@@ -1,5 +1,5 @@
 {
-  "name": "relica_neo4j",
+  "name": "@relica/archivist",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",

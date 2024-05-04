@@ -1,5 +1,5 @@
 {
-  "name": "clarity_core",
+  "name": "@relica/clarity-core",
   "version": "0.0.0",
   "main": "index.js",
   "license": "MIT",
