@@ -1,0 +1,19 @@
+# Use the official Neo4j Docker image as the base image
+FROM docker.io/neo4j:latest
+
+# Set environment variables for Neo4j configuration
+ENV NEO4J_AUTH=neo4j/password
+ENV NEO4J_dbms_security_procedures_unrestricted=apoc.*
+ENV NEO4J_apoc_import_file_enabled=true
+ENV NEO4J_apoc_export_file_enabled=true
+ENV NEO4J_PLUGINS='["apoc"]'
+
+# Set a custom password for the Neo4j user (replace 'password' with your desired password)
+ENV NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+
+
+# Expose the default ports for Neo4j
+EXPOSE 7474 7473 7687
+
+# Start the Neo4j server
+CMD ["neo4j"]

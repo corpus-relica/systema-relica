@@ -1,0 +1,26 @@
+{
+  "name": "relica_neo4j",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "c3-linearization": "^0.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "neo4j-driver": "^5.17.0",
+    "nodemon": "^2.0.22",
+    "redis": "^4.6.13",
+    "socket.io": "^4.7.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^4.6.2"
+  },
+  "scripts": {
+    "start": "nodemon src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "prettier": "^3.2.4"
+  }
+}

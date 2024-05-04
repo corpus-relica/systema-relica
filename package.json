@@ -1,0 +1,9 @@
+{
+  "name": "systema-relica",
+  "version": "0.0.0",
+  "description": "Semantic Modelling for Next-Generation applications",
+  "main": "index.js",
+  "license": "GNU",
+  "private": true,
+  "workspaces": ["archivist", "clarity-core"]
+}

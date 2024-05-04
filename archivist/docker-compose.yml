@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  archivist:
+    build:
+      context: ./
+      dockerfile: Dockerfile.node
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    container_name: archivist
+    restart: always
+    env_file:
+      - .env
+    command: ["npm", "start"]
+    networks:
+      - rlc-net
+
+networks:
+  rlc-net:
+    external: true

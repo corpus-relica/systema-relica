@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  archivist:
+    image: registry.gitlab.com/corpus-relica/archivist:${IMAGE_TAG}
+    container_name: archivist
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      RELICA_REDIS_URL: ${RELICA_REDIS_URL}
+      RELICA_REDIS_PASSWORD: ${RELICA_REDIS_PASSWORD}
+      RELICA_NEO4J_ALLOWED_ORIGIN: ${RELICA_NEO4J_ALLOWED_ORIGIN}
+      RELICA_NEO4J_URI: ${RELICA_NEO4J_URI}
+      RELICA_NEO4J_USER: ${RELICA_NEO4J_USER}
+      RELICA_NEO4J_PASSWORD: ${RELICA_NEO4J_PASSWORD}
+      RELICA_NEO4J_API_PORT: ${RELICA_NEO4J_API_PORT}
+    networks:
+      - rlc-net
+
+networks:
+  rlc-net:
+    external: true
