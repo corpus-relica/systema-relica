@@ -1,0 +1,2 @@
+* Systema Relica
+[[https://en.wikipedia.org/wiki/Gellish][Semantic Data Modelling]] for Next Generation Applications
