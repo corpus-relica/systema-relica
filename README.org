@@ -1,2 +1,10 @@
 * Systema Relica
 [[https://en.wikipedia.org/wiki/Gellish][Semantic Data Modelling]] for Next Generation Applications
+
+#+BEGIN_SRC
+git clone https://github.com/corpus-relica/systema-relica.git
+#+END_SRC
+
+#+BEGIN_SRC
+docker-compose up --build -d
+#+END_SRC
