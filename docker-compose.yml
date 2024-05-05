@@ -20,6 +20,15 @@ services:
       - NEO4J_apoc_export_file_enabled="true"
       - NEO4J_ACCEPT_LICENSE_AGREEMENT="yes"
     restart: always
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cypher-shell -u neo4j -p password 'MATCH (n) RETURN COUNT(n);' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - rlc-net
 
@@ -53,19 +62,28 @@ services:
       - rlc-net
 
   archivist:
+    container_name: archivist
     build:
       context: ./
       dockerfile: Dockerfile.archivist
+    env_file:
+      - ./packages/archivist/.env
+    environment:
+      - REDIS_URL=redis://redis:6379
     ports:
       - "3000:3000"
     volumes:
-      - ./packages/archivist:/usr/src/app
-      - /usr/src/app/node_modules
-    container_name: archivist
+      - ./packages/archivist:/app
+      - /app/node_modules
     restart: always
-    env_file:
-      - ./packages/archivist/.env
-    command: ["npm", "start"]
+    command: ["npm", "run", "start:dev"]
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
     networks:
       - rlc-net
 
@@ -82,6 +100,8 @@ services:
     env_file:
       - ./packages/clarity-core/.env
     command: sh -c "npm install && npx tsc --outDir dist && npm start"
+    depends_on:
+      - archivist
     networks:
       rlc-net:
         aliases:

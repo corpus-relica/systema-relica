@@ -1,22 +1,16 @@
-# Use an official Node runtime as a parent image
-FROM node:14
+FROM node:latest
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
-COPY ./packages/archivist/ ./
-COPY ./packages/archivist/wait-for-it.sh /usr/wait-for-it.sh
+WORKDIR /app
 
-# Copy the current directory contents into the container at /usr/src/app
 COPY ./packages/archivist/package*.json ./
 
-# Make sure the script is executable
-RUN chmod +x /usr/wait-for-it.sh
+RUN npm install -g nodemon
+RUN npm i -g @nestjs/cli
 
-# Install any needed packages specified in package.json
 RUN npm install
 
-# Make port 3000 available to the world outside this container
+COPY ./packages/archivist .
+
 EXPOSE 3000
 
-# Run the app when the container launches
-CMD ["npm", "start"]
+CMD ["nodemon", "--watch", ".", "--exec", "npm", "run", "start:dev"]

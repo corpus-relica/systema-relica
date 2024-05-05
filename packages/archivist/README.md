@@ -1,49 +1,73 @@
-# Relica-Neo4j
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+</p>
 
-Relica-Neo4j is a Node.js application that provides an interface to a Neo4j based semantic model. It exposes a comprehensive API for interacting with a Gellish knowledgegraph, a structured language for knowledge representation.
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
+
+  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+    <p align="center">
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
+<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
+<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
+<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
+<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
+  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
+    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
+</p>
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+
+## Description
+
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Installation
 
-1. Clone the repository
-2. Run `yarn` to install dependencies
+```bash
+$ yarn install
+```
 
-## Usage
+## Running the app
 
-Set the environment variables as per your configuration and start the server using `yarn dev`.
+```bash
+# development
+$ yarn run start
 
-## API
+# watch mode
+$ yarn run start:dev
 
-The application provides several routes for different functionalities:
+# production mode
+$ yarn run start:prod
+```
 
-- Concept routes: (provide details)
-- Definition routes: (provide details)
-- Kind search routes: (provide details)
-- Individual search routes: (provide details)
-- General search routes: (provide details)
-- Fact retrieval routes: (provide details)
-- Entity retrieval routes: (provide details)
-- Completion routes: (provide details)
-- Validation routes: (provide details)
-- Submission routes: (provide details)
-- Environment routes: (provide details)
+## Test
 
-## Real-time Communication
+```bash
+# unit tests
+$ yarn run test
 
-The application uses socket.io for real-time communication. It listens for various types of messages and responds accordingly.
+# e2e tests
+$ yarn run test:e2e
 
-## Dependencies
+# test coverage
+$ yarn run test:cov
+```
 
-- express: For creating the server
-- cors: For handling Cross-Origin Resource Sharing
-- socket.io: For real-time communication
-- neo4j-driver: For interacting with the Neo4j database
-- redis: For caching
-- nodemon: For development
+## Support
 
-## Contributing
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-(Provide details on how others can contribute to this project)
+## Stay in touch
+
+- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
+- Website - [https://nestjs.com](https://nestjs.com/)
+- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 
-(Provide details about the license)
+Nest is [MIT licensed](LICENSE).
