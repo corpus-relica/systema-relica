@@ -1,5 +1,5 @@
 {
-	"name": "relica_data_ingestor",
+	"name": "@relica/data-ingest",
 	"version": "0.0.0",
 	"license": "MIT",
 	"bin": "dist/cli.js",
@@ -12,9 +12,7 @@
 		"dev": "tsc --watch",
 		"test": "prettier --check . && xo && ava"
 	},
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"dependencies": {
 		"@inkjs/ui": "^1.0.0",
 		"c3-linearization": "^0.3.0",
@@ -49,9 +47,7 @@
 			"ts": "module",
 			"tsx": "module"
 		},
-		"nodeArguments": [
-			"--loader=ts-node/esm"
-		]
+		"nodeArguments": ["--loader=ts-node/esm"]
 	},
 	"xo": {
 		"extends": "xo-react",
