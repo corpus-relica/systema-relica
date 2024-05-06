@@ -8,6 +8,8 @@ import { Neo4jModule } from 'nest-neo4j';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { CacheService } from './cache/cache.service';
 import { GraphService } from './graph/graph.service';
+
+import { AppInitService } from './app-init/app-init.service';
 import { GellishBaseService } from './gellish-base/gellish-base.service';
 import { DefinitionController } from './definition/definition.controller';
 import { DefinitionService } from './definition/definition.service';
@@ -67,6 +69,7 @@ import { DeletionService } from './deletion/deletion.service';
     DeletionController,
   ],
   providers: [
+    AppInitService,
     AppService,
     CacheService,
     GraphService,

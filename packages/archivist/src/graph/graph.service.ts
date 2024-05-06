@@ -104,4 +104,10 @@ export class GraphService {
             return this.transformResult(item);
         });
     }
+
+    async isDatabaseEmpty() {
+        const query = 'MATCH (n) RETURN n LIMIT 1';
+        const res = await this.execQuery(query);
+        return res.length === 0;
+    }
 }
