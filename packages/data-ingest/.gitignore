@@ -13,3 +13,4 @@ yarn-error.log*
 .eslintcache
 
 seed/
+!/seed/000_TOPini.xls
