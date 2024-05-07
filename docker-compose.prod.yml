@@ -65,18 +65,15 @@ services:
     container_name: archivist
     build:
       context: ./
-      dockerfile: Dockerfile.archivist
+      dockerfile: Dockerfile.prod.archivist
     env_file:
       - ./packages/archivist/.env
     environment:
       - REDIS_URL=redis://redis:6379
     ports:
       - "3000:3000"
-    volumes:
-      - ./packages/archivist:/usr/src/app/packages/archivist
-      - /usr/src/app/packages/archivist/node_modules
     restart: always
-    command: ["npm", "run", "start:dev"]
+    command: ["node", "dist/main.js"]
     depends_on:
       neo4j:
         condition: service_healthy

@@ -25,12 +25,13 @@ COPY yarn.lock .
 COPY --from=build /usr/src/app/packages/types/package.json /usr/src/app/packages/types/package.json
 COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/dist
 
-COPY packages/archivist /usr/src/app/packages/archivist
+COPY --from=build /usr/src/app/packages/archivist/package.json /usr/src/app/packages/archivist/package.json
+COPY --from=build /usr/src/app/packages/archivist/dist /usr/src/app/packages/archivist/dist
 
-ENV NODE_ENV development
+ENV NODE_ENV production
 
-RUN yarn install --pure-lockfile --non-interactive
+RUN yarn install --pure-lockfile --non-interactive --production
 
 WORKDIR /usr/src/app/packages/archivist
 
-CMD ["yarn", "start:dev"]
+CMD ["npm", "start"]
