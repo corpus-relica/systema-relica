@@ -33,6 +33,7 @@ import { SubmissionService } from './submission/submission.service';
 import { UIDService } from './uid/uid.service';
 import { DeletionController } from './deletion/deletion.controller';
 import { DeletionService } from './deletion/deletion.service';
+import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion.service';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { DeletionService } from './deletion/deletion.service';
     SubmissionService,
     UIDService,
     DeletionService,
+    RawFactIngestionService,
   ],
 })
 export class AppModule {}
