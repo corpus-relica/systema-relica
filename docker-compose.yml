@@ -1,15 +1,39 @@
 version: "3.8"
 
 services:
-  neo4j:
-    image: neo4j:5.12.0
-    container_name: neo4j
-    ports:
-      - "7474:7474"
-      - "7687:7687"
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    command: /bin/sh -c "redis-server --requirepass redis"
     volumes:
-      - ./packages/dataplex/data/neo4j:/data
-      - ./seed_csv:/var/lib/neo4j/import
+      - ./packages/dataplex/data/redis:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - rlc-net
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    command: ["bash", "/docker-entrypoint-initdb.d/init-postgres.sh"]
+    volumes:
+      - ./packages/dataplex/data/postgres:/var/lib/postgresql/data
+      - ./packages/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - rlc-net
+
+  neo4j:
+    container_name: neo4j
+    image: neo4j:5.12.0
+    restart: always
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_security_procedures_unrestricted="apoc.*"
@@ -20,7 +44,12 @@ services:
       - NEO4J_apoc_import_file_enabled="true"
       - NEO4J_apoc_export_file_enabled="true"
       - NEO4J_ACCEPT_LICENSE_AGREEMENT="yes"
-    restart: always
+    volumes:
+      - ./packages/dataplex/data/neo4j:/data
+      - ./seed_csv:/var/lib/neo4j/import
+    ports:
+      - "7474:7474"
+      - "7687:7687"
     healthcheck:
       test:
         [
@@ -33,53 +62,22 @@ services:
     networks:
       - rlc-net
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - ./packages/dataplex/data/redis:/data
-    restart: always
-    command: /bin/sh -c "redis-server --requirepass redis"
-    networks:
-      - rlc-net
-
-  postgres:
-    image: postgres:latest
-    container_name: postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./packages/dataplex/data/postgres:/var/lib/postgresql/data
-      - ./packages/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
-    restart: always
-    command: ["bash", "/docker-entrypoint-initdb.d/init-postgres.sh"]
-    networks:
-      - rlc-net
-
   archivist:
     container_name: archivist
     build:
       context: ./
       dockerfile: Dockerfile.archivist
-    env_file:
-      - ./packages/archivist/.env
+    restart: always
     environment:
       - REDIS_URL=redis://redis:6379
-    ports:
-      - "3000:3000"
+    command: ["npm", "run", "start:dev"]
     volumes:
       - ./packages/archivist:/usr/src/app/packages/archivist
       - ./seed_xls:/usr/src/app/packages/archivist/seed_xls
       - ./seed_csv:/usr/src/app/packages/archivist/seed_csv
       - /usr/src/app/packages/archivist/node_modules
-    restart: always
-    command: ["npm", "run", "start:dev"]
+    ports:
+      - "3000:3000"
     depends_on:
       neo4j:
         condition: service_healthy
@@ -91,18 +89,17 @@ services:
       - rlc-net
 
   clarity-core:
-    image: node:14
     container_name: clarity-core
+    image: node:latest
     working_dir: /usr/src/app
-    ports:
-      - "3001:3001"
+    restart: always
+    # command: sh -c "npm install && npx tsc --outDir dist && npm start"
+    command: sh -c "yarn install && yarn dev"
     volumes:
       - ./packages/clarity-core:/usr/src/app
       - /usr/src/app/node_modules
-    restart: always
-    env_file:
-      - ./packages/clarity-core/.env
-    command: sh -c "npm install && npx tsc --outDir dist && npm start"
+    ports:
+      - "3001:3001"
     depends_on:
       - archivist
     networks:
