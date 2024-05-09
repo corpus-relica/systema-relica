@@ -9,6 +9,7 @@ services:
       - "7687:7687"
     volumes:
       - ./packages/dataplex/data/neo4j:/data
+      - ./seed_csv:/var/lib/neo4j/import
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_security_procedures_unrestricted="apoc.*"
@@ -74,6 +75,8 @@ services:
       - "3000:3000"
     volumes:
       - ./packages/archivist:/usr/src/app/packages/archivist
+      - ./seed_xls:/usr/src/app/packages/archivist/seed_xls
+      - ./seed_csv:/usr/src/app/packages/archivist/seed_csv
       - /usr/src/app/packages/archivist/node_modules
     restart: always
     command: ["npm", "run", "start:dev"]

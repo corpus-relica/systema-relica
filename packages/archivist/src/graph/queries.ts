@@ -303,3 +303,14 @@ SET r.full_definition = $full_definition
 SET r.partial_definition = $partial_definition
 RETURN r
 `;
+
+/////////////////////////////////////////////////////////////
+
+export const getListOfKindsQuery = `
+MATCH (a)--(r)-->()
+WHERE r.rel_type_uid = 1146 OR r.rel_type_uid = 1726
+WITH r
+ORDER BY r[$sortField]
+SKIP $skip LIMIT $pageSize
+RETURN r
+`;

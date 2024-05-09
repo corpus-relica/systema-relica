@@ -21,7 +21,8 @@ async function bootstrap() {
   app.enableCors({
     origin: '*', //process.env.RELICA_NEO4J_ALLOWED_ORIGIN,
     methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'range'],
+    exposedHeaders: ['Content-Range'],
   });
   await app.listen(3000, '0.0.0.0');
 }

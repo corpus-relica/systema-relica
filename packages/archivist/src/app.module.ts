@@ -34,6 +34,10 @@ import { UIDService } from './uid/uid.service';
 import { DeletionController } from './deletion/deletion.controller';
 import { DeletionService } from './deletion/deletion.service';
 import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion.service';
+import { XLSService } from './xls/xls.service';
+import { FileService } from './file/file.service';
+import { KindsController } from './kinds/kinds.controller';
+import { KindsService } from './kinds/kinds.service';
 
 @Module({
   imports: [
@@ -68,6 +72,7 @@ import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion
     ValidationController,
     SubmissionController,
     DeletionController,
+    KindsController,
   ],
   providers: [
     AppInitService,
@@ -88,6 +93,9 @@ import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion
     UIDService,
     DeletionService,
     RawFactIngestionService,
+    XLSService,
+    FileService,
+    KindsService,
   ],
 })
 export class AppModule {}

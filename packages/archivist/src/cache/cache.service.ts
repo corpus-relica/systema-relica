@@ -140,4 +140,35 @@ export class CacheService {
         //   this.entityPromptCache[uid] = prompt;
         //   return prompt;
     }
+
+    //--------------------------------------------------------------------- ENTITY
+
+    async getMinFreeEntityUID() {
+        const minFreeEntityUIDKey = `rlc:db:YYYY:minFreeEntityUID`;
+        const minFreeEntityUID =
+            await this.redisClient.get(minFreeEntityUIDKey);
+        if (minFreeEntityUID) {
+            return +minFreeEntityUID;
+        }
+        return 0;
+    }
+
+    async setMinFreeEntityUID(uid: number) {
+        const minFreeEntityUIDKey = `rlc:db:YYYY:minFreeEntityUID`;
+        await this.redisClient.set(minFreeEntityUIDKey, '' + uid);
+    }
+
+    async getMinFreeFactUID() {
+        const minFreeFactUIDKey = `rlc:db:YYYY:minFreeFactUID`;
+        const minFreeFactUID = await this.redisClient.get(minFreeFactUIDKey);
+        if (minFreeFactUID) {
+            return +minFreeFactUID;
+        }
+        return 0;
+    }
+
+    async setMinFreeFactUID(uid: number) {
+        const minFreeFactUIDKey = `rlc:db:YYYY:minFreeFactUID`;
+        await this.redisClient.set(minFreeFactUIDKey, '' + uid);
+    }
 }
