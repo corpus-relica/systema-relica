@@ -46,7 +46,9 @@ export const retrieveAllFacts = async (uid: number) => {
 };
 
 export const getCategory = async (uid: number) => {
+  console.log("getCategory", uid, `${URL}/retrieveEntity/category?uid=${uid}`);
   const result = await axios.get(`${URL}/retrieveEntity/category?uid=${uid}`);
+  console.log("getCategory result", result.data);
   return result.data;
 };
 

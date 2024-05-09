@@ -52,6 +52,34 @@ export class CacheService {
 
     //----------------------------------------------------------------- DESCENDANTS
 
+    async updateDescendantsInDB(nodeToDescendants: any) {
+        for (const [nodeUid, descendantsSet] of nodeToDescendants.entries()) {
+            try {
+                const newDescendants = Array.from(descendantsSet).map((uid) =>
+                    (uid as number).toString(),
+                );
+                const ns = 'rlc:db:YYYY:entity:' + nodeUid + ':descendants';
+                // client.SADD(ns, newDescendants);
+                for (const descendant of newDescendants) {
+                    const isMember = await this.redisClient.sismember(
+                        ns,
+                        descendant,
+                    );
+                    if (isMember === 0) {
+                        this.redisClient.sadd(ns, descendant);
+                    } else {
+                        console.log('already exists');
+                    }
+                }
+            } catch (error) {
+                console.error(
+                    `updateDescendantsInDB:Failed to update descendants for node ${nodeUid}:`,
+                    error,
+                );
+            }
+        }
+    }
+
     async allDescendantsOf(uid: number): Promise<number[]> {
         const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
         let descendants: any[] =
@@ -141,6 +169,54 @@ export class CacheService {
         //   return prompt;
     }
 
+    async clearEntityLineageCacheComplete() {
+        let cursor = 0;
+
+        do {
+            // console.log('cursor', cursor);
+
+            try {
+                const reply = await this.redisClient.scan(
+                    cursor,
+                    'MATCH',
+                    'rlc:db:YYYY:entity:*:lineage',
+                    'COUNT',
+                    '100',
+                );
+
+                cursor = parseInt(reply[0]);
+                const keys = reply[1];
+
+                if (keys.length === 0) {
+                    console.log('No matching keys found.');
+                } else {
+                    console.log('deleting keys:', keys);
+                    await this.redisClient.del(keys);
+                }
+            } catch (error) {
+                console.error('Error occurred during Redis scan:', error);
+                break; // Exit the loop if an error occurs
+            }
+        } while (cursor !== 0);
+    }
+
+    async addToEntityLineageCache(entityUid: number, lineage: number[]) {
+        // console.log('addToEntityLineageCache', entityUid, lineage);
+        try {
+            const ns = 'rlc:db:YYYY:entity:' + entityUid + ':lineage';
+            const lineageStrArray = lineage.map((uid) => uid.toString());
+            console.log('lineageStrArray', lineageStrArray);
+            await this.redisClient.lpush(ns, ...lineageStrArray);
+            return;
+        } catch (error) {
+            console.error(
+                `addToEntityLineageCache:Failed to update lineage for entity ${entityUid}:`,
+                error,
+            );
+            console.log(entityUid, lineage);
+        }
+    }
+
     //--------------------------------------------------------------------- ENTITY
 
     async getMinFreeEntityUID() {
@@ -171,4 +247,47 @@ export class CacheService {
         const minFreeFactUIDKey = `rlc:db:YYYY:minFreeFactUID`;
         await this.redisClient.set(minFreeFactUIDKey, '' + uid);
     }
+
+    //------------------------------------------------------------- RELATED FACTS
+
+    async clearEntityFactsCacheComplete() {
+        let cursor = 0; // Start with cursor as a number
+
+        do {
+            // Correct call format with cursor as a number and options as the second argument
+            const reply = await this.redisClient.scan(
+                cursor,
+                'MATCH',
+                'rlc:db:YYYY:entity:*:facts',
+                'COUNT',
+                '100',
+            );
+
+            cursor = parseInt(reply[0]); // Assuming cursor should be a number according to the error messages
+
+            const keys = reply[1];
+
+            if (keys.length) {
+                await this.redisClient.del(keys);
+            }
+        } while (cursor !== 0); // Repeat until SCAN has iterated through the entire keyspace, checking cursor as a number
+    }
+
+    addToEntityFactsCache = async (entityUid: number, factUid: number) => {
+        try {
+            const ns = 'rlc:db:YYYY:entity:' + entityUid + ':facts';
+            const factUidStr = factUid + '';
+            const isMember = await this.redisClient.sismember(ns, factUidStr);
+            if (isMember === 0) {
+                await this.redisClient.sadd(ns, factUidStr);
+            } else {
+                // console.log('already exists');
+            }
+        } catch (error) {
+            console.error(
+                `addToEntityFactsCache:Failed to update facts for entity ${entityUid}:`,
+                error,
+            );
+        }
+    };
 }
