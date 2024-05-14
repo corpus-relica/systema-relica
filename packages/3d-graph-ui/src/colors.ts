@@ -1,0 +1,3 @@
+export const TEXT_ULTIMATE_HIGHLIGHT_COLOR = "#FFFFFF";
+export const TEXT_HIGHLIGHT_COLOR = "#FFFFFF";
+export const TEXT_DEFAULT_COLOR = "#FFFFFF";

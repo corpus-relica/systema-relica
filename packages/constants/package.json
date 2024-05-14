@@ -1,0 +1,14 @@
+{
+  "name": "@relica/constants",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "main": "dist/constants.js",
+  "types": "dist/constants.d.js",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}
