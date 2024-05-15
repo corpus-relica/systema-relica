@@ -11,15 +11,19 @@ export class TransactionService {
     }
 
     startMachine(machineName: string) {
-        this.hsmManager.startMachine(machineName);
+        return this.hsmManager.startMachine(machineName);
     }
 
     resumeLastMachine() {
-        this.hsmManager.resumeLastMachine();
+        return this.hsmManager.resumeLastMachine();
     }
 
     sendEvent(event: any) {
-        this.hsmManager.sendEvent(event);
+        return this.hsmManager.sendEvent(event);
+    }
+
+    getSnapshot() {
+        return this.hsmManager.getSnapshot();
     }
 
     getPendingStates() {
