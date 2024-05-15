@@ -5,6 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const xstate_1 = require("xstate");
 const hsm_definitions_1 = __importDefault(require("./hsm-definitions"));
+function getNextEvents(snapshot) {
+    return [...new Set([...snapshot._nodes.flatMap((sn) => sn.ownEvents)])];
+}
 class HSMManager {
     constructor() {
         this.stack = [];
@@ -27,6 +30,7 @@ class HSMManager {
         this.currentActor.subscribe(this.handleStateChange.bind(this));
         this.currentActor.start();
         this.logger.log(`Started new state machine: ${machineName}`);
+        return this.currentActor.getPersistedSnapshot();
     }
     resumeLastMachine() {
         if (this.stack.length > 0) {
@@ -40,26 +44,39 @@ class HSMManager {
             this.currentActor.restore(snapshot);
             this.currentActor.subscribe(this.handleStateChange.bind(this));
             this.logger.log(`Resumed machine from stack`);
+            return this.currentActor.getPersistedSnapshot();
         }
         else {
             this.logger.error(`No machines left in stack to resume`);
         }
     }
     handleStateChange(snapshot) {
-        this.logger.log(`State changed to: ${snapshot.value}`);
+        this.logger.log(`State changed to: ${JSON.stringify(snapshot.value)}`);
         // Additional logic can go here
+        return snapshot;
     }
     sendEvent(event) {
         if (this.currentActor) {
             this.currentActor.send(event);
             this.logger.log(`Event sent: ${event.type}`);
+            return this.currentActor.getPersistedSnapshot();
         }
     }
     getPendingStates() {
         if (this.currentActor) {
-            return this.currentActor.state.nextEvents;
+            console.log("Getting PENDING STATES:");
+            console.log(this.currentActor.getSnapshot());
+            console.log(getNextEvents(this.currentActor.getSnapshot()));
+            // console.log(this.currentActor.logic);
+            return getNextEvents(this.currentActor.getSnapshot());
         }
         return [];
+    }
+    getSnapshot() {
+        if (this.currentActor) {
+            return this.currentActor.getPersistedSnapshot();
+        }
+        return null;
     }
 }
 exports.default = HSMManager;

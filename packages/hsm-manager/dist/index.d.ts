@@ -3,10 +3,11 @@ declare class HSMManager {
     private currentActor;
     private logger;
     constructor();
-    startMachine(machineName: string): void;
-    resumeLastMachine(): void;
-    handleStateChange(snapshot: any): void;
-    sendEvent(event: any): void;
-    getPendingStates(): any;
+    startMachine(machineName: string): any;
+    resumeLastMachine(): any;
+    handleStateChange(snapshot: any): any;
+    sendEvent(event: any): any;
+    getPendingStates(): any[];
+    getSnapshot(): any;
 }
 export default HSMManager;
