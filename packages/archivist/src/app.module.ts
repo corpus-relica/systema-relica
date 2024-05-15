@@ -6,6 +6,8 @@ import { ConceptController } from './concept/concept.controller';
 
 import { Neo4jModule } from 'nest-neo4j';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { TransactionModule } from './transaction/transaction.module';
+
 import { CacheService } from './cache/cache.service';
 import { GraphService } from './graph/graph.service';
 
@@ -58,6 +60,7 @@ import { KindsService } from './kinds/kinds.service';
       username: process.env.NEO4J_USER, //'neo4j',
       password: process.env.NEO4J_PASSWORD, //'password',
     }),
+    TransactionModule,
   ],
   controllers: [
     AppController,

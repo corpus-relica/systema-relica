@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@relica/constants": "0.0.0",
-    "@relica/fact-search": "0.0.1",
-    "@relica/3d-graph-view": "0.0.0",
+    "@relica/fact-search-ui": "0.0.1",
+    "@relica/3d-graph-ui": "0.0.0",
     "@szhsin/react-menu": "^4.1.0",
     "@tanstack/react-query": "^5.12.2",
     "@types/cytoscape": "^3.19.9",

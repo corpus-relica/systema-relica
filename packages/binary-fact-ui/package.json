@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@relica/types": "0.0.0",
-    "@relica/fact-search": "0.0.1",
+    "@relica/fact-search-ui": "0.0.1",
     "@tanstack/react-query": "^5.7.2"
   },
   "devDependencies": {

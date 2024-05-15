@@ -1,6 +1,6 @@
 {
   "name": "@relica/types",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Common type definitions for systema-relica",
   "private": true,
   "main": "./dist/index.js",

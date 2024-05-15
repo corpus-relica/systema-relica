@@ -44,16 +44,14 @@ export class AppInitService implements OnApplicationBootstrap {
                 '0.csv',
             );
 
-            // await this.buildCaches();
-            //
+            // build caches
             await this.buildSubtypesCache();
             await this.buildEntityLineageCache();
+            await this.buildEntityFactCache();
 
             this.logger.debug('datastores initialized');
         } else {
             this.logger.debug('Graph database not empty');
-
-            await this.buildEntityFactCache();
         }
     }
 
