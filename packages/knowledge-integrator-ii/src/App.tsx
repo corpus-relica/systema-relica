@@ -13,6 +13,7 @@ import { authProvider } from "./authProvider";
 
 import { MyLayout } from "./MyLayout";
 import Graph from "./Graph";
+import Modelling from "./Modelling";
 import Dashboard from "./Dashboard";
 
 export const App = () => (
@@ -25,6 +26,7 @@ export const App = () => (
     <Resource name="kinds" list={ListGuesser} />
     <CustomRoutes>
       <Route path="/graph" element={<Graph />} />
+      <Route path="/modelling" element={<Modelling />} />
     </CustomRoutes>
   </Admin>
 );

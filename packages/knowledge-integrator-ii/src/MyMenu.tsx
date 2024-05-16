@@ -6,5 +6,10 @@ export const MyMenu = () => (
         <Menu.DashboardItem />
         <Menu.ResourceItem name="kinds" />
         <Menu.Item to="/graph" primaryText="Graph" leftIcon={<LabelIcon />} />
+        <Menu.Item
+            to="/modelling"
+            primaryText="Modelling"
+            leftIcon={<LabelIcon />}
+        />
     </Menu>
 );
