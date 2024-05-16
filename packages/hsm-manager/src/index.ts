@@ -10,10 +10,12 @@ interface StackItem {
 
 //see: https://stately.ai/docs/migration#statenextevents-has-been-removed
 function getNextEvents(snapshot: AnyMachineSnapshot) {
-    return [...new Set([...snapshot._nodes.flatMap((sn) => sn.ownEvents)])];
+    return [
+        ...new Set([...snapshot._nodes.flatMap((sn: any) => sn.ownEvents)]),
+    ];
 }
 
-class HSMManager {
+export class HSMManager {
     private stack: StackItem[] = [];
     private currentActor: any; //ActorRef<any> | null = null;
     private logger: any; //SharedLogger;
@@ -98,6 +100,8 @@ class HSMManager {
         }
         return null;
     }
-}
 
-export default HSMManager;
+    getMachineNames() {
+        return Object.keys(machineDefs);
+    }
+}

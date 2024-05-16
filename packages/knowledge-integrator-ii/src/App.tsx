@@ -12,8 +12,8 @@ import { dataProvider } from "./dataProvider";
 import { authProvider } from "./authProvider";
 
 import { MyLayout } from "./MyLayout";
-import Graph from "./Graph";
-import Modelling from "./Modelling";
+import Graph from "./pages/Graph";
+import Modelling from "./pages/Modelling";
 import Dashboard from "./Dashboard";
 
 export const App = () => (
