@@ -22,6 +22,7 @@ const Modelling = () => {
     const [stack, setStack] = useState([]);
     const [isRunning, setIsRunning] = useState(false);
     const [pendingStates, setPendingStates] = useState([]);
+    const [currentMachineName, setCurrentMachineName] = useState("");
 
     // const {
     //     isPending: isStackPending,
@@ -40,7 +41,17 @@ const Modelling = () => {
 
         manager.addEventListener("machine:start", () => {
             setIsRunning(true);
+            setCurrentMachineName(manager.getCurrentMachineName());
             console.log("machine start");
+        });
+        manager.addEventListener("machine:pause", () => {
+            console.log("machine pause");
+        });
+        manager.addEventListener("machine:resume", () => {
+            setCurrentMachineName(manager.getCurrentMachineName());
+            setPendingStates(manager.getPendingStates());
+            console.log("machine resume vvvvvvvvvvvvvv");
+            console.log(manager.getCurrentMachineName());
         });
         manager.addEventListener("stack:push", () => {
             const st = manager.getStack();
@@ -52,6 +63,10 @@ const Modelling = () => {
             setStack(st);
             console.log("stack pop!", st);
         });
+        manager.addEventListener("stack:empty", () => {
+            console.log("!!!!!!!!! stack empty !!!!!!!!!!!!!!");
+            setIsRunning(false);
+        });
         manager.addEventListener("state:change", () => {
             console.log("STATE:CHANGE", manager.getSnapshot());
             setPendingStates(manager.getPendingStates());
@@ -60,6 +75,7 @@ const Modelling = () => {
         setMachineNames(manager.getMachineNames());
         setStack(manager.getStack());
         setIsRunning(manager.isMachineRunning());
+        setCurrentMachineName(manager.getCurrentMachineName());
     }, []); // Empty dependency array means this effect runs once after the initial render
 
     const handleSubmit = (data) => {
@@ -87,10 +103,7 @@ const Modelling = () => {
                 </SimpleForm>
             ) : (
                 <div>
-                    <div>
-                        current machine:
-                        {hsmManager && hsmManager.getCurrentMachineName()}
-                    </div>
+                    <div>current machine:{currentMachineName}</div>
                     <div>
                         current state:
                         {hsmManager && hsmManager.getCurrentStateName()}

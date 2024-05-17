@@ -28,6 +28,29 @@ export class HSMManager extends EventTarget {
         this.logger = console;
     }
 
+    initSubscription() {
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
+        this.subscription = this.currentActor.subscribe({
+            next: (snapshot: any) => {
+                this.logger.log(
+                    `State changed to: ${JSON.stringify(snapshot.value)}`
+                );
+                this.dispatchEvent(new Event("state:change"));
+            },
+            error: (err: any) => {
+                this.logger.error(`Error in state machine: ${err}`);
+            },
+            complete: () => {
+                this.logger.log(`State machine complete`);
+                console.log(this.currentActor.getSnapshot().output);
+                this.dispatchEvent(new Event("machine:complete"));
+                this.resumeLastMachine();
+            },
+        });
+    }
+
     startMachine(machineName: string) {
         this.logger.log(`Starting machine: ${machineName}`);
         this.logger.log(`Machine defs: ${JSON.stringify(machineDefs)}`);
@@ -48,7 +71,7 @@ export class HSMManager extends EventTarget {
             this.subscription.unsubscribe();
             const snapshot = this.currentActor.getPersistedSnapshot();
             this.stack.push({
-                name: machineName,
+                name: this.currentMachineName,
                 actor: this.currentActor,
                 snapshot,
             });
@@ -57,11 +80,18 @@ export class HSMManager extends EventTarget {
             this.logger.log(`Paused and stacked machine: ${machineName}`);
         }
 
+        // CREATE THE NEW MACHINE/ACTOR
+
         this.currentMachineName = machineName;
         this.currentActor = createActor(machineDef());
-        this.subscription = this.currentActor.subscribe(
-            this.handleStateChange.bind(this)
-        );
+        this.initSubscription();
+
+        this.currentActor.on("invoke", (event: any) => {
+            this.logger.log(`!!--\\\\ Invoke event: ${event.type} \\\\`);
+            this.logger.log(event);
+            this.startMachine(event.data);
+        });
+
         this.currentActor.start();
         this.logger.log(`Started new state machine: ${machineName}`);
 
@@ -84,13 +114,8 @@ export class HSMManager extends EventTarget {
             const { name, actor, snapshot } = entry;
             this.currentMachineName = name;
             this.currentActor = actor;
-            this.currentActor.restore(snapshot);
-            if (this.subscription) {
-                this.subscription.unsubscribe();
-            }
-            this.subscription = this.currentActor.subscribe(
-                this.handleStateChange.bind(this)
-            );
+            // this.currentActor.restore(snapshot);
+            this.initSubscription();
             this.logger.log(`Resumed machine from stack`);
             this.dispatchEvent(new Event("stack:pop"));
 
@@ -99,17 +124,13 @@ export class HSMManager extends EventTarget {
                 snapshot: this.currentActor.getPersistedSnapshot(),
             };
 
-            this.dispatchEvent(new Event("machine:start"));
+            this.dispatchEvent(new Event("machine:resume"));
             return result;
         } else {
-            this.logger.error(`No machines left in stack to resume`);
+            this.currentActor = undefined;
+            this.subscription.unsubscribe();
+            this.dispatchEvent(new Event("stack:empty"));
         }
-    }
-
-    handleStateChange(snapshot: any) {
-        this.logger.log(`State changed to: ${JSON.stringify(snapshot.value)}`);
-        // Additional logic can go here
-        this.dispatchEvent(new Event("state:change"));
     }
 
     sendEvent(event: any) {

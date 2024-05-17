@@ -100,7 +100,7 @@ const machine = () =>
         {
             actions: {
                 reset: ({ context, event }) => {},
-                emitEvent: emit({ type: "invoke", data: "some-shit" }),
+                emitEvent: emit({ type: "invoke", data: "smartSpec" }),
             },
             actors: {},
             guards: {},
