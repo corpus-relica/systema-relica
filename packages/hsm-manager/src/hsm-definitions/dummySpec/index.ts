@@ -3,48 +3,48 @@ import { createMachine, emit } from "xstate";
 const machine = () =>
     createMachine(
         {
-            id: "Untitled",
-            initial: "Initial state",
+            id: "dummySpec",
+            initial: "Initial",
             states: {
-                "Initial state": {
+                Initial: {
                     on: {
                         next: [
                             {
-                                target: "Another state",
+                                target: "Another",
                                 actions: [],
                                 meta: {},
                             },
                         ],
                     },
                 },
-                "Another state": {
+                Another: {
                     entry: {
-                        type: "emitEvent",
+                        type: "invokeSmartSpec",
                     },
                     on: {
                         next: [
                             {
-                                target: "Parent state",
+                                target: "Parent",
                                 actions: [],
                             },
                         ],
                     },
                 },
-                "Parent state": {
-                    initial: "Child state",
+                Parent: {
+                    initial: "Child",
                     states: {
-                        "Child state": {
+                        Child: {
                             on: {
                                 next: [
                                     {
-                                        target: "Another child state",
+                                        target: "AnotherChild",
                                         actions: [],
                                         meta: {},
                                     },
                                 ],
                                 back: [
                                     {
-                                        target: "#Untitled.Initial state",
+                                        target: "#dummySpec.Initial",
                                         actions: [
                                             {
                                                 type: "reset",
@@ -55,24 +55,24 @@ const machine = () =>
                                 ],
                             },
                         },
-                        "Another child state": {
-                            initial: "Child-Child State",
+                        AnotherChild: {
+                            initial: "ChildChild",
                             states: {
-                                "Child-Child State": {
+                                ChildChild: {
                                     on: {
                                         next: [
                                             {
-                                                target: "Another Child-Child State",
+                                                target: "AnotherChildChild",
                                                 actions: [],
                                             },
                                         ],
                                     },
                                 },
-                                "Another Child-Child State": {
+                                AnotherChildChild: {
                                     on: {
                                         next: [
                                             {
-                                                target: "#Untitled.Penultimate State",
+                                                target: "#dummySpec.Penultimate",
                                                 actions: [],
                                             },
                                         ],
@@ -82,17 +82,17 @@ const machine = () =>
                         },
                     },
                 },
-                "Penultimate State": {
+                Penultimate: {
                     on: {
                         finalize: [
                             {
-                                target: "Final State",
+                                target: "Final",
                                 actions: [],
                             },
                         ],
                     },
                 },
-                "Final State": {
+                Final: {
                     type: "final",
                 },
             },
@@ -100,7 +100,7 @@ const machine = () =>
         {
             actions: {
                 reset: ({ context, event }) => {},
-                emitEvent: emit({ type: "invoke", data: "smartSpec" }),
+                invokeSmartSpec: emit({ type: "invoke", data: "smartSpec" }),
             },
             actors: {},
             guards: {},
@@ -109,3 +109,4 @@ const machine = () =>
     );
 
 export default machine;
+export * from "./stateComps";

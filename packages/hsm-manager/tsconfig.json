@@ -17,6 +17,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    "jsx": "react",
     "paths": {
       "*": ["node_modules/*"]
     }

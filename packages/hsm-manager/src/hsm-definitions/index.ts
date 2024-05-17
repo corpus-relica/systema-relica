@@ -5,3 +5,4 @@ import createPhysObjDefinitionSpec from "./createPhysObjDefinitionSpec";
 const machineDefs: any = { createPhysObjDefinitionSpec, dummySpec, smartSpec };
 
 export default machineDefs;
+export * from "./dummySpec";

@@ -16,6 +16,8 @@ function getNextEvents(snapshot: AnyMachineSnapshot) {
     ];
 }
 
+export * from "./hsm-definitions/";
+
 export class HSMManager extends EventTarget {
     private stack: StackItem[] = [];
     private currentActor: any; //ActorRef<any> | null = null;
@@ -169,21 +171,23 @@ export class HSMManager extends EventTarget {
     }
 
     getCurrentStateName() {
-        const foo: Function = (obj: any): string => {
+        const collapse: Function = (obj: any): string[] => {
             const keys = Object.keys(obj);
             const key = keys[0];
             const val = obj[key];
-            return `${key}: ${typeof val === "string" ? val : foo(val)}`;
+            const result = typeof val === "string" ? [val] : collapse(val);
+            return [key, ...result];
         };
+
         if (this.currentActor) {
             const value = this.currentActor.getSnapshot().value;
             if (typeof value === "string") {
-                return value;
+                return [value];
             } else {
-                return foo(value);
+                return collapse(value);
             }
         }
-        return "";
+        return [];
     }
 
     getCurrentMachineName() {

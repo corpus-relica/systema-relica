@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { HSMManager } from "@relica/hsm-manager";
+import * as fudge from "@relica/hsm-manager";
 import { SelectInput, SimpleForm, Form } from "react-admin";
 
 // import {
@@ -15,6 +16,8 @@ import { SelectInput, SimpleForm, Form } from "react-admin";
 //     return res.json();
 // };
 
+const Brown = fudge["dummySpec_Initial"];
+
 const Modelling = () => {
     // Declare state to hold machine names
     const [machineNames, setMachineNames] = useState([]);
@@ -23,6 +26,7 @@ const Modelling = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [pendingStates, setPendingStates] = useState([]);
     const [currentMachineName, setCurrentMachineName] = useState("");
+    const [StateComp, setStateComp] = useState(null);
 
     // const {
     //     isPending: isStackPending,
@@ -70,6 +74,14 @@ const Modelling = () => {
         manager.addEventListener("state:change", () => {
             console.log("STATE:CHANGE", manager.getSnapshot());
             setPendingStates(manager.getPendingStates());
+
+            const currentStateName = manager.getCurrentStateName();
+            const machineName = manager.getCurrentMachineName();
+            const stateName = currentStateName.pop();
+            const compName = `${machineName}_${stateName}`;
+            console.log("FUCKSIN SHIT --- >", compName);
+            const comp = fudge[compName];
+            setStateComp(comp);
         });
 
         setMachineNames(manager.getMachineNames());
@@ -88,6 +100,7 @@ const Modelling = () => {
 
     return (
         <div>
+            <Brown />
             <h1>Modelling</h1>
             {isRunning === false ? (
                 <SimpleForm onSubmit={handleSubmit}>
@@ -106,8 +119,13 @@ const Modelling = () => {
                     <div>current machine:{currentMachineName}</div>
                     <div>
                         current state:
-                        {hsmManager && hsmManager.getCurrentStateName()}
+                        {hsmManager &&
+                            hsmManager
+                                .getCurrentStateName()
+                                .reduce((v, m) => m + ":" + v, "")
+                                .slice(0, -1)}
                     </div>
+                    {StateComp}
                     <div>stack size: {stack.length}</div>
                     <div>
                         <div>pending states: </div>
