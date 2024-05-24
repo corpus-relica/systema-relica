@@ -1,6 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { Formik, Field, Form, useField, useFormikContext } from "formik";
+import {
+  Formik,
+  Field,
+  Form,
+  useField,
+  useFormikContext,
+  FieldArray,
+} from "formik";
 //import './styles.css';
 import XXX from "@relica/fact-search-ui";
 import Box from "@mui/material/Box";
@@ -23,6 +30,9 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       languageCommunityUid,
       languageCommunity,
       preferredName,
+      synonyms,
+      abbreviations,
+      codes,
       supertype,
       aspect,
       aspectValue,
@@ -33,6 +43,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
     } = values;
 
     const facts = [];
+    let definitiveFact = null;
 
     if (
       uid &&
@@ -44,7 +55,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       supertype &&
       definition
     ) {
-      facts.push({
+      definitiveFact = facts.push({
         lh_object_uid: uid,
         lh_object_name: preferredName,
         rel_type_uid: 1146,
@@ -52,16 +63,72 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rh_object_uid: supertype.lh_object_uid,
         rh_object_name: supertype.lh_object_name,
       });
-    }
-    if (true) {
-      facts.push({
-        lh_object_uid: 1,
-        lh_object_name: "test",
-        rel_type_uid: 2,
-        rel_type_name: "foo",
-        rh_object_uid: 3,
-        rh_object_name: "bar",
-      });
+
+      // Synonyms
+      //
+      if (synonyms.length > 0) {
+        // const terms = synonymAbbrvCode.split(",");
+        synonyms.forEach((term: string) => {
+          facts.push({
+            lh_object_uid: uid,
+            lh_object_name: term,
+            rel_type_uid: 1981,
+            rel_type_name: "is a synonym of",
+            rh_object_uid: uid,
+            rh_object_name: preferredName,
+          });
+        });
+      }
+
+      // Abbreviations
+      //
+      if (abbreviations.length > 0) {
+        // const terms = synonymAbbrvCode.split(",");
+        abbreviations.forEach((term: string) => {
+          facts.push({
+            lh_object_uid: uid,
+            lh_object_name: term,
+            rel_type_uid: 1982,
+            rel_type_name: "is an abbreviation of",
+            rh_object_uid: uid,
+            rh_object_name: preferredName,
+          });
+        });
+      }
+
+      // Codes
+      //
+      if (codes.length > 0) {
+        abbreviations.forEach((term: string) => {
+          facts.push({
+            lh_object_uid: uid,
+            lh_object_name: term,
+            rel_type_uid: 1983,
+            rel_type_name: "is a code for",
+            rh_object_uid: uid,
+            rh_object_name: preferredName,
+          });
+        });
+      }
+
+      if (aspect) {
+        facts.push({
+          lh_object_uid: supertype.lh_object_uid,
+          lh_object_name: supertype.lh_object_name,
+          rel_type_uid: 5652,
+          rel_type_name: "has subtypes that have as discriminating aspect a",
+          rh_object_uid: aspect.lh_object_uid,
+          rh_object_name: aspect.lh_object_name,
+        });
+        facts.push({
+          lh_object_uid: uid,
+          lh_object_name: preferredName,
+          rel_type_uid: 5283,
+          rel_type_name: "is by definition qualified as",
+          rh_object_uid: aspect.lh_object_uid,
+          rh_object_name: aspect.lh_object_name,
+        });
+      }
     }
 
     updateFacts(facts);
@@ -106,6 +173,9 @@ const Modelling = () => {
     languageCommunityUid: 6628,
     languageCommunity: "Relica",
     preferredName: "",
+    synonyms: [],
+    abbreviations: [],
+    codes: [],
     supertype: {
       lh_object_uid: 1,
       lh_object_name: "concept",
@@ -221,12 +291,73 @@ const Modelling = () => {
                     <MyField name="preferredName" />
                   </label>
                   <br />
-                  <label>
+
+                  <FieldArray name="synonyms">
+                    {({ push, remove }) => (
+                      <div>
+                        <h5>synonyms</h5>
+                        {values.synonyms.map((_: any, index: number) => (
+                          <div key={index}>
+                            <label>
+                              <MyField name={`synonyms.${index}`} />
+                            </label>
+                            <button type="button" onClick={() => remove(index)}>
+                              -
+                            </button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => push("")}>
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </FieldArray>
+                  <FieldArray name="abbreviations">
+                    {({ push, remove }) => (
+                      <div>
+                        <h5>abbreviations</h5>
+                        {values.abbreviations.map((_: any, index: number) => (
+                          <div key={index}>
+                            <label>
+                              <MyField name={`abbreviations.${index}`} />
+                            </label>
+                            <button type="button" onClick={() => remove(index)}>
+                              -
+                            </button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => push("")}>
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </FieldArray>
+                  <FieldArray name="codes">
+                    {({ push, remove }) => (
+                      <div>
+                        <h5>codes</h5>
+                        {values.codes.map((_: any, index: number) => (
+                          <div key={index}>
+                            <label>
+                              <MyField name={`codes.${index}`} />
+                            </label>
+                            <button type="button" onClick={() => remove(index)}>
+                              -
+                            </button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => push("")}>
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </FieldArray>
+                  {/*<label>
                     synonym, abbreviated name, or code
                     <MyField name="synonymAbbrvCode" />
                     <br />
                     ...
-                  </label>
+                  </label>*/}
                   <br />
                   <label>
                     supertype concept uid
