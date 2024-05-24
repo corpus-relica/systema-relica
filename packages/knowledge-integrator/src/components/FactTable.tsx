@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Button, Footer, Layer } from "grommet";
-import FactSearch from "@relica/fact-search";
+import FactSearch from "@relica/fact-search-ui";
 
 const FactTable = (props) => {
   const { factTableIsOpen, setFactTableIsOpen, callback } = props;

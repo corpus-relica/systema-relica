@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createMachine, createActor } from 'xstate';
-import { HSMManager } from '@relica/hsm-manager';
+import HSMManager from '@relica/hsm-manager';
 
 @Injectable()
 export class TransactionService {

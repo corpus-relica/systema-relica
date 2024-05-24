@@ -6,6 +6,7 @@ import { observer } from "mobx-react-lite";
 import cols from "./columns";
 //@ts-ignore
 import { Fact } from "@relica/types";
+import { toJS } from "mobx";
 
 const Body = observer((props: any) => {
   const { callback } = props;
@@ -13,7 +14,7 @@ const Body = observer((props: any) => {
   const { facts } = rootStore;
 
   const handleSelectClick = (row: Fact) => {
-    callback && callback(row);
+    callback && callback(toJS(row));
   };
 
   const handleRowDetails = (row: Fact) => {

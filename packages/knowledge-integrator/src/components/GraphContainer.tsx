@@ -1,5 +1,5 @@
 import React, { useEffect, useState, memo, useCallback } from "react";
-import GraphView from "@relica/3d-graph-view";
+import GraphView from "@relica/3d-graph-ui";
 import useRootStoreContext from "../hooks/useRootStoreContext";
 import { observer } from "mobx-react";
 import { toJS } from "mobx";
