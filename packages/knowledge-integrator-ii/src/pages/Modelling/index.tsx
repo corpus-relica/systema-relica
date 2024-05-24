@@ -34,6 +34,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       abbreviations,
       codes,
       supertype,
+      aspects,
       aspect,
       aspectValue,
       func,
@@ -99,7 +100,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       // Codes
       //
       if (codes.length > 0) {
-        abbreviations.forEach((term: string) => {
+        codes.forEach((term: string) => {
           facts.push({
             lh_object_uid: uid,
             lh_object_name: term,
@@ -111,6 +112,31 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         });
       }
 
+      // Aspects
+      //
+      if (aspects.length > 0) {
+        aspects.forEach((aspect: any) => {
+          facts.push({
+            lh_object_uid: supertype.lh_object_uid,
+            lh_object_name: supertype.lh_object_name,
+            rel_type_uid: 5652,
+            rel_type_name: "has subtypes that have as discriminating aspect a",
+            rh_object_uid: aspect.lh_object_uid,
+            rh_object_name: aspect.lh_object_name,
+          });
+          facts.push({
+            lh_object_uid: uid,
+            lh_object_name: preferredName,
+            rel_type_uid: 5283,
+            rel_type_name: "is by definition qualified as",
+            rh_object_uid: aspect.lh_object_uid,
+            rh_object_name: aspect.lh_object_name,
+          });
+        });
+      }
+
+      // Aspect
+      //
       if (aspect) {
         facts.push({
           lh_object_uid: supertype.lh_object_uid,
@@ -180,6 +206,7 @@ const Modelling = () => {
       lh_object_uid: 1,
       lh_object_name: "concept",
     },
+    aspects: [],
     aspect: {
       lh_object_uid: 1,
       lh_object_name: "concept",
@@ -208,7 +235,6 @@ const Modelling = () => {
   );
 
   const handleOpen = (key: string, setFieldValue: any) => {
-    setFieldValue(key, { lh_object_uid: 5, lh_object_name: "some new shit" });
     setSfv(() => (key, res) => setFieldValue(key, res));
     setOpenKey(key);
     setOpen(true);
@@ -216,6 +242,7 @@ const Modelling = () => {
 
   const handleClose = (res: any) => {
     if (sfv && openKey) {
+      console.log("Setting field value", openKey, res);
       sfv(openKey, res);
     }
     setSfv(() => {});
@@ -292,73 +319,6 @@ const Modelling = () => {
                   </label>
                   <br />
 
-                  <FieldArray name="synonyms">
-                    {({ push, remove }) => (
-                      <div>
-                        <h5>synonyms</h5>
-                        {values.synonyms.map((_: any, index: number) => (
-                          <div key={index}>
-                            <label>
-                              <MyField name={`synonyms.${index}`} />
-                            </label>
-                            <button type="button" onClick={() => remove(index)}>
-                              -
-                            </button>
-                          </div>
-                        ))}
-                        <button type="button" onClick={() => push("")}>
-                          +
-                        </button>
-                      </div>
-                    )}
-                  </FieldArray>
-                  <FieldArray name="abbreviations">
-                    {({ push, remove }) => (
-                      <div>
-                        <h5>abbreviations</h5>
-                        {values.abbreviations.map((_: any, index: number) => (
-                          <div key={index}>
-                            <label>
-                              <MyField name={`abbreviations.${index}`} />
-                            </label>
-                            <button type="button" onClick={() => remove(index)}>
-                              -
-                            </button>
-                          </div>
-                        ))}
-                        <button type="button" onClick={() => push("")}>
-                          +
-                        </button>
-                      </div>
-                    )}
-                  </FieldArray>
-                  <FieldArray name="codes">
-                    {({ push, remove }) => (
-                      <div>
-                        <h5>codes</h5>
-                        {values.codes.map((_: any, index: number) => (
-                          <div key={index}>
-                            <label>
-                              <MyField name={`codes.${index}`} />
-                            </label>
-                            <button type="button" onClick={() => remove(index)}>
-                              -
-                            </button>
-                          </div>
-                        ))}
-                        <button type="button" onClick={() => push("")}>
-                          +
-                        </button>
-                      </div>
-                    )}
-                  </FieldArray>
-                  {/*<label>
-                    synonym, abbreviated name, or code
-                    <MyField name="synonymAbbrvCode" />
-                    <br />
-                    ...
-                  </label>*/}
-                  <br />
                   <label>
                     supertype concept uid
                     <MyField
@@ -384,6 +344,86 @@ const Modelling = () => {
                     <MyField name="definition" />
                   </label>
                   <br />
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                      <FieldArray name="synonyms">
+                        {({ push, remove }) => (
+                          <div>
+                            <h5>synonyms</h5>
+                            {values.synonyms.map((_: any, index: number) => (
+                              <div key={index}>
+                                <label>
+                                  <MyField name={`synonyms.${index}`} />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => remove(index)}
+                                >
+                                  -
+                                </button>
+                              </div>
+                            ))}
+                            <button type="button" onClick={() => push("")}>
+                              +
+                            </button>
+                          </div>
+                        )}
+                      </FieldArray>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <FieldArray name="abbreviations">
+                        {({ push, remove }) => (
+                          <div>
+                            <h5>abbreviations</h5>
+                            {values.abbreviations.map(
+                              (_: any, index: number) => (
+                                <div key={index}>
+                                  <label>
+                                    <MyField name={`abbreviations.${index}`} />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => remove(index)}
+                                  >
+                                    -
+                                  </button>
+                                </div>
+                              )
+                            )}
+                            <button type="button" onClick={() => push("")}>
+                              +
+                            </button>
+                          </div>
+                        )}
+                      </FieldArray>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <FieldArray name="codes">
+                        {({ push, remove }) => (
+                          <div>
+                            <h5>codes</h5>
+                            {values.codes.map((_: any, index: number) => (
+                              <div key={index}>
+                                <label>
+                                  <MyField name={`codes.${index}`} />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => remove(index)}
+                                >
+                                  -
+                                </button>
+                              </div>
+                            ))}
+                            <button type="button" onClick={() => push("")}>
+                              +
+                            </button>
+                          </div>
+                        )}
+                      </FieldArray>
+                    </Grid>
+                  </Grid>
+                  <br />
                   <label>
                     discriminating function uid
                     <MyField
@@ -404,6 +444,43 @@ const Modelling = () => {
                     />
                   </label>
                   <br />
+
+                  <FieldArray name="aspects">
+                    {({ push, remove }) => (
+                      <div>
+                        <h5>Discriminating aspects</h5>
+                        {values.aspects.map((_: any, index: number) => (
+                          <div key={index}>
+                            <label>
+                              uid
+                              <MyField
+                                name={`aspects.${index}.lh_object_uid`}
+                                onClick={() => {
+                                  handleOpen(`aspects.${index}`, setFieldValue);
+                                }}
+                              />
+                            </label>
+                            <label>
+                              name
+                              <MyField
+                                name={`aspects.${index}.lh_object_name`}
+                                onClick={() => {
+                                  handleOpen(`aspects.${index}`, setFieldValue);
+                                }}
+                              />
+                            </label>
+                            <button type="button" onClick={() => remove(index)}>
+                              -
+                            </button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => push("")}>
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </FieldArray>
+
                   <label>
                     discriminating aspect uid
                     <MyField
