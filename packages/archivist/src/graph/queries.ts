@@ -261,6 +261,12 @@ WHERE a.uid = $uid AND r.rel_type_uid = 5283
 RETURN r
 `;
 
+export const qualificationsOfAspect = `
+MATCH (a)--(r)-->(b)
+WHERE b.uid = $uid AND r.rel_type_uid = 1726
+RETURN r
+`;
+
 export const intendedFunctionsDef = `
 MATCH (a)--(r)-->(b)
 WHERE r.rel_type_uid = 5536

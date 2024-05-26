@@ -2393,6 +2393,19 @@ aframe@^1.5:
     three-bmfont-text dmarcos/three-bmfont-text#eed4878795be9b3e38cf6aec6b903f56acd1f695
     webvr-polyfill "^0.10.12"
 
+ag-grid-community@31.3.2:
+  version "31.3.2"
+  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-31.3.2.tgz#588fd3be5cd5d79522886ca5dfc14757cb6c7d8c"
+  integrity sha512-GxqFRD0OcjaVRE1gwLgoP0oERNPH8Lk8wKJ1txulsxysEQ5dZWHhiIoXXSiHjvOCVMkK/F5qzY6HNrn6VeDMTQ==
+
+ag-grid-react@^31.3.2:
+  version "31.3.2"
+  resolved "https://registry.yarnpkg.com/ag-grid-react/-/ag-grid-react-31.3.2.tgz#6b492cd76ea79f46690f529ddc93389e138cd0b8"
+  integrity sha512-SFHN05bsXp901rIT00Fa6iQLCtyavoJiKaXEDUtAU5LMu+GTkjs/FPQBQ8754omgdDFr4NsS3Ri6QbqBne3rug==
+  dependencies:
+    ag-grid-community "31.3.2"
+    prop-types "^15.8.1"
+
 agentkeepalive@^4.2.1:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/agentkeepalive/-/agentkeepalive-4.5.0.tgz#2673ad1389b3c418c5a20c5d7364f93ca04be923"

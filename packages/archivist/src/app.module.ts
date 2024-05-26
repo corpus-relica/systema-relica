@@ -40,6 +40,8 @@ import { XLSService } from './xls/xls.service';
 import { FileService } from './file/file.service';
 import { KindsController } from './kinds/kinds.controller';
 import { KindsService } from './kinds/kinds.service';
+import { AspectController } from './aspect/aspect.controller';
+import { AspectService } from './aspect/aspect.service';
 
 @Module({
   imports: [
@@ -76,6 +78,7 @@ import { KindsService } from './kinds/kinds.service';
     SubmissionController,
     DeletionController,
     KindsController,
+    AspectController,
   ],
   providers: [
     AppInitService,
@@ -99,6 +102,7 @@ import { KindsService } from './kinds/kinds.service';
     XLSService,
     FileService,
     KindsService,
+    AspectService,
   ],
 })
 export class AppModule {}

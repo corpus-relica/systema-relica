@@ -6,7 +6,8 @@ import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 // ------------------------------------------------------------
 import Foo from "./definition/PhysicalObject";
-import Bar from "./misc/ReviewAspect";
+import CreateAspect from "./misc/CreateAspect";
+import ReviewAspect from "./misc/ReviewAspect";
 
 import XXX from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
@@ -47,8 +48,15 @@ export default function BasicSelect() {
     case "dmpo":
       element = <Foo handleOpen={handleOpen} handleClose={handleClose} />;
       break;
+    case "create aspect":
+      element = (
+        <CreateAspect handleOpen={handleOpen} handleClose={handleClose} />
+      );
+      break;
     case "review aspect":
-      element = <Bar handleOpen={handleOpen} handleClose={handleClose} />;
+      element = (
+        <ReviewAspect handleOpen={handleOpen} handleClose={handleClose} />
+      );
       break;
     default:
       element = <div>DEFAULT</div>;
@@ -97,6 +105,7 @@ export default function BasicSelect() {
               <MenuItem value={"dmpo"}>
                 Definition Model - Physical Object
               </MenuItem>
+              <MenuItem value={"create aspect"}>Create Aspect</MenuItem>
               <MenuItem value={"review aspect"}>Review Aspect</MenuItem>
             </Select>
           </FormControl>

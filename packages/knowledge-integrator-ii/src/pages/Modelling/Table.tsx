@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -7,60 +7,65 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 
-// function createData(
-//   name: string,
-//   calories: number,
-//   fat: number,
-//   carbs: number,
-//   protein: number
-// ) {
-//   return { name, calories, fat, carbs, protein };
-// }
-
-// const rows = [
-//   createData("Frozen yoghurt", 159, 6.0, 24, 4.0),
-//   createData("Ice cream sandwich", 237, 9.0, 37, 4.3),
-//   createData("Eclair", 262, 16.0, 24, 6.0),
-//   createData("Cupcake", 305, 3.7, 67, 4.3),
-//   createData("Gingerbread", 356, 16.0, 49, 3.9),
-// ];
+import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
+import "ag-grid-community/styles/ag-grid.css"; // Mandatory CSS required by the grid
+import "ag-grid-community/styles/ag-theme-balham.css"; // Optional Theme applied to the grid
 
 export default function DenseTable({ rows }) {
+  // Column Definitions: Defines the columns to be displayed.
+  const [colDefs, setColDefs] = useState([
+    { field: "sequence" },
+    { field: "language_uid" },
+    { field: "language" },
+    { field: "lh_context_uid" },
+    { field: "lh_context_name" },
+    { field: "lh_object_uid" },
+    { field: "lh_cardinalities" },
+    { field: "lh_object_name" },
+    { field: "fact_uid" },
+    { field: "rel_type_uid" },
+    { field: "rel_type_name" },
+    { field: "rh_object_uid" },
+    { field: "rh_cardinalities" },
+    { field: "rh_object_name" },
+    {
+      field: "partial_definition",
+      tooltipField: "partial_definition",
+      headerTooltip: "Tooltip for Athlete Column Header",
+    },
+    {
+      field: "full_definition",
+      tooltipField: "full_definition",
+      headerTooltip: "Tooltip for Athlete Column Header",
+    },
+    { field: "uom_uid" },
+    { field: "uom_name" },
+    { field: "remarks" },
+    { field: "approval_status" },
+    { field: "successor_uid" },
+    { field: "effective_from" },
+    { field: "latest_update" },
+    { field: "author" },
+    { field: "reference" },
+    { field: "collection_uid" },
+    { field: "collection_name" },
+    { field: "validity_context_uid" },
+    { field: "validity_context_name" },
+  ]);
+
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-        <TableHead>
-          <TableRow>
-            <TableCell>lh_object_uid</TableCell>
-            <TableCell>lh_object_name</TableCell>
-            <TableCell>rel_type_uid</TableCell>
-            <TableCell>rel_type_name</TableCell>
-            <TableCell>rh_object_uid</TableCell>
-            <TableCell>rh_object_name</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow
-              key={row.name}
-              sx={{
-                "&:last-child td, &:last-child th": {
-                  border: 0,
-                },
-              }}
-            >
-              <TableCell component="th" scope="row">
-                {row.lh_object_uid}
-              </TableCell>
-              <TableCell>{row.lh_object_name}</TableCell>
-              <TableCell>{row.rel_type_uid}</TableCell>
-              <TableCell>{row.rel_type_name}</TableCell>
-              <TableCell>{row.rh_object_uid}</TableCell>
-              <TableCell>{row.rh_object_name}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    // wrapping container with theme & size
+    <div
+      className="ag-theme-quartz" // applying the grid theme
+      style={{ height: 500 }} // the grid will fill the size of the parent container
+    >
+      <AgGridReact
+        rowData={rows}
+        columnDefs={colDefs}
+        tooltipShowDelay={0}
+        tooltipMouseTrack={true}
+        tooltipHideDelay={20000}
+      />
+    </div>
   );
 }

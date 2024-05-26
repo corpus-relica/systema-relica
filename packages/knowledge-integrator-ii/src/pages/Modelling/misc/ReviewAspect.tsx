@@ -86,6 +86,7 @@ const Aspect = (props: any) => {
                     <Field name="aspect.rh_object_name" type="text" />
                   </label>
                   <br />
+                  <h5>Qualifications</h5>
                 </Form>
               </div>
             )}
