@@ -13,8 +13,9 @@ export const FACTS_ABOUT_RELATION = "/factRetrieval/factsAboutRelation";
 export const ALL_RELATED_FACTS_ENDPOINT = "/factRetrieval/allRelatedFacts";
 
 export const SIMPLE_VALIDATE_BINARY_FACT_ENDPOINT = "/validate/binaryFact";
-export const SUBMIT_BINARY_FACT_ENDPOINT = "/submit/binaryFact";
-export const SUMBIT_BINARY_FACTS_ENDPOINT = "/submit/binaryFacts";
+export const SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT = "/validate/binaryFacts";
+export const SUBMIT_BINARY_FACT_ENDPOINT = "/submission/binaryFact";
+export const SUMBIT_BINARY_FACTS_ENDPOINT = "/submission/binaryFacts";
 export const ENTITY_TYPE_ENDPOINT = "/retrieveEntity/type";
 export const COLLECTIONS_ENDPOINT = "/retrieveEntity/collections";
 export const LH_OBJECT_COMPLETION_ENDPOINT = "/completion/lhObject";

@@ -2,7 +2,14 @@ import * as React from "react";
 import Grid from "@mui/material/Grid";
 import SearchIcon from "@mui/icons-material/Search";
 import IconButton from "@mui/material/IconButton";
+import { Button } from "@mui/material";
 import Table from "../Table";
+import { useMutation } from "@tanstack/react-query";
+import {
+  SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
+  SUMBIT_BINARY_FACTS_ENDPOINT,
+} from "@relica/constants";
+import axios from "axios";
 
 import {
   Formik,
@@ -12,6 +19,41 @@ import {
   useFormikContext,
   FieldArray,
 } from "formik";
+
+const date = new Date();
+const formattedDate = date.toISOString().slice(0, 10);
+
+const baseFact = {
+  // sequence: 0,
+  language_uid: "910036",
+  language: "English",
+  // lh_context_uid: 0,
+  // lh_context_name: "undetermined",
+  lh_object_uid: "",
+  // lh_cardinalities: "",
+  lh_object_name: "",
+  fact_uid: "",
+  rel_type_uid: "",
+  rel_type_name: "",
+  rh_object_uid: "",
+  // rh_cardinalities: "",
+  rh_object_name: "",
+  partial_definition: "",
+  full_definition: "",
+  uom_uid: "",
+  uom_name: "",
+  remarks: "",
+  approval_status: "proposed",
+  // successor_uid: 0,
+  effective_from: formattedDate,
+  latest_update: formattedDate,
+  author: "anonymous",
+  reference: "Corpus Relica Generalis",
+  // collection_uid: 999999,
+  // collection_name: "Systema Relica",
+  // validity_context_uid: 0,
+  // validity_context_name: "undetermined",
+};
 
 const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();
@@ -24,16 +66,17 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
     const facts = [];
     let definitiveFact = null;
 
-    let definitiveUid = 101;
+    let definitiveUid = 1;
     let uid = definitiveUid;
 
     if (supertype && aspectName && aspectDefinition) {
       definitiveFact = facts.push({
-        lh_object_uid: uid,
+        ...baseFact,
+        lh_object_uid: uid.toString(),
         lh_object_name: aspectName,
-        rel_type_uid: 1146,
+        rel_type_uid: "1146",
         rel_type_name: "is a specialization of",
-        rh_object_uid: supertype.lh_object_uid,
+        rh_object_uid: supertype.lh_object_uid.toString(),
         rh_object_name: supertype.lh_object_name,
         full_definition: aspectDefinition,
         partial_definition: aspectDefinition,
@@ -44,10 +87,11 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         qualifications.forEach((qual: string) => {
           if (!qual) return;
           facts.push({
-            lh_object_uid: uid,
+            ...baseFact,
+            lh_object_uid: uid.toString(),
             lh_object_name: qual,
-            rel_type_uid: 1726,
-            rel_type_name: "is a qualifiaction of",
+            rel_type_uid: "1726",
+            rel_type_name: "is a qualification of",
             rh_object_uid: definitiveUid,
             rh_object_name: aspectName,
           });
@@ -80,6 +124,58 @@ const CreateAspect = (props: any) => {
     setFacts(facts);
   };
 
+  const mutation = useMutation({
+    mutationFn: (facts: any[]) => {
+      // i will iterate over the facts and convert certain fields to numbers
+      // before sending them to the server
+      const foo = facts.map((fact) => {
+        return {
+          ...fact,
+          lh_object_uid: parseInt(fact.lh_object_uid),
+          fact_uid: parseInt(fact.fact_uid),
+          rel_type_uid: parseInt(fact.rel_type_uid),
+          rh_object_uid: parseInt(fact.rh_object_uid),
+          uom_uid: parseInt(fact.uom_uid),
+        };
+      });
+
+      return axios.post(
+        "http://localhost:3000" + SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
+        foo
+      );
+    },
+    onSuccess: (data, variables, context) => {
+      const success = data.data.reduce((acc: boolean, result: any) => {
+        return acc && result.isValid;
+      }, true);
+
+      if (!success) {
+        console.error("ERROR", data.data);
+      } else {
+        console.log("SUCCESS", success);
+        //submit the facts
+
+        const foo = facts.map((fact) => {
+          return {
+            ...fact,
+            lh_object_uid: parseInt(fact.lh_object_uid),
+            fact_uid: parseInt(fact.fact_uid),
+            rel_type_uid: parseInt(fact.rel_type_uid),
+            rh_object_uid: parseInt(fact.rh_object_uid),
+            uom_uid: parseInt(fact.uom_uid),
+          };
+        });
+        const result = axios.post(
+          "http://localhost:3000" + SUMBIT_BINARY_FACTS_ENDPOINT,
+          foo
+        );
+        console.log("RESULT", result);
+      }
+
+      console.log("SUCCESS", success);
+    },
+  });
+
   return (
     <div>
       <h3>Aspect</h3>
@@ -92,19 +188,22 @@ const CreateAspect = (props: any) => {
         </small>
       </div>
       <Grid container spacing={2}>
-        <Grid item xs={5}>
+        <Grid item xs={12}>
           <Formik
             initialValues={initialValues}
-            onSubmit={(values) => {
-              console.log(values);
-            }}
+            onSubmit={
+              (values) => mutation.mutate(facts)
+              // setTimeout(() => {
+              //   alert(JSON.stringify(facts, null, 2));
+              // }, 500)
+            }
           >
             {({ setFieldValue, values }) => (
               <div className="section">
                 <Form>
                   <label>
                     supertype-uid
-                    <Field name="supertype.lh_object_uid" type="number" />
+                    <Field name="supertype.lh_object_uid" type="text" />
                     <IconButton
                       aria-label="search"
                       size="small"
@@ -141,7 +240,7 @@ const CreateAspect = (props: any) => {
                   </label>
                   <br />
                   <Grid container spacing={2}>
-                    <Grid item xs={4}>
+                    <Grid item xs={12}>
                       <FieldArray name="qualifications">
                         {({ push, remove }) => (
                           <div>
@@ -168,15 +267,16 @@ const CreateAspect = (props: any) => {
                         )}
                       </FieldArray>
                     </Grid>
+                    <Grid item xs={12}>
+                      <Table rows={facts} height={250} />
+                    </Grid>
                   </Grid>
+                  <Button type="submit">Submit</Button>
                   <FormListener updateFacts={updateFacts} />
                 </Form>
               </div>
             )}
           </Formik>
-        </Grid>
-        <Grid item xs={7}>
-          <Table rows={facts} />
         </Grid>
       </Grid>
     </div>
