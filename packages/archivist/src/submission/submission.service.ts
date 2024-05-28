@@ -189,8 +189,6 @@ RETURN r
         },
       );
 
-      console.log('FOOOOOOOOOOOOOOOOOOOOOOOOOOOOONK');
-
       const returnFacts = result2.map((item) => {
         return Object.assign(
           { rel_type_name: item.get('r').type },
@@ -200,13 +198,24 @@ RETURN r
 
       // UPATE CACHE
       // collect all the uids of the nodes involved in the fact
-      const uids = resolvedFacts.flatMap((fact) => [
-        fact.lh_object_uid,
-        fact.rh_object_uid,
-      ]);
+      // const uids = resolvedFacts.flatMap((fact) => [
+      //   fact.lh_object_uid,
+      //   fact.rh_object_uid,
+      // ]);
+      // await Promise.all(
+      //   uids.map(async (uid) => {
+      //     await this.cacheService.updateFactsInvolvingEntity(uid);
+      //   }),
+      // );
       await Promise.all(
-        uids.map(async (uid) => {
-          await this.cacheService.updateFactsInvolvingEntity(uid);
+        resolvedFacts.map(async (fact) => {
+          console.log(
+            'APEND MUTHERFUCKING FACT:',
+            fact.lh_object_name,
+            fact.rel_type_name,
+            fact.rh_object_name,
+          );
+          await this.cacheService.appendFact(fact);
         }),
       );
       //

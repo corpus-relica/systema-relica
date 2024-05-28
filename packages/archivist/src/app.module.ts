@@ -42,6 +42,7 @@ import { KindsController } from './kinds/kinds.controller';
 import { KindsService } from './kinds/kinds.service';
 import { AspectController } from './aspect/aspect.controller';
 import { AspectService } from './aspect/aspect.service';
+import { LinearizationService } from './linearization/linearization.service';
 
 @Module({
   imports: [
@@ -103,6 +104,7 @@ import { AspectService } from './aspect/aspect.service';
     FileService,
     KindsService,
     AspectService,
+    LinearizationService,
   ],
 })
 export class AppModule {}
