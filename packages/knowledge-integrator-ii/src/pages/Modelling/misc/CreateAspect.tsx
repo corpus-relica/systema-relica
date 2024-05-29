@@ -10,6 +10,7 @@ import {
   SUMBIT_BINARY_FACTS_ENDPOINT,
 } from "@relica/constants";
 import axios from "axios";
+import { baseFact } from "../baseFact";
 
 import {
   Formik,
@@ -22,38 +23,6 @@ import {
 
 const date = new Date();
 const formattedDate = date.toISOString().slice(0, 10);
-
-const baseFact = {
-  // sequence: 0,
-  language_uid: "910036",
-  language: "English",
-  // lh_context_uid: 0,
-  // lh_context_name: "undetermined",
-  lh_object_uid: "",
-  // lh_cardinalities: "",
-  lh_object_name: "",
-  fact_uid: "",
-  rel_type_uid: "",
-  rel_type_name: "",
-  rh_object_uid: "",
-  // rh_cardinalities: "",
-  rh_object_name: "",
-  partial_definition: "",
-  full_definition: "",
-  uom_uid: "",
-  uom_name: "",
-  remarks: "",
-  approval_status: "proposed",
-  // successor_uid: 0,
-  effective_from: formattedDate,
-  latest_update: formattedDate,
-  author: "anonymous",
-  reference: "Corpus Relica Generalis",
-  // collection_uid: 999999,
-  // collection_name: "Systema Relica",
-  // validity_context_uid: 0,
-  // validity_context_name: "undetermined",
-};
 
 const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();

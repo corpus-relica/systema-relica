@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import {
   Formik,
@@ -10,7 +10,12 @@ import {
 } from "formik";
 //import './styles.css';
 import Grid from "@mui/material/Grid";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import Table from "../Table";
+import { baseFact } from "../baseFact";
+
+import axios from "axios";
 
 const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();
@@ -36,6 +41,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       definition,
       aspectValueUom,
       part,
+      aspectQualifications,
     } = values;
 
     const facts = [];
@@ -52,6 +58,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       definition
     ) {
       definitiveFact = facts.push({
+        ...baseFact,
         lh_object_uid: uid,
         lh_object_name: preferredName,
         rel_type_uid: 1146,
@@ -66,6 +73,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         // const terms = synonymAbbrvCode.split(",");
         synonyms.forEach((term: string) => {
           facts.push({
+            ...baseFact,
             lh_object_uid: uid,
             lh_object_name: term,
             rel_type_uid: 1981,
@@ -82,6 +90,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         // const terms = synonymAbbrvCode.split(",");
         abbreviations.forEach((term: string) => {
           facts.push({
+            ...baseFact,
             lh_object_uid: uid,
             lh_object_name: term,
             rel_type_uid: 1982,
@@ -97,6 +106,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       if (codes.length > 0) {
         codes.forEach((term: string) => {
           facts.push({
+            ...baseFact,
             lh_object_uid: uid,
             lh_object_name: term,
             rel_type_uid: 1983,
@@ -112,6 +122,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       if (aspects.length > 0) {
         aspects.forEach((aspect: any) => {
           facts.push({
+            ...baseFact,
             lh_object_uid: supertype.lh_object_uid,
             lh_object_name: supertype.lh_object_name,
             rel_type_uid: 5652,
@@ -119,35 +130,19 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rh_object_uid: aspect.lh_object_uid,
             rh_object_name: aspect.lh_object_name,
           });
-          facts.push({
-            lh_object_uid: uid,
-            lh_object_name: preferredName,
-            rel_type_uid: 5283,
-            rel_type_name: "is by definition qualified as",
-            rh_object_uid: aspect.lh_object_uid,
-            rh_object_name: aspect.lh_object_name,
-          });
-        });
-      }
-
-      // Aspect
-      //
-      if (aspect) {
-        facts.push({
-          lh_object_uid: supertype.lh_object_uid,
-          lh_object_name: supertype.lh_object_name,
-          rel_type_uid: 5652,
-          rel_type_name: "has subtypes that have as discriminating aspect a",
-          rh_object_uid: aspect.lh_object_uid,
-          rh_object_name: aspect.lh_object_name,
-        });
-        facts.push({
-          lh_object_uid: uid,
-          lh_object_name: preferredName,
-          rel_type_uid: 5283,
-          rel_type_name: "is by definition qualified as",
-          rh_object_uid: aspect.lh_object_uid,
-          rh_object_name: aspect.lh_object_name,
+          const quality = aspectQualifications[aspects[0].lh_object_uid];
+          console.log("quality", quality);
+          if (quality) {
+            facts.push({
+              ...baseFact,
+              lh_object_uid: uid,
+              lh_object_name: preferredName,
+              rel_type_uid: 5283,
+              rel_type_name: "is by definition qualified as",
+              rh_object_uid: quality.lh_object_uid,
+              rh_object_name: quality.lh_object_name,
+            });
+          }
         });
       }
     }
@@ -186,6 +181,103 @@ const MyField = (props: any) => {
   );
 };
 
+const MyAspectField = (props: any) => {
+  const {
+    //     values: { textA, textB },
+    touched,
+    setFieldValue,
+  } = useFormikContext();
+  const { handleOpen, remove, index } = props;
+  const [field, meta] = useField(props);
+
+  const [qualificationsUI, setQualificationsUI] = useState([]);
+  const [selectedQual, setSelectedQual] = useState("");
+  const [qux, setQux] = useState("");
+
+  const handleChange = (event: SelectChangeEvent) => {
+    console.log("val-->", event.target.value);
+    console.log("QUX!!", qux);
+    setFieldValue(
+      `aspectQualifications.${field.value.lh_object_uid}`,
+      qux[event.target.value]
+    );
+    setSelectedQual(event.target.value);
+  };
+
+  useEffect(() => {
+    const fonk = async () => {
+      const foo = await axios.get(
+        `http://localhost:3000/aspect/qualifications?uid=${field.value.lh_object_uid}`
+      );
+      console.log(foo);
+      if (foo.data && foo.data.length > 0) {
+        const quux = {};
+        const qualifications = foo.data.map((f: any) => {
+          quux[f.lh_object_uid] = f;
+          return (
+            <MenuItem value={f.lh_object_uid}>{f.lh_object_name}</MenuItem>
+          );
+        });
+        setQux(quux);
+        setQualificationsUI(
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            value={selectedQual}
+            label="Workflow"
+            onChange={handleChange}
+          >
+            {...qualifications}
+          </Select>
+        );
+      }
+    };
+    console.log("FOOBARBAZ!!!");
+    fonk();
+  }, [field.value.lh_object_uid, selectedQual]);
+
+  return (
+    // <>
+    //   <input {...props} {...field} value={field.value || ""} />
+    //   {/*!!meta.touched && !!meta.error && <div>{meta.error}</div>*/}
+    // </>
+
+    <div key={index}>
+      <label>
+        uid
+        <MyField
+          name={`aspects.${index}.lh_object_uid`}
+          onClick={() => {
+            handleOpen(
+              `aspects.${index}`,
+              setFieldValue,
+              790229 // "790229 - 160170" (substraction set operation)
+            );
+          }}
+        />
+      </label>
+      <label>
+        name
+        <MyField
+          name={`aspects.${index}.lh_object_name`}
+          onClick={() => {
+            handleOpen(
+              `aspects.${index}`,
+              setFieldValue,
+              790229 // "790229 - 160170" (substraction set operation)
+            );
+          }}
+        />
+      </label>
+      <br />
+      {qualificationsUI}
+      <button type="button" onClick={() => remove(index)}>
+        -
+      </button>
+    </div>
+  );
+};
+
 const Modelling = (props: any) => {
   const { handleOpen, handleClose } = props;
   const initialValues = {
@@ -203,14 +295,15 @@ const Modelling = (props: any) => {
       lh_object_name: "concept",
     },
     aspects: [],
-    aspect: {
-      lh_object_uid: 1,
-      lh_object_name: "concept",
-    },
-    aspectValue: {
-      lh_object_uid: 1,
-      lh_object_name: "concept",
-    },
+    aspectQualifications: {},
+    // aspect: {
+    //   lh_object_uid: 1,
+    //   lh_object_name: "concept",
+    // },
+    // aspectValue: {
+    //   lh_object_uid: 1,
+    //   lh_object_name: "concept",
+    // },
     func: {
       lh_object_uid: 1,
       lh_object_name: "concept",
@@ -376,63 +469,18 @@ const Modelling = (props: any) => {
                     </Grid>
                   </Grid>
                   <br />
-                  <label>
-                    discriminating function uid
-                    <MyField
-                      name="func.lh_object_uid"
-                      onClick={() => {
-                        handleOpen("func", setFieldValue);
-                      }}
-                    />
-                  </label>
-                  <br />
-                  <label>
-                    discriminating function name
-                    <MyField
-                      name="func.lh_object_name"
-                      onClick={() => {
-                        handleOpen("func", setFieldValue);
-                      }}
-                    />
-                  </label>
-                  <br />
 
                   <FieldArray name="aspects">
                     {({ push, remove }) => (
                       <div>
                         <h5>Discriminating aspects</h5>
                         {values.aspects.map((_: any, index: number) => (
-                          <div key={index}>
-                            <label>
-                              uid
-                              <MyField
-                                name={`aspects.${index}.lh_object_uid`}
-                                onClick={() => {
-                                  handleOpen(
-                                    `aspects.${index}`,
-                                    setFieldValue,
-                                    790229 // "790229 - 160170" (a set operation)
-                                  );
-                                }}
-                              />
-                            </label>
-                            <label>
-                              name
-                              <MyField
-                                name={`aspects.${index}.lh_object_name`}
-                                onClick={() => {
-                                  handleOpen(
-                                    `aspects.${index}`,
-                                    setFieldValue,
-                                    790229 // "790229 - 160170" (a set operation)
-                                  );
-                                }}
-                              />
-                            </label>
-                            <button type="button" onClick={() => remove(index)}>
-                              -
-                            </button>
-                          </div>
+                          <MyAspectField
+                            name={`aspects.${index}`}
+                            index={index}
+                            handleOpen={handleOpen}
+                            remove={remove}
+                          />
                         ))}
                         <button type="button" onClick={() => push("")}>
                           +
@@ -459,7 +507,7 @@ const Modelling = (props: any) => {
                         handleOpen("aspect", setFieldValue);
                       }}
                     />
-                  </label>*/}
+                  </label>
                   <br />
                   <label>
                     discriminating aspect value uid
@@ -486,7 +534,27 @@ const Modelling = (props: any) => {
                     <MyField name="aspectValueUom" />
                     <br />
                     ...
+                  </label>*/}
+                  <label>
+                    discriminating function uid
+                    <MyField
+                      name="func.lh_object_uid"
+                      onClick={() => {
+                        handleOpen("func", setFieldValue);
+                      }}
+                    />
                   </label>
+                  <br />
+                  <label>
+                    discriminating function name
+                    <MyField
+                      name="func.lh_object_name"
+                      onClick={() => {
+                        handleOpen("func", setFieldValue);
+                      }}
+                    />
+                  </label>
+                  <br />
                   <br />
                   <label>
                     obligatory part uid
