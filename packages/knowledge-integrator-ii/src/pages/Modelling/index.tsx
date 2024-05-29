@@ -70,7 +70,9 @@ export default function BasicSelect() {
     <>
       <Modal
         open={open}
-        onClose={handleClose}
+        onClose={() => {
+          handleClose(null);
+        }}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
@@ -87,7 +89,13 @@ export default function BasicSelect() {
               handleClose(res);
             }}
           />
-          <Button onClick={handleClose}>Close</Button>
+          <Button
+            onClick={() => {
+              handleClose(null);
+            }}
+          >
+            Close
+          </Button>
         </Box>
       </Modal>
       <Box>
