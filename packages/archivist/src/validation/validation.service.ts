@@ -26,7 +26,12 @@ export class ValidationService {
     // get possibleRolePlayers for role_uid
     const possibleRolePlayers =
       await this.gellishBaseService.getPossibleRolePlayers(role_uid);
-    // console.log("possibleRolePlayers:", possibleRolePlayers, role_uid, kind_uid);
+    console.log(
+      'possibleRolePlayers:',
+      possibleRolePlayers,
+      role_uid,
+      kind_uid,
+    );
     let idx = 0;
     while (idx < possibleRolePlayers.length) {
       const rp_name = possibleRolePlayers[idx].lh_object_name;
@@ -202,29 +207,33 @@ export class ValidationService {
     // }
 
     // DO accept unkown UIDs in the lh_uid position
-    if (LHUnknownUID) {
-      // but only if the relation is 'is classified as a', 'is a specialization of', or 'is a qualification of'
-      if (
-        rel_type_uid !== 1146 && // 'is a specialization of'
-        rel_type_uid !== 1225 && // 'is classified as a '
-        rel_type_uid !== 1726 // 'is a qualification of'
-      ) {
-        return {
-          isValid: false,
-          message:
-            "unkown UIDs can only be used with 'is classified as a ' or 'is a specialization of' relations",
-        };
-      }
-      // further validation here...
-      // for instance, check if rh_uid is a valid UID (in the database)
-      // if rh_uid aligns with rh_name
-      // if rel_type_uid aligns with rel_type_name
-      // maybe check if lh_name already exists in db and throw warning if it does
-      return {
-        isValid: true,
-        message: '',
-      };
-    }
+    // if (LHUnknownUID) {
+    //   // but only if the relation is 'is classified as a', 'is a specialization of', or 'is a qualification of'
+    //   if (
+    //     rel_type_uid !== 1146 && // 'is a specialization of'
+    //     rel_type_uid !== 1225 && // 'is classified as a '
+    //     rel_type_uid !== 1726 && // 'is a qualification of'
+    //     rel_type_uid !== 1981 && // 'is a synonym of'
+    //     rel_type_uid !== 1982 && // 'is an abbreviation of'
+    //     rel_type_uid !== 1983 && // 'is a code for'
+    //     rel_type_uid !== 4691 // 'is a translation of'
+    //   ) {
+    //     return {
+    //       isValid: false,
+    //       message:
+    //         "unkown UIDs can only be used with 'is classified as a ', 'is a specialization of', 'is a qulification of', 'is a synonym of', 'is an abbreviation of', 'is a code for', and 'is a translation of' relations",
+    //     };
+    //   }
+    //   // further validation here...
+    //   // for instance, check if rh_uid is a valid UID (in the database)
+    //   // if rh_uid aligns with rh_name
+    //   // if rel_type_uid aligns with rel_type_name
+    //   // maybe check if lh_name already exists in db and throw warning if it does
+    //   return {
+    //     isValid: true,
+    //     message: '',
+    //   };
+    // }
 
     let message = '';
     // use rel_type_uid to find required roles 1 & 2
