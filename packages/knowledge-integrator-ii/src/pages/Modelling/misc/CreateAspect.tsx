@@ -1,16 +1,16 @@
 import * as React from "react";
 import Grid from "@mui/material/Grid";
-import SearchIcon from "@mui/icons-material/Search";
-import IconButton from "@mui/material/IconButton";
 import { Button } from "@mui/material";
 import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
+import createMutation from "../validateAndSubmitBinaryFactMutation";
 import {
   SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
   SUMBIT_BINARY_FACTS_ENDPOINT,
 } from "@relica/constants";
 import axios from "axios";
 import { baseFact } from "../baseFact";
+import BaseDef from "../BaseDef";
 
 import {
   Formik,
@@ -90,57 +90,7 @@ const CreateAspect = (props: any) => {
     setFacts(facts);
   };
 
-  const mutation = useMutation({
-    mutationFn: (facts: any[]) => {
-      // i will iterate over the facts and convert certain fields to numbers
-      // before sending them to the server
-      const foo = facts.map((fact) => {
-        return {
-          ...fact,
-          lh_object_uid: parseInt(fact.lh_object_uid),
-          fact_uid: parseInt(fact.fact_uid),
-          rel_type_uid: parseInt(fact.rel_type_uid),
-          rh_object_uid: parseInt(fact.rh_object_uid),
-          uom_uid: parseInt(fact.uom_uid),
-        };
-      });
-
-      return axios.post(
-        "http://localhost:3000" + SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
-        foo
-      );
-    },
-    onSuccess: (data, variables, context) => {
-      const success = data.data.reduce((acc: boolean, result: any) => {
-        return acc && result.isValid;
-      }, true);
-
-      if (!success) {
-        console.error("ERROR", data.data);
-      } else {
-        console.log("SUCCESS", success);
-        //submit the facts
-
-        const foo = facts.map((fact) => {
-          return {
-            ...fact,
-            lh_object_uid: parseInt(fact.lh_object_uid),
-            fact_uid: parseInt(fact.fact_uid),
-            rel_type_uid: parseInt(fact.rel_type_uid),
-            rh_object_uid: parseInt(fact.rh_object_uid),
-            uom_uid: parseInt(fact.uom_uid),
-          };
-        });
-        const result = axios.post(
-          "http://localhost:3000" + SUMBIT_BINARY_FACTS_ENDPOINT,
-          foo
-        );
-        console.log("RESULT", result);
-      }
-
-      console.log("SUCCESS", success);
-    },
-  });
+  const mutation = useMutation(createMutation(facts));
 
   return (
     <div>
@@ -167,43 +117,12 @@ const CreateAspect = (props: any) => {
             {({ setFieldValue, values }) => (
               <div className="section">
                 <Form>
-                  <label>
-                    supertype-uid
-                    <Field name="supertype.lh_object_uid" type="text" />
-                    <IconButton
-                      aria-label="search"
-                      size="small"
-                      onClick={() => {
-                        handleOpen("supertype", setFieldValue, 790229); // "790229 - Role"
-                      }}
-                    >
-                      <SearchIcon fontSize="inherit" />
-                    </IconButton>
-                  </label>
-                  <br />
-                  <label>
-                    supertype-name
-                    <Field name="supertype.lh_object_name" type="text" />
-                    <IconButton
-                      aria-label="search"
-                      size="small"
-                      onClick={() => {
-                        handleOpen("supertype", setFieldValue, 790229); // "790229 - Role"
-                      }}
-                    >
-                      <SearchIcon fontSize="inherit" />
-                    </IconButton>
-                  </label>
-                  <br />
-                  <label>
-                    new aspect name
-                    <Field name="aspectName" type="" />
-                  </label>
-                  <br />
-                  <label>
-                    aspect definition
-                    <Field name="aspectDefinition" type="text" />
-                  </label>
+                  <BaseDef
+                    subject="aspect"
+                    handleOpen={handleOpen}
+                    setFieldValue={setFieldValue}
+                    supertypeConeUID={790229}
+                  />
                   <br />
                   <Grid container spacing={2}>
                     <Grid item xs={12}>

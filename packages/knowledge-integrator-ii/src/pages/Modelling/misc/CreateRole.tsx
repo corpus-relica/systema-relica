@@ -7,6 +7,7 @@ import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { baseFact } from "../baseFact";
+import BaseDef from "../BaseDef";
 import createMutation from "../validateAndSubmitBinaryFactMutation";
 
 import {
@@ -143,43 +144,12 @@ const CreateRole = (props: any) => {
             {({ setFieldValue, values }) => (
               <div className="section">
                 <Form>
-                  <label>
-                    supertype role uid
-                    <Field name="supertype.lh_object_uid" type="text" />
-                    <IconButton
-                      aria-label="search"
-                      size="small"
-                      onClick={() => {
-                        handleOpen("supertype", setFieldValue, ROLE_UID);
-                      }}
-                    >
-                      <SearchIcon fontSize="inherit" />
-                    </IconButton>
-                  </label>
-                  <br />
-                  <label>
-                    supertype role name
-                    <Field name="supertype.lh_object_name" type="text" />
-                    <IconButton
-                      aria-label="search"
-                      size="small"
-                      onClick={() => {
-                        handleOpen("supertype", setFieldValue, ROLE_UID);
-                      }}
-                    >
-                      <SearchIcon fontSize="inherit" />
-                    </IconButton>
-                  </label>
-                  <br />
-                  <label>
-                    new role name
-                    <Field name="roleName" type="" />
-                  </label>
-                  <br />
-                  <label>
-                    role definition
-                    <Field name="roleDefinition" type="text" />
-                  </label>
+                  <BaseDef
+                    subject="role"
+                    handleOpen={handleOpen}
+                    setFieldValue={setFieldValue}
+                    supertypeConeUID={ROLE_UID}
+                  />
                   <br />
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
