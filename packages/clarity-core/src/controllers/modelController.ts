@@ -144,6 +144,21 @@ export const retrieveIndividualModel = async (uid: number) => {
   return baseObj;
 };
 
+export const retrieveQualificationModel = async (uid: number) => {
+  const category = await getCategory(uid);
+  const facts = await retrieveAllFacts(uid);
+  const definitiveFacts = await getDefinitiveFacts(uid);
+
+  const baseObj = {
+    name: definitiveFacts[0].lh_object_name,
+    uid: uid,
+    type: "qualification",
+    category: category,
+    facts,
+  };
+  return baseObj;
+};
+
 export const retrieveModel = async (uid: number) => {
   const type: string = await getEntityType(uid);
 
@@ -151,6 +166,8 @@ export const retrieveModel = async (uid: number) => {
     return retrieveKindModel(uid);
   } else if (type === "individual") {
     return retrieveIndividualModel(uid);
+  } else if (type === "qualification") {
+    return retrieveQualificationModel(uid);
   } else if (uid === 730000) {
     return {
       uid: uid,
