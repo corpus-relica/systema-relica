@@ -21,9 +21,6 @@ import {
   FieldArray,
 } from "formik";
 
-const date = new Date();
-const formattedDate = date.toISOString().slice(0, 10);
-
 const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();
 

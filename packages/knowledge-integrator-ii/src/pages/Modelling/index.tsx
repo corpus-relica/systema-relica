@@ -7,6 +7,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 // ------------------------------------------------------------
 import Foo from "./definition/PhysicalObject";
 import CreateAspect from "./misc/CreateAspect";
+import CreateRole from "./misc/CreateRole";
 import ReviewAspect from "./misc/ReviewAspect";
 
 import XXX from "@relica/fact-search-ui";
@@ -53,9 +54,14 @@ export default function BasicSelect() {
         <CreateAspect handleOpen={handleOpen} handleClose={handleClose} />
       );
       break;
-    case "review aspect":
+    // case "review aspect":
+    //   element = (
+    //     <ReviewAspect handleOpen={handleOpen} handleClose={handleClose} />
+    //   );
+    //   break;
+    case "create role":
       element = (
-        <ReviewAspect handleOpen={handleOpen} handleClose={handleClose} />
+        <CreateRole handleOpen={handleOpen} handleClose={handleClose} />
       );
       break;
     default:
@@ -114,7 +120,10 @@ export default function BasicSelect() {
                 Definition Model - Physical Object
               </MenuItem>
               <MenuItem value={"create aspect"}>Create Aspect</MenuItem>
-              <MenuItem value={"review aspect"}>Review Aspect</MenuItem>
+              <MenuItem value={"create role"}>Create Role</MenuItem>
+              <MenuItem value={"create relation"}>Create Relation</MenuItem>
+              <MenuItem value={"create occurrence"}>Create Occurrence</MenuItem>
+              {/*<MenuItem value={"review aspect"}>Review Aspect</MenuItem>*/}
             </Select>
           </FormControl>
         </Box>
