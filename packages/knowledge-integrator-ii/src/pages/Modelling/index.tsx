@@ -8,6 +8,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Foo from "./definition/PhysicalObject";
 import CreateAspect from "./misc/CreateAspect";
 import CreateRole from "./misc/CreateRole";
+import CreateRelation from "./misc/CreateRelation";
 import ReviewAspect from "./misc/ReviewAspect";
 
 import XXX from "@relica/fact-search-ui";
@@ -62,6 +63,11 @@ export default function BasicSelect() {
     case "create role":
       element = (
         <CreateRole handleOpen={handleOpen} handleClose={handleClose} />
+      );
+      break;
+    case "create relation":
+      element = (
+        <CreateRelation handleOpen={handleOpen} handleClose={handleClose} />
       );
       break;
     default:

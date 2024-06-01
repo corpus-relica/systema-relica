@@ -6,8 +6,7 @@ const BaseDef = (props: any) => {
   const { subject, handleOpen, setFieldValue, supertypeConeUID } = props;
 
   return (
-    <div>
-      <h1>BaseDef</h1>
+    <>
       <label>
         supertype
         <Field name="supertype.lh_object_uid" type="text" />
@@ -32,7 +31,7 @@ const BaseDef = (props: any) => {
         {subject} definition
         <Field name={`${subject}Definition`} type="text" />
       </label>
-    </div>
+    </>
   );
 };
 
