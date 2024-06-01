@@ -13,6 +13,7 @@ import "./style.css";
 
 import KindContextMenu from "./KindContextMenu";
 import IndividualContextMenu from "./IndividualContextMenu";
+import QualificationContextMenu from "./QualificationContextMenu";
 import StageContextMenu from "./StageContextMenu";
 
 import SubtypesModal from "../SubtypesModal";
@@ -58,6 +59,13 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = observer(() => {
     } else if (model.type === "individual") {
       menu = (
         <IndividualContextMenu
+          setUidToDelete={setUidToDelete}
+          setWarnIsOpen={setWarnIsOpen}
+        />
+      );
+    } else if (model.type === "qualification") {
+      menu = (
+        <QualificationContextMenu
           setUidToDelete={setUidToDelete}
           setWarnIsOpen={setWarnIsOpen}
         />
