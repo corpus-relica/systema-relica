@@ -14,12 +14,13 @@ import { deleteEntity } from "./services/relicaNeo4jService";
 import {
   getSpecializationHierarchy,
   getSubtypes,
+  getSubtypesCone,
   getAllRelatedFacts,
   loadEntity,
   loadEntities,
   removeEntity,
   removeEntities,
-  removeEntityAndDescendants,
+  removeEntityDescendants,
   clearEntities,
 } from "./controllers/environmentController";
 
@@ -118,6 +119,12 @@ io &&
         getSubtypes(d.uid);
       });
 
+      socket.on("user:getSubtypesCone", (d: { uid: number }) => {
+        console.log("GET SUBTYPES CONE");
+        console.log(d);
+        getSubtypesCone(d.uid);
+      });
+
       socket.on("user:getSpecializationHierarchy", (d: { uid: number }) => {
         console.log("GET SH");
         console.log(d);
@@ -168,7 +175,7 @@ io &&
       socket.on("user:removeEntitySubtypesRecursive", (d: { uid: number }) => {
         console.log("REMOVE ENTITY SUBTYPES RECURSIVE");
         console.log(d);
-        removeEntityAndDescendants(d.uid);
+        removeEntityDescendants(d.uid);
       });
 
       socket.on("user:getAllRelatedFacts", (d: { uid: number }) => {

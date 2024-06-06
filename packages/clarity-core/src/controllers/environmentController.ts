@@ -2,6 +2,7 @@ import * as es from "../services/environmentService";
 import {
   getSpecializationHierarchy as gsh,
   getSubtypes as gst,
+  getSubtypesCone as gstc,
   getFact,
   getFacts,
   retrieveAllFacts,
@@ -152,14 +153,14 @@ export const removeEntities = async (uids: number[]) => {
   }
 };
 
-export const removeEntityAndDescendants = async (uid: number) => {
-  console.log(">// REMOVE ENTITY AND DESCENDANTS");
+export const removeEntityDescendants = async (uid: number) => {
+  console.log(">// REMOVE ENTITY DESCENDANTS");
   const env = await es.retrieveEnvironment();
   const facts = env.facts;
   let factsToRemove: Fact[] = [];
   let remainingFacts: Fact[] = [];
   facts.forEach((fact: Fact) => {
-    if (fact.lh_object_uid === uid || fact.rh_object_uid === uid) {
+    if (/* fact.lh_object_uid === uid || */ fact.rh_object_uid === uid) {
       factsToRemove.push(fact);
     } else {
       remainingFacts.push(fact);
@@ -192,12 +193,24 @@ export const removeEntityAndDescendants = async (uid: number) => {
   console.log("SUBTYPING FACTS: ", subtypingFacts);
   subtypingFacts.forEach((fact: Fact) => {
     console.log(">>> RECURSE ON: ", fact.lh_object_uid);
-    removeEntityAndDescendants(fact.lh_object_uid);
+    removeEntityDescendants(fact.lh_object_uid);
   });
 };
 
 export const getSubtypes = async (uid: number) => {
   const result = await gst(uid);
+  const models = await modelsFromFacts(result);
+
+  es.insertFacts(result);
+  es.insertModels(models);
+
+  const payload = { facts: result, models };
+  socketServer.emit("system", "addFacts", payload);
+  return payload;
+};
+
+export const getSubtypesCone = async (uid: number) => {
+  const result = await gstc(uid);
   const models = await modelsFromFacts(result);
 
   es.insertFacts(result);

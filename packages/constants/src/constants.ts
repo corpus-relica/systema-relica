@@ -1,5 +1,6 @@
 export const CLASSIFIED_ENDPOINT = "/factRetrieval/classified";
 export const SUBTYPES_ENDPOINT = "/factRetrieval/subtypes";
+export const SUBTYPES_CONE_ENDPOINT = "/factRetrieval/subtypesCone";
 export const SPECIALIZATION_HIERARCHY_ENDPOINT =
   "/factRetrieval/specializationHierarchy";
 export const SPECIALIZATION_FACT_ENDPOINT = "/factRetrieval/specializationFact";

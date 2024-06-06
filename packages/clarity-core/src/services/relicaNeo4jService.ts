@@ -21,6 +21,13 @@ export const getSubtypes = async (uid: number) => {
   return result.data;
 };
 
+export const getSubtypesCone = async (uid: number) => {
+  const result = await axios.get(
+    `${URL}/factRetrieval/subtypesCone?uid=${uid}`,
+  );
+  return result.data;
+};
+
 export const getFact = async (uid: number) => {
   const result = await axios.get(`${URL}/factRetrieval/fact?uid=${uid}`);
   return result.data;

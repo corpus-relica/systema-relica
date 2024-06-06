@@ -9,6 +9,7 @@ import RootStoreContext from "../../context/RootStoreContext";
 import {
   getAllRelatedFacts,
   getSubtypes,
+  getSubtypesCone,
   getClassified,
   getSpecializationHierarchy,
 } from "../../RLCBaseClient";
@@ -69,7 +70,24 @@ const KindMenuItems: React.FC<KindContextMenuProps> = observer(
       setPossibleSubtypes(subtypes);
       setExistingSubtypes(existingSubtypes);
       setSubtypesModalIsOpen(true);
-      console.log("WTF??");
+    };
+
+    const querySubtypesCone = async () => {
+      sockSendCC("user", "getSubtypesCone", { uid });
+      // sockSendCC("user", "getSubtypes", { uid });
+      // const subtypes = await getSubtypesCone(uid);
+      // const existingSubtypes = subtypes
+      //   .filter((subtype) => {
+      //     const foo = factDataStore.findDefinitiveFacts(subtype.lh_object_uid);
+      //     return (
+      //       factDataStore.findDefinitiveFacts(subtype.lh_object_uid).length > 0
+      //     );
+      //   })
+      //   .map((subtype) => subtype.lh_object_uid);
+      // setPossibleSubtypes(subtypes);
+      // setExistingSubtypes(existingSubtypes);
+      // setSubtypesModalIsOpen(true);
+      // console.log("WTF??");
     };
 
     const queryClassified = async () => {
@@ -124,6 +142,9 @@ const KindMenuItems: React.FC<KindContextMenuProps> = observer(
         case "show subtypes":
           querySubtypes();
           break;
+        case "show subtypes cone":
+          querySubtypesCone();
+          break;
         case "rem this":
           removeEntity();
           break;
@@ -153,6 +174,7 @@ const KindMenuItems: React.FC<KindContextMenuProps> = observer(
         <MenuItem value="show classified">show classified</MenuItem>
         <MenuItem value="show 'all'">show 'all'</MenuItem>
         <MenuItem value="show subtypes">show subtypes</MenuItem>
+        <MenuItem value="show subtypes cone">show subtypes cone</MenuItem>
         <MenuDivider />
         <MenuItem value="rem this">rem this</MenuItem>
         <MenuItem value="rem subtypes(r)">rem subtypes(r)</MenuItem>

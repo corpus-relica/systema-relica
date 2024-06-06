@@ -8,6 +8,7 @@ import {
   UID_SEARCH_ENDPOINT,
   TEXT_SEARCH_ENDPOINT,
   SUBTYPES_ENDPOINT,
+  SUBTYPES_CONE_ENDPOINT,
   ALL_RELATED_FACTS_ENDPOINT,
   CLASSIFIED_ENDPOINT,
   CLASSIFICATION_FACT_ENDPOINT,
@@ -88,6 +89,13 @@ export const getAllRelatedFacts = async (uid: number, n: number = 1) => {
 
 export const getSubtypes = async (uid: number) => {
   const response = await axiosInstance.get(SUBTYPES_ENDPOINT, {
+    params: { uid },
+  });
+  return response.data;
+};
+
+export const getSubtypesCone = async (uid: number) => {
+  const response = await axiosInstance.get(SUBTYPES_CONE_ENDPOINT, {
     params: { uid },
   });
   return response.data;
