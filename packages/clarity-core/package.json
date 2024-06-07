@@ -1,22 +1,17 @@
 {
   "name": "@relica/clarity-core",
   "version": "0.0.0",
+  "private": true,
+  "type": "module",
   "main": "index.js",
   "license": "MIT",
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.10.6",
-    "@types/pg-pool": "^2.0.6",
-    "nodemon": "^3.0.2",
-    "prettier": "^3.2.4",
-    "typescript": "^5.3.3"
-  },
   "scripts": {
     "build": "tsc --outDir dist",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts"
   },
   "dependencies": {
+    "@relica/constants": "0.0.0",
     "axios": "^1.6.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -26,5 +21,14 @@
     "pg-pool": "^3.6.1",
     "socket.io": "^4.7.2",
     "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@relica/constants": "0.0.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.6",
+    "@types/pg-pool": "^2.0.6",
+    "nodemon": "^3.0.2",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
   }
 }

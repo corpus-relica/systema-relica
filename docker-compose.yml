@@ -70,7 +70,7 @@ services:
     restart: always
     environment:
       - REDIS_URL=redis://redis:6379
-    command: ["npm", "run", "start:dev"]
+    command: ["yarn", "start:dev"]
     volumes:
       - ./packages/archivist:/usr/src/app/packages/archivist
       - ./seed_xls:/usr/src/app/packages/archivist/seed_xls
@@ -90,11 +90,15 @@ services:
 
   clarity-core:
     container_name: clarity-core
-    image: node:latest
-    working_dir: /usr/src/app
+    # image: node:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile.clarity-core
+    # working_dir: /usr/src/app
     restart: always
     # command: sh -c "npm install && npx tsc --outDir dist && npm start"
-    command: sh -c "yarn install && yarn dev"
+    # command: sh -c "yarn install && yarn dev"
+    command: sh -c "yarn dev"
     volumes:
       - ./packages/clarity-core:/usr/src/app
       - /usr/src/app/node_modules
