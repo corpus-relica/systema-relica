@@ -30,6 +30,7 @@ export const UID_SEARCH_ENDPOINT = "/generalSearch/uid";
 export const TEXT_SEARCH_ENDPOINT = "/generalSearch/text";
 
 export const GET_DEFINITION_ENDPOINT = "/definition/get";
+export const SUBMIT_DEFINITION_ENDPOINT = "/submission/definition";
 
 export const DESCENDANTS_ENDPOINT = "/concept/descendants";
 

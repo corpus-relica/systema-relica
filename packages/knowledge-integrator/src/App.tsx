@@ -7,7 +7,7 @@ import InsertTab from "./components/InsertTab";
 import ReviewTab from "./components/ReviewTab";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-// import Chat from "./components/ChatInterfaceNOUS";
+import Chat from "./components/ChatInterfaceNOUS";
 import GraphContextMenu from "./components/GraphContextMenu";
 import GraphLegend from "./components/GraphLegend";
 import RootStoreContext from "./context/RootStoreContext";
@@ -223,7 +223,7 @@ const App: React.FC = () => {
                   )}
                 </Box>
                 <Box gridArea="chat" background="light-2">
-                  {/*<Chat />*/}
+                  <Chat />
                 </Box>
               </Grid>
             </Tab>
