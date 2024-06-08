@@ -5,7 +5,9 @@
     "outDir": "./dist",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "declaration": true, // Add this line to generate declaration files
+    "declarationDir": "./dist" // Optionally specify the output directory for declaration files
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

@@ -2,74 +2,86 @@ import axios from "axios";
 import {
   SUBMIT_DEFINITION_ENDPOINT,
   DELETE_ENTITY_ENDPOINT,
+  SPECIALIZATION_HIERARCHY_ENDPOINT,
+  SPECIALIZATION_FACT_ENDPOINT,
+  SUBTYPES_ENDPOINT,
+  SUBTYPES_CONE_ENDPOINT,
+  FACT_ENDPOINT,
+  FACTS_ENDPOINT,
+  ENTITY_ENDPOINT,
+  ENTITY_CATEGORY_ENDPOINT,
+  ALL_RELATED_FACTS_ENDPOINT,
+  DEFINITIVE_FACTS_ENDPOINT,
+  RELATED_ON_SUBTYPE_CONE_ENDPOINT,
+  ENTITY_TYPE_ENDPOINT,
+  FACTS_RELATING_ENTITIES_ENDPOINT,
+  TEXT_SEARCH_ENDPOINT,
+  SUBMIT_BINARY_FACT_ENDPOINT,
+  CLASSIFIED_ENDPOINT,
+  CLASSIFICATION_FACT_ENDPOINT,
 } from "@relica/constants";
 
 const URL = process.env.RELICA_NEO4J_URL;
 
 export const getSpecializationHierarchy = async (uid: number) => {
   const result = await axios.get(
-    `${URL}/factRetrieval/specializationHierarchy?uid=${uid}`,
+    `${URL}${SPECIALIZATION_HIERARCHY_ENDPOINT}?uid=${uid}`,
   );
   return result.data;
 };
 
 export const getSpecializationFact = async (uid: number) => {
   const result = await axios.get(
-    `${URL}/factRetrieval/specializationFact?uid=${uid}`,
+    `${URL}${SPECIALIZATION_FACT_ENDPOINT}?uid=${uid}`,
   );
   return result.data;
 };
 
 export const getSubtypes = async (uid: number) => {
-  const result = await axios.get(`${URL}/factRetrieval/subtypes?uid=${uid}`);
+  const result = await axios.get(`${URL}${SUBTYPES_ENDPOINT}?uid=${uid}`);
   return result.data;
 };
 
 export const getSubtypesCone = async (uid: number) => {
-  const result = await axios.get(
-    `${URL}/factRetrieval/subtypesCone?uid=${uid}`,
-  );
+  const result = await axios.get(`${URL}${SUBTYPES_CONE_ENDPOINT}?uid=${uid}`);
   return result.data;
 };
 
 export const getFact = async (uid: number) => {
-  const result = await axios.get(`${URL}/factRetrieval/fact?uid=${uid}`);
+  const result = await axios.get(`${URL}${FACT_ENDPOINT}?uid=${uid}`);
   return result.data;
 };
 
 export const getFacts = async (factUIDs: number[]) => {
   const result = await axios.get(
-    `${URL}/factRetrieval/facts?uids=${JSON.stringify(factUIDs)}`,
+    `${URL}${FACTS_ENDPOINT}?uids=${JSON.stringify(factUIDs)}`,
   );
   return result.data;
 };
 
 export const getEntity = async (uid: number) => {
-  const result = await axios.get(`${URL}/retrieveEntity/entity?uid=${uid}`);
+  const result = await axios.get(`${URL}${ENTITY_ENDPOINT}?uid=${uid}`);
   return result.data;
 };
 
 export const retrieveAllFacts = async (uid: number) => {
   const result = await axios.get(
-    `${URL}/factRetrieval/allRelatedFacts?uid=${uid}`,
+    `${URL}${ALL_RELATED_FACTS_ENDPOINT}?uid=${uid}`,
   );
   return result.data;
 };
 
 export const getCategory = async (uid: number) => {
-  console.log("getCategory", uid, `${URL}/retrieveEntity/category?uid=${uid}`);
-  const result = await axios.get(`${URL}/retrieveEntity/category?uid=${uid}`);
-  console.log("getCategory result", result.data);
+  const result = await axios.get(
+    `${URL}${ENTITY_CATEGORY_ENDPOINT}?uid=${uid}`,
+  );
   return result.data;
 };
 
 export const getDefinitiveFacts = async (uid: number) => {
-  console.log("getDefinitiveFacts", uid);
-  console.log(`${URL}/factRetrieval/definitiveFacts?uid=${uid}`);
   const result = await axios.get(
-    `${URL}/factRetrieval/definitiveFacts?uid=${uid}`,
+    `${URL}${DEFINITIVE_FACTS_ENDPOINT}?uid=${uid}`,
   );
-  console.log("getDefinitiveFacts", result.data);
   return result.data;
 };
 
@@ -78,27 +90,26 @@ export const getRelatedOnUIDSubtypeCone = async (
   rel_type_uid: number,
 ) => {
   const result = await axios.get(
-    `${URL}/factRetrieval/relatedOnUIDSubtypeCone?lh_object_uid=${lh_object_uid}&rel_type_uid=${rel_type_uid}`,
+    `${URL}${RELATED_ON_SUBTYPE_CONE_ENDPOINT}?lh_object_uid=${lh_object_uid}&rel_type_uid=${rel_type_uid}`,
   );
   return result.data;
 };
 
 export const getEntityType = async (uid: number) => {
-  const result = await axios.get(`${URL}/retrieveEntity/type?uid=${uid}`);
+  const result = await axios.get(`${URL}${ENTITY_TYPE_ENDPOINT}?uid=${uid}`);
   return result.data;
 };
 
 export const getFactsRelatingEntities = async (uid1: number, uid2: number) => {
-  console.log("getFactsRelatingEntities", uid1, uid2);
   const result = await axios.get(
-    `${URL}/factRetrieval/factsRelatingEntities?uid1=${uid1}&uid2=${uid2}`,
+    `${URL}${FACTS_RELATING_ENTITIES_ENDPOINT}?uid1=${uid1}&uid2=${uid2}`,
   );
   return result.data;
 };
 
 export const textSearchExact = async (searchTerm: string) => {
   const result = await axios.get(
-    `${URL}/generalSearch/text?searchTerm=${searchTerm}&exactMatch=true`,
+    `${URL}${TEXT_SEARCH_ENDPOINT}?searchTerm=${searchTerm}&exactMatch=true`,
   );
   return result.data;
 };
@@ -109,7 +120,7 @@ export const createKind = async (
   name: string,
   definition: string,
 ) => {
-  const result = await axios.post(`${URL}/submit/binaryFact`, {
+  const result = await axios.post(`${URL}${SUBMIT_BINARY_FACT_ENDPOINT}`, {
     lh_object_uid: "1",
     lh_object_name: name,
     rel_type_uid: 1146,
@@ -127,7 +138,7 @@ export const createIndividual = async (
   name: string,
   definition: string,
 ) => {
-  const result = await axios.post(`${URL}/submit/binaryFact`, {
+  const result = await axios.post(`${URL}${SUBMIT_BINARY_FACT_ENDPOINT}`, {
     lh_object_uid: "1",
     lh_object_name: name,
     rel_type_uid: 1225,
@@ -147,13 +158,13 @@ export const deleteEntity = async (uid: number) => {
 };
 
 export const getClassified = async (uid: number) => {
-  const result = await axios.get(`${URL}/factRetrieval/classified?uid=${uid}`);
+  const result = await axios.get(`${URL}${CLASSIFIED_ENDPOINT}?uid=${uid}`);
   return result.data;
 };
 
 export const getClassificationFact = async (uid: number) => {
   const result = await axios.get(
-    `${URL}/factRetrieval/classificationFact?uid=${uid}`,
+    `${URL}${CLASSIFICATION_FACT_ENDPOINT}?uid=${uid}`,
   );
   return result.data;
 };
