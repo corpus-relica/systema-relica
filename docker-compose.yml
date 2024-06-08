@@ -100,8 +100,8 @@ services:
     # command: sh -c "yarn install && yarn dev"
     command: sh -c "yarn dev"
     volumes:
-      - ./packages/clarity-core:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./packages/clarity-core:/usr/src/app/packages/clarity-core
+      - /usr/src/app/packages/clarity-core/node_modules
     ports:
       - "3001:3001"
     depends_on:

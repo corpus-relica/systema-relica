@@ -1,4 +1,6 @@
 import Pool from "pg-pool";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Connection URL
 const url = process.env.RELICA_CLARITY_CORE_MONGO_URI; //mongodb://localhost:27017";

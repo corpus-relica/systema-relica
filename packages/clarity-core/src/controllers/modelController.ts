@@ -5,8 +5,8 @@ import {
   getRelatedOnUIDSubtypeCone,
   getEntityType,
   submitDefinition,
-} from "../services/relicaNeo4jService";
-import { Fact } from "../types";
+} from "../services/relicaNeo4jService.js";
+import { Fact } from "../types.js";
 
 const physObjUID = 730044;
 const aspectUID = 790229;

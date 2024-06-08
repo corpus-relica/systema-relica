@@ -1,4 +1,4 @@
-import * as es from "../services/environmentService";
+import * as es from "../services/environmentService.js";
 import {
   getSpecializationHierarchy as gsh,
   getSubtypes as gst,
@@ -14,10 +14,10 @@ import {
   createIndividual,
   getClassified as gc,
   getClassificationFact,
-} from "../services/relicaNeo4jService";
-import { retrieveModels } from "./modelController";
+} from "../services/relicaNeo4jService.js";
+import { retrieveModels } from "./modelController.js";
 
-import socketServer from "../utils/SocketServer";
+import socketServer from "../utils/SocketServer.js";
 
 import { Fact } from "../types.js";
 

@@ -5,7 +5,7 @@ import {
   retrieveModel,
   retrieveModels,
   updateDefinition,
-} from "../controllers/modelController";
+} from "../controllers/modelController.js";
 
 const router = express.Router();
 

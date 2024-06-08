@@ -11,8 +11,8 @@ import {
   getClassificationFactByUID,
   getAllRelatedFacts,
   listSubtypes,
-} from "../controllers/environmentController";
-import socketServer from "../utils/SocketServer";
+} from "../controllers/environmentController.js";
+import socketServer from "../utils/SocketServer.js";
 
 const router = Router();
 

@@ -4,13 +4,13 @@ import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
 
-import initApp from "./initialization/initApp";
+import initApp from "./initialization/initApp.js";
 
-import modelRoutes from "./routes/modelRoutes";
+import modelRoutes from "./routes/modelRoutes.js";
 
-import environmentRoutes from "./routes/environmentRoutes";
-import { setSelectedEntity } from "./services/environmentService";
-import { deleteEntity } from "./services/relicaNeo4jService";
+import environmentRoutes from "./routes/environmentRoutes.js";
+import { setSelectedEntity } from "./services/environmentService.js";
+import { deleteEntity } from "./services/relicaNeo4jService.js";
 import {
   getSpecializationHierarchy,
   getSubtypes,
@@ -22,9 +22,9 @@ import {
   removeEntities,
   removeEntityDescendants,
   clearEntities,
-} from "./controllers/environmentController";
+} from "./controllers/environmentController.js";
 
-import socketServer from "./utils/SocketServer";
+import socketServer from "./utils/SocketServer.js";
 
 /////////////////////////////////////////////////////////////////////////
 

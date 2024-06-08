@@ -1,5 +1,8 @@
 import axios from "axios";
-import { SUBMIT_DEFINITION_ENDPOINT } from "@relica/constants";
+import {
+  SUBMIT_DEFINITION_ENDPOINT,
+  DELETE_ENTITY_ENDPOINT,
+} from "@relica/constants";
 
 const URL = process.env.RELICA_NEO4J_URL;
 
@@ -137,7 +140,9 @@ export const createIndividual = async (
 };
 
 export const deleteEntity = async (uid: number) => {
-  const result = await axios.delete(`${URL}/deletion/entity?uid=${uid}`);
+  const result = await axios.delete(
+    `${URL}${DELETE_ENTITY_ENDPOINT}?uid=${uid}`,
+  );
   return result.data;
 };
 

@@ -1,5 +1,5 @@
-import pgClient from "../client/pgClient";
-import { Fact } from "../types";
+import pgClient from "../client/pgClient.js";
+import { Fact } from "../types.js";
 
 export async function retrieveEnvironment() {
   console.log("FUCKING RETREIVE ENVIRONMENT!!!!");

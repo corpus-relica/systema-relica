@@ -1,6 +1,6 @@
 // import redisService from "../services/redisService";
-import pgClient from "../client/pgClient";
-import { retrieveEnvironment } from "../services/environmentService";
+import pgClient from "../client/pgClient.js";
+import { retrieveEnvironment } from "../services/environmentService.js";
 
 export default async function initializeApp() {
   // await redisService.init();
