@@ -2,7 +2,7 @@ import pgClient from "../client/pgClient.js";
 import { Fact } from "../types.js";
 
 export async function retrieveEnvironment() {
-  console.log("FUCKING RETREIVE ENVIRONMENT!!!!");
+  console.log("RETREIVE ENVIRONMENT!!!!");
 
   const models = await pgClient.query("SELECT * FROM env_model");
   const facts = await pgClient.query("SELECT * FROM env_fact");
