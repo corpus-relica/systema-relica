@@ -21,6 +21,7 @@ export const ENTITY_TYPE_ENDPOINT = "/retrieveEntity/type";
 export const COLLECTIONS_ENDPOINT = "/retrieveEntity/collections";
 export const LH_OBJECT_COMPLETION_ENDPOINT = "/completion/lhObject";
 export const RH_OBJECT_COMPLETION_ENDPOINT = "/completion/rhObject";
+export const DELETE_ENTITY_ENDPOINT = "/deletion/entity";
 
 export const UID_SEARCH_KIND_ENDPOINT = "/kindSearch/uid";
 export const TEXT_SEARCH_KIND_ENDPOINT = "/kindSearch/text";
