@@ -24,7 +24,8 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'range'],
     exposedHeaders: ['Content-Range'],
   });
-  await app.listen(3000, '0.0.0.0');
+
+  await await app.listen(3000, '0.0.0.0');
 }
 
 bootstrap();
