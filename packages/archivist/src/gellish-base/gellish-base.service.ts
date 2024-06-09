@@ -501,7 +501,7 @@ RETURN path`;
     partial_definition,
     full_definition,
   ) => {
-    const result = await this.graphService.execQuery(
+    const result = await this.graphService.execWriteQuery(
       updateFactDefinitionQuery,
       {
         fact_uid,
@@ -509,7 +509,6 @@ RETURN path`;
         full_definition,
       },
     );
-    console.log('UPDATE FACT DEFINITION', result);
     return this.graphService.transformResult(result[0]);
   };
 }
