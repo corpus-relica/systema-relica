@@ -315,8 +315,9 @@ RETURN r
 export const getListOfKindsQuery = `
 MATCH (a)--(r)-->()
 WHERE r.rel_type_uid = 1146 OR r.rel_type_uid = 1726
-WITH r
-ORDER BY r[$sortField]
+WITH r, CASE WHEN $sortOrder = 'ASC' THEN r[$sortField] ELSE null END AS sortFieldAsc,
+          CASE WHEN $sortOrder = 'DESC' THEN r[$sortField] ELSE null END AS sortFieldDesc
+ORDER BY sortFieldAsc ASC, sortFieldDesc DESC
 SKIP $skip LIMIT $pageSize
 RETURN r
 `;
