@@ -11,6 +11,7 @@ import CreateRole from "./misc/CreateRole";
 import CreateRelation from "./misc/CreateRelation";
 import CreateOccurrence from "./misc/CreateOccurrence";
 import ReviewAspect from "./misc/ReviewAspect";
+import CreateBinaryFact from "./misc/CreateBinaryFact";
 
 import XXX from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
@@ -30,7 +31,9 @@ export default function BasicSelect() {
 
   const handleOpen = (key: string, setFieldValue: any, filter: number = 0) => {
     setFilter(filter);
-    setSfv(() => (key, res) => setFieldValue(key, res));
+    setSfv(() => (key, res) => {
+      setFieldValue(key, res);
+    });
     setOpenKey(key);
     setOpen(true);
   };
@@ -74,6 +77,11 @@ export default function BasicSelect() {
     case "create occurrence":
       element = (
         <CreateOccurrence handleOpen={handleOpen} handleClose={handleClose} />
+      );
+      break;
+    case "create binary fact":
+      element = (
+        <CreateBinaryFact handleOpen={handleOpen} handleClose={handleClose} />
       );
       break;
     default:
@@ -135,6 +143,9 @@ export default function BasicSelect() {
               <MenuItem value={"create role"}>Create Role</MenuItem>
               <MenuItem value={"create relation"}>Create Relation</MenuItem>
               <MenuItem value={"create occurrence"}>Create Occurrence</MenuItem>
+              <MenuItem value={"create binary fact"}>
+                Create Binary Fact
+              </MenuItem>
               {/*<MenuItem value={"review aspect"}>Review Aspect</MenuItem>*/}
             </Select>
           </FormControl>
