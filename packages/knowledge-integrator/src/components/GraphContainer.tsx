@@ -25,18 +25,26 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
     graphViewStore.hoveredLinkType = null;
   }, []);
 
+  const handleEdgeClick = (uid: any) => {
+    console.log("foo", uid);
+  };
+
+  const handleEdgeRightClick = (uid: any) => {
+    console.log("bar", uid);
+  };
+
   const jsCats = toJS(categories);
-  console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
-  console.log(jsCats);
-  console.log(toJS(facts));
-  console.log(selectNode);
-  console.log(handleContextMenuTrigger);
-  console.log(graphViewStore.selectNone);
-  console.log(handleEdgeRollOver);
-  console.log(handleEdgeRollOut);
-  console.log(selectedNode);
-  console.log(paletteMap);
-  console.log("~~~~~~~~~~~ END WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
+  // console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
+  // console.log(jsCats);
+  // console.log(toJS(facts));
+  // console.log(selectNode);
+  // console.log(handleContextMenuTrigger);
+  // console.log(graphViewStore.selectNone);
+  // console.log(handleEdgeRollOver);
+  // console.log(handleEdgeRollOut);
+  // console.log(selectedNode);
+  // console.log(paletteMap);
+  // console.log("~~~~~~~~~~~ END WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
   return (
     <ErrorBoundary>
       {jsCats.length > 0 && (
@@ -49,6 +57,8 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
           onStageClick={graphViewStore.selectNone}
           onEdgeRollOver={handleEdgeRollOver}
           onEdgeRollOut={handleEdgeRollOut}
+          onEdgeClick={handleEdgeClick}
+          onEdgeRightClick={handleEdgeRightClick}
           selectedNode={selectedNode}
           paletteMap={paletteMap}
         />

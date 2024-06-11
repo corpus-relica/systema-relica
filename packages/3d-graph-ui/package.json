@@ -37,6 +37,6 @@
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   },
-  "main": "dist/3d-graph-view.cjs",
-  "module": "dist/3d-graph-view.js"
+  "main": "dist/3d-graph-ui.cjs",
+  "module": "dist/3d-graph-ui.js"
 }
