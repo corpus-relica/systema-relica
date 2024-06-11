@@ -103,8 +103,15 @@ io &&
       socket.on("user:selectEntity", (d: { uid: number }) => {
         console.log("SELECT ENTITY");
         console.log(d);
-        setSelectedEntity(d.uid);
+        setSelectedEntity(d.uid, "entity");
         socketServer.emit("system", "selectEntity", { uid: d.uid });
+      });
+
+      socket.on("user:selectFact", (d: { uid: number }) => {
+        console.log("SELECT FACT");
+        console.log(d);
+        setSelectedEntity(d.uid, "fact");
+        socketServer.emit("system", "selectFact", { uid: d.uid });
       });
 
       socket.on("user:selectNone", () => {

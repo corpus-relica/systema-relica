@@ -9,6 +9,7 @@ class GraphViewStore {
   cameraTarget: nodeData | null;
 
   selectedNode: number | null;
+  selectedEdge: number | null;
   hoveredNode: number | null;
   hoveredLink: number | null;
   hoveredLinkType: number | null;
@@ -22,6 +23,7 @@ class GraphViewStore {
     this.cameraTarget = null;
 
     this.selectedNode = null;
+    this.selectedEdge = null;
     this.hoveredNode = null;
     this.hoveredLink = null;
     this.hoveredLinkType = null;
@@ -35,6 +37,7 @@ class GraphViewStore {
       cameraTarget: observable,
 
       selectedNode: observable,
+      selectedEdge: observable,
       hoveredNode: observable,
       hoveredLink: observable,
       hoveredLinkType: observable,
@@ -43,6 +46,7 @@ class GraphViewStore {
 
       setZoomLevel: action,
       selectNode: action,
+      selectEdge: action,
 
       // handleNodeClick: action,
       handleNodeHover: action,
@@ -58,6 +62,7 @@ class GraphViewStore {
   }
 
   // Note to self: this is fuct up, DO NOT LEAVE IT LIKE THIS
+  // *new* Note to self: ...why is this fuct up again?
 
   // setSelectedEntity(uid: number) {
   //   this.selectedNode = uid;
@@ -68,6 +73,10 @@ class GraphViewStore {
     // nousSocket.emit("selectNode", id);
     // sockSendCC("user", "loadEntity", { uid: id });
     sockSendCC("user", "selectEntity", { uid: id });
+  };
+
+  selectEdge = (id: number) => {
+    sockSendCC("user", "selectFact", { uid: id });
   };
 
   selectNone = () => {

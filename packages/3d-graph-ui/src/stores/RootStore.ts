@@ -21,6 +21,7 @@ class RootStore {
   hoveredLink: number | null = null;
   hoveredNode: number | null = null;
   selectedNode: number | null = null;
+  selectedEdge: number | null = null;
 
   private sleepTimer: number = 0;
   private sleepDelay: number = 30000;
@@ -85,7 +86,7 @@ class RootStore {
 
   setEdgePositions = (
     id: number,
-    pos: { source: Position; target: Position },
+    pos: { source: Position; target: Position }
   ) => {
     const edge = this.edgeData.get(id);
     if (edge) {
@@ -94,7 +95,7 @@ class RootStore {
         Object.assign({}, edge, {
           sourcePos: pos.source,
           targetPos: pos.target,
-        }),
+        })
       );
     }
   };
@@ -137,6 +138,10 @@ class RootStore {
     this.hoveredNode = null;
   };
 
+  setSelectedEdge = (id: number | null) => {
+    this.selectedEdge = id;
+  };
+
   setHoveredLink = (id: number | null) => {
     this.hoveredLink = id;
   };
@@ -162,7 +167,7 @@ class RootStore {
       uid: number;
       name: string;
       descendants: Array<number>;
-    }> | null,
+    }> | null
   ) => {
     if (!newCats) {
       this.categories = {};

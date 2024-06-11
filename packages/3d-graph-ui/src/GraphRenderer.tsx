@@ -48,6 +48,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
     edgeData,
     isRunning,
     selectedNode,
+    selectedEdge,
     paletteMap,
     hoveredLink,
     setHoveredLink,
@@ -59,7 +60,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
   } = useStores();
   const { camera } = useThree();
   const [cameraPosition, setCameraPosition] = useState(
-    new THREE.Vector3(45, 0, 0),
+    new THREE.Vector3(45, 0, 0)
   );
   const cameraVec = new THREE.Vector3(CAMERA_TARGET_DISTANCE, 0, 0);
 
@@ -140,18 +141,6 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
     controlsRef.current.target.lerp(new THREE.Vector3(x, y, z), 0.1);
   });
 
-  // useEffect(() => {
-  //   console.log("IS RUNNING", isRunning);
-  // }, [isRunning]);
-
-  // const handlePointerOver = (id: number) => {
-  //   setHoveredLink(id);
-  // };
-
-  // const handlePointerOut = (id: number) => {
-  //   unsetHoveredLink();
-  // };
-
   const uni: EdgeData[] = [];
   const bin: EdgeData[] = [];
   // separate binary from unary links
@@ -206,12 +195,12 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
             id={id}
             color={color}
             label={label}
-          />,
+          />
         );
       });
       return memo.concat(ret);
     },
-    [],
+    []
   );
 
   return (
@@ -256,6 +245,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
             target={targetPos}
             baseColor={color}
             hovered={hoveredLink === id}
+            selected={selectedEdge === id}
           />
         );
       })}

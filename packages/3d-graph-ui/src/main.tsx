@@ -439,6 +439,7 @@ paletteMap.set(1146, "#ff0000");
 
 const Harness = ({ facts }: { facts: Array<Fact> }) => {
   const [selectedNode, setSelectedNode] = useState<number>(1);
+  const [selectedEdge, setSelectedEdge] = useState<number>(1);
   return (
     <React.StrictMode>
       <App
@@ -446,21 +447,29 @@ const Harness = ({ facts }: { facts: Array<Fact> }) => {
         facts={facts}
         paletteMap={paletteMap}
         selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
         onNodeClick={(id) => {
           console.log("clicked node", id);
           setSelectedNode(id);
         }}
-        onStageClick={() => {
-          console.log("clicked stage");
-        }}
         onNodeRightClick={(id) => {
           console.log("right clicked node", id);
+        }}
+        onStageClick={() => {
+          console.log("clicked stage");
         }}
         onEdgeRollOver={(id) => {
           console.log("rolled over edge", id);
         }}
         onEdgeRollOut={(id) => {
           console.log("rolled out of edge", id);
+        }}
+        onEdgeClick={(id) => {
+          console.log("clicked edge", id);
+          setSelectedEdge(id);
+        }}
+        onEdgeRightClick={(id) => {
+          console.log("right clicked edge", id);
         }}
       />
     </React.StrictMode>

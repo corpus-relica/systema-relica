@@ -26,6 +26,7 @@ export interface AppProps {
   onEdgeClick?: (id: number) => void | null;
   onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
   selectedNode: number | null;
+  selectedEdge: number | null;
   paletteMap: Map<number, string> | null;
 }
 
@@ -60,6 +61,7 @@ const App: React.FC<AppProps> = observer(
     onEdgeClick,
     onEdgeRightClick,
     selectedNode,
+    selectedEdge,
     paletteMap,
   }: AppProps) => {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -69,6 +71,7 @@ const App: React.FC<AppProps> = observer(
     // if (onEdgeRollOut) rootStore.setOnEdgeRollOut(onEdgeRollOut);
 
     rootStore.setSelectedNode(selectedNode);
+    rootStore.setSelectedEdge(selectedEdge);
     rootStore.setPaletteMap(paletteMap);
 
     if (categories.length > 0) rootStore.setCategories(categories);

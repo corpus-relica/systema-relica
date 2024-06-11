@@ -131,6 +131,14 @@ const App: React.FC = () => {
       console.log("SELECT ENTITY");
       console.log(typeof d.uid);
       graphViewStore.selectedNode = d.uid;
+      graphViewStore.selectedEdge = null;
+    };
+
+    const onSelectFact = (d) => {
+      console.log("SELECT FACT");
+      console.log(typeof d.uid);
+      graphViewStore.selectedEdge = d.uid;
+      graphViewStore.selectedNode = null;
     };
 
     const onAddFacts = (d) => {
@@ -155,12 +163,14 @@ const App: React.FC = () => {
 
     const onNoneSelected = () => {
       graphViewStore.selectedNode = null;
+      graphViewStore.selectedEdge = null;
     };
 
     ccSocket.on("connect", onConnect);
     ccSocket.on("disconnect", onDisconnect);
 
     ccSocket.on("system:selectEntity", onSelectEntity);
+    ccSocket.on("system:selectFact", onSelectFact);
     ccSocket.on("system:selectedNone", onNoneSelected);
     ccSocket.on("system:addFacts", onAddFacts);
     ccSocket.on("system:remFacts", onRemFacts);
@@ -172,6 +182,7 @@ const App: React.FC = () => {
       ccSocket.off("disconnect", onDisconnect);
 
       ccSocket.off("system:selectEntity", onSelectEntity);
+      ccSocket.off("system:selectFact", onSelectFact);
       ccSocket.off("system:addFacts", onAddFacts);
       ccSocket.off("system:remFacts", onRemFacts);
       ccSocket.off("system:updateCategoryDescendantsCache", establishCats);

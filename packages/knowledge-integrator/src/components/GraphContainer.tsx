@@ -12,7 +12,13 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
     useRootStoreContext();
   // const { nodeData, edgeData } = graphDataStore;
   const { facts, categories } = factDataStore;
-  const { selectNode, selectedNode, handleContextMenuTrigger } = graphViewStore;
+  const {
+    selectNode,
+    selectEdge,
+    selectedNode,
+    selectedEdge,
+    handleContextMenuTrigger,
+  } = graphViewStore;
   const { paletteMap } = colorPaletteStore;
 
   const handleEdgeRollOver = (uid: number) => {
@@ -26,7 +32,8 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
   }, []);
 
   const handleEdgeClick = (uid: any) => {
-    console.log("foo", uid);
+    console.log("GRAPHCONTAINER:HANDLE EDGE CLICK", uid);
+    selectEdge(uid);
   };
 
   const handleEdgeRightClick = (uid: any) => {
@@ -34,7 +41,7 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
   };
 
   const jsCats = toJS(categories);
-  // console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
+  console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
   // console.log(jsCats);
   // console.log(toJS(facts));
   // console.log(selectNode);
@@ -43,8 +50,9 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
   // console.log(handleEdgeRollOver);
   // console.log(handleEdgeRollOut);
   // console.log(selectedNode);
+  console.log(selectedEdge);
   // console.log(paletteMap);
-  // console.log("~~~~~~~~~~~ END WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
+  console.log("~~~~~~~~~~~ END WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
   return (
     <ErrorBoundary>
       {jsCats.length > 0 && (
@@ -60,6 +68,7 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
           onEdgeClick={handleEdgeClick}
           onEdgeRightClick={handleEdgeRightClick}
           selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
           paletteMap={paletteMap}
         />
       )}

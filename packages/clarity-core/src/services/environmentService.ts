@@ -60,29 +60,51 @@ export async function clearEnvironment() {
   return;
 }
 
-export async function setSelectedEntity(uid: number | null) {
+export async function setSelectedEntity(
+  uid: number | null,
+  type: string | null = null,
+) {
   if (uid === null) {
     return await pgClient.query(
-      "UPDATE env_selected_entity SET uid = NULL WHERE id = 1",
+      "UPDATE env_selected_entity SET uid = NULL, type='none' WHERE id = 1",
     );
   }
 
-  // only if uid exists as lh_object_uid or rh_object_uid in env_fact
-  // env_fact schema is (uid, fact) where fact is a json object
-  const res = await pgClient.query(
-    "SELECT * FROM env_fact WHERE fact->>'lh_object_uid' = $1 OR fact->>'rh_object_uid' = $1",
-    [uid],
-  );
+  if (type === "entity") {
+    // only if uid exists as lh_object_uid or rh_object_uid in env_fact
+    // env_fact schema is (uid, fact) where fact is a json object
+    const res = await pgClient.query(
+      "SELECT * FROM env_fact WHERE fact->>'lh_object_uid' = $1 OR fact->>'rh_object_uid' = $1",
+      [uid],
+    );
 
-  if (res.rows.length === 0) {
-    return;
+    if (res.rows.length === 0) {
+      return;
+    }
+
+    // needs to insert into first row
+    return await pgClient.query(
+      "UPDATE env_selected_entity SET uid = $1, type = 'entity' WHERE id = 1",
+      [uid],
+    );
+  } else if (type === "fact") {
+    // only if uid exists as lh_object_uid or rh_object_uid in env_fact
+    // env_fact schema is (uid, fact) where fact is a json object
+    const res = await pgClient.query(
+      "SELECT * FROM env_fact WHERE fact->>'fact_uid' = $1",
+      [uid],
+    );
+
+    if (res.rows.length === 0) {
+      return;
+    }
+
+    // needs to insert into first row
+    return await pgClient.query(
+      "UPDATE env_selected_entity SET uid = $1, type = 'fact' WHERE id = 1",
+      [uid],
+    );
   }
-
-  // needs to insert into first row
-  return await pgClient.query(
-    "UPDATE env_selected_entity SET uid = $1 WHERE id = 1",
-    [uid],
-  );
 }
 
 export async function getSelectedEntity() {

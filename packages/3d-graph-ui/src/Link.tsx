@@ -20,6 +20,7 @@ export interface LinkProps {
   target: Position;
   baseColor: string;
   hovered: boolean;
+  selected: boolean;
 }
 
 const lineOffsetLength = 1.618; // Length by which to shorten the line on each end
@@ -48,17 +49,26 @@ const LoopLink: React.FC<LoopLinkProps> = observer(
       0,
       1.5 * Math.PI, // aStartAngle, aEndAngle
       false, // aClockwise
-      0, // aRotation
+      0 // aRotation
     );
 
     // Convert it to a set of points
     const points = curve.getPoints(32);
     return <Line points={points} color="white" />;
-  },
+  }
 );
 
 const Link: React.FC<LinkProps> = observer(
-  ({ id, type, label, source, target, baseColor, hovered }: LinkProps) => {
+  ({
+    id,
+    type,
+    label,
+    source,
+    target,
+    baseColor,
+    hovered,
+    selected,
+  }: LinkProps) => {
     if (
       source.x === target.x &&
       source.y === target.y &&
@@ -85,36 +95,36 @@ const Link: React.FC<LinkProps> = observer(
 
     const orientation = new THREE.Quaternion().setFromUnitVectors(
       new THREE.Vector3(0, 1, 0),
-      cylinderDirection,
+      cylinderDirection
     );
 
     const offsetVector = cylinderDirection.clone().multiplyScalar(-1); // Reverse the direction
     const conePosition = new THREE.Vector3().addVectors(
       targetVector,
-      offsetVector.multiplyScalar(lineOffsetLength),
+      offsetVector.multiplyScalar(lineOffsetLength)
     );
 
     const lineStartVector = new THREE.Vector3().addVectors(
       sourceVector,
-      cylinderDirection.clone().multiplyScalar(lineOffsetLength),
+      cylinderDirection.clone().multiplyScalar(lineOffsetLength)
     );
     const lineEndVector = new THREE.Vector3().addVectors(
       targetVector,
-      cylinderDirection.clone().multiplyScalar(-lineOffsetLength),
+      cylinderDirection.clone().multiplyScalar(-lineOffsetLength)
     );
     const cylinderStartVector = new THREE.Vector3().addVectors(
       sourceVector,
-      cylinderDirection.clone().multiplyScalar(cylinderOffsetLength),
+      cylinderDirection.clone().multiplyScalar(cylinderOffsetLength)
     );
     const cylinderEndVector = new THREE.Vector3().addVectors(
       targetVector,
-      cylinderDirection.clone().multiplyScalar(-cylinderOffsetLength),
+      cylinderDirection.clone().multiplyScalar(-cylinderOffsetLength)
     );
     const cylinderLength = cylinderStartVector.distanceTo(cylinderEndVector);
     const lineLength = lineStartVector.distanceTo(lineEndVector);
 
-    const color: string = hovered ? "hotpink" : baseColor;
-
+    const color: string = hovered || selected ? "hotpink" : baseColor;
+    const cylinderWidth = selected ? 0.125 : 0.05;
     //Handle self reference
 
     const points = [];
@@ -133,7 +143,9 @@ const Link: React.FC<LinkProps> = observer(
           quaternion={orientation}
           visible={true}
         >
-          <cylinderGeometry args={[0.05, 0.05, lineLength, 3]} />
+          <cylinderGeometry
+            args={[cylinderWidth, cylinderWidth, lineLength, 3]}
+          />
           <meshBasicMaterial color={color} />
         </mesh>
         <mesh
@@ -145,7 +157,7 @@ const Link: React.FC<LinkProps> = observer(
           <cylinderGeometry args={[0.5, 0.5, cylinderLength, 5]} />
           <meshBasicMaterial color={color} />
         </mesh>
-        {hovered && (
+        {(hovered || selected) && (
           <Billboard position={midPoint} follow>
             <Text
               userData={userData}
@@ -169,7 +181,7 @@ const Link: React.FC<LinkProps> = observer(
         </mesh>
       </>
     );
-  },
+  }
 );
 
 export default Link;
