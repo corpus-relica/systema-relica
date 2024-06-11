@@ -26,10 +26,6 @@ export interface AppProps {
   selectedNode: number | null;
   onEdgeClick?: (id: number) => void | null;
   onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
-  onEdgeClick?: (id: number) => void | null;
-  onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
-  onEdgeClick?: (id: number) => void | null;
-  onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
   paletteMap: Map<number, string> | null;
 }
 
