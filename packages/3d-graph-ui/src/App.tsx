@@ -28,6 +28,8 @@ export interface AppProps {
   onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
   onEdgeClick?: (id: number) => void | null;
   onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
+  onEdgeClick?: (id: number) => void | null;
+  onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
   paletteMap: Map<number, string> | null;
 }
 
@@ -84,7 +86,7 @@ const App: React.FC<AppProps> = observer(
       for (let k of rootStore.nodeData.keys()) {
         if (
           !facts.find(
-            (fact) => fact.lh_object_uid === k || fact.rh_object_uid === k,
+            (fact) => fact.lh_object_uid === k || fact.rh_object_uid === k
           )
         ) {
           rootStore.removeNode(k);
@@ -245,7 +247,7 @@ const App: React.FC<AppProps> = observer(
         </div>
       </RootStoreContext.Provider>
     );
-  },
+  }
 );
 
 export default App;
