@@ -24,6 +24,8 @@ export interface AppProps {
   onEdgeRollOver?: (id: number) => void | null;
   onEdgeRollOut?: (id: number) => void | null;
   selectedNode: number | null;
+  onEdgeClick?: (id: number) => void | null;
+  onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
   paletteMap: Map<number, string> | null;
 }
 
