@@ -81,10 +81,15 @@ GRANT ALL ON TABLE public.env_model TO postgres;
 
 -- DROP TABLE public.env_selected_entity;
 
+CREATE TYPE entity_fact_enum AS ENUM ('entity', 'fact', 'none');
+
 CREATE TABLE public.env_selected_entity (
-	uid int8 NULL DEFAULT 0,
-	id int4 NOT NULL DEFAULT 1
+    id int4 NOT NULL DEFAULT 1,
+    uid int8 NULL DEFAULT 0,
+    type entity_fact_enum NOT NULL DEFAULT 'none'
 );
+
+INSERT INTO public.env_selected_entity DEFAULT VALUES;
 
 -- Permissions
 
