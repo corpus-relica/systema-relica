@@ -319,5 +319,4 @@ WITH r, CASE WHEN $sortOrder = 'ASC' THEN r[$sortField] ELSE null END AS sortFie
           CASE WHEN $sortOrder = 'DESC' THEN r[$sortField] ELSE null END AS sortFieldDesc
 ORDER BY sortFieldAsc ASC, sortFieldDesc DESC
 SKIP $skip LIMIT $pageSize
-RETURN r
-`;
+RETURN r`;
