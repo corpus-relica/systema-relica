@@ -23,11 +23,9 @@ export interface AppProps {
   onNodeRightClick: (id: number | null, e: MouseEvent) => void | null;
   onEdgeRollOver?: (id: number) => void | null;
   onEdgeRollOut?: (id: number) => void | null;
+  onEdgeClick?: (id: number) => void | null;
+  onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
   selectedNode: number | null;
-  onEdgeClick?: (id: number) => void | null;
-  onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
-  onEdgeClick?: (id: number) => void | null;
-  onEdgeRightClick?: (id: number | null, e: MouseEvent) => void | null;
   paletteMap: Map<number, string> | null;
 }
 
@@ -59,6 +57,8 @@ const App: React.FC<AppProps> = observer(
     onStageClick,
     onEdgeRollOver,
     onEdgeRollOut,
+    onEdgeClick,
+    onEdgeRightClick,
     selectedNode,
     paletteMap,
   }: AppProps) => {
@@ -163,6 +163,7 @@ const App: React.FC<AppProps> = observer(
 
     const handleMouseUp = (e: MouseEvent) => {
       const hoveredNode = rootStore.hoveredNode;
+      const hoveredLink = rootStore.hoveredLink;
       const { button } = e;
       const dx = e.clientX - mouse.current.x;
       const dy = e.clientY - mouse.current.y;
@@ -171,18 +172,27 @@ const App: React.FC<AppProps> = observer(
       switch (button) {
         case 0:
           console.log("mouse up Left click");
-          if (!dragged && hoveredNode && onNodeClick) onNodeClick(hoveredNode);
-          if (!dragged && !hoveredNode && onStageClick) onStageClick();
+          if (!dragged && hoveredNode && onNodeClick) {
+            onNodeClick(hoveredNode);
+          } else if (!dragged && hoveredLink && onEdgeClick) {
+            onEdgeClick(hoveredLink);
+          } else if (!dragged && !hoveredNode && !hoveredLink && onStageClick) {
+            onStageClick();
+          }
           break;
         case 1:
           console.log("mouse up Middle click");
           break;
         case 2:
           console.log("mouse up Right click");
-          if (!dragged && hoveredNode && onNodeRightClick)
+          if (!dragged && hoveredNode && onNodeRightClick) {
             onNodeRightClick(hoveredNode, e);
-          if (!dragged && !hoveredNode && onNodeRightClick)
-            onNodeRightClick(null, e);
+          } else if (!dragged && hoveredLink && onEdgeRightClick) {
+            onEdgeRightClick(hoveredLink, e);
+          } else if (!dragged && !hoveredNode && !hoveredLink) {
+            onNodeRightClick && onNodeRightClick(null, e);
+            onEdgeRightClick && onEdgeRightClick(null, e);
+          }
           break;
         default:
           console.log("mouse up Unknown click");
