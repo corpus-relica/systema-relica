@@ -1,6 +1,8 @@
 import React, { useContext } from "react";
 import { observer } from "mobx-react";
 import { ControlledMenu, MenuItem, MenuDivider } from "@szhsin/react-menu";
+import { Fact } from "../../types";
+import { sockSendCC } from "../../socket";
 
 import RootStoreContext from "../../context/RootStoreContext";
 
@@ -18,10 +20,11 @@ interface FactContextMenuProps {
 
 const FactMenuItems: React.FC<FactContextMenuProps> = observer(
   ({ setUidToDelete, setWarnIsOpen }) => {
-    const { graphViewStore } = useContext(RootStoreContext);
+    const { graphViewStore, factDataStore } = useContext(RootStoreContext);
 
     const { contextMenuFocus, closeContextMenu } = graphViewStore;
     const { x, y, uid } = contextMenuFocus;
+    const fact: Fact = factDataStore.findFact(uid);
 
     const menuItemClassName = ({ hover }) =>
       hover ? "my-menuitem-hover" : "my-menuitem";
@@ -29,14 +32,12 @@ const FactMenuItems: React.FC<FactContextMenuProps> = observer(
     const handleItemClick = (e) => {
       // console.log(`[MenuItem] ${e.value} clicked`);
       switch (e.value) {
-        //   case "Clear All":
-        //     // clearStage();
-        //     console.log("CLEAR ALL");
-        //     sockSendCC("user", "clearEntities", {});
-        //     break;
         case "delete this!":
           setUidToDelete(uid);
           setWarnIsOpen(true);
+          break;
+        case "rem this":
+          sockSendCC("user", "removeFact", { uid });
           break;
         default:
           console.log("DEFAULT");
@@ -53,7 +54,11 @@ const FactMenuItems: React.FC<FactContextMenuProps> = observer(
           onItemClick={handleItemClick}
           menuClassName="my-menu"
         >
-          <MenuItem value="Clear All">Fact {uid}</MenuItem>
+          <MenuItem value="---">
+            Fact {uid} :: {fact.rel_type_uid} : {fact.rel_type_name}
+          </MenuItem>
+          <MenuDivider />
+          <MenuItem value="rem this">rem this</MenuItem>
           <MenuDivider />
           <MenuItem value="delete this!" className={menuItemClassName}>
             delete this!

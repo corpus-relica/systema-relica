@@ -66,6 +66,10 @@ class FactDataStore {
     return uniqueFacts;
   };
 
+  findFact = (factUID: number) => {
+    return this.facts.find((fact) => fact.fact_uid === factUID);
+  };
+
   removeFact = (factUID: number) => {
     console.log("removeFact", factUID);
     this.facts = this.facts.filter((fact) => fact.fact_uid !== factUID);

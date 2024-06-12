@@ -180,6 +180,12 @@ io &&
         console.log("Entity deleted");
       });
 
+      socket.on("user:removeFact", (d: { uid: number }) => {
+        console.log("REMOVE FACT");
+        console.log(d);
+        removeFact(d.uid);
+      });
+
       socket.on("user:deleteFact", async (d: { uid: number }) => {
         console.log("DELETE FACT");
         console.log(d);
