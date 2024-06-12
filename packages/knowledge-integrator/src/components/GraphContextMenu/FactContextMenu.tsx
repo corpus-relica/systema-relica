@@ -53,7 +53,7 @@ const FactMenuItems: React.FC<FactContextMenuProps> = observer(
           onItemClick={handleItemClick}
           menuClassName="my-menu"
         >
-          <MenuItem value="Clear All">FOOBARBAZ {uid}</MenuItem>
+          <MenuItem value="Clear All">Fact {uid}</MenuItem>
           <MenuDivider />
           <MenuItem value="delete this!" className={menuItemClassName}>
             delete this!
