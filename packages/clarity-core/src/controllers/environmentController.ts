@@ -142,6 +142,33 @@ export const removeEntity = async (uid: number) => {
   socketServer.emit("system", "remFacts", { fact_uids: factUIDsToRemove });
 };
 
+export const removeFact = async (uid: number) => {
+  console.log("remove fact", uid);
+  const env = await es.retrieveEnvironment();
+  const facts = env.facts;
+
+  const factToRemove = facts.find((fact: Fact) => fact.fact_uid === uid);
+  let candidateModelUIDsToRemove: Set<number> = new Set([
+    factToRemove.lh_object_uid,
+    factToRemove.rh_object_uid,
+  ]);
+  facts.forEach((fact: Fact) => {
+    if (fact.fact_uid !== uid) {
+      if (candidateModelUIDsToRemove.has(fact.lh_object_uid)) {
+        candidateModelUIDsToRemove.delete(fact.lh_object_uid);
+      }
+      if (candidateModelUIDsToRemove.has(fact.rh_object_uid)) {
+        candidateModelUIDsToRemove.delete(fact.rh_object_uid);
+      }
+    }
+  });
+
+  es.removeFacts([uid]);
+  es.removeModels(Array.from(candidateModelUIDsToRemove));
+
+  socketServer.emit("system", "remFacts", { fact_uids: [uid] });
+};
+
 export const clearEntities = async () => {
   await es.clearEnvironment();
   socketServer.emit("system", "entitiesCleared", {});

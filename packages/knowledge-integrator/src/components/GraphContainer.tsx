@@ -61,12 +61,16 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
           facts={toJS(facts)} // nodeData={nodeData}
           // edgeData={edgeData}
           onNodeClick={selectNode}
-          onNodeRightClick={handleContextMenuTrigger}
+          onNodeRightClick={(uid: number, event: MouseEvent) => {
+            handleContextMenuTrigger(uid, "entity", event);
+          }}
           onStageClick={graphViewStore.selectNone}
           onEdgeRollOver={handleEdgeRollOver}
           onEdgeRollOut={handleEdgeRollOut}
           onEdgeClick={handleEdgeClick}
-          onEdgeRightClick={handleEdgeRightClick}
+          onEdgeRightClick={(uid: number, event: MouseEvent) => {
+            handleContextMenuTrigger(uid, "fact", event);
+          }}
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
           paletteMap={paletteMap}

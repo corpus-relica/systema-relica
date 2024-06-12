@@ -14,7 +14,12 @@ class GraphViewStore {
   hoveredLink: number | null;
   hoveredLinkType: number | null;
 
-  contextMenuFocus: { x: number | null; y: number | null; uid: number | null };
+  contextMenuFocus: {
+    x: number | null;
+    y: number | null;
+    uid: number | null;
+    type: string | null;
+  };
 
   constructor() {
     this.zoomLevel = 1;
@@ -28,7 +33,7 @@ class GraphViewStore {
     this.hoveredLink = null;
     this.hoveredLinkType = null;
 
-    this.contextMenuFocus = { x: null, y: null, uid: null };
+    this.contextMenuFocus = { x: null, y: null, uid: null, type: null };
 
     makeObservable(this, {
       zoomLevel: observable,
@@ -93,14 +98,14 @@ class GraphViewStore {
     this.hoveredLink = link?.id || null;
   };
 
-  handleContextMenuTrigger = (uid: number, event: MouseEvent) => {
+  handleContextMenuTrigger = (uid: number, type: string, event: MouseEvent) => {
     const x = event.clientX;
     const y = event.clientY;
-    this.contextMenuFocus = { x, y, uid };
+    this.contextMenuFocus = { x, y, uid, type };
   };
 
   closeContextMenu = () => {
-    this.contextMenuFocus = { x: null, y: null, uid: null };
+    this.contextMenuFocus = { x: null, y: null, uid: null, type: null };
   };
 }
 

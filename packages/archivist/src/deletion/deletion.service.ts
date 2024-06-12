@@ -56,4 +56,36 @@ export class DeletionService {
     return { result: 'success', uid: uid, deletedFacts: facts };
     // return { result: "testing" };
   }
+
+  async deleteFact(uid) {
+    const fact = await this.gellishBaseService.getFact(uid);
+    const { fact_uid, lh_object_uid, rh_object_uid } = fact;
+
+    const lhFactUIDs =
+      await this.cacheService.allFactsInvolvingEntity(lh_object_uid);
+    const rhFactUIDs =
+      await this.cacheService.allFactsInvolvingEntity(rh_object_uid);
+
+    await this.cacheService.removeFromFactsInvolvingEntity(
+      lh_object_uid,
+      fact_uid,
+    );
+    await this.cacheService.removeFromFactsInvolvingEntity(
+      rh_object_uid,
+      fact_uid,
+    );
+    await this.graphService.execWriteQuery(deleteFactQuery, {
+      uid: fact_uid,
+    });
+
+    // remove orphans
+    if (lhFactUIDs.length === 1 && lhFactUIDs[0] === uid) {
+      await this.deleteEntity(lh_object_uid);
+    }
+    if (rhFactUIDs.length === 1 && rhFactUIDs[0] === uid) {
+      await this.deleteEntity(rh_object_uid);
+    }
+
+    return { result: 'success', uid: uid, deletedFact: fact };
+  }
 }

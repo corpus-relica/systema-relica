@@ -2,6 +2,7 @@ import axios from "axios";
 import {
   SUBMIT_DEFINITION_ENDPOINT,
   DELETE_ENTITY_ENDPOINT,
+  DELETE_FACT_ENDPOINT,
   SPECIALIZATION_HIERARCHY_ENDPOINT,
   SPECIALIZATION_FACT_ENDPOINT,
   SUBTYPES_ENDPOINT,
@@ -154,6 +155,11 @@ export const deleteEntity = async (uid: number) => {
   const result = await axios.delete(
     `${URL}${DELETE_ENTITY_ENDPOINT}?uid=${uid}`,
   );
+  return result.data;
+};
+
+export const deleteFact = async (uid: number) => {
+  const result = await axios.delete(`${URL}${DELETE_FACT_ENDPOINT}?uid=${uid}`);
   return result.data;
 };
 

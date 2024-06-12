@@ -33,6 +33,7 @@ export const ENTITY_CATEGORY_ENDPOINT = "/retrieveEntity/category";
 export const LH_OBJECT_COMPLETION_ENDPOINT = "/completion/lhObject";
 export const RH_OBJECT_COMPLETION_ENDPOINT = "/completion/rhObject";
 export const DELETE_ENTITY_ENDPOINT = "/deletion/entity";
+export const DELETE_FACT_ENDPOINT = "/deletion/fact";
 
 export const UID_SEARCH_KIND_ENDPOINT = "/kindSearch/uid";
 export const TEXT_SEARCH_KIND_ENDPOINT = "/kindSearch/text";

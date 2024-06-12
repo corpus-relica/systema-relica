@@ -6,12 +6,12 @@ import { observer } from "mobx-react";
 import RootStoreContext from "../../context/RootStoreContext";
 import { sockSendCC } from "../../socket";
 
-import { ControlledMenu, MenuItem, MenuDivider } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 
 import "./style.css";
 
 import KindContextMenu from "./KindContextMenu";
+import FactContextMenu from "./FactContextMenu";
 import IndividualContextMenu from "./IndividualContextMenu";
 import QualificationContextMenu from "./QualificationContextMenu";
 import StageContextMenu from "./StageContextMenu";
@@ -33,45 +33,59 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = observer(() => {
   const [warnIsOpen, setWarnIsOpen] = useState(false);
   const [uidToDelete, setUidToDelete] = useState(null);
 
+  const [factWarnIsOpen, setFactWarnIsOpen] = useState(false);
+  const [factUidToDelete, setFactUidToDelete] = useState(null);
+
   const { graphViewStore, factDataStore, entityDataStore, semanticModelStore } =
     useContext(RootStoreContext);
 
   const { addFacts, addConcepts } = factDataStore;
   const { contextMenuFocus, closeContextMenu } = graphViewStore;
-  const { x, y, uid } = contextMenuFocus;
+  const { x, y, uid, type } = contextMenuFocus;
 
   let menu;
+
   if (uid) {
-    const model = semanticModelStore.models.get(uid);
-    if (model.type === "kind") {
+    if (type === "entity") {
+      const model = semanticModelStore.models.get(uid);
+      if (model.type === "kind") {
+        menu = (
+          <KindContextMenu
+            setUidToDelete={setUidToDelete}
+            setSubtypesModalIsOpen={setSubtypesModalIsOpen}
+            setPossibleSubtypes={setPossibleSubtypes}
+            setExistingSubtypes={setExistingSubtypes}
+            setClassifiedModalIsOpen={setClassifiedModalIsOpen}
+            setPossibleClassified={setPossibleClassified}
+            setExistingClassified={setExistingClassified}
+            setWarnIsOpen={setWarnIsOpen}
+          />
+        );
+      } else if (model.type === "individual") {
+        menu = (
+          <IndividualContextMenu
+            setUidToDelete={setUidToDelete}
+            setWarnIsOpen={setWarnIsOpen}
+          />
+        );
+      } else if (model.type === "qualification") {
+        menu = (
+          <QualificationContextMenu
+            setUidToDelete={setUidToDelete}
+            setWarnIsOpen={setWarnIsOpen}
+          />
+        );
+      } else {
+        console.log("unknown model type: ", model.type);
+      }
+    } else if (type === "fact") {
+      console.log("foo");
       menu = (
-        <KindContextMenu
-          setUidToDelete={setUidToDelete}
-          setSubtypesModalIsOpen={setSubtypesModalIsOpen}
-          setPossibleSubtypes={setPossibleSubtypes}
-          setExistingSubtypes={setExistingSubtypes}
-          setClassifiedModalIsOpen={setClassifiedModalIsOpen}
-          setPossibleClassified={setPossibleClassified}
-          setExistingClassified={setExistingClassified}
-          setWarnIsOpen={setWarnIsOpen}
+        <FactContextMenu
+          setUidToDelete={setFactUidToDelete}
+          setWarnIsOpen={setFactWarnIsOpen}
         />
       );
-    } else if (model.type === "individual") {
-      menu = (
-        <IndividualContextMenu
-          setUidToDelete={setUidToDelete}
-          setWarnIsOpen={setWarnIsOpen}
-        />
-      );
-    } else if (model.type === "qualification") {
-      menu = (
-        <QualificationContextMenu
-          setUidToDelete={setUidToDelete}
-          setWarnIsOpen={setWarnIsOpen}
-        />
-      );
-    } else {
-      console.log("unknown model type: ", model.type);
     }
   } else if (x && y) {
     // assume we opened context menu over the 'stage'
@@ -95,6 +109,13 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = observer(() => {
     setUidToDelete(null);
     sockSendCC("user", "deleteEntity", { uid });
     setWarnIsOpen(false);
+  };
+
+  const deleteFact = () => {
+    const uid = factUidToDelete;
+    setFactUidToDelete(null);
+    sockSendCC("user", "deleteFact", { uid });
+    setFactWarnIsOpen(false);
   };
 
   return (
@@ -125,6 +146,26 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = observer(() => {
               <Button
                 label="No"
                 onClick={() => setWarnIsOpen(false)}
+                color="status-ok"
+              />
+            </Box>
+          </Box>
+        </Layer>
+      )}
+
+      {factWarnIsOpen && (
+        <Layer>
+          <Box gap="medium" margin="medium">
+            <Text>Are you sure you want to delete this fact?</Text>
+            <Box direction="row-reverse" gap="small">
+              <Button
+                label="Yes!"
+                onClick={deleteFact.bind(this)}
+                color="status-critical"
+              />
+              <Button
+                label="No"
+                onClick={() => setFactWarnIsOpen(false)}
                 color="status-ok"
               />
             </Box>

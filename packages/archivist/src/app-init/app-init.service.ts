@@ -4,6 +4,7 @@ import { CacheService } from 'src/cache/cache.service';
 import { RawFactIngestionService } from 'src/raw-fact-ingestion/raw-fact-ingestion.service';
 import { XLSService } from 'src/xls/xls.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { UIDService } from 'src/uid/uid.service';
 import { readdirSync } from 'fs';
 
 const BATCH_SIZE = 100;
@@ -18,11 +19,13 @@ export class AppInitService implements OnApplicationBootstrap {
     private readonly xlsService: XLSService,
     private readonly cacheService: CacheService,
     private readonly gellishBaseService: GellishBaseService,
+    private readonly uidService: UIDService,
   ) {}
 
   async onApplicationBootstrap() {
     await this.initializeDatabase();
     // Perform other application initialization tasks
+    await this.uidService.init();
   }
 
   private async initializeDatabase() {

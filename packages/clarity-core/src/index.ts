@@ -10,7 +10,7 @@ import modelRoutes from "./routes/modelRoutes.js";
 
 import environmentRoutes from "./routes/environmentRoutes.js";
 import { setSelectedEntity } from "./services/environmentService.js";
-import { deleteEntity } from "./services/relicaNeo4jService.js";
+import { deleteEntity, deleteFact } from "./services/relicaNeo4jService.js";
 import {
   getSpecializationHierarchy,
   getSubtypes,
@@ -22,6 +22,7 @@ import {
   removeEntities,
   removeEntityDescendants,
   clearEntities,
+  removeFact,
 } from "./controllers/environmentController.js";
 
 import socketServer from "./utils/SocketServer.js";
@@ -174,9 +175,20 @@ io &&
 
         const result = await deleteEntity(d.uid);
         //if result is success
-        console.log("RESULT", result);
+        console.log("DELETE ENTITY RESULT", result);
         removeEntity(d.uid);
         console.log("Entity deleted");
+      });
+
+      socket.on("user:deleteFact", async (d: { uid: number }) => {
+        console.log("DELETE FACT");
+        console.log(d);
+
+        const result = await deleteFact(d.uid);
+        //if result is success
+        console.log("DELETE FACT RESULT", result);
+        removeFact(d.uid);
+        console.log("Fact deleted");
       });
 
       socket.on("user:removeEntitySubtypesRecursive", (d: { uid: number }) => {

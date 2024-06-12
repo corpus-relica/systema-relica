@@ -175,7 +175,7 @@ export class ValidationService {
       ? true
       : this.validateUIDNamePair(rh_object_uid, rh_object_name);
 
-    if (!qux) {
+    if (!qux && !(rel_type_uid === 1981)) {
       return {
         isValid: false,
         message: 'lh_object_uid and lh_object_name do not match',
