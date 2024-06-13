@@ -17,3 +17,5 @@ yarn-error.log*
 
 seed_csv/
 seed_xls/
+
+temp.*
