@@ -31,12 +31,6 @@ RETURN partial_definition, source_uid
 ORDER BY length(newPath)
 `;
 
-export const collections = `
-MATCH (r:Fact)
-WITH DISTINCT r.collection_uid as uid, r.collection_name as name
-RETURN COLLECT({uid: uid, name: name}) as collections
-`;
-
 export const textSearchQuery = `
 MATCH (kind:Entity)-->(r:Fact)-->(parent:Entity)
 WHERE r.rel_type_uid IN $relTypeUIDs
