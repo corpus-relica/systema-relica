@@ -132,6 +132,17 @@ export class CacheService {
     }
   }
 
+  async removeDescendantFrom(uid, descendant) {
+    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    await this.redisClient.srem(descendantsKey, descendant + '');
+    if (this.descendantsCache[uid + '']) {
+      console.log('Removing descendant from cache');
+      this.descendantsCache[uid + ''] = this.descendantsCache[uid + ''].filter(
+        (d) => d !== descendant,
+      );
+    }
+  }
+
   //--------------------------------------------------------------------- LINEAGE
 
   async lineageOf(uid: number) {
@@ -289,6 +300,7 @@ export class CacheService {
   };
 
   //---------------------------------------------------------------------
+
   appendFact = async (fact: Fact) => {
     if (fact.rel_type_uid === 1146 || fact.rel_type_uid === 1726) {
       const lineage = await this.linearizationService.calculateLineage(
@@ -303,5 +315,32 @@ export class CacheService {
     }
     // add to facts cache regardless
     await this.addToEntityFactsCache(fact.lh_object_uid, fact.fact_uid);
+  };
+
+  //TODO: figure out if this should be recursive
+  // i.e. from a UX perspective, should deleting an entity delete all of its descendants?
+  removeEntity = async (uid: number) => {
+    // iterate the lineage of the entity and remove the entity from each
+    // of the descendants caches
+    const lineage = await this.lineageOf(uid);
+    for (let i = 0; i < lineage.length; i++) {
+      await this.removeDescendantFrom(lineage[i], uid);
+    }
+
+    // remove from descendants cache
+    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    await this.redisClient.del(descendantsKey);
+
+    // remove from lineage cache
+    const lineageKey = `rlc:db:YYYY:entity:${uid}:lineage`;
+    await this.redisClient.del(lineageKey);
+
+    // remove from facts cache
+    const factsKey = `rlc:db:YYYY:entity:${uid}:facts`;
+    await this.redisClient.del(factsKey);
+
+    // remove from prompt cache
+    const promptKey = `rlc:db:YYYY:${uid}:prompts:info`;
+    await this.redisClient.del(promptKey);
   };
 }

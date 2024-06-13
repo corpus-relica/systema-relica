@@ -17,8 +17,6 @@ export class DeletionService {
   ) {}
 
   async deleteEntity(uid) {
-    // TODO: remove entity from cache if is kind
-
     // to delete an entity we need to delete all the facts involving the entity
     const factUIDs = await this.cacheService.allFactsInvolvingEntity(uid);
     const facts = await Promise.all(
@@ -44,17 +42,12 @@ export class DeletionService {
       }),
     );
 
-    // await Promise.all(
-    //   factUIDs.map(async (fact_uid) => {
-    //     await execQuery(deleteFactQuery, { uid: fact_uid });
-    //   }),
-    // );
+    await this.cacheService.removeEntity(uid);
 
-    // // delete all the facts
+    // delete all the facts
     await this.graphService.execWriteQuery(deleteEntityQuery, { uid });
 
     return { result: 'success', uid: uid, deletedFacts: facts };
-    // return { result: "testing" };
   }
 
   async deleteFact(uid) {
@@ -80,9 +73,11 @@ export class DeletionService {
 
     // remove orphans
     if (lhFactUIDs.length === 1 && lhFactUIDs[0] === uid) {
+      await this.cacheService.removeEntity(lh_object_uid);
       await this.deleteEntity(lh_object_uid);
     }
     if (rhFactUIDs.length === 1 && rhFactUIDs[0] === uid) {
+      await this.cacheService.removeEntity(rh_object_uid);
       await this.deleteEntity(rh_object_uid);
     }
 
