@@ -27,7 +27,13 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   React.useEffect(() => {
     // console.log("Form values changed:", values);
     // Perform any desired action when form values change
-    const { supertype, aspectName, aspectDefinition, qualifications } = values;
+    const {
+      supertype,
+      aspectName,
+      aspectDefinition,
+      qualifications,
+      collection,
+    } = values;
 
     const facts = [];
     let definitiveFact = null;
@@ -46,6 +52,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rh_object_name: supertype.lh_object_name,
         full_definition: aspectDefinition,
         partial_definition: aspectDefinition,
+        collection_uid: collection.uid,
+        collection_name: collection.name,
       });
       uid++;
 
@@ -60,6 +68,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "is a qualification of",
             rh_object_uid: definitiveUid,
             rh_object_name: aspectName,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
           uid++;
         });
@@ -73,7 +83,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 };
 
 const CreateAspect = (props: any) => {
-  const { handleOpen, handleClose } = props;
+  const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     aspectName: "",
     aspectDefinition: "",
@@ -82,6 +92,7 @@ const CreateAspect = (props: any) => {
       rh_object_name: "",
     },
     qualifications: [],
+    collection: collection,
   };
 
   const [facts, setFacts] = React.useState([]);

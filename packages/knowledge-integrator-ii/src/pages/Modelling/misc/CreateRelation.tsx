@@ -37,6 +37,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       relationDefinition,
       requiredRole1,
       requiredRole2,
+      collection,
     } = values;
 
     const facts = [];
@@ -56,6 +57,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rh_object_name: supertype.lh_object_name,
         full_definition: relationDefinition,
         partial_definition: relationDefinition,
+        collection_uid: collection.uid,
+        collection_name: collection.name,
       });
       uid++;
 
@@ -68,6 +71,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
           rel_type_name: "requires a role-1 as a",
           rh_object_uid: requiredRole1.lh_object_uid.toString(),
           rh_object_name: requiredRole1.lh_object_name,
+          collection_uid: collection.uid,
+          collection_name: collection.name,
         });
         definitiveFact = facts.push({
           ...baseFact,
@@ -77,6 +82,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
           rel_type_name: "requires a role-2 as a",
           rh_object_uid: requiredRole2.lh_object_uid.toString(),
           rh_object_name: requiredRole2.lh_object_name,
+          collection_uid: collection.uid,
+          collection_name: collection.name,
         });
 
         // else if (requiredRoles.length > 2) {
@@ -104,7 +111,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 };
 
 const CreateRelation = (props: any) => {
-  const { handleOpen, handleClose } = props;
+  const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     relationName: "",
     relationDefinition: "",
@@ -114,6 +121,7 @@ const CreateRelation = (props: any) => {
     },
     requiredRole1: {},
     requiredRole2: {},
+    collection: collection,
   };
 
   const [facts, setFacts] = React.useState([]);

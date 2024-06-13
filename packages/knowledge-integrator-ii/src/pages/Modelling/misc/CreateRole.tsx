@@ -37,6 +37,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       roleDefinition,
       rolePlayers,
       requiringRelations,
+      collection,
     } = values;
 
     const facts = [];
@@ -56,6 +57,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rh_object_name: supertype.lh_object_name,
         full_definition: roleDefinition,
         partial_definition: roleDefinition,
+        collection_uid: collection.uid,
+        collection_name: collection.name,
       });
       uid++;
 
@@ -70,6 +73,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "can by definition have a role as a",
             rh_object_uid: definitiveUid,
             rh_object_name: roleName,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
           uid++;
         });
@@ -99,7 +104,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 };
 
 const CreateRole = (props: any) => {
-  const { handleOpen, handleClose } = props;
+  const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     roleName: "",
     roleDefinition: "",
@@ -109,6 +114,7 @@ const CreateRole = (props: any) => {
     },
     rolePlayers: [],
     requiringRelations: [],
+    collection: collection,
   };
 
   const [facts, setFacts] = React.useState([]);

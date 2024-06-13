@@ -128,8 +128,13 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 
   React.useEffect(() => {
     console.log(values);
-    const { supertype, occurrenceName, occurrenceDefinition, involvements } =
-      values;
+    const {
+      supertype,
+      occurrenceName,
+      occurrenceDefinition,
+      involvements,
+      collection,
+    } = values;
 
     const facts = [];
     let definitiveFact = null;
@@ -148,6 +153,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rh_object_name: supertype.lh_object_name,
         full_definition: occurrenceDefinition,
         partial_definition: occurrenceDefinition,
+        collection_uid: collection.uid,
+        collection_name: collection.name,
       });
       uid++;
     }
@@ -170,6 +177,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rh_object_name: involvement.supertype.lh_object_name,
             full_definition: involvement.definition,
             partial_definition: involvement.definition,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
           uid++;
         }
@@ -183,6 +192,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "requires a role-1 as a",
             rh_object_uid: involvement.requiredRole1.lh_object_uid.toString(),
             rh_object_name: involvement.requiredRole1.lh_object_name,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
           facts.push({
             ...baseFact,
@@ -192,6 +203,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "requires a role-2 as a",
             rh_object_uid: involvement.requiredRole2.lh_object_uid.toString(),
             rh_object_name: involvement.requiredRole2.lh_object_name,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
           facts.push({
             ...baseFact,
@@ -201,6 +214,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "can by definition have a role as a",
             rh_object_uid: involvement.requiredRole2.lh_object_uid.toString(),
             rh_object_name: involvement.requiredRole2.lh_object_name,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
         }
       });
@@ -213,7 +228,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 };
 
 const CreateOccurrence = (props: any) => {
-  const { handleOpen, handleClose } = props;
+  const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     occurrenceName: "",
     occurrenceDefinition: "",
@@ -222,6 +237,7 @@ const CreateOccurrence = (props: any) => {
       rh_object_name: "",
     },
     involvements: [],
+    collection: collection,
   };
 
   const [facts, setFacts] = React.useState([]);

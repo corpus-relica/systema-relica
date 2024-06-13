@@ -30,9 +30,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();
 
   React.useEffect(() => {
-    console.log("STEPHANOPOULOS!!!");
-    console.log(values);
-    const { lh_object, rel_type, rh_object } = values;
+    const { lh_object, rel_type, rh_object, collection } = values;
 
     const facts = [];
 
@@ -52,6 +50,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rel_type_name: rel_type.lh_object_name,
         rh_object_uid: rh_object.lh_object_uid.toString(),
         rh_object_name: rh_object.lh_object_name,
+        collection_uid: collection.uid,
+        collection_name: collection.name,
       });
     }
 
@@ -62,7 +62,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 };
 
 const CreateBinaryFact = (props: any) => {
-  const { handleOpen, handleClose } = props;
+  const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     lh_object: {
       lh_object_uid: undefined,
@@ -76,6 +76,7 @@ const CreateBinaryFact = (props: any) => {
       lh_object_uid: undefined,
       lh_object_name: "",
     },
+    collection: collection,
   };
 
   const [facts, setFacts] = React.useState([]);

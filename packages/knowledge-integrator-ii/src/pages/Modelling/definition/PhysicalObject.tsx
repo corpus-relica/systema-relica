@@ -47,6 +47,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       aspectValueUom,
       part,
       aspectQualifications,
+      collection,
     } = values;
 
     const facts = [];
@@ -72,6 +73,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rh_object_name: supertype.lh_object_name,
         full_definition: definition,
         partial_definition: definition,
+        collection_uid: collection.uid,
+        collection_name: collection.name,
       });
 
       // Synonyms
@@ -87,6 +90,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "is a synonym of",
             rh_object_uid: uid.toString(),
             rh_object_name: preferredName,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
         });
       }
@@ -104,6 +109,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "is an abbreviation of",
             rh_object_uid: uid.toString(),
             rh_object_name: preferredName,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
         });
       }
@@ -120,6 +127,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
             rel_type_name: "is a code for",
             rh_object_uid: uid.toString(),
             rh_object_name: preferredName,
+            collection_uid: collection.uid,
+            collection_name: collection.name,
           });
         });
       }
@@ -142,6 +151,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
                 "has subtypes that have as discriminating aspect a",
               rh_object_uid: aspect.lh_object_uid.toString(),
               rh_object_name: aspect.lh_object_name,
+              collection_uid: collection.uid,
+              collection_name: collection.name,
             });
             const quality = aspectQualifications[aspects[0].lh_object_uid];
             console.log("quality", quality);
@@ -154,6 +165,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
                 rel_type_name: "is by definition qualified as",
                 rh_object_uid: quality.lh_object_uid.toString(),
                 rh_object_name: quality.lh_object_name,
+                collection_uid: collection.uid,
+                collection_name: collection.name,
               });
             }
           }
@@ -172,6 +185,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
           rel_type_name: "has as an intended function a",
           rh_object_uid: func.lh_object_uid.toString(),
           rh_object_name: func.lh_object_name,
+          collection_uid: collection.uid,
+          collection_name: collection.name,
         });
         // });
       }
@@ -188,6 +203,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
           rel_type_name: "is by definition a possible part of a",
           rh_object_uid: part.lh_object_uid.toString(),
           rh_object_name: part.lh_object_name,
+          collection_uid: collection.uid,
+          collection_name: collection.name,
         });
         // });
       }
@@ -327,7 +344,7 @@ const MyAspectField = (props: any) => {
 };
 
 const Modelling = (props: any) => {
-  const { handleOpen, handleClose } = props;
+  const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     uid: 1,
     languageUid: 910036,
@@ -362,6 +379,7 @@ const Modelling = (props: any) => {
       lh_object_uid: 1,
       lh_object_name: "concept",
     },
+    collection: collection,
   };
 
   const [facts, setFacts] = React.useState([]);
