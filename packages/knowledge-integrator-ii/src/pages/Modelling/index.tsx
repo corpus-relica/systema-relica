@@ -55,7 +55,7 @@ export default function BasicSelect() {
   const handleCollectionChange = (event: SelectChangeEvent) => {
     const uid = event.target.value;
     if (uid === 0) {
-      setCollection(uid);
+      setCollection({ uid: 0, name: "None" });
       return;
     }
     const name = collectionItems.find((item: any) => item.uid === uid).name;
