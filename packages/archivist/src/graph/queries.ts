@@ -304,6 +304,13 @@ SET r.partial_definition = $partial_definition
 RETURN r
 `;
 
+export const updateFactCollectionQuery = `
+MATCH (r:Fact {fact_uid: $fact_uid})
+SET r.collection_uid = $collection_uid
+SET r.collection_name = $collection_name
+RETURN r
+`;
+
 /////////////////////////////////////////////////////////////
 
 export const getListOfKindsQuery = `

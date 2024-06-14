@@ -103,6 +103,9 @@ export class GraphService {
   };
 
   transformPathResults(res) {
+    this.logger.debug('transformPathResults');
+    this.logger.debug(res);
+
     const result = res.map((item) => {
       const path = item.get('path');
       const rels = path.segments.map((seg) => {

@@ -20,6 +20,8 @@ import { useQuery } from "@tanstack/react-query";
 import Specialization from "./Display/Specialization";
 import Classification from "./Display/Classification";
 import Value from "./Display/Value";
+import Collection from "./Display/Collection";
+import Definition from "./Display/Definition";
 
 import PossibleRole from "./Display/PossibleRole";
 import { sockSendCC } from "../../socket";
@@ -50,8 +52,11 @@ const IndividualDetails: React.FC = observer(() => {
 
   if (isLoading || !selectedNode) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
+  console.log("INDIVIDUAL DATA");
+  console.log(data);
 
-  const { uid, type, category, name, definition, facts, value } = data;
+  const { uid, type, category, name, definition, facts, value, collection } =
+    data;
   const specialization = data[1146];
   const classification = data[1225];
   const synonyms = data[1981];
@@ -100,6 +105,10 @@ const IndividualDetails: React.FC = observer(() => {
           <Box>
             <Box direction="row" align="center" justify="between">
               <Box>
+                <Collection
+                  uid={definition[0].fact_uid}
+                  collection={collection}
+                />
                 <Text size="18px" style={{ fontWeight: 800 }}>
                   {text}
                 </Text>
@@ -114,6 +123,7 @@ const IndividualDetails: React.FC = observer(() => {
                   "error, concept seemingly not classified"
                 )}
                 {value && <Value value={value} />}
+                {definition && <Definition definitions={definition} />}
               </Box>
               <Button
                 icon={<CopyIcon />}

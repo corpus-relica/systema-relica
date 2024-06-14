@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   SUBMIT_DEFINITION_ENDPOINT,
+  SUBMIT_COLLECTION_ENDPOINT,
   DELETE_ENTITY_ENDPOINT,
   DELETE_FACT_ENDPOINT,
   SPECIALIZATION_HIERARCHY_ENDPOINT,
@@ -184,6 +185,19 @@ export const submitDefinition = async (
     fact_uid,
     partial_definition,
     full_definition,
+  });
+  return result.data;
+};
+
+export const submitCollection = async (
+  fact_uid: number,
+  collection_uid: number,
+  collection_name: string,
+) => {
+  const result = await axios.put(`${URL}${SUBMIT_COLLECTION_ENDPOINT}`, {
+    fact_uid,
+    collection_uid,
+    collection_name,
   });
   return result.data;
 };

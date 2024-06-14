@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import Specialization from "./Display/Specialization";
 import Definition from "./Display/Definition";
+import Collection from "./Display/Collection";
 
 import PossibleRole from "./Display/PossibleRole";
 import { sockSendCC } from "../../socket";
@@ -51,11 +52,10 @@ const KindDetails: React.FC = observer(() => {
   if (!selectedNode) return <div>No node selected</div>;
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
-  console.log("DATA");
+  console.log("KIND DATA");
   console.log(data);
-  const { uid, type, category, name, definition, facts } = data;
+  const { uid, type, category, name, definition, facts, collection } = data;
   const specialization = data[1146];
-  const classification = data[1225];
   const synonyms = data[1981];
   const inverses = data[1986];
   const reqRole1 = data[4731];
@@ -102,22 +102,18 @@ const KindDetails: React.FC = observer(() => {
           <Box>
             <Box direction="row" align="center" justify="between">
               <Box>
+                <Collection
+                  uid={definition[0].fact_uid}
+                  collection={collection}
+                />
                 <Text size="18px" style={{ fontWeight: 800 }}>
                   {text}
                 </Text>
                 <Text size="12px" style={{ fontWeight: 500 }}>
-                  {specialization && specialization.length > 0
-                    ? "Specialization:"
-                    : classification && classification.length > 0
-                      ? `Classification:`
-                      : "error, concept neither specialized nor classified"}
+                  "Specialization:"
                 </Text>
-                {specialization && specialization.length > 0 ? (
+                {specialization && specialization.length > 0 && (
                   <Specialization uids={specialization} childUID={uid} />
-                ) : classification && classification.length > 0 ? (
-                  `foo`
-                ) : (
-                  "error, concept neither specialized nor classified"
                 )}
               </Box>
               <Button
@@ -135,6 +131,7 @@ const KindDetails: React.FC = observer(() => {
                 <Text size="12px">{category}</Text>
               </Box>
             )}
+
             {definition && <Definition definitions={definition} />}
             {synonyms && synonyms.length > 0 && (
               <Box>

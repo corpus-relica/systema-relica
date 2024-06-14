@@ -5,6 +5,7 @@ import {
   retrieveModel,
   retrieveModels,
   updateDefinition,
+  updateCollection,
 } from "../controllers/modelController.js";
 
 const router = express.Router();
@@ -61,6 +62,24 @@ router.put("/definition", async (req, res) => {
       +fact_uid,
       partial_definition,
       full_definition,
+    );
+    res.send(result);
+  }
+});
+
+router.put("/collection", async (req, res) => {
+  const { fact_uid, collection_uid, collection_name } = req.body;
+  if (
+    fact_uid === undefined ||
+    collection_uid === undefined ||
+    collection_name === undefined
+  ) {
+    res.send("fact_uid or collection_uid or collection_name not provided");
+  } else {
+    const result = await updateCollection(
+      +fact_uid,
+      +collection_uid,
+      collection_name,
     );
     res.send(result);
   }

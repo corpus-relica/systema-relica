@@ -5,6 +5,7 @@ import {
   getRelatedOnUIDSubtypeCone,
   getEntityType,
   submitDefinition,
+  submitCollection,
 } from "../services/relicaNeo4jService.js";
 import { Fact } from "../types.js";
 
@@ -86,6 +87,10 @@ export const retrieveKindModel = async (uid: number) => {
   return Object.assign(model, {
     uid: uid,
 
+    collection: {
+      uid: definitiveFacts[0].collection_uid,
+      name: definitiveFacts[0].collection_name,
+    },
     name: definitiveFacts[0].lh_object_name, //.map((x: Fact) => x.lh_object_name).join(", "),
     type: "kind",
     category: category,
@@ -126,11 +131,20 @@ export const retrieveIndividualModel = async (uid: number) => {
   }
 
   const baseObj = {
-    name: classification[0].lh_object_name,
-    1225: classification.map((x: Fact) => x.rh_object_uid),
     uid: uid,
+    name: classification[0].lh_object_name,
+    collection: {
+      uid: definitiveFacts[0].collection_uid,
+      name: definitiveFacts[0].collection_name,
+    },
+    1225: classification.map((x: Fact) => x.rh_object_uid),
     type: "individual",
     category: category,
+    definition: definitiveFacts.map((x: Fact) => ({
+      fact_uid: x.fact_uid,
+      partial_definition: x.partial_definition,
+      full_definition: x.full_definition,
+    })),
     facts,
   };
   const value = await getRelatedOnUIDSubtypeCone(uid, 5025); // 'has on scale a value equal to'
@@ -243,5 +257,18 @@ export const updateDefinition = async (
   );
   // TODO: righit about here we have the opportuninty to update the local store
   //
+  return response;
+};
+
+export const updateCollection = async (
+  fact_uid: number,
+  collection_uid: number,
+  collection_name: string,
+) => {
+  const response = await submitCollection(
+    fact_uid,
+    collection_uid,
+    collection_name,
+  );
   return response;
 };

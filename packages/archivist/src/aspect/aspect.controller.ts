@@ -1,6 +1,8 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AspectService } from './aspect.service';
 
+@ApiTags('Aspect')
 @Controller('aspect')
 export class AspectController {
   constructor(private readonly aspectService: AspectService) {}

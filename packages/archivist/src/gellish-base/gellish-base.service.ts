@@ -6,7 +6,7 @@ import {
   RELATION_UID,
 } from '../bootstrapping';
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GraphService } from 'src/graph/graph.service';
 import { CacheService } from 'src/cache/cache.service';
 
@@ -27,6 +27,7 @@ import {
   fact,
   facts,
   updateFactDefinitionQuery,
+  updateFactCollectionQuery,
   qualificationFact,
 } from 'src/graph/queries';
 
@@ -34,6 +35,8 @@ import { linearize } from 'c3-linearization';
 
 @Injectable()
 export class GellishBaseService {
+  private readonly logger = new Logger(GellishBaseService.name);
+
   constructor(
     private readonly graphService: GraphService,
     private readonly cacheService: CacheService,
@@ -509,6 +512,32 @@ RETURN path`;
         full_definition,
       },
     );
+    return this.graphService.transformResult(result[0]);
+  };
+
+  updateFactCollection = async (
+    fact_uid: number,
+    collection_uid: number,
+    collection_name: string,
+  ) => {
+    this.logger.verbose(
+      'UPDATE FACT COLLECTION',
+      fact_uid,
+      collection_uid,
+      collection_name,
+    );
+
+    const result = await this.graphService.execWriteQuery(
+      updateFactCollectionQuery,
+      {
+        fact_uid,
+        collection_uid,
+        collection_name,
+      },
+    );
+
+    this.logger.verbose('UPDATE FACT COLLECTION', result);
+
     return this.graphService.transformResult(result[0]);
   };
 }
