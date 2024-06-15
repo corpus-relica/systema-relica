@@ -175,7 +175,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 
       // Function
       //
-      if (func) {
+      if (func && func.lh_object_uid && func.lh_object_name) {
         // codes.forEach((term: string) => {
         facts.push({
           ...baseFact,
@@ -193,7 +193,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 
       // Part
       //
-      if (part) {
+      if (part && part.lh_object_uid && part.lh_object_name) {
         // codes.forEach((term: string) => {
         facts.push({
           ...baseFact,
@@ -383,6 +383,7 @@ const Modelling = (props: any) => {
   };
 
   const [facts, setFacts] = React.useState([]);
+  const [submissionStatus, setSubmissionStatus] = React.useState("none");
 
   const updateFacts = (facts: any) => {
     setFacts(facts);
@@ -390,6 +391,8 @@ const Modelling = (props: any) => {
 
   const mutation = useMutation({
     mutationFn: (facts: any[]) => {
+      setSubmissionStatus("pending");
+
       // i will iterate over the facts and convert certain fields to numbers
       // before sending them to the server
       const foo = facts.map((fact) => {
@@ -409,6 +412,8 @@ const Modelling = (props: any) => {
       );
     },
     onSuccess: (data, variables, context) => {
+      setSubmissionStatus("success");
+
       const success = data.data.reduce((acc: boolean, result: any) => {
         return acc && result.isValid;
       }, true);
@@ -437,6 +442,11 @@ const Modelling = (props: any) => {
       }
 
       console.log("SUCCESS", success);
+    },
+    onError: (error, variables, context) => {
+      setSubmissionStatus("error");
+
+      console.error("ERROR", error);
     },
   });
 
@@ -656,6 +666,9 @@ const Modelling = (props: any) => {
                   </label>
                   <br />
                   <button type="submit">Submit</button>
+                  {submissionStatus === "pending" && <div>Submitting...</div>}
+                  {submissionStatus === "success" && <div>Success!</div>}
+                  {submissionStatus === "error" && <div>Error!</div>}
                   <FormListener updateFacts={updateFacts} />
                 </Form>
               </div>
