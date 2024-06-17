@@ -22,7 +22,7 @@ class ColorPaletteStore {
       () => this.factDataStore.facts,
       (facts) => {
         this.updatePalette(facts);
-      }
+      },
     );
   }
 
@@ -37,12 +37,27 @@ class ColorPaletteStore {
     facts.forEach((fact) => {
       rel_type_uids.add(fact.rel_type_uid);
     });
-    Array.from(rel_type_uids).forEach((rel_type_uid) => {
+
+    // Remove entries from paletteMap that are not in rel_type_uids
+    Array.from(this.paletteMap.keys()).forEach((key) => {
+      if (!rel_type_uids.has(key)) {
+        this.paletteMap.delete(key);
+      }
+    });
+
+    // Add new entries to paletteMap that are in rel_type_uids but not in paletteMap
+    rel_type_uids.forEach((rel_type_uid) => {
       if (!this.paletteMap.has(rel_type_uid)) {
         this.paletteMap.set(rel_type_uid, this.getRandomColor());
       }
     });
-    console.log("UPDATEPALETTE", Array.from(this.paletteMap.values()));
+
+    console.log(
+      "UPDATEPALETTE",
+      Array.from(this.paletteMap.values()).length,
+      facts.length,
+      Array.from(this.paletteMap.values()),
+    );
   };
 
   getRandomColor = () => {
