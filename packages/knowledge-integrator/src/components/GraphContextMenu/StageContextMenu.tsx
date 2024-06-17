@@ -1,11 +1,7 @@
 import React, { useRef, useEffect, useContext, useState } from "react";
 import { observer } from "mobx-react";
-import { Drop, Box, Menu, Text, Layer, Button } from "grommet";
 import { ControlledMenu, MenuItem, MenuDivider } from "@szhsin/react-menu";
 import { sockSendCC } from "../../socket";
-
-import SubtypesModal from "../SubtypesModal";
-import ClassifiedModal from "./ClassifiedModal";
 
 import RootStoreContext from "../../context/RootStoreContext";
 
@@ -19,21 +15,10 @@ import {
 interface KindContextMenuProps {}
 
 const KindMenuItems: React.FC<KindContextMenuProps> = observer(() => {
-  const [uidToDelete, setUidToDelete] = useState(null);
-
-  const { graphViewStore, factDataStore } = useContext(RootStoreContext);
-
-  const { findDefinitiveFacts, removeFact } = factDataStore;
+  const { graphViewStore } = useContext(RootStoreContext);
 
   const { contextMenuFocus, closeContextMenu } = graphViewStore;
   const { x, y, uid } = contextMenuFocus;
-
-  const menuItemClassName = ({ hover }) =>
-    hover ? "my-menuitem-hover" : "my-menuitem";
-
-  const querySH = async () => {
-    sockSendCC("user", "getSpecializationHierarchy", { uid });
-  };
 
   const handleItemClick = (e) => {
     console.log(`[MenuItem] ${e.value} clicked`);

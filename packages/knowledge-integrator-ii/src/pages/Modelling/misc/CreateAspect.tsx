@@ -3,10 +3,10 @@ import Grid from "@mui/material/Grid";
 import { Button } from "@mui/material";
 import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
-import createMutation from "../validateAndSubmitBinaryFactMutation";
+import createMutation from "../validateAndSubmitDateFactMutation";
 import {
   SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
-  SUMBIT_BINARY_FACTS_ENDPOINT,
+  SUBMIT_BINARY_FACTS_ENDPOINT,
 } from "@relica/constants";
 import axios from "axios";
 import { baseFact } from "../baseFact";

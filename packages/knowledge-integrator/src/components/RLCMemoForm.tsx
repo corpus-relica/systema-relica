@@ -12,7 +12,7 @@ import {
 //@ts-ignore
 import {
   SUBMIT_BINARY_FACT_ENDPOINT,
-  SUMBIT_BINARY_FACTS_ENDPOINT,
+  SUBMIT_BINARY_FACTS_ENDPOINT,
 } from "@relica/constants";
 
 const GAP = "small";
@@ -38,7 +38,7 @@ const RLCMemoForm: React.FC = () => {
     refObjectUID: number,
     refObjectName: string,
     title: string,
-    body: string
+    body: string,
   ) => `[
     [1,"memo_${memoId}","1225","is classified as a","${rlcMemoTypeUID}", "rlc_memo"],
     [2,"memo_title_${memoId}","1225","is classified as a","${rlcMemoTitleTypeUID}","rlc_memo_title", "${title}"],
@@ -71,7 +71,7 @@ const RLCMemoForm: React.FC = () => {
       refObjectUID,
       refObjectName,
       escapeText(title),
-      escapeText(body)
+      escapeText(body),
     );
     const protofacts = JSON.parse(str);
     const facts = protofacts.map((protofact: string[]) => {
@@ -103,7 +103,7 @@ const RLCMemoForm: React.FC = () => {
     });
     // console.dir(facts);
     // const response = await axiosInstance.post(
-    //   SUMBIT_BINARY_FACTS_ENDPOINT,
+    //   SUBMIT_BINARY_FACTS_ENDPOINT,
     //   facts
     // );
     // const { foo } = response.data;

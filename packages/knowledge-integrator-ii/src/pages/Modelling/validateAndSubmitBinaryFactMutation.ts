@@ -1,7 +1,7 @@
 import axios from "axios";
 import {
   SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
-  SUMBIT_BINARY_FACTS_ENDPOINT,
+  SUBMIT_BINARY_FACTS_ENDPOINT,
 } from "@relica/constants";
 
 export default (facts: any[]) => ({
@@ -45,7 +45,7 @@ export default (facts: any[]) => ({
         };
       });
       const result = axios.post(
-        "http://localhost:3000" + SUMBIT_BINARY_FACTS_ENDPOINT,
+        "http://localhost:3000" + SUBMIT_BINARY_FACTS_ENDPOINT,
         foo
       );
       console.log("RESULT", result);
