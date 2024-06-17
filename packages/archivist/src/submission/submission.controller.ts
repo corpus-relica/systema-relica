@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SubmissionService } from './submission.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { CacheService } from 'src/cache/cache.service';
-import { UpdateCollectionDto } from './submission.dto';
+import { UpdateCollectionDto, CreateDateDto } from './submission.dto';
 
 @ApiTags('Submission')
 @Controller('submission')
@@ -77,6 +77,25 @@ export class SubmissionController {
       +collection_uid,
       collection_name,
     );
+    return result;
+  }
+
+  @Post('/date')
+  @ApiOperation({ summary: 'Create Date' })
+  @ApiResponse({ status: 200, description: 'Date created successfully.' })
+  @ApiResponse({ status: 500, description: 'Something went wrong.' })
+  async createDate(@Body() body: CreateDateDto) {
+    const { date_uid, collection_uid, collection_name } = body;
+    const result = await this.submissionService.submitDate({
+      lh_object_uid: +date_uid,
+      lh_object_name: '' + date_uid,
+      rel_type_uid: +1225,
+      rel_type_name: 'is classified as',
+      rh_object_uid: +550571,
+      rh_object_name: 'date',
+      collection_uid: +collection_uid,
+      collection_name,
+    });
     return result;
   }
 }

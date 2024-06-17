@@ -14,6 +14,7 @@ import CreateOccurrence from "./misc/CreateOccurrence";
 import ReviewAspect from "./misc/ReviewAspect";
 import CreateBinaryFact from "./misc/CreateBinaryFact";
 import ClassifyIndividual from "./misc/ClassifyIndividual";
+import CreateDate from "./misc/CreateDate";
 
 import XXX from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
@@ -164,6 +165,15 @@ export default function BasicSelect() {
         />
       );
       break;
+    case "create date":
+      element = (
+        <CreateDate
+          handleOpen={handleOpen}
+          handleClose={handleClose}
+          collection={collection}
+        />
+      );
+      break;
     default:
       element = <div>DEFAULT</div>;
   }
@@ -229,6 +239,7 @@ export default function BasicSelect() {
               <MenuItem value={"classify individual"}>
                 Classify Individual
               </MenuItem>
+              <MenuItem value={"create date"}>Create Date</MenuItem>
 
               {/*<MenuItem value={"review aspect"}>Review Aspect</MenuItem>*/}
             </Select>

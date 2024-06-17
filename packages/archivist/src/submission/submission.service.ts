@@ -229,4 +229,72 @@ RETURN r
       return { success: false, message: error.message };
     }
   };
+
+  submitDate = async (fact) => {
+    try {
+      const [lh_object_uid, fact_uid, rh_object_uid] =
+        this.uidService.reserveUID(3);
+
+      let finalFact = Object.assign({}, fact, { fact_uid });
+
+      // if (
+      //   parseInt(fact.lh_object_uid) >= 15000000 &&
+      //   parseInt(fact.lh_object_uid) <= 30000000
+      // ) {
+      //   finalFact = Object.assign({}, finalFact, {
+      //     lh_object_uid,
+      //   });
+      //   const result = await this.graphService.execWriteQuery(
+      //     `MERGE (n:Entity {uid: $uid}) RETURN n`,
+      //     {
+      //       uid: lh_object_uid,
+      //     },
+      //   );
+      //   if (result.length == 0) {
+      //     throw new Error('LH Merge operation failed');
+      //   }
+      // }
+
+      const result = await this.graphService.execWriteQuery(createFact, {
+        lh_object_uid: finalFact.lh_object_uid,
+        rh_object_uid: finalFact.rh_object_uid,
+        properties: finalFact,
+      });
+
+      if (!result || result.length == 0) {
+        return {
+          success: false,
+          message: 'Execution of createDate failed',
+        };
+      }
+
+      const convertedResult = this.graphService.convertNeo4jInts(
+        result[0].toObject().r,
+      );
+      const returnFact = Object.assign(
+        { rel_type_name: finalFact.rel_type_name },
+        convertedResult.properties,
+      );
+
+      // UPATE CACHE
+      // collect all the uids of the nodes involved in the fact
+      // const uids = [returnFact.lh_object_uid];
+      // await Promise.all(
+      //   uids.map(async (uid) => {
+      //     await this.cacheService.updateFactsInvolvingEntity(uid);
+      //   }),
+      // );
+      //
+
+      return {
+        success: true,
+        fact: returnFact,
+      };
+    } catch (error) {
+      console.error(`Error in submitBinaryFact: ${error.message}`);
+      // Rethrow the error if you want to handle it in a higher level of your app
+      // throw error;
+      return { success: false, message: error.message };
+    }
+  };
 }
