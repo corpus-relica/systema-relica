@@ -5,11 +5,15 @@ import {
   EditGuesser,
   ShowGuesser,
   CustomRoutes,
+  combineDataProviders,
+  defaultDataProvider,
 } from "react-admin";
 import { Route } from "react-router-dom";
 
-import { dataProvider } from "./dataProvider";
 import { authProvider } from "./authProvider";
+
+import CCDataProvider from "./data/CCDataProvider";
+import ArchivistDataProvider from "./data/ArchivistDataProvider";
 
 import { MyLayout } from "./MyLayout";
 import Graph from "./pages/Graph";
@@ -20,6 +24,23 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
+const dataProvider = new Proxy(defaultDataProvider, {
+  get: (target, name) => {
+    return (resource: any, params: any) => {
+      console.log("GETTING", resource, name);
+      if (typeof name === "symbol" || name === "then") {
+        return;
+      }
+      if (resource.startsWith("db/")) {
+        return ArchivistDataProvider[name](resource.substring(3), params);
+      }
+      if (resource.startsWith("env/")) {
+        return CCDataProvider.getList(resource.substring(4), params);
+      }
+    };
+  },
+});
+
 export const App = () => (
   <QueryClientProvider client={queryClient}>
     <Admin
@@ -28,11 +49,11 @@ export const App = () => (
       dataProvider={dataProvider}
       authProvider={authProvider}
     >
-      <Resource name="kinds" list={ListGuesser} />
+      <Resource name="db/kinds" list={ListGuesser} />
       <CustomRoutes>
-        <Route path="/graph" element={<Graph />} />
-        <Route path="/modelling" element={<Modelling />} />
+        <Route path="env/graph" element={<Graph />} />
       </CustomRoutes>
     </Admin>
   </QueryClientProvider>
 );
+// <Route path="/modelling" element={<Modelling />} />

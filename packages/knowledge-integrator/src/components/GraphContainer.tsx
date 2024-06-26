@@ -42,16 +42,16 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
 
   const jsCats = toJS(categories);
   console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
-  // console.log(jsCats);
-  // console.log(toJS(facts));
-  // console.log(selectNode);
+  console.log(jsCats);
+  console.log(toJS(facts));
+  console.log(selectNode);
   // console.log(handleContextMenuTrigger);
   // console.log(graphViewStore.selectNone);
   // console.log(handleEdgeRollOver);
   // console.log(handleEdgeRollOut);
-  // console.log(selectedNode);
+  console.log(selectedNode);
   console.log(selectedEdge);
-  // console.log(paletteMap);
+  console.log(paletteMap);
   console.log("~~~~~~~~~~~ END WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
   return (
     <ErrorBoundary>
