@@ -52,8 +52,8 @@ export const App = () => (
       <Resource name="db/kinds" list={ListGuesser} />
       <CustomRoutes>
         <Route path="env/graph" element={<Graph />} />
+        <Route path="/modelling" element={<Modelling />} />
       </CustomRoutes>
     </Admin>
   </QueryClientProvider>
 );
-// <Route path="/modelling" element={<Modelling />} />
