@@ -321,3 +321,8 @@ WITH r, CASE WHEN $sortOrder = 'ASC' THEN r[$sortField] ELSE null END AS sortFie
 ORDER BY sortFieldAsc ASC, sortFieldDesc DESC
 SKIP $skip LIMIT $pageSize
 RETURN r`;
+
+export const countKindsQuery = `
+MATCH (a)--(r)-->()
+WHERE r.rel_type_uid = 1146 OR r.rel_type_uid = 1726
+RETURN count(r) as total`;

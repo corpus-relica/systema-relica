@@ -5,59 +5,68 @@ import { Injectable, Logger } from '@nestjs/common';
 import { GraphService } from 'src/graph/graph.service';
 
 import {
-    getListOfKindsQuery,
-    // getOneKindQuery,
-    // getManyKindsQuery,
-    // getManyReferenceOfKindQuery,
-    // createKindQuery,
-    // updateKindQuery,
-    // deleteKindQuery,
-    // deleteManyKindsQuery,
+  getListOfKindsQuery,
+  countKindsQuery,
+  // getOneKindQuery,
+  // getManyKindsQuery,
+  // getManyReferenceOfKindQuery,
+  // createKindQuery,
+  // updateKindQuery,
+  // deleteKindQuery,
+  // deleteManyKindsQuery,
 } from 'src/graph/queries';
 
 @Injectable()
 export class KindsService {
-    private readonly logger = new Logger(KindsService.name);
+  private readonly logger = new Logger(KindsService.name);
 
-    constructor(private readonly graphService: GraphService) {}
+  constructor(private readonly graphService: GraphService) {}
 
-    async getList(
-        sortField: string,
-        sortOrder: string,
-        skip: number,
-        pageSize: number,
-    ) {
-        const result = await this.graphService.execQuery(getListOfKindsQuery, {
-            sortField,
-            sortOrder,
-            skip: neo4j.int(skip),
-            pageSize: neo4j.int(pageSize),
-        });
+  async getList(
+    sortField: string,
+    sortOrder: string,
+    skip: number,
+    pageSize: number,
+  ) {
+    const result = await this.graphService.execQuery(getListOfKindsQuery, {
+      sortField,
+      sortOrder,
+      skip: neo4j.int(skip),
+      pageSize: neo4j.int(pageSize),
+    });
 
-        const transformedResult = result.map((item) => {
-            const t: any = this.graphService.transformResult(item);
-            t.id = t.fact_uid;
-            return t;
-        });
+    const total = await this.graphService.execQuery(countKindsQuery, {});
 
-        return transformedResult;
-    }
+    const transformedResult = result.map((item) => {
+      const t: any = this.graphService.transformResult(item);
+      t.id = t.fact_uid;
+      return t;
+    });
 
-    async getOne(id: number) {
-        return {};
-    }
+    //convert neo4j integer to js number
+    console.log();
 
-    async getMany(data: any) {}
+    return {
+      data: transformedResult,
+      total: total[0].get('total').toInt(),
+    };
+  }
 
-    async getManyReference(data: any) {}
+  async getOne(id: number) {
+    return {};
+  }
 
-    async create(data: any) {}
+  async getMany(data: any) {}
 
-    async update(id: number, data: any) {}
+  async getManyReference(data: any) {}
 
-    async updateMany(data: any) {}
+  async create(data: any) {}
 
-    async delete(id: number) {}
+  async update(id: number, data: any) {}
 
-    async deleteMany(data: any) {}
+  async updateMany(data: any) {}
+
+  async delete(id: number) {}
+
+  async deleteMany(data: any) {}
 }

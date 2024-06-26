@@ -18,7 +18,7 @@ const Graph = () => {
   const [facts, setFacts] = useStore("facts", []);
   const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
-  const [paletteMap, setPaletteMap] = useStore("paletteMap", []);
+  const [paletteMap, setPaletteMap] = useStore("paletteMap", new Map());
 
   // const establishCats = async () => {
   //   const concepts = await resolveUIDs(
@@ -110,30 +110,32 @@ const Graph = () => {
   const onStageClick = () => {
     // graphViewStore.selectNone();
   };
-  // console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
+  console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
   // console.log(facts);
   return (
-    <div>
+    <div style={{ height: "100%" }}>
       <h1>Graph</h1>
-      <GraphView
-        categories={categories}
-        facts={facts} // nodeData={nodeData}
-        // edgeData={edgeData}
-        onNodeClick={selectNode}
-        onNodeRightClick={(uid: number, event: MouseEvent) => {
-          // handleContextMenuTrigger(uid, "entity", event);
-        }}
-        onStageClick={onStageClick}
-        onEdgeRollOver={handleEdgeRollOver}
-        onEdgeRollOut={handleEdgeRollOut}
-        onEdgeClick={handleEdgeClick}
-        onEdgeRightClick={(uid: number, event: MouseEvent) => {
-          // handleContextMenuTrigger(uid, "fact", event);
-        }}
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        paletteMap={paletteMap}
-      />
+      <div style={{ width: "100vw", height: "100vh" }}>
+        <GraphView
+          categories={categories}
+          facts={facts} // nodeData={nodeData}
+          // edgeData={edgeData}
+          onNodeClick={selectNode}
+          onNodeRightClick={(uid: number, event: MouseEvent) => {
+            // handleContextMenuTrigger(uid, "entity", event);
+          }}
+          onStageClick={onStageClick}
+          onEdgeRollOver={handleEdgeRollOver}
+          onEdgeRollOut={handleEdgeRollOut}
+          onEdgeClick={handleEdgeClick}
+          onEdgeRightClick={(uid: number, event: MouseEvent) => {
+            // handleContextMenuTrigger(uid, "fact", event);
+          }}
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          paletteMap={paletteMap}
+        />
+      </div>
     </div>
   );
 };

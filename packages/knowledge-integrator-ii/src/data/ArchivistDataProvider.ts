@@ -1,26 +1,57 @@
 import axios from "axios";
 
-const CCAxiosInstance = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_RELICA_ARCHIVIST_API_URL,
 });
 
 const dataProvider = {
   // get a list of records based on sort, filter, and pagination
   getList: (resource: string, params: any): Promise<any> => {
-    // console.log("ARCHIVIST::GETTING LIST", resource, params);
+    console.log("ARCHIVIST::GETTING LIST", resource, params);
+
     switch (resource) {
       case "concept/entities":
-        return CCAxiosInstance.get("/concept/entities", {
-          params: { uids: "[" + params.uids.join(",") + "]" },
-        }).then((response) => {
-          response.data.forEach((e: any) => {
-            e.id = e.uid;
+        return axiosInstance
+          .get("/concept/entities", {
+            params: { uids: "[" + params.uids.join(",") + "]" },
+          })
+          .then((response) => {
+            response.data.forEach((e: any) => {
+              e.id = e.uid;
+            });
+            return {
+              data: response.data,
+              total: response.data.length,
+            };
           });
-          return {
-            data: response.data,
-            total: response.data.length,
-          };
-        });
+      case "kinds":
+        const sort = params.sort
+          ? `["${params.sort.field}","${params.sort.order}"]`
+          : '["id", "ASC"]';
+        const rangeMin =
+          params.pagination.page * params.pagination.perPage -
+          params.pagination.perPage;
+        const rangeMax = params.pagination.page * params.pagination.perPage;
+        const range = `[${rangeMin}, ${rangeMax}]`;
+        return axiosInstance
+          .get("kinds", {
+            params: {
+              sort: sort,
+              range: range,
+              filter: "{}",
+            },
+          })
+          .then((response) => {
+            console.log("KINDS", response);
+            response.data.data.forEach((e: any) => {
+              e.id = e.uid;
+            });
+
+            return {
+              data: response.data.data,
+              total: response.data.total,
+            };
+          });
       default:
         //return rejected promise
         return Promise.reject("Unknown resource");
