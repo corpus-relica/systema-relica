@@ -19,9 +19,9 @@
     "ag-grid-react": "^31.3.2",
     "axios": "^1.7.2",
     "formik": "^2.4.6",
-    "ra-data-simple-rest": "^4.16.0",
+    "ra-data-simple-rest": "^5.0.2",
     "react": "^18.2.0",
-    "react-admin": "^4.16.0",
+    "react-admin": "^5.0.2",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
