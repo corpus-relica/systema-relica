@@ -1,7 +1,17 @@
-import React, { useEffect, useState, memo, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  memo,
+  useCallback,
+  useRef,
+  useReducer,
+} from "react";
+
 import GraphView from "@relica/3d-graph-ui";
+
 import { useStore, useDataProvider } from "react-admin";
 import { nodeData, edgeData } from "../types";
+import GraphContextMenu from "../components/GraphContextMenu";
 
 const cats = {
   730044: "Physical Object",
@@ -19,23 +29,6 @@ const Graph = () => {
   const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
   const [paletteMap, setPaletteMap] = useStore("paletteMap", new Map());
-
-  // const establishCats = async () => {
-  //   const concepts = await resolveUIDs(
-  //     Object.keys(cats).map((x) => parseInt(x)),
-  //   );
-  //   console.log("vvvv - CONCEPTS vvvv:");
-  //   console.log(concepts);
-  //   const newCats = [];
-  //   for (const [key, name] of Object.entries(cats)) {
-  //     const concept = concepts.find((c) => c.uid === parseInt(key));
-  //     const { uid, descendants } = concept;
-  //     newCats.push({ uid, name, descendants });
-  //   }
-  //   console.log("vvvv - CATEGORIES vvvv:");
-  //   console.log(newCats);
-  //   setCategories(newCats);
-  // };
 
   useEffect(() => {
     console.log("vvvv - CATEGORIES vvvv:");
@@ -80,17 +73,32 @@ const Graph = () => {
     // this.hoveredLink = link?.id || null;
   };
 
+  // START MENU
+
+  const [open, setOpen] = useState(false);
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
+  const [uid, setUid] = useState(0);
+  const [type, setType] = useState("");
+
   const handleContextMenuTrigger = (
     uid: number,
     type: string,
     event: MouseEvent
   ) => {
-    // const x = event.clientX;
-    // const y = event.clientY;
-    // this.contextMenuFocus = { x, y, uid, type };
+    event.preventDefault();
+    setX(event.clientX);
+    setY(event.clientY);
+    setUid(uid);
+    setType(type);
+    setOpen(true);
   };
 
-  //
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  // END MENU
 
   const handleEdgeRollOver = (uid: number) => {
     // const fact = factDataStore.facts.find((fact) => fact.fact_uid === uid);
@@ -108,28 +116,34 @@ const Graph = () => {
   };
 
   const onStageClick = () => {
-    // graphViewStore.selectNone();
+    setOpen(false);
   };
-  console.log("~~~~~~~~~~~ WHAT IS GOING ON HERE!!!! ~~~~~~~~~~");
-  // console.log(facts);
+
   return (
     <div style={{ height: "100%" }}>
       <h1>Graph</h1>
+      <GraphContextMenu
+        open={open}
+        handleClose={handleClose}
+        x={x}
+        y={y}
+        uid={uid}
+        type={type}
+      />
       <div style={{ width: "100vw", height: "100vh" }}>
         <GraphView
           categories={categories}
-          facts={facts} // nodeData={nodeData}
-          // edgeData={edgeData}
+          facts={facts}
           onNodeClick={selectNode}
           onNodeRightClick={(uid: number, event: MouseEvent) => {
-            // handleContextMenuTrigger(uid, "entity", event);
+            handleContextMenuTrigger(uid, "entity", event);
           }}
           onStageClick={onStageClick}
           onEdgeRollOver={handleEdgeRollOver}
           onEdgeRollOut={handleEdgeRollOut}
           onEdgeClick={handleEdgeClick}
           onEdgeRightClick={(uid: number, event: MouseEvent) => {
-            // handleContextMenuTrigger(uid, "fact", event);
+            handleContextMenuTrigger(uid, "fact", event);
           }}
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}

@@ -58,8 +58,7 @@ const GraphContainer: React.FC<GraphContainerProps> = observer(() => {
       {jsCats.length > 0 && (
         <GraphView
           categories={toJS(categories)}
-          facts={toJS(facts)} // nodeData={nodeData}
-          // edgeData={edgeData}
+          facts={toJS(facts)}
           onNodeClick={selectNode}
           onNodeRightClick={(uid: number, event: MouseEvent) => {
             handleContextMenuTrigger(uid, "entity", event);
