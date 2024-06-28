@@ -12,6 +12,7 @@ import GraphView from "@relica/3d-graph-ui";
 import { useStore, useDataProvider } from "react-admin";
 import { nodeData, edgeData } from "../types";
 import GraphContextMenu from "../components/GraphContextMenu";
+import { ccSocket } from "../socket";
 
 const cats = {
   730044: "Physical Object",
@@ -30,6 +31,14 @@ const Graph = () => {
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
   const [paletteMap, setPaletteMap] = useStore("paletteMap", new Map());
 
+  const onAddFacts = (data: any) => {
+    const newFacts = data.facts.filter((fact) => {
+      return !facts.some((f) => f.fact_uid === fact.fact_uid);
+    });
+
+    setFacts([...facts, ...newFacts]);
+  };
+
   useEffect(() => {
     console.log("vvvv - CATEGORIES vvvv:");
     const init = async () => {
@@ -43,6 +52,10 @@ const Graph = () => {
         newCats.push({ uid, name, descendants });
       }
       setCategories(newCats);
+      //
+      const env = await dataProvider.getList("env/facts", {});
+      console.log("vvvv - ENVIRONMENT vvvv:");
+      setFacts(env.data);
     };
     //
     // dataProvider
@@ -59,6 +72,11 @@ const Graph = () => {
     //     // setLoading(false);
     //   });
     init();
+    ccSocket.on("system:addFacts", onAddFacts);
+
+    return () => {
+      ccSocket.off("system:addFacts", onAddFacts);
+    };
   }, []);
 
   const selectNode = (id: number) => {
@@ -95,6 +113,7 @@ const Graph = () => {
   };
 
   const handleClose = () => {
+    console.log("CLOSE ???????");
     setOpen(false);
   };
 
@@ -119,6 +138,7 @@ const Graph = () => {
     setOpen(false);
   };
 
+  console.log("GRAPH RENDER, OPEN ?????", open);
   return (
     <div style={{ height: "100%" }}>
       <h1>Graph</h1>

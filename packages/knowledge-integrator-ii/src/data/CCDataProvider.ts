@@ -63,8 +63,13 @@ const dataProvider = {
 
   // get a single record by id
   getOne: (resource: string, params: any): Promise<any> => {
+    return CCAxiosInstance.get(`model?uid=${params.uid}`).then((response) => {
+      response.data.id = response.data.uid;
+      return { data: response.data };
+    });
     return Promise.resolve({ data: { id: 123, name: "hello" } });
   },
+
   // get a list of records based on an array of ids
   getMany: (resource: string, params: any): Promise<any> => {
     return Promise.resolve({ data: { id: 123, name: "hello" } });

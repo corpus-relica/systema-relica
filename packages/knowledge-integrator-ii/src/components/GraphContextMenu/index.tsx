@@ -1,40 +1,57 @@
-import React from "react";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import React, { useEffect, useState } from "react";
+import KindContextMenu from "./KindContextMenu";
 
 interface GraphContextMenuProps {
   open: boolean;
   handleClose: () => void;
   x: number;
   y: number;
+  uid: number;
+  type: string;
 }
 
-const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
-  const { open, handleClose, x, y } = props;
+import { useStore, useDataProvider } from "react-admin";
 
-  return (
-    <Menu
-      open={open}
-      onClose={handleClose}
-      anchorReference="anchorPosition"
-      anchorPosition={{ top: y, left: x }}
-      MenuListProps={{
-        "aria-labelledby": "basic-button",
-        style: { pointerEvents: "auto" },
-      }}
-      PaperProps={{
-        style: { pointerEvents: "auto" },
-      }}
-      BackdropProps={{
-        style: { pointerEvents: "none" },
-      }}
-      style={{ pointerEvents: "none" }}
-    >
-      <MenuItem onClick={handleClose}>Profile</MenuItem>
-      <MenuItem onClick={handleClose}>My account</MenuItem>
-      <MenuItem onClick={handleClose}>Logout</MenuItem>
-    </Menu>
-  );
+const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
+  const dataProvider = useDataProvider();
+  const { open, handleClose, x, y, uid, type } = props;
+  const [menu, setMenu] = useState<JSX.Element | null>(null);
+
+  console.log("GRAPH CONTEXT MENU ?????", open);
+
+  useEffect(() => {
+    const foo = async () => {
+      if (uid) {
+        if (type === "entity") {
+          const result = await dataProvider.getOne("env/", {
+            uid: uid,
+          });
+          const model = result.data;
+          if (model.type === "kind") {
+            setMenu(
+              <KindContextMenu
+                uid={uid}
+                open={open}
+                handleClose={handleClose}
+                x={x}
+                y={y}
+              />
+            );
+          } else if (model.type === "individual") {
+            // menu = <div>Individual</div>;
+          } else if (model.type === "qualification") {
+            // menu = <div>Qualification</div>;
+          } else {
+            console.log("unknown model type: ", model.type);
+          }
+        }
+      }
+    };
+
+    foo();
+  }, [uid, open]);
+
+  return <>{menu}</>;
 };
 
 export default GraphContextMenu;
