@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import KindContextMenu from "./KindContextMenu";
+import IndividualContextMenu from "./IndividualContextMenu";
 
 interface GraphContextMenuProps {
   open: boolean;
@@ -17,8 +18,6 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const { open, handleClose, x, y, uid, type } = props;
   const [menu, setMenu] = useState<JSX.Element | null>(null);
 
-  console.log("GRAPH CONTEXT MENU ?????", open);
-
   useEffect(() => {
     const foo = async () => {
       if (uid) {
@@ -27,6 +26,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             uid: uid,
           });
           const model = result.data;
+          console.log("model: ", model.type);
           if (model.type === "kind") {
             setMenu(
               <KindContextMenu
@@ -38,7 +38,15 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
               />
             );
           } else if (model.type === "individual") {
-            // menu = <div>Individual</div>;
+            setMenu(
+              <IndividualContextMenu
+                uid={uid}
+                open={open}
+                handleClose={handleClose}
+                x={x}
+                y={y}
+              />
+            );
           } else if (model.type === "qualification") {
             // menu = <div>Qualification</div>;
           } else {

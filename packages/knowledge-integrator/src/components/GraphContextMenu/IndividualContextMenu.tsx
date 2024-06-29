@@ -33,10 +33,6 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = observer(
     const menuItemClassName = ({ hover }) =>
       hover ? "my-menuitem-hover" : "my-menuitem";
 
-    const querySH = async () => {
-      sockSendCC("user", "getSpecializationHierarchy", { uid });
-    };
-
     const queryOmni = async () => {
       sockSendCC("user", "getAllRelatedFacts", { uid });
     };

@@ -11,16 +11,11 @@ import Divider from "@mui/material/Divider";
 
 import { sockSendCC } from "../../socket";
 
-const SH = "SH";
-const SHOW_CLASSIFIED = "show classified";
 const SHOW_ALL = "show 'all'";
-const SHOW_SUBTYPES = "show subtypes";
-const SHOW_SUBTYPES_CONE = "show subtypes cone";
 const REM_THIS = "rem this";
-const REM_SUBTYPES_R = "rem subtypes(r)";
 const DELETE_THIS = "delete this!";
 
-interface KindContextMenuProps {
+interface IndividualContextMenuProps {
   uid: number;
   open: boolean;
   handleClose: () => void;
@@ -30,10 +25,7 @@ interface KindContextMenuProps {
   // type: string;
 }
 
-// const handleItemClick = (e) => {
-// };
-
-const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
+const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
   const { uid, open, handleClose, x, y } = props;
 
   const handleItemClick = useCallback(
@@ -41,47 +33,28 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       const value = e.currentTarget.getAttribute("value");
       console.log(`Clicked item with value: ${value}`);
       switch (value) {
-        case SH:
-          sockSendCC("user", "getSpecializationHierarchy", { uid });
-          handleClose();
-          break;
-        case SHOW_CLASSIFIED:
-          // queryClassified();
-          break;
         case SHOW_ALL:
           sockSendCC("user", "getAllRelatedFacts", { uid });
           handleClose();
-          // queryOmni();
-          break;
-        case SHOW_SUBTYPES:
-          // querySubtypes();
-          break;
-        case SHOW_SUBTYPES_CONE:
-          // querySubtypesCone();
           break;
         case REM_THIS:
-          // removeEntity();
-          break;
-        case REM_SUBTYPES_R:
-          // removeEntitySubtypesRecursive();
+          sockSendCC("user", "removeEntity", { uid });
+          handleClose();
           break;
         case DELETE_THIS:
           // setUidToDelete(uid);
           // setWarnIsOpen(true);
+          handleClose();
           break;
-
         default:
-          console.log("DEFAULT");
-          break;
+          console.log(`Unknown value: ${value}`);
       }
     },
-    [uid]
+    [uid, handleClose]
   );
 
   const menuItemClassName = ({ hover }) =>
     hover ? "my-menuitem-hover" : "my-menuitem";
-
-  console.log("KIND CONTEXT MENU ?????", open);
   return (
     <Menu
       open={open}
@@ -100,26 +73,36 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       }}
       style={{ pointerEvents: "none" }}
     >
-      <MenuItem value="SH" onClick={handleItemClick}>
-        SH
-      </MenuItem>
-      <MenuItem value={SHOW_CLASSIFIED} disabled>
-        show classified
+      <MenuItem value="show classifier" disabled>
+        show classifier
       </MenuItem>
       <MenuItem value={SHOW_ALL} onClick={handleItemClick}>
         show 'all'
       </MenuItem>
-      <MenuItem value={SHOW_SUBTYPES}>show subtypes</MenuItem>
-      <MenuItem value={SHOW_SUBTYPES_CONE}>show subtypes cone</MenuItem>
       <Divider />
-      <MenuItem value={REM_THIS}>rem this</MenuItem>
-      <MenuItem value={REM_SUBTYPES_R}>rem subtypes(r)</MenuItem>
-      <Divider />
-      <MenuItem value={DELETE_THIS} className={menuItemClassName}>
+      <MenuItem value={REM_THIS} onClick={handleItemClick}>
+        rem this
+      </MenuItem>
+      <MenuItem
+        value={DELETE_THIS}
+        onClick={handleItemClick}
+        className={menuItemClassName}
+      >
         delete this!
       </MenuItem>
     </Menu>
   );
 };
 
-export default KindContextMenu;
+// <MenuItem onClick={handleItemClick} value="show all facts">
+//   Show all facts
+// </MenuItem>
+// <MenuItem onClick={handleItemClick} value="show all concepts">
+//   Show all concepts
+// </MenuItem>
+// <Divider />
+// <MenuItem onClick={handleItemClick} value="delete this!">
+//   Delete this!
+// </MenuItem>
+
+export default IndividualContextMenu;

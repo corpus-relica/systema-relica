@@ -8,13 +8,20 @@ import {
   CustomRoutes,
   combineDataProviders,
   defaultDataProvider,
+  memoryStore,
 } from "react-admin";
+
 import { Route } from "react-router-dom";
 
 import { authProvider } from "./authProvider";
 
 import CCDataProvider from "./data/CCDataProvider";
 import ArchivistDataProvider from "./data/ArchivistDataProvider";
+
+import { useStores } from "./context/RootStoreContext";
+
+import { resolveUIDs } from "./RLCBaseClient";
+import { retrieveEnvironment } from "./CCClient";
 
 import { MyLayout } from "./MyLayout";
 import Graph from "./pages/Graph";
@@ -48,15 +55,69 @@ const dataProvider = new Proxy(defaultDataProvider, {
   },
 });
 
+const cats = {
+  730044: "Physical Object",
+  193671: "Occurrence",
+  160170: "Role",
+  790229: "Aspect",
+  //970002: "Information",
+  2850: "Relation",
+};
+
 export const App = () => {
+  const rootStore: any = useStores();
+  console.log("vvvv - ROOT STORE vvvv:");
+  console.log(rootStore);
+  const { factDataStore } = rootStore;
+  const { addFacts, addConcepts, setCategories } = factDataStore;
+  const [isConnected, setIsConnected] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  const establishCats = async () => {
+    const concepts = await resolveUIDs(
+      Object.keys(cats).map((x) => parseInt(x))
+    );
+    console.log("vvvv - CONCEPTS vvvv:");
+    console.log(concepts);
+    const newCats = [];
+    for (const [key, name] of Object.entries(cats)) {
+      const concept = concepts.find((c: any) => c.uid === parseInt(key));
+      const { uid, descendants } = concept;
+      newCats.push({ uid, name, descendants });
+    }
+    console.log("vvvv - CATEGORIES vvvv:");
+    console.log(newCats);
+    setCategories(newCats);
+  };
+
+  useEffect(() => {
+    const retrieveEnv = async () => {
+      const env = await retrieveEnvironment();
+      console.log("vvvv - ENVIRONMENT vvvv:");
+      console.log(env);
+      factDataStore.addFacts(env.facts);
+      // semanticModelStore.addModels(env.models);
+      // graphViewStore.selectedNode = env.selectedEntity;
+    };
+
+    const foobarbaz = async () => {
+      await establishCats();
+      await retrieveEnv();
+      console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
+      setIsReady(true);
+    };
+
+    foobarbaz();
+  }, []);
+
   useEffect(() => {
     const onConnect = () => {
-      // setIsConnected(true);
+      setIsConnected(true);
       console.log("//// CONNECTED SOCKET> CC");
     };
 
     const onDisconnect = () => {
-      // setIsConnected(false);
+      setIsConnected(false);
       console.log("//// DISCONNECTED SOCKET> CC");
     };
 
@@ -76,12 +137,12 @@ export const App = () => {
 
     const onAddFacts = (d) => {
       console.log(d);
-      // factDataStore.addFacts(d.facts);
+      factDataStore.addFacts(d.facts);
       // semanticModelStore.addModels(d.models);
     };
 
     const onRemFacts = (d) => {
-      // factDataStore.removeFacts(d.fact_uids);
+      factDataStore.removeFacts(d.fact_uids);
       // semanticModelStore.models.forEach((model) => {
       //   if (!factDataStore.hasObject(model.uid))
       //     semanticModelStore.removeModel(model.uid);
@@ -89,7 +150,7 @@ export const App = () => {
     };
 
     const onEntitiesCleared = () => {
-      // factDataStore.clearFacts();
+      factDataStore.clearFacts();
       // semanticModelStore.clearModels();
       // graphViewStore.selectedNode = null;
     };
@@ -129,6 +190,7 @@ export const App = () => {
         dashboard={Dashboard}
         dataProvider={dataProvider}
         authProvider={authProvider}
+        store={memoryStore()}
       >
         <Resource name="db/kinds" list={ListGuesser} />
         <CustomRoutes>
