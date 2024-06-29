@@ -34,8 +34,9 @@ interface KindContextMenuProps {
   handleClose: () => void;
   x: number;
   y: number;
-  // uid: number;
-  // type: string;
+  setClassifiedModalIsOpen: (isOpen: boolean) => void;
+  setPossibleClassified: (classified: any) => void;
+  setExistingClassified: (classified: any) => void;
 }
 
 // const handleItemClick = (e) => {
@@ -45,7 +46,16 @@ import { useStores } from "../../context/RootStoreContext";
 
 const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   const { factDataStore } = useStores();
-  const { uid, open, handleClose, x, y } = props;
+  const {
+    uid,
+    open,
+    handleClose,
+    x,
+    y,
+    setClassifiedModalIsOpen,
+    setPossibleClassified,
+    setExistingClassified,
+  } = props;
 
   const handleItemClick = useCallback(
     async (e) => {
@@ -69,9 +79,9 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
               );
             })
             .map((individual) => individual.lh_object_uid);
-          // setPossibleClassified(classified);
-          // setExistingClassified(existingClassified);
-          // setClassifiedModalIsOpen(true);
+          setPossibleClassified(classified);
+          setExistingClassified(existingClassified);
+          setClassifiedModalIsOpen(true);
           // const response = await getClassified(uid);
           // addFacts(response);
           console.log("MUTHERFUCK??");
@@ -151,7 +161,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       <MenuItem value="SH" onClick={handleItemClick}>
         SH
       </MenuItem>
-      <MenuItem value={SHOW_CLASSIFIED} disabled>
+      <MenuItem value={SHOW_CLASSIFIED} onClick={handleItemClick}>
         show classified
       </MenuItem>
       <MenuItem value={SHOW_ALL} onClick={handleItemClick}>

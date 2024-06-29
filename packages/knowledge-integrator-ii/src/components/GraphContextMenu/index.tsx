@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import KindContextMenu from "./KindContextMenu";
 import IndividualContextMenu from "./IndividualContextMenu";
+import ClassifiedDialogue from "./ClassifiedDialogue";
+import { sockSendCC } from "../../socket";
 
 interface GraphContextMenuProps {
   open: boolean;
@@ -17,6 +19,10 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const dataProvider = useDataProvider();
   const { open, handleClose, x, y, uid, type } = props;
   const [menu, setMenu] = useState<JSX.Element | null>(null);
+
+  const [classifiedModalIsOpen, setClassifiedDialogueIsOpen] = useState(false);
+  const [possibleClassified, setPossibleClassified] = useState([]);
+  const [existingClassified, setExistingClassified] = useState([]);
 
   useEffect(() => {
     const foo = async () => {
@@ -35,6 +41,9 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 handleClose={handleClose}
                 x={x}
                 y={y}
+                setClassifiedModalIsOpen={setClassifiedDialogueIsOpen}
+                setPossibleClassified={setPossibleClassified}
+                setExistingClassified={setExistingClassified}
               />
             );
           } else if (model.type === "individual") {
@@ -59,7 +68,29 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
     foo();
   }, [uid, open]);
 
-  return <>{menu}</>;
+  return (
+    <>
+      {menu}
+
+      {classifiedModalIsOpen && (
+        <ClassifiedDialogue
+          uid={uid}
+          classified={possibleClassified}
+          existingSubtypes={existingClassified}
+          handleClose={() => {
+            setClassifiedDialogueIsOpen(false);
+          }}
+          handleOk={(selected: number[], notSelected: number[]) => {
+            setClassifiedDialogueIsOpen(false);
+            console.log("selected: ", selected);
+            console.log("notSelected: ", notSelected);
+            sockSendCC("user", "loadEntities", { uids: selected });
+            sockSendCC("user", "removeEntities", { uids: notSelected });
+          }}
+        />
+      )}
+    </>
+  );
 };
 
 export default GraphContextMenu;
