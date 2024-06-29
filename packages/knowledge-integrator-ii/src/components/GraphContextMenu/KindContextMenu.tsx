@@ -154,6 +154,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
     <Menu
       open={open}
       onClose={handleClose}
+      transitionDuration={0}
       anchorReference="anchorPosition"
       anchorPosition={{ top: y, left: x }}
       MenuListProps={{
