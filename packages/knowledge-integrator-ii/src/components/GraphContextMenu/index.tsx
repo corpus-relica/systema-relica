@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import KindContextMenu from "./KindContextMenu";
 import IndividualContextMenu from "./IndividualContextMenu";
 import ClassifiedDialogue from "./ClassifiedDialogue";
+import SubtypesDialogue from "./SubtypesDialogue";
 import { sockSendCC } from "../../socket";
 
 interface GraphContextMenuProps {
@@ -20,7 +21,12 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const { open, handleClose, x, y, uid, type } = props;
   const [menu, setMenu] = useState<JSX.Element | null>(null);
 
-  const [classifiedModalIsOpen, setClassifiedDialogueIsOpen] = useState(false);
+  const [subtypesDialogueIsOpen, setSubtypesDialogueIsOpen] = useState(false);
+  const [possibleSubtypes, setPossibleSubtypes] = useState([]);
+  const [existingSubtypes, setExistingSubtypes] = useState([]);
+
+  const [classifiedDialogueIsOpen, setClassifiedDialogueIsOpen] =
+    useState(false);
   const [possibleClassified, setPossibleClassified] = useState([]);
   const [existingClassified, setExistingClassified] = useState([]);
 
@@ -41,7 +47,10 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 handleClose={handleClose}
                 x={x}
                 y={y}
-                setClassifiedModalIsOpen={setClassifiedDialogueIsOpen}
+                setSubtypesDialogueIsOpen={setSubtypesDialogueIsOpen}
+                setPossibleSubtypes={setPossibleSubtypes}
+                setExistingSubtypes={setExistingSubtypes}
+                setClassifiedDialogueIsOpen={setClassifiedDialogueIsOpen}
                 setPossibleClassified={setPossibleClassified}
                 setExistingClassified={setExistingClassified}
               />
@@ -72,7 +81,24 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
     <>
       {menu}
 
-      {classifiedModalIsOpen && (
+      {subtypesDialogueIsOpen && (
+        <SubtypesDialogue
+          uid={uid}
+          subtypes={possibleSubtypes}
+          existingSubtypes={existingSubtypes}
+          handleClose={() => {
+            setSubtypesDialogueIsOpen(false);
+          }}
+          handleOk={(selected: number[], notSelected: number[]) => {
+            setSubtypesDialogueIsOpen(false);
+            console.log(selected, notSelected);
+            sockSendCC("user", "loadEntities", { uids: selected });
+            sockSendCC("user", "removeEntities", { uids: notSelected });
+          }}
+        />
+      )}
+
+      {classifiedDialogueIsOpen && (
         <ClassifiedDialogue
           uid={uid}
           classified={possibleClassified}

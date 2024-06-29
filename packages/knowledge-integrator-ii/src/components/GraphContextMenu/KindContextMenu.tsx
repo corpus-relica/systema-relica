@@ -34,7 +34,10 @@ interface KindContextMenuProps {
   handleClose: () => void;
   x: number;
   y: number;
-  setClassifiedModalIsOpen: (isOpen: boolean) => void;
+  setSubtypesDialogueIsOpen: (isOpen: boolean) => void;
+  setPossibleSubtypes: (classified: any) => void;
+  setExistingSubtypes: (classified: any) => void;
+  setClassifiedDialogueIsOpen: (isOpen: boolean) => void;
   setPossibleClassified: (classified: any) => void;
   setExistingClassified: (classified: any) => void;
 }
@@ -52,7 +55,10 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
     handleClose,
     x,
     y,
-    setClassifiedModalIsOpen,
+    setSubtypesDialogueIsOpen,
+    setPossibleSubtypes,
+    setExistingSubtypes,
+    setClassifiedDialogueIsOpen,
     setPossibleClassified,
     setExistingClassified,
   } = props;
@@ -81,7 +87,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
             .map((individual) => individual.lh_object_uid);
           setPossibleClassified(classified);
           setExistingClassified(existingClassified);
-          setClassifiedModalIsOpen(true);
+          setClassifiedDialogueIsOpen(true);
           // const response = await getClassified(uid);
           // addFacts(response);
           console.log("MUTHERFUCK??");
@@ -105,9 +111,9 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
               );
             })
             .map((subtype) => subtype.lh_object_uid);
-          // setPossibleSubtypes(subtypes);
-          // setExistingSubtypes(existingSubtypes);
-          // setSubtypesModalIsOpen(true);
+          setPossibleSubtypes(subtypes);
+          setExistingSubtypes(existingSubtypes);
+          setSubtypesDialogueIsOpen(true);
           handleClose();
           break;
         case SHOW_SUBTYPES_CONE:
