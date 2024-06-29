@@ -3,6 +3,7 @@ import KindContextMenu from "./KindContextMenu";
 import IndividualContextMenu from "./IndividualContextMenu";
 import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
+import DeleteEntityDialogue from "./DeleteEntityDialogue";
 import { sockSendCC } from "../../socket";
 
 interface GraphContextMenuProps {
@@ -30,6 +31,9 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const [possibleClassified, setPossibleClassified] = useState([]);
   const [existingClassified, setExistingClassified] = useState([]);
 
+  const [warnIsOpen, setWarnIsOpen] = useState(false);
+  const [uidToDelete, setUidToDelete] = useState(null);
+
   useEffect(() => {
     const foo = async () => {
       if (uid) {
@@ -53,6 +57,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 setClassifiedDialogueIsOpen={setClassifiedDialogueIsOpen}
                 setPossibleClassified={setPossibleClassified}
                 setExistingClassified={setExistingClassified}
+                setUidToDelete={setUidToDelete}
+                setWarnIsOpen={setWarnIsOpen}
               />
             );
           } else if (model.type === "individual") {
@@ -63,6 +69,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 handleClose={handleClose}
                 x={x}
                 y={y}
+                setUidToDelete={setUidToDelete}
+                setWarnIsOpen={setWarnIsOpen}
               />
             );
           } else if (model.type === "qualification") {
@@ -80,6 +88,19 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   return (
     <>
       {menu}
+
+      {warnIsOpen && (
+        <DeleteEntityDialogue
+          uid={uidToDelete}
+          handleClose={() => {
+            setWarnIsOpen(false);
+          }}
+          handleOk={() => {
+            setWarnIsOpen(false);
+            sockSendCC("user", "deleteEntity", { uid: uidToDelete });
+          }}
+        />
+      )}
 
       {subtypesDialogueIsOpen && (
         <SubtypesDialogue

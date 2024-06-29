@@ -21,12 +21,12 @@ interface IndividualContextMenuProps {
   handleClose: () => void;
   x: number;
   y: number;
-  // uid: number;
-  // type: string;
+  setUidToDelete: (uid: number) => void;
+  setWarnIsOpen: (isOpen: boolean) => void;
 }
 
 const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
-  const { uid, open, handleClose, x, y } = props;
+  const { uid, open, handleClose, x, y, setUidToDelete, setWarnIsOpen } = props;
 
   const handleItemClick = useCallback(
     (e) => {
@@ -42,8 +42,8 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
           handleClose();
           break;
         case DELETE_THIS:
-          // setUidToDelete(uid);
-          // setWarnIsOpen(true);
+          setUidToDelete(uid);
+          setWarnIsOpen(true);
           handleClose();
           break;
         default:

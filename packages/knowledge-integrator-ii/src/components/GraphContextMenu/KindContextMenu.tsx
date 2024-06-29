@@ -40,6 +40,8 @@ interface KindContextMenuProps {
   setClassifiedDialogueIsOpen: (isOpen: boolean) => void;
   setPossibleClassified: (classified: any) => void;
   setExistingClassified: (classified: any) => void;
+  setUidToDelete: (uid: number) => void;
+  setWarnIsOpen: (isOpen: boolean) => void;
 }
 
 // const handleItemClick = (e) => {
@@ -61,6 +63,8 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
     setClassifiedDialogueIsOpen,
     setPossibleClassified,
     setExistingClassified,
+    setUidToDelete,
+    setWarnIsOpen,
   } = props;
 
   const handleItemClick = useCallback(
@@ -129,8 +133,8 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case DELETE_THIS:
-          // setUidToDelete(uid);
-          // setWarnIsOpen(true);
+          setUidToDelete(uid);
+          setWarnIsOpen(true);
           handleClose();
           break;
 
@@ -187,7 +191,11 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
         rem subtypes(r)
       </MenuItem>
       <Divider />
-      <MenuItem value={DELETE_THIS} className={menuItemClassName} disabled>
+      <MenuItem
+        value={DELETE_THIS}
+        className={menuItemClassName}
+        onClick={handleItemClick}
+      >
         delete this!
       </MenuItem>
     </Menu>
