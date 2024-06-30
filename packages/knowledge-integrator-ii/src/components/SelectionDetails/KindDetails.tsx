@@ -3,14 +3,24 @@ import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
 import { retrieveKindModel } from "../../CCClient";
 import { sockSendCC } from "../../socket";
+
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import CopyAllIcon from "@mui/icons-material/CopyAll";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+
 import Specialization from "./display/Specialization";
 import Definition from "./display/Definition";
+import PossibleRole from "./display/PossibleRole";
 
 const KindDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");
@@ -47,21 +57,21 @@ const KindDetails: React.FC = () => {
   };
 
   const text = `${uid} (${type}) :: ${name}`;
-  // const factTableRows = facts.map((fact) => {
-  //   return (
-  //     <TableRow>
-  //       <TableCell>
-  //         <Text size="10px">{fact.lh_object_name}</Text>
-  //       </TableCell>
-  //       <TableCell>
-  //         <Text size="10px">{fact.rel_type_name}</Text>
-  //       </TableCell>
-  //       <TableCell>
-  //         <Text size="10px">{fact.rh_object_name}</Text>
-  //       </TableCell>
-  //     </TableRow>
-  //   );
-  // });
+  const factTableRows = facts.map((fact) => {
+    return (
+      <TableRow>
+        <TableCell>
+          <Typography size="10px">{fact.lh_object_name}</Typography>
+        </TableCell>
+        <TableCell>
+          <Typography size="10px">{fact.rel_type_name}</Typography>
+        </TableCell>
+        <TableCell>
+          <Typography size="10px">{fact.rh_object_name}</Typography>
+        </TableCell>
+      </TableRow>
+    );
+  });
 
   console.log("data: ", data);
 
@@ -93,25 +103,74 @@ const KindDetails: React.FC = () => {
           </Stack>
         )}
         {definition && <Definition definitions={definition} />}
+
+        {synonyms && synonyms.length > 0 && (
+          <Box>
+            <Typography size="12px" style={{ fontWeight: 600 }}>
+              Synonyms:
+            </Typography>
+            <Typography size="12px">{synonyms.join(", ")}</Typography>
+          </Box>
+        )}
+
+        {inverses && inverses.length > 0 && (
+          <Box>
+            <Typography size="12px" style={{ fontWeight: 600 }}>
+              Inverses:
+            </Typography>
+            <Typography size="12px">{inverses.join(", ")}</Typography>
+          </Box>
+        )}
+
+        {((reqRole1 && reqRole1.length > 0) ||
+          (reqRole2 && reqRole2.length > 0)) && (
+          <Box>
+            <Typography size="12px" style={{ fontWeight: 600 }}>
+              Required Roles:
+            </Typography>
+            <Typography size="12px">{reqRole1.join(", ")}</Typography>
+            <Typography size="12px">{reqRole2.join(", ")}</Typography>
+          </Box>
+        )}
+
+        {possRoles && possRoles.length > 0 && (
+          <Box>
+            <Stack direction="row" gap="xxsmall">
+              <Typography
+                size="12px"
+                style={{ fontWeight: 600 }}
+                onClick={loadAllPossRoles}
+              >
+                [x]
+              </Typography>
+              <Typography size="12px" style={{ fontWeight: 600 }}>
+                Possible Roles:
+              </Typography>
+            </Stack>
+            {possRoles.map((roleUID) => {
+              //check if is one of known entities
+              // if so return the entity name
+              // otherwise just return the id with a link to load entity
+              return <PossibleRole uid={roleUID} roleplayerUID={uid} />;
+            })}
+          </Box>
+        )}
+
+        {facts && facts.length > 0 && (
+          <Box>
+            <Typography size="12px" style={{ fontWeight: 600 }}>
+              AllRelatedFacts:
+            </Typography>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableBody>{factTableRows}</TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
       </Box>
     </Stack>
   );
 };
 
 export default KindDetails;
-
-// <Box
-//   sx={{
-//     flexDirection: "column",
-//     width: "384px",
-//   }}
-// >
-//   <Box>
-//     <Box sx={{ flexDirection: "row" }}>
-//       <Box></Box>
-//       <Button onClick={pushDataToClipboard} variant="outlined">
-//         push to clipboard
-//       </Button>
-//     </Box>
-//   </Box>
-// </Box>
