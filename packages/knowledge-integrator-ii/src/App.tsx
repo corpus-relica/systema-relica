@@ -68,14 +68,15 @@ const cats = {
 
 const memStore = localStorageStore();
 
+console.log("vvvv - MEMSTORE vvvv:");
+console.log(memStore);
+
 export const App = () => {
-  const foo = useStoreContext();
-  console.log("vvvv - STORE CONTEXT vvvv:");
-  console.log(foo);
   const rootStore: any = useStores();
   console.log("vvvv - ROOT STORE vvvv:");
   console.log(rootStore);
   const { factDataStore } = rootStore;
+
   const { addFacts, addConcepts, setCategories } = factDataStore;
   const [isConnected, setIsConnected] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -149,6 +150,11 @@ export const App = () => {
       console.log(d);
       factDataStore.addFacts(d.facts);
       // semanticModelStore.addModels(d.models);
+      d.models.forEach((model: any) => {
+        const key = "model:" + model.uid;
+        memStore.removeItem(key);
+        memStore.setItem(key, model);
+      });
     };
 
     const onRemFacts = (d) => {

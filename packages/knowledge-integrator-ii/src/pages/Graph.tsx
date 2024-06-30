@@ -157,7 +157,7 @@ const Graph = observer(() => {
             display: "flex",
             flexDirection: "column",
             width: "384px",
-            backgroundColor: "red",
+            backgroundColor: "white",
           }}
         >
           <SelectionDetails />
