@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { retrieveKindModel } from "../../CCClient";
 import { sockSendCC } from "../../socket";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import CopyAllIcon from "@mui/icons-material/CopyAll";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import Specialization from "./display/Specialization";
+import Definition from "./display/Definition";
 
 const KindDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");
@@ -74,9 +76,23 @@ const KindDetails: React.FC = () => {
             <Typography size="12px" style={{ fontWeight: 500, color: "black" }}>
               Specialization:
             </Typography>
-            <Specialization uids={specialization} childUID={uid} />
+            {specialization && specialization.length > 0 && (
+              <Specialization uids={specialization} childUID={uid} />
+            )}
           </Box>
+          <IconButton aria-label="copy to clipboard">
+            <CopyAllIcon onClick={pushDataToClipboard} />
+          </IconButton>
         </Stack>
+        {category && (
+          <Stack direction="row" spacing="1">
+            <Typography size="12px" style={{ fontWeight: 600 }}>
+              Category:
+            </Typography>
+            <Typography size="12px">{category}</Typography>
+          </Stack>
+        )}
+        {definition && <Definition definitions={definition} />}
       </Box>
     </Stack>
   );

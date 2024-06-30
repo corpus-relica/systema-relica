@@ -19,7 +19,6 @@ interface DefinitionProps {
 }
 
 const Definition: React.FC<DefinitionProps> = observer(({ definitions }) => {
-  const { semanticModelStore } = useContext(RootStoreContext);
   const [isEditing, setIsEditing] = useState(false);
   const [newPartialDef, setNewPartialDef] = useState("");
   const [newFullDef, setNewFullDef] = useState("");
