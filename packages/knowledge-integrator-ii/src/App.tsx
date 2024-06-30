@@ -8,7 +8,9 @@ import {
   CustomRoutes,
   combineDataProviders,
   defaultDataProvider,
-  memoryStore,
+  localStorageStore,
+  useStore,
+  useStoreContext,
 } from "react-admin";
 
 import { Route } from "react-router-dom";
@@ -64,7 +66,12 @@ const cats = {
   2850: "Relation",
 };
 
+const memStore = localStorageStore();
+
 export const App = () => {
+  const foo = useStoreContext();
+  console.log("vvvv - STORE CONTEXT vvvv:");
+  console.log(foo);
   const rootStore: any = useStores();
   console.log("vvvv - ROOT STORE vvvv:");
   console.log(rootStore);
@@ -72,6 +79,9 @@ export const App = () => {
   const { addFacts, addConcepts, setCategories } = factDataStore;
   const [isConnected, setIsConnected] = useState(false);
   const [isReady, setIsReady] = useState(false);
+
+  const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
+  const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
 
   const establishCats = async () => {
     const concepts = await resolveUIDs(
@@ -123,16 +133,16 @@ export const App = () => {
 
     const onSelectEntity = (d) => {
       console.log("SELECT ENTITY");
-      console.log(typeof d.uid);
-      // graphViewStore.selectedNode = d.uid;
-      // graphViewStore.selectedEdge = null;
+      console.log(d.uid);
+      memStore.setItem("selectedNode", d.uid); //
+      memStore.setItem("selectedEdge", null);
     };
 
     const onSelectFact = (d) => {
       console.log("SELECT FACT");
-      console.log(typeof d.uid);
-      // graphViewStore.selectedEdge = d.uid;
-      // graphViewStore.selectedNode = null;
+      console.log(d.uid);
+      memStore.setItem("selectedNode", null);
+      memStore.setItem("selectedEdge", d.uid);
     };
 
     const onAddFacts = (d) => {
@@ -152,12 +162,12 @@ export const App = () => {
     const onEntitiesCleared = () => {
       factDataStore.clearFacts();
       // semanticModelStore.clearModels();
-      // graphViewStore.selectedNode = null;
+      memStore.setItem("selectedNode", null);
     };
 
     const onNoneSelected = () => {
-      // graphViewStore.selectedNode = null;
-      // graphViewStore.selectedEdge = null;
+      memStore.setItem("selectedNode", null);
+      memStore.setItem("selectedEdge", null);
     };
 
     ccSocket.on("connect", onConnect);
@@ -190,7 +200,7 @@ export const App = () => {
         dashboard={Dashboard}
         dataProvider={dataProvider}
         authProvider={authProvider}
-        store={memoryStore()}
+        store={memStore}
       >
         <Resource name="db/kinds" list={ListGuesser} />
         <CustomRoutes>

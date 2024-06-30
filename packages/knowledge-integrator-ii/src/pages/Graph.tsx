@@ -15,8 +15,15 @@ import { toJS } from "mobx";
 
 import { useStore, useDataProvider } from "react-admin";
 import { nodeData, edgeData } from "../types";
+
 import GraphContextMenu from "../components/GraphContextMenu";
-import { ccSocket } from "../socket";
+import SelectionDetails from "../components/SelectionDetails";
+
+import { sockSendCC } from "../socket";
+
+import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
+import { useTheme } from "@mui/material/styles";
 
 const cats = {
   730044: "Physical Object",
@@ -28,15 +35,16 @@ const cats = {
 };
 
 const Graph = observer(() => {
+  const theme = useTheme();
   const { factDataStore } = useStores();
   const { facts, categories } = factDataStore;
 
-  const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
-  const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
+  const [selectedNode] = useStore("selectedNode");
+  const [selectedEdge] = useStore("selectedEdge");
   const [paletteMap, setPaletteMap] = useStore("paletteMap", new Map());
 
   const selectNode = (id: number) => {
-    // sockSendCC("user", "selectEntity", { uid: id });
+    sockSendCC("user", "selectEntity", { uid: id });
   };
 
   const handleNodeHover = (node: nodeData | null) => {
@@ -48,7 +56,6 @@ const Graph = observer(() => {
   };
 
   // START MENU
-
   const [open, setOpen] = useState(false);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
@@ -69,7 +76,6 @@ const Graph = observer(() => {
   };
 
   const handleClose = () => {
-    console.log("CLOSE ???????");
     setOpen(false);
   };
 
@@ -86,47 +92,78 @@ const Graph = observer(() => {
   }, []);
 
   const handleEdgeClick = (uid: any) => {
-    // console.log("GRAPHCONTAINER:HANDLE EDGE CLICK", uid);
-    // selectEdge(uid);
+    sockSendCC("user", "selectFact", { uid });
   };
 
   const onStageClick = () => {
     setOpen(false);
   };
 
-  console.log("GRAPH RENDER, OPEN ?????", open);
   return (
-    <div style={{ height: "100%" }}>
-      <h1>Graph</h1>
-      <GraphContextMenu
-        open={open}
-        handleClose={handleClose}
-        x={x}
-        y={y}
-        uid={uid}
-        type={type}
-      />
-      <div style={{ width: "100vw", height: "100vh" }}>
-        <GraphView
-          categories={categories}
-          facts={facts}
-          onNodeClick={selectNode}
-          onNodeRightClick={(uid: number, event: MouseEvent) => {
-            handleContextMenuTrigger(uid, "entity", event);
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+      }}
+    >
+      <Box>
+        <h1>Graph</h1>
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          flex: 1,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            backgroundColor: theme.palette.background.default,
           }}
-          onStageClick={onStageClick}
-          onEdgeRollOver={handleEdgeRollOver}
-          onEdgeRollOut={handleEdgeRollOut}
-          onEdgeClick={handleEdgeClick}
-          onEdgeRightClick={(uid: number, event: MouseEvent) => {
-            handleContextMenuTrigger(uid, "fact", event);
+        >
+          <GraphContextMenu
+            open={open}
+            handleClose={handleClose}
+            x={x}
+            y={y}
+            uid={uid}
+            type={type}
+          />
+          <GraphView
+            categories={categories}
+            facts={facts}
+            onNodeClick={selectNode}
+            onNodeRightClick={(uid: number, event: MouseEvent) => {
+              handleContextMenuTrigger(uid, "entity", event);
+            }}
+            onStageClick={onStageClick}
+            onEdgeRollOver={handleEdgeRollOver}
+            onEdgeRollOut={handleEdgeRollOut}
+            onEdgeClick={handleEdgeClick}
+            onEdgeRightClick={(uid: number, event: MouseEvent) => {
+              handleContextMenuTrigger(uid, "fact", event);
+            }}
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            paletteMap={paletteMap}
+          />
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "384px",
+            backgroundColor: "red",
           }}
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          paletteMap={paletteMap}
-        />
-      </div>
-    </div>
+        >
+          <SelectionDetails />
+        </Box>
+      </Box>
+    </Box>
   );
 });
 
