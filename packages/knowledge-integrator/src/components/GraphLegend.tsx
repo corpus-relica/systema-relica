@@ -2,6 +2,8 @@ import React, { useEffect } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+
 import { useStores } from "../context/RootStoreContext";
 import { observer } from "mobx-react";
 
@@ -34,10 +36,21 @@ const GraphLegend: React.FC = observer(() => {
   });
 
   return (
-    <Box pad={"xsmall"} margin={"xsmall"} style={{ backgroundColor: "grey" }}>
-      <Typography>GraphLegend</Typography>
-      {entries}
-    </Box>
+    <Paper
+      elevation={3}
+      sx={{
+        position: "absolute",
+        bottom: 50,
+        left: 20,
+        padding: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+      }}
+    >
+      <Box pad={"xsmall"} margin={"xsmall"} style={{ backgroundColor: "grey" }}>
+        <Typography>GraphLegend</Typography>
+        {entries}
+      </Box>
+    </Paper>
   );
 });
 
