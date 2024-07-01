@@ -1,0 +1,69 @@
+FROM node:latest as build
+MAINTAINER Marc <marc@specular-occlusion>
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+COPY yarn.lock .
+COPY packages/types ./packages/types
+COPY packages/constants ./packages/constants
+COPY packages/fact-search-ui ./packages/fact-search-ui
+COPY packages/3d-graph-ui ./packages/3d-graph-ui
+COPY packages/hsm-manager ./packages/hsm-manager
+COPY packages/knowledge-integrator ./packages/knowledge-integrator
+
+RUN yarn install --pure-lockfile --non-interactive
+
+WORKDIR /usr/src/app/packages/types
+RUN yarn build
+
+WORKDIR /usr/src/app/packages/constants
+RUN yarn build
+
+WORKDIR /usr/src/app/packages/fact-search-ui
+RUN yarn build
+
+WORKDIR /usr/src/app/packages/3d-graph-ui
+RUN yarn build
+
+WORKDIR /usr/src/app/packages/hsm-manager
+RUN yarn build
+
+WORKDIR /usr/src/app/packages/knowledge-integrator
+RUN yarn build
+
+# --------------------------------------
+
+FROM node:latest
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+COPY yarn.lock .
+
+COPY --from=build /usr/src/app/packages/types/package.json /usr/src/app/packages/types/package.json
+COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/dist
+
+COPY --from=build /usr/src/app/packages/constants/package.json /usr/src/app/packages/constants/package.json
+COPY --from=build /usr/src/app/packages/constants/dist /usr/src/app/packages/constants/dist
+
+COPY --from=build /usr/src/app/packages/fact-search-ui/package.json /usr/src/app/packages/fact-search-ui/package.json
+COPY --from=build /usr/src/app/packages/fact-search-ui/dist /usr/src/app/packages/fact-search-ui/dist
+
+COPY --from=build /usr/src/app/packages/3d-graph-ui/package.json /usr/src/app/packages/3d-graph-ui/package.json
+COPY --from=build /usr/src/app/packages/3d-graph-ui/dist /usr/src/app/packages/3d-graph-ui/dist
+
+COPY --from=build /usr/src/app/packages/hsm-manager/package.json /usr/src/app/packages/hsm-manager/package.json
+COPY --from=build /usr/src/app/packages/hsm-manager/dist /usr/src/app/packages/hsm-manager/dist
+
+COPY packages/knowledge-integrator /usr/src/app/packages/knowledge-integrator
+
+ENV NODE_ENV development
+
+RUN yarn install
+
+WORKDIR /usr/src/app/packages/knowledge-integrator
+
+EXPOSE 5173
+
+CMD ["yarn", "dev"]

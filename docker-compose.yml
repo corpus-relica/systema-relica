@@ -111,6 +111,32 @@ services:
         aliases:
           - clarity-core
 
+  knowledge-integrator:
+    container_name: knowledge-integrator
+    build:
+      context: .
+      dockerfile: Dockerfile.knowledge-integrator
+    restart: always
+    command: yarn dev
+    volumes:
+      - ./packages/knowledge-integrator:/usr/src/app/packages/knowledge-integrator
+      - ./packages/constants:/usr/src/app/packages/constants
+      - ./packages/fact-search-ui:/usr/src/app/packages/fact-search-ui
+      - ./packages/3d-graph-ui:/usr/src/app/packages/3d-graph-ui
+      - ./packages/hsm-manager:/usr/src/app/packages/hsm-manager
+      - /usr/src/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - archivist
+      - clarity-core
+    networks:
+      rlc-net:
+        aliases:
+          - knowledge-integrator
+
 networks:
   rlc-net:
     name: rlc-net

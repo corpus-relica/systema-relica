@@ -19,6 +19,8 @@ RUN yarn build
 WORKDIR /usr/src/app/packages/archivist
 RUN yarn build
 
+# --------------------------------------
+
 FROM node:latest
 
 WORKDIR /usr/src/app
