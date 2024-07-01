@@ -16,11 +16,23 @@ class FactDataStore {
   //
 
   addFact = (newFact: Fact) => {
+    // check if fact already exists first
+
+    if (this.facts.some((fact) => fact.fact_uid === newFact.fact_uid)) {
+      console.log("fact already exists");
+      return;
+    }
     this.facts.push(newFact);
   };
 
   addFacts = (newFacts: Array<Fact>) => {
-    this.facts = [...this.facts, ...newFacts];
+    // existing facts sub newFacts
+    const tempFacts = this.facts.filter((fact) => {
+      return !newFacts.some((newFact) => {
+        return fact.fact_uid === newFact.fact_uid;
+      });
+    });
+    this.facts = [...tempFacts, ...newFacts];
   };
 
   // todo: probably move this

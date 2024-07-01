@@ -31,6 +31,7 @@ import { useTheme } from "@mui/material/styles";
 import XXX from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
+import GraphLegend from "../components/GraphLegend";
 
 const cats = {
   730044: "Physical Object",
@@ -43,12 +44,12 @@ const cats = {
 
 const Graph = observer(() => {
   const theme = useTheme();
-  const { factDataStore } = useStores();
+  const { factDataStore, colorPaletteStore } = useStores();
+  const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
 
   const [selectedNode] = useStore("selectedNode");
   const [selectedEdge] = useStore("selectedEdge");
-  const [paletteMap, setPaletteMap] = useStore("paletteMap", new Map());
 
   const [searchUIOpen, setSearchUIOpen] = useState(false);
   const [filter, setFilter] = useState<number>(0);
@@ -201,6 +202,7 @@ const Graph = observer(() => {
             uid={uid}
             type={type}
           />
+          <GraphLegend />
           <GraphView
             categories={categories}
             facts={facts}
