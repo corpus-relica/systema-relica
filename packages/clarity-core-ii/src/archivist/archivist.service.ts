@@ -1,0 +1,223 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
+import {
+  SUBMIT_DEFINITION_ENDPOINT,
+  SUBMIT_COLLECTION_ENDPOINT,
+  DELETE_ENTITY_ENDPOINT,
+  DELETE_FACT_ENDPOINT,
+  SPECIALIZATION_HIERARCHY_ENDPOINT,
+  SPECIALIZATION_FACT_ENDPOINT,
+  SUBTYPES_ENDPOINT,
+  SUBTYPES_CONE_ENDPOINT,
+  FACT_ENDPOINT,
+  FACTS_ENDPOINT,
+  ENTITY_ENDPOINT,
+  ENTITY_CATEGORY_ENDPOINT,
+  ALL_RELATED_FACTS_ENDPOINT,
+  DEFINITIVE_FACTS_ENDPOINT,
+  RELATED_ON_SUBTYPE_CONE_ENDPOINT,
+  ENTITY_TYPE_ENDPOINT,
+  FACTS_RELATING_ENTITIES_ENDPOINT,
+  TEXT_SEARCH_ENDPOINT,
+  SUBMIT_BINARY_FACT_ENDPOINT,
+  CLASSIFIED_ENDPOINT,
+  CLASSIFICATION_FACT_ENDPOINT,
+} from '@relica/constants';
+
+const URL = 'http://localhost:3000'; //process.env.RELICA_NEO4J_URL;
+
+@Injectable()
+export class ArchivistService {
+  private readonly logger = new Logger(ArchivistService.name);
+
+  constructor(private httpService: HttpService) {}
+
+  async getSpecializationHierarchy(uid: number) {
+    const url = `${URL}${SPECIALIZATION_HIERARCHY_ENDPOINT}`;
+    const { data } = await firstValueFrom(
+      this.httpService.get(url, { params: { uid } }),
+    );
+    return data;
+  }
+
+  async getSpecializationFact(uid: number) {
+    // const result = await axios.get(
+    //   `${URL}${SPECIALIZATION_FACT_ENDPOINT}?uid=${uid}`,
+    // );
+    // return result.data;
+  }
+
+  async getSubtypes(uid: number) {
+    // const result = await axios.get(`${URL}${SUBTYPES_ENDPOINT}?uid=${uid}`);
+    // return result.data;
+  }
+
+  async getSubtypesCone(uid: number) {
+    // const result = await axios.get(
+    //   `${URL}${SUBTYPES_CONE_ENDPOINT}?uid=${uid}`,
+    // );
+    // return result.data;
+  }
+
+  async getFact(uid: number) {
+    // const result = await axios.get(`${URL}${FACT_ENDPOINT}?uid=${uid}`);
+    // return result.data;
+  }
+
+  async getFacts(factUIDs: number[]) {
+    // const result = await axios.get(
+    //   `${URL}${FACTS_ENDPOINT}?uids=${JSON.stringify(factUIDs)}`,
+    // );
+    // return result.data;
+  }
+
+  async getEntity(uid: number) {
+    // const result = await axios.get(`${URL}${ENTITY_ENDPOINT}?uid=${uid}`);
+    // return result.data;
+  }
+
+  async retrieveAllFacts(uid: number) {
+    const url = `${URL}${ALL_RELATED_FACTS_ENDPOINT}`;
+    const { data } = await firstValueFrom(
+      this.httpService.get(url, { params: { uid } }),
+    );
+    return data;
+  }
+
+  async getCategory(uid: number) {
+    const url = `${URL}${ENTITY_CATEGORY_ENDPOINT}`;
+    const { data } = await firstValueFrom(
+      this.httpService.get(url, { params: { uid } }),
+    );
+    return data;
+  }
+
+  async getDefinitiveFacts(uid: number) {
+    const url = `${URL}${DEFINITIVE_FACTS_ENDPOINT}`;
+    const { data } = await firstValueFrom(
+      this.httpService.get(url, { params: { uid } }),
+    );
+    return data;
+  }
+
+  async getRelatedOnUIDSubtypeCone(
+    lh_object_uid: number,
+    rel_type_uid: number,
+  ) {
+    const url = `${URL}${RELATED_ON_SUBTYPE_CONE_ENDPOINT}`;
+    const { data } = await firstValueFrom(
+      this.httpService.get(url, { params: { lh_object_uid, rel_type_uid } }),
+    );
+    return data;
+  }
+
+  async getEntityType(uid: number) {
+    const url = `${URL}${ENTITY_TYPE_ENDPOINT}`;
+    // const result = await axios.get(`${URL}${ENTITY_TYPE_ENDPOINT}?uid=${uid}`);
+    // return result.data;
+  }
+
+  async getFactsRelatingEntities(uid1: number, uid2: number) {
+    // const result = await axios.get(
+    //   `${URL}${FACTS_RELATING_ENTITIES_ENDPOINT}?uid1=${uid1}&uid2=${uid2}`,
+    // );
+    // return result.data;
+  }
+
+  async textSearchExact(searchTerm: string) {
+    // const result = await axios.get(
+    //   `${URL}${TEXT_SEARCH_ENDPOINT}?searchTerm=${searchTerm}&exactMatch=true`,
+    // );
+    // return result.data;
+  }
+
+  async createKind(
+    parentUID: number,
+    parentName: string,
+    name: string,
+    definition: string,
+  ) {
+    // const result = await axios.post(`${URL}${SUBMIT_BINARY_FACT_ENDPOINT}`, {
+    //   lh_object_uid: '1',
+    //   lh_object_name: name,
+    //   rel_type_uid: 1146,
+    //   rel_type_name: 'is a specialization of',
+    //   rh_object_uid: parentUID,
+    //   rh_object_name: parentName,
+    //   full_definition: definition,
+    // });
+    // return result.data;
+  }
+
+  async createIndividual(
+    kindUID: number,
+    kindName: string,
+    name: string,
+    definition: string,
+  ) {
+    // const result = await axios.post(`${URL}${SUBMIT_BINARY_FACT_ENDPOINT}`, {
+    //   lh_object_uid: '1',
+    //   lh_object_name: name,
+    //   rel_type_uid: 1225,
+    //   rel_type_name: 'is classified as a',
+    //   rh_object_uid: kindUID,
+    //   rh_object_name: kindName,
+    //   full_definition: definition,
+    // });
+    // return result.data;
+  }
+
+  async deleteEntity(uid: number) {
+    // const result = await axios.delete(
+    //   `${URL}${DELETE_ENTITY_ENDPOINT}?uid=${uid}`,
+    // );
+    // return result.data;
+  }
+
+  async deleteFact(uid: number) {
+    // const result = await axios.delete(
+    //   `${URL}${DELETE_FACT_ENDPOINT}?uid=${uid}`,
+    // );
+    // return result.data;
+  }
+
+  async getClassified(uid: number) {
+    // const result = await axios.get(`${URL}${CLASSIFIED_ENDPOINT}?uid=${uid}`);
+    // return result.data;
+  }
+
+  async getClassificationFact(uid: number) {
+    // const result = await axios.get(
+    //   `${URL}${CLASSIFICATION_FACT_ENDPOINT}?uid=${uid}`,
+    // );
+    // return result.data;
+  }
+
+  async submitDefinition(
+    fact_uid: number,
+    partial_definition: string,
+    full_definition: string,
+  ) {
+    // const result = await axios.put(`${URL}${SUBMIT_DEFINITION_ENDPOINT}`, {
+    //   fact_uid,
+    //   partial_definition,
+    //   full_definition,
+    // });
+    // return result.data;
+  }
+
+  async submitCollection(
+    fact_uid: number,
+    collection_uid: number,
+    collection_name: string,
+  ) {
+    // const result = await axios.put(`${URL}${SUBMIT_COLLECTION_ENDPOINT}`, {
+    //   fact_uid,
+    //   collection_uid,
+    //   collection_name,
+    // });
+    // return result.data;
+  }
+}
