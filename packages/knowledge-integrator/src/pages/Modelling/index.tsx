@@ -194,7 +194,7 @@ export default function BasicSelect() {
       >
         <Box
           sx={{
-            bgcolor: "background.paper",
+            bgcolor: "gray",
             border: "2px solid #000",
             p: 2,
           }}
