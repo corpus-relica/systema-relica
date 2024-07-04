@@ -13,7 +13,7 @@ export const ccSocket = io(import.meta.env.VITE_RELICA_CC_SOCKET_URL, {
   },
 });
 
-export const nousSocket = io(import.meta.env.VITE_RELICA_NOUS_SOCKET_URL);
+// export const nousSocket = io(import.meta.env.VITE_RELICA_NOUS_SOCKET_URL);
 
 // export const nousSocket = {
 //   on: (x, y) => {},
