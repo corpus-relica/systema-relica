@@ -63,10 +63,10 @@ export class ModelController {
 
   @Put('/definition')
   async definition(
-    @Query('fact_uid') fact_uid: string,
-    @Query('partial_definition') partial_definition: string,
-    @Query('full_definition') full_definition: string,
+    @Body()
+    body: any,
   ) {
+    const { fact_uid, partial_definition, full_definition } = body;
     if (
       fact_uid === undefined ||
       partial_definition === undefined ||

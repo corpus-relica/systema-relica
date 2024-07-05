@@ -102,7 +102,6 @@ export class ModelService {
     }
 
     // console.log(definitiveFacts);
-    // return Object.assign(model, {
     return Object.assign(model, {
       uid: uid,
       collection: {

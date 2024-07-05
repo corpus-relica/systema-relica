@@ -50,7 +50,7 @@ export class EventsGateway {
   //
 
   @SubscribeMessage('nous:selectEntity')
-  nouseSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
+  nouseSelectEntity(@MessageBody('uid') uid: number): number {
     console.log('NOUS:SELECT ENTITY');
     this.environmentService.setSelectedEntity(uid);
     this.server.emit('system:selectEntity', { uid: uid });
@@ -58,7 +58,7 @@ export class EventsGateway {
   }
 
   @SubscribeMessage('nous:loadEntity')
-  async nouseLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
+  async nouseLoadEntity(@MessageBody('uid') uid: number): Promise<any> {
     // socket.on("nous:loadEntity", async (d: { uid: number }, cbk: any) => {
     console.log('NOUS:LOAD ENTITY');
     console.log(uid);
