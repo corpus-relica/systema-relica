@@ -90,6 +90,10 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
     foo();
   }, [uid, open]);
 
+  console.log("WARNING: ", warnIsOpen, uidToDelete);
+  console.log("SUBTYPES: ", subtypesDialogueIsOpen, possibleSubtypes);
+  console.log("CLASSIFIED: ", classifiedDialogueIsOpen, possibleClassified);
+
   return (
     <>
       {menu}

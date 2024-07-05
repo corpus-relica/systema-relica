@@ -6,11 +6,13 @@ import { EnvFact } from './envFact.entity';
 import { EnvModel } from './envModel.entity';
 import { EnvSelectedEntity } from './envSelectedEntity.entity';
 import { ModelModule } from '../model/model.module';
+import { ArchivistModule } from '../archivist/archivist.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([EnvFact, EnvModel, EnvSelectedEntity]),
     ModelModule,
+    ArchivistModule,
   ],
   providers: [EnvironmentService],
   controllers: [EnvironmentController],

@@ -207,15 +207,6 @@ export const retrieveModel = async (uid: number) => {
   }
 };
 
-async function retrieveModelsSequentially(uids: number[]) {
-  const models = [];
-  for (const uid of uids) {
-    const model = await retrieveModel(uid);
-    models.push(model);
-  }
-  return models;
-}
-
 async function throttlePromises<T>(
   funcs: Array<() => Promise<T>>,
   limit: number,
@@ -242,7 +233,6 @@ async function throttlePromises<T>(
 export const retrieveModels = async (uids: Array<number>) => {
   const funcs = uids.map((uid) => () => retrieveModel(uid));
   return await throttlePromises(funcs, 5);
-  // return await retrieveModelsSequentially(uids);
 };
 
 export const updateDefinition = async (

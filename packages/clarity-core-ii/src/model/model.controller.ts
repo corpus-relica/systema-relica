@@ -4,6 +4,7 @@ import {
   Put,
   Post,
   Query,
+  Body,
   Inject,
   Param,
   Logger,
@@ -29,73 +30,84 @@ export class ModelController {
   }
 
   @Get('/individual')
-  async individual() {
-    // const { uid } = req.query;
-    // if (uid === undefined) {
-    //   res.send('No UID provided');
-    // } else {
-    //   const result = await retrieveIndividualModel(+uid);
-    //   res.send(result);
-    // }
+  async individual(@Query('uid') uid: string) {
+    if (uid === undefined) {
+      throw new HttpException('No UID provided', 400);
+    } else {
+      const result = await this.modelService.retrieveIndividualModel(+uid);
+      return result;
+    }
   }
 
   @Get()
-  async model() {
-    // const { uid, uids } = req.query;
-    // if (uid !== undefined) {
-    //   const result = await retrieveModel(+uid);
-    //   res.send(result);
-    // } else if (uids !== undefined) {
-    //   let parsedUIDs;
-    //   if (typeof uids === 'string') {
-    //     parsedUIDs = JSON.parse(uids);
-    //   } else if (Array.isArray(uids)) {
-    //     parsedUIDs = uids;
-    //   }
-    //   const result = await retrieveModels(parsedUIDs);
-    //   res.send(result);
-    // } else {
-    //   res.send('UIDs must be an array');
-    // }
+  async model(@Query('uid') uid: string, @Query('uids') uids: number[]) {
+    if (uid !== undefined) {
+      const result = await this.modelService.retrieveModel(+uid);
+      return result;
+    } else if (uids !== undefined) {
+      let parsedUIDs;
+      if (typeof uids === 'string') {
+        parsedUIDs = JSON.parse(uids);
+      } else if (Array.isArray(uids)) {
+        parsedUIDs = uids;
+      }
+      const result = await this.modelService.retrieveModels(parsedUIDs);
+      return result;
+    } else {
+      throw new HttpException(
+        'error attempting to retrieveModel(s). neither parameter UID nor UIDs is defined',
+        400,
+      );
+    }
   }
 
   @Put('/definition')
-  async definition() {
-    // const { fact_uid, partial_definition, full_definition } = req.body;
-    // if (
-    //   fact_uid === undefined ||
-    //   partial_definition === undefined ||
-    //   full_definition === undefined
-    // ) {
-    //   res.send(
-    //     'fact_uid or partial_definition or full_definition not provided',
-    //   );
-    // } else {
-    //   const result = await updateDefinition(
-    //     +fact_uid,
-    //     partial_definition,
-    //     full_definition,
-    //   );
-    //   res.send(result);
-    // }
+  async definition(
+    @Query('fact_uid') fact_uid: string,
+    @Query('partial_definition') partial_definition: string,
+    @Query('full_definition') full_definition: string,
+  ) {
+    if (
+      fact_uid === undefined ||
+      partial_definition === undefined ||
+      full_definition === undefined
+    ) {
+      throw new HttpException(
+        'fact_uid or partial_definition or full_definition not provided',
+        400,
+      );
+    } else {
+      const result = await this.modelService.updateDefinition(
+        +fact_uid,
+        partial_definition,
+        full_definition,
+      );
+      return result;
+    }
   }
 
   @Put('/collection')
-  async collection() {
-    // const { fact_uid, collection_uid, collection_name } = req.body;
-    // if (
-    //   fact_uid === undefined ||
-    //   collection_uid === undefined ||
-    //   collection_name === undefined
-    // ) {
-    //   res.send('fact_uid or collection_uid or collection_name not provided');
-    // } else {
-    //   const result = await updateCollection(
-    //     +fact_uid,
-    //     +collection_uid,
-    //     collection_name,
-    //   );
-    //   res.send(result);
-    // }
+  async collection(
+    @Body('fact_uid') fact_uid: string,
+    @Body('collection_uid') collection_uid: string,
+    @Body('collection_name') collection_name: string,
+  ) {
+    if (
+      fact_uid === undefined ||
+      collection_uid === undefined ||
+      collection_name === undefined
+    ) {
+      throw new HttpException(
+        'fact_uid or collection_uid or collection_name not provided',
+        400,
+      );
+    } else {
+      const result = await this.modelService.updateCollection(
+        +fact_uid,
+        +collection_uid,
+        collection_name,
+      );
+      return result;
+    }
   }
 }

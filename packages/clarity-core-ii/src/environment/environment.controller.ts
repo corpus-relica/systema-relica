@@ -35,131 +35,134 @@ export class EnvironmentController {
   }
 
   @Get('/loadEntity')
-  async loadEntity() {
-    // // Extract 'uid' from the request parameters and ensure it's a string
-    // const uid = req.params.uid;
-    // if (typeof uid === 'string') {
-    //   // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
-    //   const result = await loadEntity(parseInt(uid));
-    //   res.json(result);
-    // } else {
-    //   // Handle the case where 'uid' is not a string
-    //   res.status(400).send('Invalid UID');
-    // }
+  async loadEntity(@Param('uid') uid: string) {
+    // Extract 'uid' from the request parameters and ensure it's a string
+    if (typeof uid === 'string') {
+      // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
+      const result = await this.loadEntity(uid);
+      return result;
+    } else {
+      // Handle the case where 'uid' is not a string
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('/textSearch')
-  async textSearch() {
-    // // Extract 'searchTerm' from the request parameters and ensure it's a string
-    // const searchTerm = req.params.searchTerm;
-    // if (typeof searchTerm === "string") {
-    //   // Now 'searchTerm' is guaranteed to be a string, so we can safely use parseInt
-    //   const result = await textSearch(searchTerm);
-    //   res.json(result);
-    // } else {
-    //   // Handle the case where 'searchTerm' is not a string
-    //   res.status(400).send("Invalid search term");
-    // }
+  async textSearch(@Param('searchTerm') searchTerm: string) {
+    // Extract 'searchTerm' from the request parameters and ensure it's a string
+    if (typeof searchTerm === 'string') {
+      // Now 'searchTerm' is guaranteed to be a string, so we can safely use parseInt
+      const result = await this.environmentService.textSearch(searchTerm);
+      return result;
+    } else {
+      // Handle the case where 'searchTerm' is not a string
+      throw new HttpException('Invalid search term', 400);
+    }
   }
 
   @Get('/specializeKind')
-  async specializeKind() {
-    // // Extract 'uid' from the request parameters and ensure it's a string
-    // const uid = req.params.uid;
-    // const supertypeName = req.params.supertypeName;
-    // const name = req.params.name;
-    // if (typeof uid === "string") {
-    //   // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
-    //   const result = await specializeKind(parseInt(uid), supertypeName, name);
-    //   res.json(result);
-    // } else {
-    //   // Handle the case where 'uid' is not a string
-    //   res.status(400).send("Invalid UID");
-    // }
+  async specializeKind(
+    @Param('uid') uid: string,
+    @Param('supertypeName') supertypeName: string,
+    @Param('name') name: string,
+  ) {
+    if (typeof uid === 'string') {
+      // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
+      const result = await this.specializeKind(uid, supertypeName, name);
+      return result;
+    } else {
+      // Handle the case where 'uid' is not a string
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('/classifyEntity')
-  async classifyEntity() {
-    // // Extract 'uid' from the request parameters and ensure it's a string
-    // const uid = req.params.uid;
-    // const typeName = req.params.typeName;
-    // const name = req.params.name;
-    // if (typeof uid === "string") {
-    //   // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
-    //   const result = await classifyIndividual(parseInt(uid), typeName, name);
-    //   res.json(result);
-    // } else {
-    //   // Handle the case where 'uid' is not a string
-    //   res.status(400).send("Invalid UID");
-    // }
+  async classifyEntity(
+    @Param('uid') uid: string,
+    @Param('name') name: string,
+    @Param('typeName') typeName: string,
+  ) {
+    // Extract 'uid' from the request parameters and ensure it's a string
+    if (typeof uid === 'string') {
+      // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
+      const result = await this.environmentService.classifyIndividual(
+        parseInt(uid),
+        typeName,
+        name,
+      );
+      return result;
+    } else {
+      // Handle the case where 'uid' is not a string
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('loadSpecializationHierarchy')
-  async loadSpecializationHierarchy() {
-    // // Extract 'uid' from the request parameters and ensure it's a string
-    // const uid = req.params.uid;
-    // if (typeof uid === 'string') {
-    //   // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
-    //   const result = await getSpecializationHierarchy(parseInt(uid));
-    //   res.json(result);
-    // } else {
-    //   // Handle the case where 'uid' is not a string
-    //   res.status(400).send('Invalid UID');
-    // }
+  async loadSpecializationHierarchy(@Param('uid') uid: string) {
+    // Extract 'uid' from the request parameters and ensure it's a string
+    if (typeof uid === 'string') {
+      // Now 'uid' is guaranteed to be a string, so we can safely use parseInt
+      const result = await this.environmentService.getSpecializationHierarchy(
+        parseInt(uid),
+      );
+      return result;
+    } else {
+      // Handle the case where 'uid' is not a string
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('loadSpecialization')
-  async loadSpecialization() {
-    // const uid = req.params.uid;
-    // if (typeof uid === "string") {
-    //   const result = await getSpecializationFactByUID(parseInt(uid));
-    //   res.json(result);
-    // } else {
-    //   res.status(400).send("Invalid UID");
-    // }
+  async loadSpecialization(@Param('uid') uid: string) {
+    if (typeof uid === 'string') {
+      const result = await this.environmentService.getSpecializationFactByUID(
+        parseInt(uid),
+      );
+      return result;
+    } else {
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('loadClassified')
-  async loadClassified() {
-    // const uid = req.params.uid;
-    // if (typeof uid === "string") {
-    //   const result = await getClassified(parseInt(uid));
-    //   res.json(result);
-    // } else {
-    //   res.status(400).send("Invalid UID");
-    // }
+  async loadClassified(@Param('uid') uid: string) {
+    if (typeof uid === 'string') {
+      const result = await this.environmentService.getClassified(parseInt(uid));
+      return result;
+    } else {
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('loadClassification')
-  async loadClassification() {
-    // const uid = req.params.uid;
-    // if (typeof uid === "string") {
-    //   const result = await getClassificationFactByUID(parseInt(uid));
-    //   res.json(result);
-    // } else {
-    //   res.status(400).send("Invalid UID");
-    // }
+  async loadClassification(@Param('uid') uid: string) {
+    if (typeof uid === 'string') {
+      const result = await this.environmentService.getClassificationFactByUID(
+        parseInt(uid),
+      );
+      return result;
+    } else {
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('loadAllRelatedFacts')
-  async loadAllRelatedFacts() {
-    // const uid = req.params.uid;
-    // if (typeof uid === "string") {
-    //   const result = await getAllRelatedFacts(parseInt(uid));
+  async loadAllRelatedFacts(@Param('uid') uid: string) {
+    // if (typeof uid === 'string') {
+    //   const result = await this.environmentService.getAllRelatedFacts(parseInt(uid));
     //   res.json(result);
     // } else {
-    //   res.status(400).send("Invalid UID");
+    //   res.status(400).send('Invalid UID');
     // }
   }
 
   @Get('listSubtypes')
-  async listSubtypes() {
-    // const uid = req.params.uid;
-    // if (typeof uid === "string") {
-    //   const result = await listSubtypes(parseInt(uid));
-    //   res.json(result);
-    // } else {
-    //   res.status(400).send("Invalid UID");
-    // }
+  async listSubtypes(@Param('uid') uid: string) {
+    if (typeof uid === 'string') {
+      const result = await this.environmentService.listSubtypes(parseInt(uid));
+      return result;
+    } else {
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 }
