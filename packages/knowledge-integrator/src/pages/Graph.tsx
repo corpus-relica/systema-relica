@@ -113,8 +113,11 @@ const Graph = observer(() => {
   };
 
   const handleSearchUIClose = (res: any) => {
-    const { lh_object_uid, rel_type_uid, rh_object_uid } = res;
     setSearchUIOpen(false);
+
+    if (!res) return;
+
+    const { lh_object_uid, rel_type_uid, rh_object_uid } = res;
     if (rel_type_uid === 1225) {
       sockSendCC("user", "getSpecializationHierarchy", {
         uid: rh_object_uid,
@@ -127,6 +130,7 @@ const Graph = observer(() => {
     selectNode(lh_object_uid);
   };
 
+  console.log(searchUIOpen);
   return (
     <Box
       sx={{
