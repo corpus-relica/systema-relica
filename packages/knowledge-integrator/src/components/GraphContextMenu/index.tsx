@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import KindContextMenu from "./KindContextMenu";
 import IndividualContextMenu from "./IndividualContextMenu";
 import StageContextMenu from "./StageContextMenu";
+import FactContextMenu from "./FactContextMenu";
 import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
@@ -79,6 +80,16 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           } else {
             console.log("unknown model type: ", model.type);
           }
+        } else if (type === "fact") {
+          setMenu(
+            <FactContextMenu
+              uid={uid}
+              open={open}
+              handleClose={handleClose}
+              x={x}
+              y={y}
+            />
+          );
         }
       } else if (x !== null && y !== null) {
         setMenu(

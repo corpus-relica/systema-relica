@@ -70,7 +70,6 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   const handleItemClick = useCallback(
     async (e) => {
       const value = e.currentTarget.getAttribute("value");
-      console.log(`Clicked item with value: ${value}`);
       switch (value) {
         case SH:
           sockSendCC("user", "getSpecializationHierarchy", { uid });
@@ -94,7 +93,6 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           setClassifiedDialogueIsOpen(true);
           // const response = await getClassified(uid);
           // addFacts(response);
-          console.log("MUTHERFUCK??");
           handleClose();
           break;
         case SHOW_ALL:
@@ -149,7 +147,6 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   const menuItemClassName = ({ hover }) =>
     hover ? "my-menuitem-hover" : "my-menuitem";
 
-  console.log("KIND CONTEXT MENU ?????", open);
   return (
     <Menu
       open={open}
@@ -183,6 +180,9 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       </MenuItem>
       <MenuItem value={SHOW_SUBTYPES_CONE} onClick={handleItemClick}>
         show subtypes cone
+      </MenuItem>
+      <MenuItem value={"undefined"} disabled>
+        reparent this
       </MenuItem>
       <Divider />
       <MenuItem value={REM_THIS} onClick={handleItemClick}>

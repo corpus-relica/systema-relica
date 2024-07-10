@@ -223,8 +223,9 @@ export class EnvironmentService {
         candidateModelUIDsToRemove.delete(fact.rh_object_uid);
       }
     });
-    this.removeFacts(factUIDsToRemove);
-    this.removeModels(Array.from(candidateModelUIDsToRemove));
+    if (factUIDsToRemove.length > 0) this.removeFacts(factUIDsToRemove);
+    if (candidateModelUIDsToRemove.size > 0)
+      this.removeModels(Array.from(candidateModelUIDsToRemove));
     return factUIDsToRemove;
   }
 
@@ -252,6 +253,7 @@ export class EnvironmentService {
   }
 
   async removeFacts(uids: number[]) {
+    console.log('remove facts', uids);
     await this.envFactRepository.delete(uids);
   }
 
