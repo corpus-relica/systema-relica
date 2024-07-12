@@ -38,11 +38,15 @@ import { DeletionService } from './deletion/deletion.service';
 import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion.service';
 import { XLSService } from './xls/xls.service';
 import { FileService } from './file/file.service';
+import { KindController } from './kind/kind.controller';
+import { KindService } from './kind/kind.service';
 import { KindsController } from './kinds/kinds.controller';
 import { KindsService } from './kinds/kinds.service';
 import { AspectController } from './aspect/aspect.controller';
 import { AspectService } from './aspect/aspect.service';
 import { LinearizationService } from './linearization/linearization.service';
+import { QueryController } from './query/query.controller';
+import { QueryService } from './query/query.service';
 
 @Module({
   imports: [
@@ -78,8 +82,10 @@ import { LinearizationService } from './linearization/linearization.service';
     ValidationController,
     SubmissionController,
     DeletionController,
+    KindController,
     KindsController,
     AspectController,
+    QueryController,
   ],
   providers: [
     AppInitService,
@@ -102,9 +108,11 @@ import { LinearizationService } from './linearization/linearization.service';
     RawFactIngestionService,
     XLSService,
     FileService,
+    KindService,
     KindsService,
     AspectService,
     LinearizationService,
+    QueryService,
   ],
 })
 export class AppModule {}

@@ -20,8 +20,14 @@ export class FactRetrievalController {
   }
 
   @Get('classified')
-  async getClassified(@Query('uid') uid: string) {
-    return this.factRetrievalService.getClassified(parseInt(uid));
+  async getClassified(
+    @Query('uid') uid: string,
+    @Query('recursive') recursive: string = 'false',
+  ) {
+    return this.factRetrievalService.getClassified(
+      parseInt(uid),
+      recursive === 'true',
+    );
   }
 
   @Get('classificationFact')

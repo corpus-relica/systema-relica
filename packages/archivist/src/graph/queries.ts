@@ -326,3 +326,18 @@ export const countKindsQuery = `
 MATCH (a)--(r)-->()
 WHERE r.rel_type_uid = 1146 OR r.rel_type_uid = 1726
 RETURN count(r) as total`;
+
+export const reparentKindQuery = `
+MATCH (n:Entity {uid: $uid})
+MATCH (p:Entity {uid: $newParentUID})--(fb)-->(x)
+WHERE fb.rel_type_uid = 1146
+MATCH (n)-[ra1]-(r)-[ra2]->(oldParent:Entity)
+WHERE r.rel_type_uid = 1146
+SET r.rh_object_uid = fb.lh_object_uid
+SET r.rh_object_name = fb.lh_object_name
+SET r.partial_definition =  $partialDefinition
+SET r.full_definition = $fullDefinition
+SET r.latest_update = $latestUpdate
+DELETE ra2
+CREATE (r)-[:role]->(p)
+RETURN r`;

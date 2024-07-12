@@ -4,17 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { GraphService } from 'src/graph/graph.service';
 
-import {
-  getListOfKindsQuery,
-  countKindsQuery,
-  // getOneKindQuery,
-  // getManyKindsQuery,
-  // getManyReferenceOfKindQuery,
-  // createKindQuery,
-  // updateKindQuery,
-  // deleteKindQuery,
-  // deleteManyKindsQuery,
-} from 'src/graph/queries';
+import { getListOfKindsQuery, countKindsQuery } from 'src/graph/queries';
 
 @Injectable()
 export class KindsService {

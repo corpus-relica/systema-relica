@@ -45,17 +45,29 @@ export class FactRetrievalService {
     return flattenedFacts;
   };
 
-  getClassified = async (uid) => {
-    console.log('GET CLASSIFIED');
-    const result = await this.graphService.execQuery(classified, { uid });
-    console.log(result);
-    console.log('GET CLASSIFIED ?');
-    if (result.length === 0) return [];
-    console.log('GET CLASSIFIED ??');
-    console.log(result);
-    console.log(this.graphService.transformResults(result));
-    console.log('GET CLASSIFIED ???');
-    return this.graphService.transformResults(result);
+  getClassified = async (uid: number, recursive: boolean = false) => {
+    console.log('GET CLASSIFIED', uid, recursive);
+    if (!recursive) {
+      const result = await this.graphService.execQuery(classified, { uid });
+      if (result.length === 0) return [];
+      return this.graphService.transformResults(result);
+    } else {
+      const subtypes = await this.cacheService.allDescendantsOf(uid);
+      const facts = await Promise.all(
+        subtypes.map(async (subtype) => {
+          const result = await this.graphService.execQuery(classified, {
+            uid: subtype,
+          });
+          return this.graphService.transformResults(result);
+        }),
+      );
+
+      console.log('FACTS', facts);
+
+      const flattenedFacts = facts.flat();
+
+      return flattenedFacts;
+    }
   };
 
   getFactsAboutRole = async (uid) => {
