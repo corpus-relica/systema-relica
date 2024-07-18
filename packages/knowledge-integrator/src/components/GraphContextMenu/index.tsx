@@ -44,7 +44,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             uid: uid,
           });
           const model = result.data;
-          console.log("model: ", model.type);
+          console.log("model: ", model);
           if (model.type === "kind") {
             setMenu(
               <KindContextMenu

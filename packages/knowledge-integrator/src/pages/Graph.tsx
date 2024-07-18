@@ -73,7 +73,7 @@ const Graph = observer(() => {
   const [uid, setUid] = useState(0);
   const [type, setType] = useState("");
 
-  const handleContextMenuTrigger = (
+  const handleContextMenuTrigger = async (
     uid: number,
     type: string,
     event: MouseEvent

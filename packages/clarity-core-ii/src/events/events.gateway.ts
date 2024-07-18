@@ -51,7 +51,7 @@ export class EventsGateway {
 
   @SubscribeMessage('nous:selectEntity')
   nouseSelectEntity(@MessageBody('uid') uid: number): number {
-    console.log('NOUS:SELECT ENTITY');
+    console.log('NOUS:SELECT ENTITY', uid);
     this.environmentService.setSelectedEntity(uid);
     this.server.emit('system:selectEntity', { uid: uid });
     return uid;

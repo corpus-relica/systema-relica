@@ -225,36 +225,59 @@ class RootStore {
     2850: "#c7703f",
   };
 
-  getNodeColor = (id: number) => {
-    let color;
+  getNodeCategory = (id: number) => {
+    let category = "Unknown";
     let idx = 0;
 
-    if (id === 730000) return "#fff";
+    if (id === 730000) return "Root";
 
     if (
       this.categories["Physical Object"].uid === id ||
       this.categories["Physical Object"].descendants.includes(id)
     ) {
-      color = this.catColors[730044];
+      category = "Physical Object";
     } else if (
       this.categories["Occurrence"].uid === id ||
       this.categories["Occurrence"].descendants.includes(id)
     ) {
-      color = this.catColors[193671];
+      category = "Occurrence";
     } else if (
       this.categories["Role"].uid === id ||
       this.categories["Role"].descendants.includes(id)
     ) {
-      color = this.catColors[160170];
+      category = "Role";
     } else if (
       this.categories["Aspect"].uid === id ||
       this.categories["Aspect"].descendants.includes(id)
     ) {
-      color = this.catColors[790229];
+      category = "Aspect";
     } else if (
       this.categories["Relation"].uid === id ||
       this.categories["Relation"].descendants.includes(id)
     ) {
+      category = "Relation";
+    }
+
+    return category;
+  };
+
+  getNodeColor = (id: number) => {
+    let color;
+    let idx = 0;
+
+    const cat = this.getNodeCategory(id);
+
+    if (cat === "Root") return "#fff";
+
+    if (cat === "Physical Object") {
+      color = this.catColors[730044];
+    } else if (cat === "Occurrence") {
+      color = this.catColors[193671];
+    } else if (cat === "Role") {
+      color = this.catColors[160170];
+    } else if (cat === "Aspect") {
+      color = this.catColors[790229];
+    } else if (cat === "Relation") {
       color = this.catColors[2850];
     }
 

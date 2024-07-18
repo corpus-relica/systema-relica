@@ -76,8 +76,8 @@ const Definition: React.FC<DefinitionProps> = ({ definitions }) => {
       />
       {fullDefTitle}
       <TextField
-        id="partial-def"
-        label="partial definition"
+        id="full-def"
+        label="full definition"
         variant="outlined"
         value={newFullDef}
         onChange={(e: any) => {

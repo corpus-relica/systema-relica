@@ -50,10 +50,12 @@ export class EnvironmentService {
     );
     console.log('selectedEntity', selectedEntity);
 
+    const selectedEntityUID = selectedEntity[0] ? selectedEntity[0].uid : null;
+
     return {
       models: models.map((row: any) => row.model),
       facts: facts.map((row: any) => row.fact),
-      selectedEntity: selectedEntity[0].uid,
+      selectedEntity: selectedEntityUID,
     };
   }
 
@@ -148,6 +150,9 @@ export class EnvironmentService {
 
   async getSelectedEntity() {
     const res = await this.envSelectedEntityRepository.find();
+    if (res.length === 0) {
+      return null;
+    }
     return res[0].uid;
   }
 

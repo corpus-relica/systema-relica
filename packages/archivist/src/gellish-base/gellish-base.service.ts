@@ -271,6 +271,13 @@ RETURN path`;
   };
 
   getCategory = async (uid) => {
+    console.log('GETTING CATEGORY MUTHER SUCKER!!!!', uid);
+    //is this an individual or a kind?
+    const classificationFact = await this.getClassificationFact(uid);
+    if (classificationFact.length > 0) {
+      uid = classificationFact[0].rh_object_uid;
+    }
+
     const physicalObjectSubtypes =
       await this.cacheService.allDescendantsOf(PHYSICAL_OBJECT_UID);
     const roleSubtypes = await this.cacheService.allDescendantsOf(ROLE_UID);
