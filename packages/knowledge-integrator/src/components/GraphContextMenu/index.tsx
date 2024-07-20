@@ -49,6 +49,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             setMenu(
               <KindContextMenu
                 uid={uid}
+                category={model.category}
                 open={open}
                 handleClose={handleClose}
                 x={x}
@@ -67,6 +68,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             setMenu(
               <IndividualContextMenu
                 uid={uid}
+                category={model.category}
                 open={open}
                 handleClose={handleClose}
                 x={x}

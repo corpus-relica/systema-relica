@@ -9,7 +9,13 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
-import { sockSendCC } from "../../socket";
+import KindContextPhysicalObjectSubmenu from "./submenu/PhsysicalObject";
+import KindContextAspectSubmenu from "./submenu/Aspect";
+import KindContextRoleSubmenu from "./submenu/Role";
+import KindContextRelationSubmenu from "./submenu/Relation";
+import KindContextOccurrenceSubmenu from "./submenu/Occurrence";
+
+import { sockSendCC } from "../../../socket";
 
 import {
   getAllRelatedFacts,
@@ -17,7 +23,10 @@ import {
   getSubtypesCone,
   getClassified,
   getSpecializationHierarchy,
-} from "../../RLCBaseClient";
+} from "../../../RLCBaseClient";
+
+import { useStores } from "../../../context/RootStoreContext";
+import { Fact } from "../../../types";
 
 const SH = "SH";
 const SHOW_CLASSIFIED = "show classified";
@@ -30,6 +39,7 @@ const DELETE_THIS = "delete this!";
 
 interface KindContextMenuProps {
   uid: number;
+  category: string;
   open: boolean;
   handleClose: () => void;
   x: number;
@@ -44,15 +54,11 @@ interface KindContextMenuProps {
   setWarnIsOpen: (isOpen: boolean) => void;
 }
 
-// const handleItemClick = (e) => {
-// };
-
-import { useStores } from "../../context/RootStoreContext";
-
 const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   const { factDataStore } = useStores();
   const {
     uid,
+    category,
     open,
     handleClose,
     x,
@@ -68,7 +74,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   } = props;
 
   const handleItemClick = useCallback(
-    async (e) => {
+    async (e: any) => {
       const value = e.currentTarget.getAttribute("value");
       switch (value) {
         case SH:
@@ -87,7 +93,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
                   .length > 0
               );
             })
-            .map((individual) => individual.lh_object_uid);
+            .map((individual: Fact) => individual.lh_object_uid);
           setPossibleClassified(classified);
           setExistingClassified(existingClassified);
           setClassifiedDialogueIsOpen(true);
@@ -147,6 +153,50 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   const menuItemClassName = ({ hover }) =>
     hover ? "my-menuitem-hover" : "my-menuitem";
 
+  let submenu: any = null;
+  switch (category) {
+    case "physical object":
+      submenu = (
+        <>
+          <KindContextPhysicalObjectSubmenu />
+          <Divider />
+        </>
+      );
+      break;
+    case "aspect":
+      submenu = (
+        <>
+          <KindContextAspectSubmenu />
+          <Divider />
+        </>
+      );
+      break;
+    case "role":
+      submenu = (
+        <>
+          <KindContextRoleSubmenu />
+          <Divider />
+        </>
+      );
+      break;
+    case "relation":
+      submenu = (
+        <>
+          <KindContextRelationSubmenu />
+          <Divider />
+        </>
+      );
+      break;
+    case "occurrence":
+      submenu = (
+        <>
+          <KindContextOccurrenceSubmenu />
+          <Divider />
+        </>
+      );
+      break;
+  }
+
   return (
     <Menu
       open={open}
@@ -166,6 +216,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       }}
       style={{ pointerEvents: "none" }}
     >
+      {submenu}
       <MenuItem value="SH" onClick={handleItemClick}>
         SH
       </MenuItem>

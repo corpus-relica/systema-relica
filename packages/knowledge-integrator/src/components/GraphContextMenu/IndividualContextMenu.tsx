@@ -26,7 +26,16 @@ interface IndividualContextMenuProps {
 }
 
 const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
-  const { uid, open, handleClose, x, y, setUidToDelete, setWarnIsOpen } = props;
+  const {
+    uid,
+    category,
+    open,
+    handleClose,
+    x,
+    y,
+    setUidToDelete,
+    setWarnIsOpen,
+  } = props;
 
   const handleItemClick = useCallback(
     (e) => {
@@ -74,6 +83,10 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       }}
       style={{ pointerEvents: "none" }}
     >
+      <MenuItem value="category" disabled>
+        category: {category}
+      </MenuItem>
+      <Divider />
       <MenuItem value="show classifier" disabled>
         show classifier
       </MenuItem>
