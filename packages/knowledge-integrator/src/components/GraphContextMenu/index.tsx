@@ -6,6 +6,7 @@ import FactContextMenu from "./FactContextMenu";
 import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
+import DeleteFactDialogue from "./DeleteFactDialogue";
 import { sockSendCC } from "../../socket";
 
 interface GraphContextMenuProps {
@@ -35,6 +36,9 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
 
   const [warnIsOpen, setWarnIsOpen] = useState(false);
   const [uidToDelete, setUidToDelete] = useState(null);
+
+  const [factWarnIsOpen, setFactWarnIsOpen] = useState(false);
+  const [factUidToDelete, setFactUidToDelete] = useState(null);
 
   useEffect(() => {
     const foo = async () => {
@@ -90,6 +94,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
               handleClose={handleClose}
               x={x}
               y={y}
+              setUidToDelete={setFactUidToDelete}
+              setWarnIsOpen={setFactWarnIsOpen}
             />
           );
         }
@@ -104,6 +110,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   }, [uid, open]);
 
   console.log("WARNING: ", warnIsOpen, uidToDelete);
+  console.log("FACT WARNING: ", factWarnIsOpen, factUidToDelete);
   console.log("SUBTYPES: ", subtypesDialogueIsOpen, possibleSubtypes);
   console.log("CLASSIFIED: ", classifiedDialogueIsOpen, possibleClassified);
 
@@ -120,6 +127,19 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           handleOk={() => {
             setWarnIsOpen(false);
             sockSendCC("user", "deleteEntity", { uid: uidToDelete });
+          }}
+        />
+      )}
+
+      {factWarnIsOpen && (
+        <DeleteFactDialogue
+          uid={factUidToDelete}
+          handleClose={() => {
+            setFactWarnIsOpen(false);
+          }}
+          handleOk={() => {
+            setFactWarnIsOpen(false);
+            sockSendCC("user", "deleteFact", { uid: factUidToDelete });
           }}
         />
       )}

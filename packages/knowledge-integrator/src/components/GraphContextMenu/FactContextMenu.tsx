@@ -16,24 +16,17 @@ const REM_THIS = "rem this";
 const DELETE_THIS = "delete this!";
 
 interface IndividualContextMenuProps {
-  // uid: number;
+  uid: number;
   open: boolean;
   handleClose: () => void;
   x: number;
   y: number;
-  // setUidToDelete: (uid: number) => void;
-  // setWarnIsOpen: (isOpen: boolean) => void;
+  setUidToDelete: (uid: number) => void;
+  setWarnIsOpen: (isOpen: boolean) => void;
 }
 
 const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
-  const {
-    // uid,
-    open,
-    handleClose,
-    x,
-    y,
-    // setUidToDelete, setWarnIsOpen
-  } = props;
+  const { uid, open, handleClose, x, y, setUidToDelete, setWarnIsOpen } = props;
 
   const handleItemClick = (e) => {
     const value = e.currentTarget.getAttribute("value");
@@ -41,6 +34,11 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       case CLEAR_ALL:
         console.log("CLEAR ALL");
         sockSendCC("user", "clearEntities", {});
+        handleClose();
+        break;
+      case DELETE_THIS:
+        setUidToDelete(uid);
+        setWarnIsOpen(true);
         handleClose();
         break;
       default:
@@ -82,7 +80,6 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
         value={DELETE_THIS}
         className={menuItemClassName}
         onClick={handleItemClick}
-        disabled
       >
         delete this!
       </MenuItem>
