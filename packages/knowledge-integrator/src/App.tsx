@@ -27,6 +27,7 @@ import { retrieveEnvironment } from "./CCClient";
 
 import { MyLayout } from "./MyLayout";
 import Graph from "./pages/Graph";
+import Settings from "./pages/Settings";
 import Modelling from "./pages/Modelling/";
 import Dashboard from "./Dashboard";
 
@@ -212,6 +213,7 @@ export const App = () => {
         <CustomRoutes>
           <Route path="env/graph" element={<Graph />} />
           <Route path="/modelling" element={<Modelling />} />
+          <Route path="/settings" element={<Settings />} />
         </CustomRoutes>
       </Admin>
     </QueryClientProvider>
