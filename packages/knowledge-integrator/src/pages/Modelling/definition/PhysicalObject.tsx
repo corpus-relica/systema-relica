@@ -12,6 +12,8 @@ import {
 import Grid from "@mui/material/Grid";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { IconButton } from "@mui/material";
 import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
 import { baseFact } from "../baseFact";
@@ -239,7 +241,7 @@ const MyField = (props: any) => {
 
   return (
     <>
-      <input {...props} {...field} value={field.value || ""} />
+      <Field {...props} {...field} value={field.value || ""} />
       {/*!!meta.touched && !!meta.error && <div>{meta.error}</div>*/}
     </>
   );
@@ -392,6 +394,15 @@ const Modelling = (props: any) => {
 
   const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
+  const conjureDef = (
+    values: any,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    const { preferredName, supertype } = values;
+    const def = `A ${preferredName} is a ${supertype.lh_object_name} that...`;
+    setFieldValue("definition", def);
+  };
+
   return (
     <div className="App">
       <h3>Physical Object Definition Model</h3>
@@ -461,7 +472,20 @@ const Modelling = (props: any) => {
                   <br />
                   <label>
                     textual definition
-                    <MyField name="definition" />
+                    {/*<MyField name="definition" multiline rows={4} />*/}
+                    <MyField
+                      name="definition"
+                      as="textarea"
+                      placeholder="Enter definition here"
+                      multiLine
+                      rows={4}
+                      fullWidth
+                    />
+                    <IconButton>
+                      <AutoAwesomeIcon
+                        onClick={() => conjureDef(values, setFieldValue)}
+                      />
+                    </IconButton>
                   </label>
                   <br />
                   <Grid container spacing={2}>
