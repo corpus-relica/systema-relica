@@ -118,12 +118,13 @@ const CreateRole = (props: any) => {
   };
 
   const [facts, setFacts] = React.useState([]);
+  const [submissionStatus, setSubmissionStatus] = React.useState("none");
 
   const updateFacts = (facts: any) => {
     setFacts(facts);
   };
 
-  const mutation = useMutation(createMutation(facts));
+  const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
   return (
     <div>
@@ -140,12 +141,11 @@ const CreateRole = (props: any) => {
         <Grid item xs={12}>
           <Formik
             initialValues={initialValues}
-            onSubmit={
-              (values) => mutation.mutate(facts)
-              // setTimeout(() => {
-              //   alert(JSON.stringify(facts, null, 2));
-              // }, 500)
-            }
+            onSubmit={(values) => {
+              // console.log("values");
+              // console.log(values);
+              mutation.mutate(facts);
+            }}
           >
             {({ setFieldValue, values }) => (
               <div className="section">
@@ -260,6 +260,9 @@ const CreateRole = (props: any) => {
                     </Grid>
                   </Grid>
                   <Button type="submit">Submit</Button>
+                  {submissionStatus === "pending" && <div>Submitting...</div>}
+                  {submissionStatus === "success" && <div>Success!</div>}
+                  {submissionStatus === "error" && <div>Error!</div>}
                   <FormListener updateFacts={updateFacts} />
                 </Form>
               </div>

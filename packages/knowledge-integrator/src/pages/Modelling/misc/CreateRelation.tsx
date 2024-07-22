@@ -66,9 +66,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       });
       uid++;
 
-      if (!isEmptyObj(requiredRole1) && !isEmptyObj(requiredRole2)) {
+      if (!isEmptyObj(requiredRole1)) {
         console.log("requiredRole1", requiredRole1);
-        console.log("requiredRole2", requiredRole2);
         definitiveFact = facts.push({
           ...baseFact,
           lh_object_uid: definitiveUid.toString(),
@@ -80,6 +79,10 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
           collection_uid: collection.uid,
           collection_name: collection.name,
         });
+      }
+
+      if (!isEmptyObj(requiredRole2)) {
+        console.log("requiredRole2", requiredRole2);
         definitiveFact = facts.push({
           ...baseFact,
           lh_object_uid: definitiveUid.toString(),
@@ -91,22 +94,6 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
           collection_uid: collection.uid,
           collection_name: collection.name,
         });
-
-        // else if (requiredRoles.length > 2) {
-        //   requiredRoles.forEach((role: any) => {
-        //     if (!role) return;
-        //     facts.push({
-        //       ...baseFact,
-        //       lh_object_uid: role.lh_object_uid,
-        //       lh_object_name: role.lh_object_name,
-        //       rel_type_uid: "5343",
-        //       rel_type_name: "can by definition have a role as a",
-        //       rh_object_uid: definitiveUid,
-        //       rh_object_name: roleName,
-        //     });
-        //     uid++;
-        //   });
-        // }
       }
     }
 
@@ -131,12 +118,13 @@ const CreateRelation = (props: any) => {
   };
 
   const [facts, setFacts] = React.useState([]);
+  const [submissionStatus, setSubmissionStatus] = React.useState("none");
 
   const updateFacts = (facts: any) => {
     setFacts(facts);
   };
 
-  const mutation = useMutation(createMutation(facts));
+  const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
   return (
     <div>
@@ -206,6 +194,9 @@ const CreateRelation = (props: any) => {
                     </Grid>
                   </Grid>
                   <Button type="submit">Submit</Button>
+                  {submissionStatus === "pending" && <div>Submitting...</div>}
+                  {submissionStatus === "success" && <div>Success!</div>}
+                  {submissionStatus === "error" && <div>Error!</div>}
                   <FormListener updateFacts={updateFacts} />
                 </Form>
               </div>

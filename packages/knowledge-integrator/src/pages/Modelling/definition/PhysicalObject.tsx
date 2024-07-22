@@ -15,6 +15,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
 import { baseFact } from "../baseFact";
+import createMutation from "../validateAndSubmitBinaryFactMutation";
 import {
   SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
   SUBMIT_BINARY_FACTS_ENDPOINT,
@@ -389,66 +390,7 @@ const Modelling = (props: any) => {
     setFacts(facts);
   };
 
-  const mutation = useMutation({
-    mutationFn: (facts: any[]) => {
-      setSubmissionStatus("pending");
-
-      // i will iterate over the facts and convert certain fields to numbers
-      // before sending them to the server
-      const foo = facts.map((fact) => {
-        return {
-          ...fact,
-          lh_object_uid: parseInt(fact.lh_object_uid),
-          fact_uid: parseInt(fact.fact_uid),
-          rel_type_uid: parseInt(fact.rel_type_uid),
-          rh_object_uid: parseInt(fact.rh_object_uid),
-          uom_uid: parseInt(fact.uom_uid),
-        };
-      });
-
-      return axios.post(
-        "http://localhost:3000" + SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
-        foo
-      );
-    },
-    onSuccess: (data, variables, context) => {
-      setSubmissionStatus("success");
-
-      const success = data.data.reduce((acc: boolean, result: any) => {
-        return acc && result.isValid;
-      }, true);
-
-      if (!success) {
-        console.error("ERROR", data.data);
-      } else {
-        console.log("SUCCESS", success);
-        //submit the facts
-
-        const foo = facts.map((fact) => {
-          return {
-            ...fact,
-            lh_object_uid: parseInt(fact.lh_object_uid),
-            fact_uid: parseInt(fact.fact_uid),
-            rel_type_uid: parseInt(fact.rel_type_uid),
-            rh_object_uid: parseInt(fact.rh_object_uid),
-            uom_uid: parseInt(fact.uom_uid),
-          };
-        });
-        const result = axios.post(
-          "http://localhost:3000" + SUBMIT_BINARY_FACTS_ENDPOINT,
-          foo
-        );
-        console.log("RESULT", result);
-      }
-
-      console.log("SUCCESS", success);
-    },
-    onError: (error, variables, context) => {
-      setSubmissionStatus("error");
-
-      console.error("ERROR", error);
-    },
-  });
+  const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
   return (
     <div className="App">

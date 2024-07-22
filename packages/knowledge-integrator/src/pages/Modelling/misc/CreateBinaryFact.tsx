@@ -80,12 +80,13 @@ const CreateBinaryFact = (props: any) => {
   };
 
   const [facts, setFacts] = React.useState([]);
+  const [submissionStatus, setSubmissionStatus] = React.useState("none");
 
   const updateFacts = (facts: any) => {
     setFacts(facts);
   };
 
-  const mutation = useMutation(createMutation(facts));
+  const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
   return (
     <div>
@@ -153,6 +154,9 @@ const CreateBinaryFact = (props: any) => {
                   </label>
                   <br />
                   <Button type="submit">Submit</Button>
+                  {submissionStatus === "pending" && <div>Submitting...</div>}
+                  {submissionStatus === "success" && <div>Success!</div>}
+                  {submissionStatus === "error" && <div>Error!</div>}
                   <FormListener updateFacts={updateFacts} />
                 </Form>
                 <br />

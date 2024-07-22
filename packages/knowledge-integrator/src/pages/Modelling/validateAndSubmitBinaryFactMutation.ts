@@ -4,8 +4,10 @@ import {
   SUBMIT_BINARY_FACTS_ENDPOINT,
 } from "@relica/constants";
 
-export default (facts: any[]) => ({
+export default (facts: any[], setSubmissionStatus?: any) => ({
   mutationFn: (fcts: any[]) => {
+    if (setSubmissionStatus) setSubmissionStatus("pending");
+
     // before sending them to the server
     const foo = fcts.map((fact) => {
       return {
@@ -24,6 +26,7 @@ export default (facts: any[]) => ({
     );
   },
   onSuccess: (data, variables, context) => {
+    if (setSubmissionStatus) setSubmissionStatus("success");
     const success = data.data.reduce((acc: boolean, result: any) => {
       return acc && result.isValid;
     }, true);
@@ -52,5 +55,9 @@ export default (facts: any[]) => ({
     }
 
     console.log("SUCCESS", success);
+  },
+  onError: (error, variables, context) => {
+    if (setSubmissionStatus) setSubmissionStatus("error");
+    console.error("ERROR", error);
   },
 });

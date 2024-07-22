@@ -70,12 +70,13 @@ const CreateDate = (props: any) => {
   };
 
   const [facts, setFacts] = React.useState([]);
+  const [submissionStatus, setSubmissionStatus] = React.useState("none");
 
   const updateFacts = (facts: any) => {
     setFacts(facts);
   };
 
-  const mutation = useMutation(createMutation(facts));
+  const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
   return (
     <div>
@@ -107,6 +108,9 @@ const CreateDate = (props: any) => {
                     </Grid>
                   </Grid>
                   <Button type="submit">Submit</Button>
+                  {submissionStatus === "pending" && <div>Submitting...</div>}
+                  {submissionStatus === "success" && <div>Success!</div>}
+                  {submissionStatus === "error" && <div>Error!</div>}
                   <FormListener updateFacts={updateFacts} />
                 </Form>
               </div>
