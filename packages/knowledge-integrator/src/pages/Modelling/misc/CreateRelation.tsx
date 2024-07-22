@@ -26,6 +26,10 @@ const PHYSICAL_OBJECT_UID = 730044;
 const date = new Date();
 const formattedDate = date.toISOString().slice(0, 10);
 
+const isEmptyObj = (obj: any) => {
+  return Object.keys(obj).length === 0 && obj.constructor === Object;
+};
+
 const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();
 
@@ -62,7 +66,9 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
       });
       uid++;
 
-      if (requiredRole1 && requiredRole2) {
+      if (!isEmptyObj(requiredRole1) && !isEmptyObj(requiredRole2)) {
+        console.log("requiredRole1", requiredRole1);
+        console.log("requiredRole2", requiredRole2);
         definitiveFact = facts.push({
           ...baseFact,
           lh_object_uid: definitiveUid.toString(),

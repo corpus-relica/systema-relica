@@ -222,6 +222,8 @@ export class EventsGateway {
     console.log('DELETE FACT RESULT', result);
     this.environmentService.removeFact(uid);
     // console.log("Fact deleted");
+
+    this.server.emit('system:remFacts', { fact_uids: [uid] });
     return uid;
   }
 

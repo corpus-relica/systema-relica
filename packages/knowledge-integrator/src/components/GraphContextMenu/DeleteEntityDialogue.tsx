@@ -27,8 +27,12 @@ const DeleteEntityDialogue: React.FC<DeleteEntityDialogueProps> = ({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose}>No</Button>
-        <Button onClick={handleOk}>Yes!</Button>
+        <Button onClick={handleClose} variant="contained" color="success">
+          No
+        </Button>
+        <Button onClick={handleOk} variant="outlined" color="error">
+          Yes!
+        </Button>
       </DialogActions>
     </Dialog>
   );
