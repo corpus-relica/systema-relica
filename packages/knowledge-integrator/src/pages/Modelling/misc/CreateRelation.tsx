@@ -156,6 +156,7 @@ const CreateRelation = (props: any) => {
                     handleOpen={handleOpen}
                     setFieldValue={setFieldValue}
                     supertypeConeUID={RELATION_UID}
+                    values={values}
                   />
                   <br />
                   <label>

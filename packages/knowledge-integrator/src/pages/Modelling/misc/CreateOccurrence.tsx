@@ -279,6 +279,7 @@ const CreateOccurrence = (props: any) => {
                     handleOpen={handleOpen}
                     setFieldValue={setFieldValue}
                     supertypeConeUID={OCCURRENCE_UID}
+                    values={values}
                   />
                   <br />
                   <Grid container spacing={2}>

@@ -36,7 +36,7 @@ export const retrieveModels = async (uids: number[]) => {
 export const updateModelDefinition = async (
   fact_uid: number,
   partial_definition: string,
-  full_definition: string,
+  full_definition: string
 ) => {
   const response = await CCAxiosInstance.put("/model/definition", {
     fact_uid,
@@ -49,12 +49,26 @@ export const updateModelDefinition = async (
 export const updateModelCollection = async (
   fact_uid: number,
   collection_uid: number,
-  collection_name: string,
+  collection_name: string
 ) => {
   const response = await CCAxiosInstance.put("/model/collection", {
     fact_uid,
     collection_uid,
     collection_name,
   });
+  return response.data;
+};
+
+export const conjureDefinition = async (
+  apiKey: string,
+  supertypeUID: number,
+  newKindName: string
+) => {
+  const response = await CCAxiosInstance.get(
+    "/artificialIntelligence/conjureDefinition",
+    {
+      params: { apiKey, supertypeUID, newKindName },
+    }
+  );
   return response.data;
 };

@@ -9,6 +9,7 @@ import axios from "axios";
 import { baseFact } from "../baseFact";
 import BaseDef from "../BaseDef";
 import createMutation from "../validateAndSubmitBinaryFactMutation";
+import { useStore } from "react-admin";
 
 import {
   Formik,
@@ -25,6 +26,9 @@ const PHYSICAL_OBJECT_UID = 730044;
 
 const date = new Date();
 const formattedDate = date.toISOString().slice(0, 10);
+
+const OPEN_AI_API_KEY = "openai_api_key";
+const ANTHROPIC_API_KEY = "anthropic_api_key";
 
 const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();
@@ -104,6 +108,12 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
 };
 
 const CreateRole = (props: any) => {
+  const [openAIAPIKey, setOpenAIAPIKey] = useStore(OPEN_AI_API_KEY, null);
+  const [anthropicAPIKey, setAnthropicAPIKey] = useStore(
+    ANTHROPIC_API_KEY,
+    null
+  );
+
   const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     roleName: "",
@@ -126,6 +136,21 @@ const CreateRole = (props: any) => {
 
   const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
+  const conjureDef = async (
+    values: any,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    const { preferredName, supertype } = values;
+    if (openAIAPIKey !== null) {
+      const completion = await conjureDefinition(
+        openAIAPIKey,
+        supertype.lh_object_uid,
+        preferredName
+      );
+      setFieldValue("definition", completion.data);
+    }
+  };
+
   return (
     <div>
       <h3>Role</h3>
@@ -142,8 +167,6 @@ const CreateRole = (props: any) => {
           <Formik
             initialValues={initialValues}
             onSubmit={(values) => {
-              // console.log("values");
-              // console.log(values);
               mutation.mutate(facts);
             }}
           >
@@ -155,6 +178,7 @@ const CreateRole = (props: any) => {
                     handleOpen={handleOpen}
                     setFieldValue={setFieldValue}
                     supertypeConeUID={ROLE_UID}
+                    values={values}
                   />
                   <br />
                   <Grid container spacing={2}>

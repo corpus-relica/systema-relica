@@ -134,6 +134,7 @@ const CreateAspect = (props: any) => {
                     handleOpen={handleOpen}
                     setFieldValue={setFieldValue}
                     supertypeConeUID={790229}
+                    values={values}
                   />
                   <br />
                   <Grid container spacing={2}>

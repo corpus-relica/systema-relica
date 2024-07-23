@@ -7,7 +7,6 @@ import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { baseFact } from "../baseFact";
-import BaseDef from "../BaseDef";
 import createMutation from "../validateAndSubmitBinaryFactMutation";
 
 import {

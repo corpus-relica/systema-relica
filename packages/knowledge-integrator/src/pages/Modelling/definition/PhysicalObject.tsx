@@ -25,6 +25,7 @@ import {
 import { useStore } from "react-admin";
 
 import axios from "axios";
+import { conjureDefinition } from "../../../CCClient";
 
 const OPEN_AI_API_KEY = "openai_api_key";
 const ANTHROPIC_API_KEY = "anthropic_api_key";
@@ -409,18 +410,14 @@ const Modelling = (props: any) => {
     setFieldValue: (field: string, value: any) => void
   ) => {
     const { preferredName, supertype } = values;
-    const def = `A ${preferredName} is a ${supertype.lh_object_name} that...`;
-    const completion = await axios.get(
-      "http://localhost:3001/artificialIntelligence/conjureDefinition",
-      {
-        params: {
-          apiKey: openAIAPIKey,
-          supertypeUID: supertype.lh_object_uid,
-          newKindName: preferredName,
-        },
-      }
-    );
-    setFieldValue("definition", completion.data);
+    if (openAIAPIKey !== null) {
+      const completion = await conjureDefinition(
+        openAIAPIKey,
+        supertype.lh_object_uid,
+        preferredName
+      );
+      setFieldValue("definition", completion.data);
+    }
   };
 
   return (
