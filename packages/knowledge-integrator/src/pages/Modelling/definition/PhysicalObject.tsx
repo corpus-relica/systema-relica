@@ -22,8 +22,12 @@ import {
   SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
   SUBMIT_BINARY_FACTS_ENDPOINT,
 } from "@relica/constants";
+import { useStore } from "react-admin";
 
 import axios from "axios";
+
+const OPEN_AI_API_KEY = "openai_api_key";
+const ANTHROPIC_API_KEY = "anthropic_api_key";
 
 const FormListener = ({ updateFacts }: { updateFacts: any }) => {
   const { values }: { values: any } = useFormikContext();
@@ -74,7 +78,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rel_type_name: "is a specialization of",
         rh_object_uid: supertype.lh_object_uid.toString(),
         rh_object_name: supertype.lh_object_name,
-        full_definition: definition,
+        full_definition: "is a " + supertype.lh_object_name + " " + definition,
         partial_definition: definition,
         collection_uid: collection.uid,
         collection_name: collection.name,
@@ -347,6 +351,12 @@ const MyAspectField = (props: any) => {
 };
 
 const Modelling = (props: any) => {
+  const [openAIAPIKey, setOpenAIAPIKey] = useStore(OPEN_AI_API_KEY, null);
+  const [anthropicAPIKey, setAnthropicAPIKey] = useStore(
+    ANTHROPIC_API_KEY,
+    null
+  );
+
   const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     uid: 1,
@@ -394,13 +404,23 @@ const Modelling = (props: any) => {
 
   const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
-  const conjureDef = (
+  const conjureDef = async (
     values: any,
     setFieldValue: (field: string, value: any) => void
   ) => {
     const { preferredName, supertype } = values;
     const def = `A ${preferredName} is a ${supertype.lh_object_name} that...`;
-    setFieldValue("definition", def);
+    const completion = await axios.get(
+      "http://localhost:3001/artificialIntelligence/conjureDefinition",
+      {
+        params: {
+          apiKey: openAIAPIKey,
+          supertypeUID: supertype.lh_object_uid,
+          newKindName: preferredName,
+        },
+      }
+    );
+    setFieldValue("definition", completion.data);
   };
 
   return (
@@ -445,12 +465,6 @@ const Modelling = (props: any) => {
                   </label>
                   <br />
                   <label>
-                    preferred name
-                    <MyField name="preferredName" />
-                  </label>
-                  <br />
-
-                  <label>
                     supertype concept uid
                     <MyField
                       name="supertype.lh_object_uid"
@@ -468,6 +482,11 @@ const Modelling = (props: any) => {
                         handleOpen("supertype", setFieldValue, 730044);
                       }}
                     />
+                  </label>
+                  <br />
+                  <label>
+                    preferred name
+                    <MyField name="preferredName" />
                   </label>
                   <br />
                   <label>

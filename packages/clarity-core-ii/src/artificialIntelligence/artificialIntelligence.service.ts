@@ -67,6 +67,6 @@ Provide only the definition, starting after the double colon (::).
 
     // console.log('GOt chat completion', chatCompletion);
 
-    return chatCompletion;
+    return chatCompletion.choices[0].message.content;
   }
 }
