@@ -15,6 +15,8 @@ import { EnvSelectedEntity } from './environment/envSelectedEntity.entity';
 import { ModelModule } from './model/model.module';
 import { ArchivistModule } from './archivist/archivist.module';
 
+import { ArtificialIntelligenceModule } from './artificialIntelligence/artificialIntelligence.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -33,6 +35,7 @@ import { ArchivistModule } from './archivist/archivist.module';
     EnvironmentModule,
     ModelModule,
     ArchivistModule,
+    ArtificialIntelligenceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -373,13 +373,13 @@ const Modelling = (props: any) => {
     //   lh_object_name: "concept",
     // },
     func: {
-      lh_object_uid: 1,
+      lh_object_uid: null,
       lh_object_name: "concept",
     },
     definition: "",
     aspectValueUom: "",
     part: {
-      lh_object_uid: 1,
+      lh_object_uid: null,
       lh_object_name: "concept",
     },
     collection: collection,
@@ -481,10 +481,10 @@ const Modelling = (props: any) => {
                       rows={4}
                       fullWidth
                     />
-                    <IconButton>
-                      <AutoAwesomeIcon
-                        onClick={() => conjureDef(values, setFieldValue)}
-                      />
+                    <IconButton
+                      onClick={() => conjureDef(values, setFieldValue)}
+                    >
+                      <AutoAwesomeIcon />
                     </IconButton>
                   </label>
                   <br />
