@@ -72,17 +72,20 @@ const Graph = observer(() => {
   const [y, setY] = useState(0);
   const [uid, setUid] = useState(0);
   const [type, setType] = useState("");
+  const [relType, setRelType] = useState(0);
 
   const handleContextMenuTrigger = async (
     uid: number,
     type: string,
-    event: MouseEvent
+    event: MouseEvent,
+    rel_type_uid?: number
   ) => {
     event.preventDefault();
     setX(event.clientX);
     setY(event.clientY);
     setUid(uid);
     setType(type);
+    rel_type_uid ? setRelType(rel_type_uid) : null;
     setOpen(true);
   };
 
@@ -107,7 +110,6 @@ const Graph = observer(() => {
   };
 
   const onStageClick = () => {
-    console.log("STAGE CLICK!!!!!!!!!!!");
     setOpen(false);
     sockSendCC("user", "selectNone", {});
   };
@@ -130,7 +132,6 @@ const Graph = observer(() => {
     selectNode(lh_object_uid);
   };
 
-  console.log(searchUIOpen);
   return (
     <Box
       sx={{
@@ -205,6 +206,7 @@ const Graph = observer(() => {
             y={y}
             uid={uid}
             type={type}
+            relType={relType}
           />
           <GraphLegend />
           <GraphView
@@ -219,7 +221,13 @@ const Graph = observer(() => {
             onEdgeRollOut={handleEdgeRollOut}
             onEdgeClick={handleEdgeClick}
             onEdgeRightClick={(uid: number, event: MouseEvent) => {
-              handleContextMenuTrigger(uid, "fact", event);
+              const fact = facts.find((fact) => fact.fact_uid === uid);
+              handleContextMenuTrigger(
+                uid,
+                "fact",
+                event,
+                fact && fact.rel_type_uid
+              );
             }}
             selectedNode={selectedNode}
             selectedEdge={selectedEdge}

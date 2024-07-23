@@ -14,6 +14,7 @@ import { sockSendCC } from "../../socket";
 const CLEAR_ALL = "Clear all";
 const REM_THIS = "rem this";
 const DELETE_THIS = "delete this!";
+const REIFY = "reify";
 
 interface IndividualContextMenuProps {
   uid: number;
@@ -23,10 +24,21 @@ interface IndividualContextMenuProps {
   y: number;
   setUidToDelete: (uid: number) => void;
   setWarnIsOpen: (isOpen: boolean) => void;
+  relType: number;
 }
 
-const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
-  const { uid, open, handleClose, x, y, setUidToDelete, setWarnIsOpen } = props;
+const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
+  const {
+    uid,
+    open,
+    handleClose,
+    x,
+    y,
+    setUidToDelete,
+    setWarnIsOpen,
+    relType,
+  } = props;
+  console.log("MUTHERFUCING FACT CONTEXT MENU SUCKER -- ", uid);
 
   const handleItemClick = (e) => {
     const value = e.currentTarget.getAttribute("value");
@@ -39,6 +51,11 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       case DELETE_THIS:
         setUidToDelete(uid);
         setWarnIsOpen(true);
+        handleClose();
+        break;
+      case REIFY:
+        sockSendCC("user", "getSpecializationHierarchy", { uid: relType });
+        sockSendCC("user", "selectEntity", { uid: relType });
         handleClose();
         break;
       default:
@@ -69,6 +86,9 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       }}
       style={{ pointerEvents: "none" }}
     >
+      <MenuItem value={REIFY} onClick={handleItemClick}>
+        reify
+      </MenuItem>
       <MenuItem value={CLEAR_ALL} onClick={handleItemClick} disabled>
         intercalate
       </MenuItem>
@@ -87,4 +107,4 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
   );
 };
 
-export default StageContextMenu;
+export default FactContextMenu;

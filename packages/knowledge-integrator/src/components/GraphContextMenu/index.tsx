@@ -16,13 +16,14 @@ interface GraphContextMenuProps {
   y: number;
   uid: number;
   type: string;
+  relType?: number;
 }
 
 import { useStore, useDataProvider } from "react-admin";
 
 const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const dataProvider = useDataProvider();
-  const { open, handleClose, x, y, uid, type } = props;
+  const { open, handleClose, x, y, uid, type, relType } = props;
   const [menu, setMenu] = useState<JSX.Element | null>(null);
 
   const [subtypesDialogueIsOpen, setSubtypesDialogueIsOpen] = useState(false);
@@ -96,6 +97,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
               y={y}
               setUidToDelete={setFactUidToDelete}
               setWarnIsOpen={setFactWarnIsOpen}
+              relType={relType || 0}
             />
           );
         }
