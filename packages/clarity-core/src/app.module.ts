@@ -17,8 +17,8 @@ import { ArchivistModule } from './archivist/archivist.module';
 
 import { ArtificialIntelligenceModule } from './artificialIntelligence/artificialIntelligence.module';
 
-import { DSLVMModule } from './dslvm/dslvm.module';
 import { SemanticModelModule } from './semanticModel/semanticModel.module';
+import { REPLModule } from './repl/repl.module';
 
 @Module({
   imports: [
@@ -39,8 +39,8 @@ import { SemanticModelModule } from './semanticModel/semanticModel.module';
     ModelModule,
     ArchivistModule,
     ArtificialIntelligenceModule,
-    DSLVMModule,
     SemanticModelModule,
+    REPLModule,
   ],
   controllers: [AppController],
   providers: [AppService],

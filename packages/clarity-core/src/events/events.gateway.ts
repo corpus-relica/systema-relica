@@ -14,6 +14,8 @@ import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
 import { SemanticModelService } from '../semanticModel/semanticModel.service';
 
+import { LOAD_SPECIALIZATION_HIERARCHY } from '../semanticModel/actions';
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -28,7 +30,7 @@ export class EventsGateway {
   constructor(
     private readonly environmentService: EnvironmentService,
     private readonly archivistService: ArchivistService,
-    private readonly semanticModelService: SemanticModelService,
+    private readonly semanticModel: SemanticModelService,
   ) {}
 
   afterInit(server: Server) {
@@ -136,16 +138,20 @@ export class EventsGateway {
   ): Promise<any> {
     console.log('GET SPECIALIZATION HIERARCHY: ', uid);
 
-    const result = await this.archivistService.getSpecializationHierarchy(uid);
-    const facts = result.facts;
-    const models = await this.environmentService.modelsFromFacts(facts);
+    // const result = await this.archivistService.getSpecializationHierarchy(uid);
+    // const facts = result.facts;
+    // const models = await this.environmentService.modelsFromFacts(facts);
 
-    this.environmentService.insertFacts(facts);
-    this.environmentService.insertModels(models);
+    // this.environmentService.insertFacts(facts);
+    // this.environmentService.insertModels(models);
 
-    const payload = { facts, models };
-    this.server.emit('system:addFacts', payload);
-    return payload;
+    // const payload = { facts, models };
+    // this.server.emit('system:addFacts', payload);
+    // return payload;
+    this.semanticModel.dispatch({
+      type: LOAD_SPECIALIZATION_HIERARCHY,
+      payload: { uid },
+    });
   }
 
   @SubscribeMessage('user:loadEntity')

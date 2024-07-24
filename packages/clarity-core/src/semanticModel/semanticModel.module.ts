@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { SemanticModelService } from './semanticModel.service';
-import { DSLVMModule } from 'src/dslvm/dslvm.module';
-// import { SemanticModelController } from './semantic-model.controller';
+import { REPLModule } from 'src/repl/repl.module';
 
 @Module({
-  imports: [DSLVMModule],
+  imports: [REPLModule],
   providers: [SemanticModelService],
-  // controllers: [SemanticModelController],
   exports: [SemanticModelService],
 })
 export class SemanticModelModule {}
