@@ -337,7 +337,9 @@ export class MalHashMap {
   }
 }
 
-type MalF = (...args: (MalType | undefined)[]) => MalType;
+// type MalF = (...args: (MalType | undefined)[]) => MalType;
+// sync MalF type:
+type MalF = (...args: (MalType | undefined)[]) => Promise<MalType>;
 
 export class MalFunction {
   static fromLisp(
@@ -347,7 +349,7 @@ export class MalFunction {
     bodyAst: MalType,
   ): MalFunction {
     const f = new MalFunction();
-    f.func = (...args) =>
+    f.func = async (...args) =>
       evalMal(bodyAst, new Env(env, params, checkUndefined(args)));
     f.env = env;
     f.params = params;

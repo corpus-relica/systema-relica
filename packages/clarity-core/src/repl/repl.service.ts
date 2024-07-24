@@ -28,7 +28,7 @@ export class REPLService {
   }
 
   // EVAL
-  private evalAST(ast: MalType, env: Env): MalType {
+  private async evalAST(ast: MalType, env: Env): Promise<MalType> {
     switch (ast.type) {
       case Node.Symbol:
         const f = env.get(ast);
@@ -37,14 +37,20 @@ export class REPLService {
         }
         return f;
       case Node.List:
-        return new MalList(ast.list.map((ast) => this.EVAL(ast, env)));
+        const foo = await Promise.all(
+          ast.list.map((ast) => this.EVAL(ast, env)),
+        );
+        return new MalList(foo);
       case Node.Vector:
-        return new MalVector(ast.list.map((ast) => this.EVAL(ast, env)));
+        const bar = await Promise.all(
+          ast.list.map((ast) => this.EVAL(ast, env)),
+        );
+        return new MalVector(bar);
       case Node.HashMap:
         const list: MalType[] = [];
         for (const [key, value] of ast.entries()) {
           list.push(key);
-          list.push(this.EVAL(value, env));
+          list.push(await this.EVAL(value, env));
         }
         return new MalHashMap(list);
       default:
@@ -52,7 +58,7 @@ export class REPLService {
     }
   }
 
-  EVAL(ast: MalType, env: Env): MalType {
+  async EVAL(ast: MalType, env: Env): Promise<MalType> {
     if (ast.type !== Node.List) {
       return this.evalAST(ast, env);
     }
@@ -73,7 +79,7 @@ export class REPLService {
             if (!value) {
               throw new Error(`unexpected syntax`);
             }
-            return env.set(key, this.EVAL(value, env));
+            return env.set(key, await this.EVAL(value, env));
           }
           case 'let*': {
             let letEnv = new Env(env);
@@ -96,13 +102,13 @@ export class REPLService {
                 throw new Error(`unexpected syntax`);
               }
 
-              letEnv.set(key, this.EVAL(value, letEnv));
+              letEnv.set(key, await this.EVAL(value, letEnv));
             }
             return this.EVAL(ast.list[2], letEnv);
           }
         }
     }
-    const result = this.evalAST(ast, env);
+    const result = await this.evalAST(ast, env);
     if (!isSeq(result)) {
       throw new Error(
         `unexpected return type: ${result.type}, expected: list or vector`,
@@ -112,7 +118,8 @@ export class REPLService {
     if (f.type !== Node.Function) {
       throw new Error(`unexpected token: ${f.type}, expected: function`);
     }
-    return f.func(...args);
+
+    return await f.func(...args);
   }
 
   // PRINT
@@ -121,38 +128,44 @@ export class REPLService {
   }
 
   // REP
-  rep(str: string): string {
+  async rep(str: string): Promise<string> {
     this.logger.log('REP START -> ', str);
 
     const replEnv = new Env();
     replEnv.set(
       MalSymbol.get('+'),
       MalFunction.fromBootstrap(
-        (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v + b!.v),
+        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v + b!.v),
       ),
     );
     replEnv.set(
       MalSymbol.get('-'),
       MalFunction.fromBootstrap(
-        (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v - b!.v),
+        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v - b!.v),
       ),
     );
     replEnv.set(
       MalSymbol.get('*'),
       MalFunction.fromBootstrap(
-        (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v * b!.v),
+        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v * b!.v),
       ),
     );
     replEnv.set(
       MalSymbol.get('/'),
       MalFunction.fromBootstrap(
-        (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v / b!.v),
+        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v / b!.v),
       ),
     );
+    replEnv.set(
+      MalSymbol.get('delay'),
+      MalFunction.fromBootstrap(async (duration: MalNumber) => {
+        return new Promise((resolve) => setTimeout(resolve, duration.v));
+      }),
+    );
 
-    const result = this.PRINT(this.EVAL(this.READ(str), replEnv));
-    this.logger.log('REP END -> ', result);
-    return result;
+    const result = await this.EVAL(this.READ(str), replEnv);
+    this.logger.log('REP END -> ', this.PRINT(result));
+    return this.PRINT(result);
   }
 
   exec(str: string): any {
