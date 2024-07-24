@@ -2,13 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
-// const apiPort = process.env.RELICA_CLARITY_CORE_API_PORT;
+const apiPort = process.env.RELICA_CLARITY_CORE_API_PORT;
 
-// console.log('Starting Clarity Core...' + apiPort);
+console.log('Starting Clarity Core...' + apiPort);
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Swagger API documentation
   const config = new DocumentBuilder()
     .setTitle('Relica Clarity-Core API')
     .setDescription(

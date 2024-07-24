@@ -17,6 +17,8 @@ import { ArchivistModule } from './archivist/archivist.module';
 
 import { ArtificialIntelligenceModule } from './artificialIntelligence/artificialIntelligence.module';
 
+import { DSLVMModule } from './dslvm/dslvm.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -36,6 +38,7 @@ import { ArtificialIntelligenceModule } from './artificialIntelligence/artificia
     ModelModule,
     ArchivistModule,
     ArtificialIntelligenceModule,
+    DSLVMModule,
   ],
   controllers: [AppController],
   providers: [AppService],

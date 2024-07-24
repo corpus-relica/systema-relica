@@ -12,6 +12,8 @@ import { EnvironmentService } from '../environment/environment.service';
 import { ArchivistService } from '../archivist/archivist.service';
 import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
+import { DSLParser } from '../dslvm/dsl-parser.service';
+import { VMExecutor } from '../dslvm/vm-executor.service';
 
 @WebSocketGateway({
   cors: {
@@ -27,6 +29,8 @@ export class EventsGateway {
   constructor(
     private readonly environmentService: EnvironmentService,
     private readonly archivistService: ArchivistService,
+    private readonly dslParser: DSLParser,
+    private readonly vmExecutor: VMExecutor,
   ) {}
 
   afterInit(server: Server) {
@@ -47,7 +51,7 @@ export class EventsGateway {
     this.server.emit('clientLeft', { clientId: client.id });
   }
 
-  //
+  // NOUS //
 
   @SubscribeMessage('nous:selectEntity')
   nouseSelectEntity(@MessageBody('uid') uid: number): number {
@@ -70,7 +74,19 @@ export class EventsGateway {
     return res;
   }
 
-  //
+  // COMMAND //
+
+  // @SubscribeMessage('system:command')
+  // async systemCommand(@MessageBody('command') command: string): Promise<void> {
+  //   this.logger.log('SYSTEM:COMMAND');
+  //   const parsedCommand = this.dslParser.parse(command);
+  //   await this.vmExecutor.execute(parsedCommand);
+
+  //   // const newState = await this.stateStore.getState();
+  //   return;
+  // }
+
+  // LEGACY //
 
   @SubscribeMessage('user:selectEntity')
   userSelectEntity(@MessageBody('uid') uid: number): number {
