@@ -26,7 +26,7 @@ import {
   CLASSIFICATION_FACT_ENDPOINT,
 } from './constants';
 
-const URL = process.env.RELICA_NEO4J_URL;
+const URL = 'http://archivist:3000'; //process.env.RELICA_NEO4J_URL;
 
 @Injectable()
 export class ArchivistService {
@@ -100,6 +100,7 @@ export class ArchivistService {
 
   async getCategory(uid: number) {
     const url = `${URL}${ENTITY_CATEGORY_ENDPOINT}`;
+    console.log('\\\\\\\\\\\\\\\\\\ url \\\\\\\\\\\\\\\\\\\\\\\\', url);
     const { data } = await firstValueFrom(
       this.httpService.get(url, { params: { uid } }),
     );

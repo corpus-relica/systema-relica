@@ -42,8 +42,9 @@ export class ModelService {
   }
 
   async retrieveKindModel(uid) {
+    console.log('RETREIVE MODEL uid', uid);
     const category = await this.archivistService.getCategory(uid);
-    // console.log('category', category);
+    console.log('category', category);
     const facts = await this.archivistService.retrieveAllFacts(uid);
     // console.log('facts', facts);
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);

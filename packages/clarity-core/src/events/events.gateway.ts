@@ -12,8 +12,7 @@ import { EnvironmentService } from '../environment/environment.service';
 import { ArchivistService } from '../archivist/archivist.service';
 import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
-import { DSLParser } from '../dslvm/dsl-parser.service';
-import { VMExecutor } from '../dslvm/vm-executor.service';
+import { SemanticModelService } from '../semanticModel/semanticModel.service';
 
 @WebSocketGateway({
   cors: {
@@ -29,8 +28,7 @@ export class EventsGateway {
   constructor(
     private readonly environmentService: EnvironmentService,
     private readonly archivistService: ArchivistService,
-    private readonly dslParser: DSLParser,
-    private readonly vmExecutor: VMExecutor,
+    private readonly semanticModelService: SemanticModelService,
   ) {}
 
   afterInit(server: Server) {

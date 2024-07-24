@@ -24,7 +24,10 @@ export class ModelController {
     if (uid === undefined) {
       throw new HttpException('No UID provided', 400);
     } else {
+      this.logger.log('~~~~~~~~~~~~KIND~~~~~~~~~~~~');
+      this.logger.log(uid);
       const result = await this.modelService.retrieveKindModel(+uid);
+      this.logger.log(result);
       return result;
     }
   }
