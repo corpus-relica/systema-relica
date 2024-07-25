@@ -33,6 +33,9 @@ import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 import GraphLegend from "../components/GraphLegend";
 
+const USER = "user";
+const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
+
 const cats = {
   730044: "Physical Object",
   193671: "Occurrence",
@@ -106,12 +109,12 @@ const Graph = observer(() => {
   }, []);
 
   const handleEdgeClick = (uid: any) => {
-    sockSendCC("user", "selectFact", { uid });
+    sockSendCC(USER, "selectFact", { uid });
   };
 
   const onStageClick = () => {
     setOpen(false);
-    sockSendCC("user", "selectNone", {});
+    sockSendCC(USER, "selectNone", {});
   };
 
   const handleSearchUIClose = (res: any) => {
@@ -121,11 +124,11 @@ const Graph = observer(() => {
 
     const { lh_object_uid, rel_type_uid, rh_object_uid } = res;
     if (rel_type_uid === 1225) {
-      sockSendCC("user", "getSpecializationHierarchy", {
+      sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
         uid: rh_object_uid,
       });
     } else {
-      sockSendCC("user", "getSpecializationHierarchy", {
+      sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
         uid: lh_object_uid,
       });
     }

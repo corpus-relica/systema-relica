@@ -25,8 +25,6 @@ export class EnvironmentService {
   ) {}
 
   async modelsFromFacts(facts: Fact[]) {
-    console.log('!!!!! MODELS FROM FACTS!!!!');
-    console.log(facts);
     const entityUIDs = facts.reduce((acc: number[], fact: Fact) => {
       if (!acc.includes(fact.lh_object_uid)) acc.push(fact.lh_object_uid);
       if (!acc.includes(fact.rh_object_uid)) acc.push(fact.rh_object_uid);
@@ -39,17 +37,9 @@ export class EnvironmentService {
   }
 
   async retrieveEnvironment(envID?: string) {
-    console.log('!!!!! RETREIVE ENVIRONMENT!!!!');
-
     const models = await this.envModelRepository.find();
     const facts = await this.envFactRepository.find();
     const selectedEntity = await this.envSelectedEntityRepository.find();
-
-    console.log(
-      '--------------------------------------------------------------------',
-    );
-    console.log('selectedEntity', selectedEntity);
-
     const selectedEntityUID = selectedEntity[0] ? selectedEntity[0].uid : null;
 
     return {
@@ -112,7 +102,6 @@ export class EnvironmentService {
         .orWhere("fact.fact->>'rh_object_uid' = :uid", { uid })
         .getMany();
 
-      console.log('res', res);
       if (res.length === 0) {
         return;
       }
@@ -166,7 +155,6 @@ export class EnvironmentService {
     this.insertFacts(facts);
     this.insertModels(models);
     const payload = { facts, models };
-    // socketServer.emit('system', 'addFacts', payload);
     return payload;
   }
 
@@ -176,7 +164,6 @@ export class EnvironmentService {
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
-    // socketServer.emit('system', 'addFacts', payload);
     return payload;
   }
 
@@ -202,7 +189,6 @@ export class EnvironmentService {
   }
 
   async removeEntity(uid: number) {
-    console.log('remove entity', uid);
     const env = await this.retrieveEnvironment();
     const facts = env.facts;
     let factsToRemove: Fact[] = [];
@@ -236,7 +222,6 @@ export class EnvironmentService {
   }
 
   async removeFact(uid: number) {
-    console.log('remove fact', uid);
     const env = await this.retrieveEnvironment();
     const facts = env.facts;
     const factToRemove = facts.find((fact: Fact) => fact.fact_uid === uid);
@@ -260,7 +245,6 @@ export class EnvironmentService {
   }
 
   async removeFacts(uids: number[]) {
-    console.log('remove facts', uids);
     if (uids.length === 0) return;
     await this.envFactRepository.delete(uids);
   }
@@ -270,13 +254,14 @@ export class EnvironmentService {
   }
 
   async removeEntities(uids: number[]) {
-    const removedFactUids = [];
+    let removedFactUids = [];
     await Promise.all(
       uids.map(async (uid) => {
         const removedFactUid = await this.removeEntity(uid);
-        removedFactUids.push(removedFactUid);
+        removedFactUids = removedFactUids.concat(removedFactUid);
       }),
     );
+
     return removedFactUids;
   }
 
@@ -289,7 +274,7 @@ export class EnvironmentService {
     return payload;
   }
 
-  async getSubtypesCone(uid: number) {
+  async loadSubtypesCone(uid: number) {
     const result = await this.archivistService.getSubtypesCone(uid);
     const models = await this.modelsFromFacts(result);
     this.insertFacts(result);
@@ -308,7 +293,6 @@ export class EnvironmentService {
   // THIS PROBABLY DOESN"T BELONG HERE!!
   // like, weigh the meritts of routing all such calls through CC vs. giving NOUS and Integrator direct access to the DB layer
   async textSearch(searchTerm: string) {
-    // const selectedEntity = await es.getSelectedEntity();
     const selectedEntity = await this.getSelectedEntity();
     const searchResult: any =
       await this.archivistService.textSearchExact(searchTerm);
@@ -318,12 +302,9 @@ export class EnvironmentService {
       +selectedEntity,
     );
     const facts = searchResult.facts.concat(relResult);
-    // // console.log(Object.entries(result));
-    // // console.log(result.facts);
     const models = await this.modelsFromFacts(facts);
     this.insertFacts(facts);
     this.insertModels(models);
-    // socketServer.emit('system', 'addFacts', { facts, models });
     return { facts: facts, models };
   }
 
@@ -335,18 +316,15 @@ export class EnvironmentService {
       'this is a test',
     );
     // //refresh the category-descendants cache on client-side
-    // socketServer.emit('system', 'updateCategoryDescendantsCache', {});
     if (result.success) {
       const { fact } = result;
       const facts = [fact];
       const models = await this.modelsFromFacts(facts);
       this.insertFacts(facts);
       this.insertModels(models);
-      // socketServer.emit('system', 'addFacts', { facts, models });
       return { success: true, uid: fact.lh_object_uid };
     }
     return { error: 'failed to specialize kind' };
-    // console.log('specialized Kind', result);
   }
 
   async classifyIndividual(uid: number, typeName: string, name: string) {
@@ -357,18 +335,15 @@ export class EnvironmentService {
       'this is a test',
     );
     // //refresh the category-descendants cache on client-side
-    // socketServer.emit('system', 'updateCategoryDescendantsCache', {});
     if (result.success) {
       const { fact } = result;
       const facts = [fact];
       const models = await this.modelsFromFacts(facts);
       this.insertFacts(facts);
       this.insertModels(models);
-      // socketServer.emit('system', 'addFacts', { facts, models });
       return { success: true, uid: fact.lh_object_uid };
     }
     return { error: 'failed to classify individual' };
-    // console.log('classified Individual', result);
   }
 
   async getClassified(uid: number) {
@@ -377,7 +352,6 @@ export class EnvironmentService {
     const models = await this.modelsFromFacts(facts);
     this.insertFacts(facts);
     this.insertModels(models);
-    // socketServer.emit('system', 'addFacts', { facts, models });
     return { success: true, facts, models };
   }
 
@@ -387,7 +361,6 @@ export class EnvironmentService {
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
-    // socketServer.emit('system', 'addFacts', payload);
     return payload;
   }
 }

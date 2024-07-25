@@ -25,6 +25,7 @@ import { EnvironmentService } from '../environment/environment.service';
 
 import { jsToMal, malToJs } from './utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Fact } from '@relica/types';
 
 @Injectable()
 export class REPLService {
@@ -214,6 +215,14 @@ export class REPLService {
     );
 
     replEnv.set(
+      MalSymbol.get('retrieveAllFacts'),
+      MalFunction.fromBootstrap(async (uid: MalNumber): Promise<any> => {
+        const res = await this.archivist.retrieveAllFacts(uid.v);
+        return jsToMal(res);
+      }),
+    );
+
+    replEnv.set(
       MalSymbol.get('getSpecializationHierarchy'),
       MalFunction.fromBootstrap(async (uid: MalNumber): Promise<any> => {
         const res = await this.archivist.getSpecializationHierarchy(uid.v);
@@ -246,11 +255,100 @@ export class REPLService {
     );
 
     replEnv.set(
+      MalSymbol.get('selectEntity'),
+      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+        this.environment.setSelectedEntity(uid.v, 'entity');
+        return MalNil.instance;
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('selectFact'),
+      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+        this.environment.setSelectedEntity(uid.v, 'fact');
+        return MalNil.instance;
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('selectNone'),
+      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+        this.environment.setSelectedEntity(null);
+        return MalNil.instance;
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('loadSubtypesCone'),
+      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+        const res = await this.environment.loadSubtypesCone(uid.v);
+        return jsToMal(res);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('unloadEntity'),
+      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+        const removedFacts = await this.environment.removeEntity(uid.v);
+        return jsToMal(removedFacts);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('loadEntity'),
+      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+        const res = await this.environment.loadEntity(uid.v);
+        return jsToMal(res);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('loadEntities'),
+      MalFunction.fromBootstrap(async (uids: MalVector) => {
+        let facts: Fact[] = [];
+        let models: any[] = [];
+        const xxx = malToJs(uids);
+        for (let i = 0; i < xxx.length; i++) {
+          const payload = await this.environment.loadEntityBase(xxx[i]);
+          facts = facts.concat(payload.facts);
+          models = models.concat(payload.models);
+        }
+        const payload = { facts, models };
+        // this.server.emit('system:addFacts', payload);
+        // return payload;
+        return jsToMal(payload);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('unloadEntities'),
+      MalFunction.fromBootstrap(async (uids: MalVector) => {
+        console.log('unloadEntities', malToJs(uids));
+        const removedFacts = await this.environment.removeEntities(
+          malToJs(uids),
+        );
+
+        console.log('unloadEntities: AFTER !!!!!', removedFacts);
+        return jsToMal(removedFacts);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('clearEntites'),
+      MalFunction.fromBootstrap(async (event: MalString, payload: MalType) => {
+        this.environment.clearEntities();
+        return MalNil.instance;
+      }),
+    );
+
+    replEnv.set(
       MalSymbol.get('emit'),
       MalFunction.fromBootstrap(
         async (event: MalString, payload: MalHashMap) => {
-          console.log('emit', event.v, malToJs(payload));
-          this.eventEmitter.emit(event.v, malToJs(payload));
+          this.eventEmitter.emit('emit', {
+            type: event.v,
+            payload: malToJs(payload),
+          });
           return MalNil.instance;
         },
       ),

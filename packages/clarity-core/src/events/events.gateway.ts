@@ -14,7 +14,19 @@ import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
 import { SemanticModelService } from '../semanticModel/semanticModel.service';
 
-import { LOAD_SPECIALIZATION_HIERARCHY } from '../semanticModel/actions';
+import {
+  SELECT_ENTITY,
+  SELECT_FACT,
+  SELECT_NONE,
+  LOAD_SUBTYPES_CONE,
+  LOAD_SPECIALIZATION_HIERARCHY,
+  UNLOAD_ENTITY,
+  LOAD_ENTITY,
+  LOAD_ENTITIES,
+  UNLOAD_ENTITIES,
+  CLEAR_ENTITIES,
+  LOAD_ALL_RELATED,
+} from '../semanticModel/actions';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @WebSocketGateway({
@@ -53,10 +65,12 @@ export class EventsGateway {
     this.server.emit('clientLeft', { clientId: client.id });
   }
 
-  @OnEvent('system:addFacts')
+  // EVENT HANDLER //
+
+  @OnEvent('emit')
   async handleAddFacts(payload: any) {
-    console.log('SYSTEM:ADD FACTS');
-    this.server.emit('system:addFacts', payload);
+    this.logger.log('EMIT:', payload.type);
+    this.server.emit(payload.type, payload.payload);
   }
 
   // NOUS //
@@ -98,121 +112,95 @@ export class EventsGateway {
 
   @SubscribeMessage('user:selectEntity')
   userSelectEntity(@MessageBody('uid') uid: number): number {
-    console.log('SELECT ENTITY');
-    console.log(uid);
-    this.environmentService.setSelectedEntity(uid, 'entity');
-    this.server.emit('system:selectEntity', { uid: uid });
+    this.semanticModel.dispatch({
+      type: SELECT_ENTITY,
+      payload: { uid },
+    });
     return uid;
   }
 
   @SubscribeMessage('user:selectFact')
   userSelectFact(@MessageBody('uid') uid: any): number {
-    console.log('SELECT FACT');
-    console.log(uid);
-    this.environmentService.setSelectedEntity(uid, 'fact');
-    this.server.emit('system:selectFact', { uid: uid });
+    this.semanticModel.dispatch({
+      type: SELECT_FACT,
+      payload: { uid },
+    });
     return uid;
   }
 
   @SubscribeMessage('user:selectNone')
   userSelectNone(): Promise<number> {
-    console.log('SELECT NONE');
-    this.environmentService.setSelectedEntity(null);
-    this.server.emit('system:selectedNone', {});
+    this.semanticModel.dispatch({
+      type: SELECT_NONE,
+      payload: null,
+    });
     return null;
   }
 
-  @SubscribeMessage('user:getSubtypes')
-  async userGetSubtypes(@MessageBody('uid') uid: any): Promise<number> {
-    console.log('GET SUBTYPES');
-    console.log(uid);
-    const res = await this.environmentService.getSubtypes(uid);
-    this.server.emit('system:addFacts', res);
-    return uid;
-  }
-
-  @SubscribeMessage('user:getSubtypesCone')
+  @SubscribeMessage('user:loadSubtypesCone')
   async userGetSubtypesCone(@MessageBody('uid') uid: any): Promise<number> {
-    console.log('GET SUBTYPES CONE');
-    console.log(uid);
-    const res = await this.environmentService.getSubtypesCone(uid);
-    this.server.emit('system:addFacts', res);
+    this.semanticModel.dispatch({
+      type: LOAD_SUBTYPES_CONE,
+      payload: { uid },
+    });
     return uid;
   }
 
-  @SubscribeMessage('user:getSpecializationHierarchy')
-  async userGetSpecializationHierarchy(
+  @SubscribeMessage('user:loadSpecializationHierarchy')
+  async userLoadSpecializationHierarchy(
     @MessageBody('uid') uid: number,
   ): Promise<any> {
-    console.log('GET SPECIALIZATION HIERARCHY: ', uid);
-
-    // const result = await this.archivistService.getSpecializationHierarchy(uid);
-    // const facts = result.facts;
-    // const models = await this.environmentService.modelsFromFacts(facts);
-
-    // this.environmentService.insertFacts(facts);
-    // this.environmentService.insertModels(models);
-
-    // const payload = { facts, models };
-    // this.server.emit('system:addFacts', payload);
-    // return payload;
     this.semanticModel.dispatch({
       type: LOAD_SPECIALIZATION_HIERARCHY,
       payload: { uid },
     });
+    return;
   }
 
   @SubscribeMessage('user:loadEntity')
   async userLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('LOAD ENTITY');
-    console.log(uid);
-    const payload = await this.environmentService.loadEntity(uid);
-    this.server.emit('system:addFacts', payload);
+    this.semanticModel.dispatch({
+      type: LOAD_ENTITY,
+      payload: { uid },
+    });
     return uid;
   }
 
   @SubscribeMessage('user:loadEntities')
   async userLoadEntities(@MessageBody('uids') uids: number[]): Promise<any> {
-    console.log('LOAD ENTITIES');
-    console.log(uids, typeof uids);
-    let facts: Fact[] = [];
-    let models: any[] = [];
-    for (let i = 0; i < uids.length; i++) {
-      const payload = await this.environmentService.loadEntityBase(uids[i]);
-      facts = facts.concat(payload.facts);
-      models = models.concat(payload.models);
-    }
-    const payload = { facts, models };
-    this.server.emit('system:addFacts', payload);
-    return payload;
+    this.semanticModel.dispatch({
+      type: LOAD_ENTITIES,
+      payload: { uids },
+    });
+    return uids;
   }
 
-  @SubscribeMessage('user:removeEntity')
+  @SubscribeMessage('user:unloadEntity')
   async userRemoveEntity(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('REMOVE ENTITY');
-    console.log(uid);
-    const removedFactUids = await this.environmentService.removeEntity(uid);
-    this.server.emit('system:remFacts', { fact_uids: removedFactUids });
+    this.semanticModel.dispatch({
+      type: UNLOAD_ENTITY,
+      payload: { uid },
+    });
     return uid;
   }
 
-  @SubscribeMessage('user:removeEntities')
+  @SubscribeMessage('user:unloadEntities')
   async userRemoveEntities(
     @MessageBody('uids') uids: number[],
   ): Promise<number[]> {
-    console.log('REMOVE ENTITIES');
-    console.log(uids);
-    const removedFactUids = await this.environmentService.removeEntities(uids);
-    this.server.emit('system:remFacts', { fact_uids: removedFactUids });
+    this.semanticModel.dispatch({
+      type: UNLOAD_ENTITIES,
+      payload: { uids },
+    });
     return uids;
   }
 
   @SubscribeMessage('user:clearEntities')
   userClearEntities(): Promise<number> {
-    console.log('CLEAR ENTITIES');
-    this.environmentService.clearEntities();
-
-    this.server.emit('system:entitiesCleared', {});
+    this.semanticModel.dispatch({
+      type: CLEAR_ENTITIES,
+      payload: {},
+    });
 
     return null;
   }
@@ -231,15 +219,6 @@ export class EventsGateway {
     return uid;
   }
 
-  @SubscribeMessage('user:removeFact')
-  async userRemoveFact(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('REMOVE FACT');
-    console.log(uid);
-    await this.environmentService.removeFact(uid);
-    this.server.emit('system:remFacts', { fact_uids: [uid] });
-    return uid;
-  }
-
   @SubscribeMessage('user:deleteFact')
   async userDeleteFact(@MessageBody('uid') uid: number): Promise<number> {
     console.log('DELETE FACT');
@@ -255,7 +234,7 @@ export class EventsGateway {
     return uid;
   }
 
-  @SubscribeMessage('user:removeEntitySubtypesRecursive')
+  @SubscribeMessage('user:unloadSubtypesCone')
   async userRemoveEntitySubtypesRecursive(
     @MessageBody('uid') uid: number,
   ): Promise<number> {
@@ -292,7 +271,7 @@ export class EventsGateway {
     this.environmentService.removeModels(
       Array.from(candidateModelUIDsToRemove),
     );
-    this.server.emit('system:remFacts', { fact_uids: factUIDsToRemove });
+    this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
     const subtypingFacts = factsToRemove.filter(
       (fact: Fact) => fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
     );
@@ -305,19 +284,13 @@ export class EventsGateway {
     return uid;
   }
 
-  @SubscribeMessage('user:getAllRelatedFacts')
+  @SubscribeMessage('user:loadAllRelatedFacts')
   async userGetAllRelatedFacts(@MessageBody('uid') uid: number): Promise<any> {
-    console.log('GET ALL RELATED FACTS');
-    console.log(uid, typeof uid);
+    this.semanticModel.dispatch({
+      type: LOAD_ALL_RELATED,
+      payload: { uid },
+    });
 
-    const result = await this.archivistService.retrieveAllFacts(uid);
-    const models = await this.environmentService.modelsFromFacts(result);
-
-    await this.environmentService.insertFacts(result);
-    await this.environmentService.insertModels(models);
-
-    this.server.emit('system:addFacts', { facts: result, models });
-
-    return { facts: result, models };
+    return null;
   }
 }

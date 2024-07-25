@@ -28,13 +28,13 @@ import {
 import { useStores } from "../../../context/RootStoreContext";
 import { Fact } from "../../../types";
 
-const SH = "SH";
-const SHOW_CLASSIFIED = "show classified";
-const SHOW_ALL = "show 'all'";
-const SHOW_SUBTYPES = "show subtypes";
-const SHOW_SUBTYPES_CONE = "show subtypes cone";
-const REM_THIS = "rem this";
-const REM_SUBTYPES_R = "rem subtypes(r)";
+const LOAD_SH = "load SH";
+const LOAD_CLASSIFIED = "load classified";
+const LOAD_ALL_RELATED = "load all related";
+const LOAD_SUBTYPES = "load subtypes";
+const LOAD_SUBTYPES_CONE = "load subtypes cone";
+const UNLOAD_THIS = "unload this";
+const UNLOAD_SUBTYPES_CONE = "unload subtypes cone";
 const DELETE_THIS = "delete this!";
 
 interface KindContextMenuProps {
@@ -77,11 +77,11 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
     async (e: any) => {
       const value = e.currentTarget.getAttribute("value");
       switch (value) {
-        case SH:
-          sockSendCC("user", "getSpecializationHierarchy", { uid });
+        case LOAD_SH:
+          sockSendCC("user", "loadSpecializationHierarchy", { uid });
           handleClose();
           break;
-        case SHOW_CLASSIFIED:
+        case LOAD_CLASSIFIED:
           const classified = await getClassified(uid);
           const existingClassified = classified
             .filter((individual: any) => {
@@ -97,16 +97,13 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           setPossibleClassified(classified);
           setExistingClassified(existingClassified);
           setClassifiedDialogueIsOpen(true);
-          // const response = await getClassified(uid);
-          // addFacts(response);
           handleClose();
           break;
-        case SHOW_ALL:
-          sockSendCC("user", "getAllRelatedFacts", { uid });
+        case LOAD_ALL_RELATED:
+          sockSendCC("user", "loadAllRelatedFacts", { uid });
           handleClose();
           break;
-        case SHOW_SUBTYPES:
-          // sockSendCC("user", "getSubtypes", { uid });
+        case LOAD_SUBTYPES:
           const subtypes = await getSubtypes(uid);
           const existingSubtypes = subtypes
             .filter((subtype) => {
@@ -124,16 +121,16 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           setSubtypesDialogueIsOpen(true);
           handleClose();
           break;
-        case SHOW_SUBTYPES_CONE:
-          sockSendCC("user", "getSubtypesCone", { uid });
+        case LOAD_SUBTYPES_CONE:
+          sockSendCC("user", "loadSubtypesCone", { uid });
           handleClose();
           break;
-        case REM_THIS:
-          sockSendCC("user", "removeEntity", { uid });
+        case UNLOAD_THIS:
+          sockSendCC("user", "unloadEntity", { uid });
           handleClose();
           break;
-        case REM_SUBTYPES_R:
-          sockSendCC("user", "removeEntitySubtypesRecursive", { uid });
+        case UNLOAD_SUBTYPES_CONE:
+          sockSendCC("user", "unloadSubtypesCone", { uid });
           handleClose();
           break;
         case DELETE_THIS:
@@ -220,27 +217,27 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       <MenuItem value="SH" onClick={handleItemClick}>
         SH
       </MenuItem>
-      <MenuItem value={SHOW_CLASSIFIED} onClick={handleItemClick}>
-        show classified
+      <MenuItem value={LOAD_CLASSIFIED} onClick={handleItemClick}>
+        load classified
       </MenuItem>
-      <MenuItem value={SHOW_ALL} onClick={handleItemClick}>
-        show 'all'
+      <MenuItem value={LOAD_ALL_RELATED} onClick={handleItemClick}>
+        load all related
       </MenuItem>
-      <MenuItem value={SHOW_SUBTYPES} onClick={handleItemClick}>
-        show subtypes
+      <MenuItem value={LOAD_SUBTYPES} onClick={handleItemClick}>
+        load subtypes
       </MenuItem>
-      <MenuItem value={SHOW_SUBTYPES_CONE} onClick={handleItemClick}>
-        show subtypes cone
+      <MenuItem value={LOAD_SUBTYPES_CONE} onClick={handleItemClick}>
+        load subtypes cone
       </MenuItem>
       <MenuItem value={"undefined"} disabled>
         reparent this
       </MenuItem>
       <Divider />
-      <MenuItem value={REM_THIS} onClick={handleItemClick}>
-        rem this
+      <MenuItem value={UNLOAD_THIS} onClick={handleItemClick}>
+        unoad this
       </MenuItem>
-      <MenuItem value={REM_SUBTYPES_R} onClick={handleItemClick}>
-        rem subtypes(r)
+      <MenuItem value={UNLOAD_SUBTYPES_CONE} onClick={handleItemClick}>
+        unload subtypes cone
       </MenuItem>
       <Divider />
       <MenuItem

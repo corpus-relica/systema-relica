@@ -173,6 +173,7 @@ export const App = () => {
     };
 
     const onNoneSelected = () => {
+      console.log("SELECT NONE");
       memStore.setItem("selectedNode", null);
       memStore.setItem("selectedEdge", null);
     };
@@ -180,11 +181,11 @@ export const App = () => {
     ccSocket.on("connect", onConnect);
     ccSocket.on("disconnect", onDisconnect);
 
-    ccSocket.on("system:selectEntity", onSelectEntity);
-    ccSocket.on("system:selectFact", onSelectFact);
+    ccSocket.on("system:selectedEntity", onSelectEntity);
+    ccSocket.on("system:selectedFact", onSelectFact);
     ccSocket.on("system:selectedNone", onNoneSelected);
-    ccSocket.on("system:addFacts", onAddFacts);
-    ccSocket.on("system:remFacts", onRemFacts);
+    ccSocket.on("system:loadedFacts", onAddFacts);
+    ccSocket.on("system:unloadedFacts", onRemFacts);
     // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);
     ccSocket.on("system:entitiesCleared", onEntitiesCleared);
 
@@ -192,11 +193,13 @@ export const App = () => {
       ccSocket.off("connect", onConnect);
       ccSocket.off("disconnect", onDisconnect);
 
-      ccSocket.off("system:selectEntity", onSelectEntity);
-      ccSocket.off("system:selectFact", onSelectFact);
-      ccSocket.off("system:addFacts", onAddFacts);
-      ccSocket.off("system:remFacts", onRemFacts);
+      ccSocket.off("system:selectedEntity", onSelectEntity);
+      ccSocket.off("system:selectedFact", onSelectFact);
+      ccSocket.off("system:selectedNone", onNoneSelected);
+      ccSocket.off("system:loadedFacts", onAddFacts);
+      ccSocket.off("system:unloadedFacts", onRemFacts);
       // ccSocket.off("system:updateCategoryDescendantsCache", establishCats);
+      ccSocket.off("system:entitiesCleared", onEntitiesCleared);
     };
   }, []);
 

@@ -158,7 +158,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             setSubtypesDialogueIsOpen(false);
             console.log(selected, notSelected);
             sockSendCC("user", "loadEntities", { uids: selected });
-            sockSendCC("user", "removeEntities", { uids: notSelected });
+            sockSendCC("user", "unloadEntities", { uids: notSelected });
           }}
         />
       )}
@@ -176,7 +176,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             console.log("selected: ", selected);
             console.log("notSelected: ", notSelected);
             sockSendCC("user", "loadEntities", { uids: selected });
-            sockSendCC("user", "removeEntities", { uids: notSelected });
+            sockSendCC("user", "unloadEntities", { uids: notSelected });
           }}
         />
       )}
