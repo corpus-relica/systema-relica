@@ -17,16 +17,16 @@ export class SemanticModelService {
     switch (action.type) {
       case LOAD_SPECIALIZATION_HIERARCHY:
         this.logger.log('SEMANTIC MODEL :: LOAD_SPECIALIZATION_HIERARCHY');
-        //         command = `
-        // (let (result (getSpecializationHierarchy ${action.payload.uid})
-        //       facts  (:facts result)
-        //       models (modelsFromFacts facts)
-        //       payload (:facts facts :models models)
-        //   (insertFacts facts)
-        //   (insertModels models)
-        //   (emit 'system:addFacts' payload)))
-        // `;
-        command = `(/ 8 (- 12 3) (+ 1 2) (* 2 3))`;
+        command = `
+        (let* [result (getSpecializationHierarchy ${action.payload.uid})
+               facts  (get result :facts )
+               models (modelsFromFacts facts)
+               payload {:facts facts :models models}]
+          (do
+            (insertFacts facts)
+            (insertModels models)
+            (emit \"system:addFacts\" payload))))
+        `;
         break;
       case 'DECREMENT':
         break;

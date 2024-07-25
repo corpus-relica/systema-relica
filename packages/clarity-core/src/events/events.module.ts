@@ -7,5 +7,6 @@ import { SemanticModelModule } from 'src/semanticModel/semanticModel.module';
 @Module({
   imports: [EnvironmentModule, ArchivistModule, SemanticModelModule],
   providers: [EventsGateway],
+  exports: [EventsGateway],
 })
 export class EventsModule {}

@@ -10,6 +10,9 @@ import {
   MalFunction,
   isAST,
   isSeq,
+  MalNumber,
+  MalSymbol,
+  MalString,
 } from './types';
 import { Env } from './env';
 import * as core from './core';
@@ -17,11 +20,21 @@ import { readStr } from './reader';
 import { prStr } from './printer';
 import { Logger } from '@nestjs/common';
 
+import { ArchivistService } from '../archivist/archivist.service';
+import { EnvironmentService } from '../environment/environment.service';
+
+import { jsToMal, malToJs } from './utils';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 @Injectable()
 export class REPLService {
   private logger: Logger = new Logger('REPLService');
 
-  constructor() {}
+  constructor(
+    private archivist: ArchivistService,
+    private environment: EnvironmentService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   // READ
   READ(str: string): MalType {
@@ -182,7 +195,7 @@ export class REPLService {
     return this.PRINT(result);
   }
 
-  exec(str: string): any {
+  async exec(str: string): Promise<any> {
     this.logger.log('REP START');
 
     const replEnv = new Env();
@@ -191,11 +204,63 @@ export class REPLService {
       replEnv.set(key, value);
     });
 
-    this.rep('(def! not (fn* (a) (if a false true)))', replEnv);
+    replEnv.set(
+      MalSymbol.get('delay'),
+      MalFunction.fromBootstrap(async (duration: MalNumber) => {
+        return new Promise((resolve) => {
+          setTimeout(() => resolve(MalNil.instance), duration.v);
+        });
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('getSpecializationHierarchy'),
+      MalFunction.fromBootstrap(async (uid: MalNumber): Promise<any> => {
+        const res = await this.archivist.getSpecializationHierarchy(uid.v);
+        return jsToMal(res);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('modelsFromFacts'),
+      MalFunction.fromBootstrap(async (facts: MalVector): Promise<MalType> => {
+        const res = await this.environment.modelsFromFacts(malToJs(facts));
+        return jsToMal(res);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('insertFacts'),
+      MalFunction.fromBootstrap(async (facts: MalVector): Promise<MalType> => {
+        const res = await this.environment.insertFacts(malToJs(facts));
+        return jsToMal(res);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('insertModels'),
+      MalFunction.fromBootstrap(async (models: MalVector): Promise<MalType> => {
+        const res = await this.environment.insertModels(malToJs(models));
+        return jsToMal(res);
+      }),
+    );
+
+    replEnv.set(
+      MalSymbol.get('emit'),
+      MalFunction.fromBootstrap(
+        async (event: MalString, payload: MalHashMap) => {
+          console.log('emit', event.v, malToJs(payload));
+          this.eventEmitter.emit(event.v, malToJs(payload));
+          return MalNil.instance;
+        },
+      ),
+    );
+
+    await this.rep('(def! not (fn* (a) (if a false true)))', replEnv);
 
     try {
       if (str) {
-        return this.rep(str, replEnv);
+        return await this.rep(str, replEnv);
       }
     } catch (e) {
       const err: Error = e;

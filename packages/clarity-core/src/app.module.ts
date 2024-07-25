@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
+import { EventEmitterModule } from '@nestjs/event-emitter';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -25,6 +27,7 @@ import { REPLModule } from './repl/repl.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.RELICA_POSTGRES_HOST,

@@ -1,6 +1,7 @@
 import { Node, MalType } from './types';
 
 export function prStr(v: MalType, printReadably = true): string {
+  console.log('prStr', v);
   switch (v.type) {
     case Node.List:
       return `(${v.list.map((v) => prStr(v, printReadably)).join(' ')})`;

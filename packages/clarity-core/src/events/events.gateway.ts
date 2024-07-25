@@ -15,6 +15,7 @@ import { Fact } from '@relica/types';
 import { SemanticModelService } from '../semanticModel/semanticModel.service';
 
 import { LOAD_SPECIALIZATION_HIERARCHY } from '../semanticModel/actions';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @WebSocketGateway({
   cors: {
@@ -31,6 +32,7 @@ export class EventsGateway {
     private readonly environmentService: EnvironmentService,
     private readonly archivistService: ArchivistService,
     private readonly semanticModel: SemanticModelService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   afterInit(server: Server) {
@@ -49,6 +51,12 @@ export class EventsGateway {
     this.logger.log(`Client disconnected: ${client.id}`);
     // Optionally broadcast to other clients that a client has left
     this.server.emit('clientLeft', { clientId: client.id });
+  }
+
+  @OnEvent('system:addFacts')
+  async handleAddFacts(payload: any) {
+    console.log('SYSTEM:ADD FACTS');
+    this.server.emit('system:addFacts', payload);
   }
 
   // NOUS //
