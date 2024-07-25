@@ -3,15 +3,16 @@ import { Injectable } from '@nestjs/common';
 import {
   Node,
   MalType,
-  MalNumber,
+  MalNil,
   MalList,
   MalVector,
   MalHashMap,
-  MalSymbol,
   MalFunction,
+  isAST,
   isSeq,
 } from './types';
 import { Env } from './env';
+import * as core from './core';
 import { readStr } from './reader';
 import { prStr } from './printer';
 import { Logger } from '@nestjs/common';
@@ -86,13 +87,12 @@ export class REPLService {
             const pairs = ast.list[1];
             if (!isSeq(pairs)) {
               throw new Error(
-                `unexpected toke type: ${pairs.type}, expected: list or vector`,
+                `unexpected token type: ${pairs.type}, expected: list or vector`,
               );
             }
-            const list = pairs.list;
-            for (let i = 0; i < list.length; i += 2) {
-              const key = list[i];
-              const value = list[i + 1];
+            for (let i = 0; i < pairs.list.length; i += 2) {
+              const key = pairs.list[i];
+              const value = pairs.list[i + 1];
               if (key.type !== Node.Symbol) {
                 throw new Error(
                   `unexpected token type: ${key.type}, expected: symbol`,
@@ -104,10 +104,57 @@ export class REPLService {
 
               letEnv.set(key, await this.EVAL(value, letEnv));
             }
-            return this.EVAL(ast.list[2], letEnv);
+            return await this.EVAL(ast.list[2], letEnv);
+          }
+          case 'do': {
+            const [, ...list] = ast.list;
+            const ret = await this.evalAST(new MalList(list), env);
+            if (!isSeq(ret)) {
+              throw new Error(
+                `unexpected return type: ${ret.type}, expected: list or vector`,
+              );
+            }
+            return ret.list[ret.list.length - 1];
+          }
+          case 'if': {
+            const [, cond, thenExpr, elseExrp] = ast.list;
+            const ret = await this.EVAL(cond, env);
+            let b = true;
+            if (ret.type === Node.Boolean && !ret.v) {
+              b = false;
+            } else if (ret.type === Node.Nil) {
+              b = false;
+            }
+            if (b) {
+              return await this.EVAL(thenExpr, env);
+            } else if (elseExrp) {
+              return await this.EVAL(elseExrp, env);
+            } else {
+              return MalNil.instance;
+            }
+          }
+          case 'fn*': {
+            const [, args, binds] = ast.list;
+            if (!isSeq(args)) {
+              throw new Error(
+                `unexpected return type: ${args.type}, expected: list or vector`,
+              );
+            }
+            const symbols = args.list.map((param) => {
+              if (param.type !== Node.Symbol) {
+                throw new Error(
+                  `unexpected return type: ${param.type}, expected: symbol`,
+                );
+              }
+              return param;
+            });
+            return MalFunction.fromBootstrap(async (...fnArgs: MalType[]) => {
+              return await this.EVAL(binds, new Env(env, symbols, fnArgs));
+            });
           }
         }
     }
+
     const result = await this.evalAST(ast, env);
     if (!isSeq(result)) {
       throw new Error(
@@ -128,54 +175,33 @@ export class REPLService {
   }
 
   // REP
-  async rep(str: string): Promise<string> {
+  async rep(str: string, replEnv: any): Promise<string> {
     this.logger.log('REP START -> ', str);
-
-    const replEnv = new Env();
-    replEnv.set(
-      MalSymbol.get('+'),
-      MalFunction.fromBootstrap(
-        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v + b!.v),
-      ),
-    );
-    replEnv.set(
-      MalSymbol.get('-'),
-      MalFunction.fromBootstrap(
-        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v - b!.v),
-      ),
-    );
-    replEnv.set(
-      MalSymbol.get('*'),
-      MalFunction.fromBootstrap(
-        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v * b!.v),
-      ),
-    );
-    replEnv.set(
-      MalSymbol.get('/'),
-      MalFunction.fromBootstrap(
-        async (a?: MalNumber, b?: MalNumber) => new MalNumber(a!.v / b!.v),
-      ),
-    );
-    replEnv.set(
-      MalSymbol.get('delay'),
-      MalFunction.fromBootstrap(async (duration: MalNumber) => {
-        return new Promise((resolve) => setTimeout(resolve, duration.v));
-      }),
-    );
-
     const result = await this.EVAL(this.READ(str), replEnv);
     this.logger.log('REP END -> ', this.PRINT(result));
     return this.PRINT(result);
   }
 
   exec(str: string): any {
+    this.logger.log('REP START');
+
+    const replEnv = new Env();
+
+    core.ns.forEach((value, key) => {
+      replEnv.set(key, value);
+    });
+
+    this.rep('(def! not (fn* (a) (if a false true)))', replEnv);
+
     try {
       if (str) {
-        return this.rep(str);
+        return this.rep(str, replEnv);
       }
     } catch (e) {
       const err: Error = e;
       this.logger.error(err.message);
     }
+
+    this.logger.log('EXEC END');
   }
 }
