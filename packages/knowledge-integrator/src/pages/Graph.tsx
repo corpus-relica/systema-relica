@@ -33,6 +33,8 @@ import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 import GraphLegend from "../components/GraphLegend";
 
+import GraphAndSelectionLayout from "./GraphToo";
+
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 
@@ -194,59 +196,26 @@ const Graph = observer(() => {
           flex: 1,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            flex: 1,
-            backgroundColor: theme.palette.background.default,
-          }}
-        >
-          <GraphContextMenu
-            open={open}
-            handleClose={handleClose}
-            x={x}
-            y={y}
-            uid={uid}
-            type={type}
-            relType={relType}
-          />
-          <GraphLegend />
-          <GraphView
-            categories={categories}
-            facts={facts}
-            onNodeClick={selectNode}
-            onNodeRightClick={(uid: number, event: MouseEvent) => {
-              handleContextMenuTrigger(uid, "entity", event);
-            }}
-            onStageClick={onStageClick}
-            onEdgeRollOver={handleEdgeRollOver}
-            onEdgeRollOut={handleEdgeRollOut}
-            onEdgeClick={handleEdgeClick}
-            onEdgeRightClick={(uid: number, event: MouseEvent) => {
-              const fact = facts.find((fact) => fact.fact_uid === uid);
-              handleContextMenuTrigger(
-                uid,
-                "fact",
-                event,
-                fact && fact.rel_type_uid
-              );
-            }}
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
-            paletteMap={paletteMap}
-          />
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            width: "384px",
-            backgroundColor: "#515151",
-          }}
-        >
-          <SelectionDetails />
-        </Box>
+        <GraphAndSelectionLayout
+          open={open}
+          handleClose={handleClose}
+          x={x}
+          y={y}
+          uid={uid}
+          type={type}
+          relType={relType}
+          categories={categories}
+          facts={facts}
+          selectNode={selectNode}
+          handleContextMenuTrigger={handleContextMenuTrigger}
+          onStageClick={onStageClick}
+          handleEdgeRollOver={handleEdgeRollOver}
+          handleEdgeRollOut={handleEdgeRollOut}
+          handleEdgeClick={handleEdgeClick}
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          paletteMap={paletteMap}
+        />
       </Box>
     </Box>
   );
