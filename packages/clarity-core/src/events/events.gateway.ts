@@ -26,6 +26,7 @@ import {
   UNLOAD_ENTITIES,
   CLEAR_ENTITIES,
   LOAD_ALL_RELATED,
+  REPL_EVAL,
 } from '../semanticModel/actions';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
@@ -107,6 +108,19 @@ export class EventsGateway {
   //   // const newState = await this.stateStore.getState();
   //   return;
   // }
+
+  // CLIENT(knowledge-integrator) REPL
+  @SubscribeMessage('repl:eval')
+  replEval(@MessageBody('command') command: string): string {
+    this.logger.log('REPL:EVAL');
+    this.logger.log(command);
+
+    this.semanticModel.dispatch({
+      type: REPL_EVAL,
+      payload: { command },
+    });
+    return command;
+  }
 
   // LEGACY //
 

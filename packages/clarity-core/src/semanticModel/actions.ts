@@ -19,3 +19,5 @@ export const DELETE_FACT: string = 'DELETE_FACT';
 
 export const UNLOAD_SUBTYPES_CONE: string = 'UNLOAD_SUBTYPES_CONE';
 export const LOAD_ALL_RELATED: string = 'LOAD_ALL_RELATED';
+
+export const REPL_EVAL: string = 'REPL_EVAL';

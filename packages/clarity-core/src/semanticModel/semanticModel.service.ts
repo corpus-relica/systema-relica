@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 // import { VMExecutor } from '../dslvm/vm-executor.service';
 import { REPLService } from 'src/repl/repl.service';
 import {
+  REPL_EVAL,
   SELECT_FACT,
   SELECT_ENTITY,
   SELECT_NONE,
@@ -26,20 +27,24 @@ export class SemanticModelService {
 
   reducer(state, action) {
     let command;
-    switch (action.type) {
+    const { type, payload } = action;
+    switch (type) {
+      case REPL_EVAL:
+        command = payload.command;
+        break;
       /////////
       case SELECT_ENTITY:
         command = `
         (do
-          (selectEntity ${action.payload.uid})
-          (emit \"system:selectedEntity\" {:uid ${action.payload.uid}}))
+          (selectEntity ${payload.uid})
+          (emit \"system:selectedEntity\" {:uid ${payload.uid}}))
         `;
         break;
       case SELECT_FACT:
         command = `
         (do
-          (selectFact ${action.payload.uid})
-          (emit \"system:selectedFact\" {:uid ${action.payload.uid}}))
+          (selectFact ${payload.uid})
+          (emit \"system:selectedFact\" {:uid ${payload.uid}}))
         `;
         break;
       case SELECT_NONE:
@@ -52,24 +57,24 @@ export class SemanticModelService {
       /////////
       case LOAD_ENTITY:
         command = `
-(let* [result (loadEntity ${action.payload.uid})]
+(let* [result (loadEntity ${payload.uid})]
 (emit \"system:loadedFacts\" result))
 `;
         break;
       case UNLOAD_ENTITY:
         command = `
-        (let* [result (unloadEntity ${action.payload.uid})]
+        (let* [result (unloadEntity ${payload.uid})]
 (emit \"system:unloadedFacts\" {:fact_uids result}))
         `;
         break;
       case LOAD_ENTITIES:
-        const loadUidsStr = action.payload.uids.join(' ');
+        const loadUidsStr = payload.uids.join(' ');
         command = `
         (let* [result (loadEntities [${loadUidsStr}])]
 (emit \"system:loadedFacts\" result))`;
         break;
       case UNLOAD_ENTITIES:
-        const unloadUidsStr = action.payload.uids.join(' ');
+        const unloadUidsStr = payload.uids.join(' ');
         console.log('UNLOAD_ENTITIES', unloadUidsStr);
         command = `
         (let* [result (unloadEntities [${unloadUidsStr}])]
@@ -84,13 +89,13 @@ export class SemanticModelService {
       /////////
       case LOAD_SUBTYPES_CONE:
         command = `
-(let* [result (loadSubtypesCone ${action.payload.uid})]
+(let* [result (loadSubtypesCone ${payload.uid})]
 (emit \"system:loadedFacts\" result))`;
         break;
       case LOAD_SPECIALIZATION_HIERARCHY:
         this.logger.log('SEMANTIC MODEL :: LOAD_SPECIALIZATION_HIERARCHY');
         command = `
-        (let* [result (getSpecializationHierarchy ${action.payload.uid})
+        (let* [result (getSpecializationHierarchy ${payload.uid})
                facts  (get result :facts )
                models (modelsFromFacts facts)
                payload {:facts facts :models models}]
@@ -102,7 +107,7 @@ export class SemanticModelService {
         break;
       case LOAD_ALL_RELATED:
         command = `
-(let* [result (retrieveAllFacts ${action.payload.uid})
+(let* [result (retrieveAllFacts ${payload.uid})
 models (modelsFromFacts result)]
 (do
   (insertFacts result)

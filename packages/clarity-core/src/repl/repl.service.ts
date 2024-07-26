@@ -334,7 +334,7 @@ export class REPLService {
     );
 
     replEnv.set(
-      MalSymbol.get('clearEntites'),
+      MalSymbol.get('clearEntities'),
       MalFunction.fromBootstrap(async (event: MalString, payload: MalType) => {
         this.environment.clearEntities();
         return MalNil.instance;
