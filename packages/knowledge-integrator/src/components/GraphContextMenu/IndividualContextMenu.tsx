@@ -43,11 +43,11 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       console.log(`Clicked item with value: ${value}`);
       switch (value) {
         case SHOW_ALL:
-          sockSendCC("user", "getAllRelatedFacts", { uid });
+          sockSendCC("user", "loadAllRelatedFacts", { uid });
           handleClose();
           break;
         case REM_THIS:
-          sockSendCC("user", "removeEntity", { uid });
+          sockSendCC("user", "unloadEntity", { uid });
           handleClose();
           break;
         case DELETE_THIS:
