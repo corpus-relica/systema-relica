@@ -33,8 +33,6 @@ import Dashboard from "./Dashboard";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { ccSocket } from "./socket";
-
 const queryClient = new QueryClient();
 
 const dataProvider = new Proxy(defaultDataProvider, {
@@ -74,16 +72,17 @@ console.log(memStore);
 
 export const App = () => {
   const rootStore: any = useStores();
+
   console.log("vvvv - ROOT STORE vvvv:");
   console.log(rootStore);
   const { factDataStore } = rootStore;
 
-  const { addFacts, addConcepts, setCategories } = factDataStore;
-  const [isConnected, setIsConnected] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  // const { addFacts, addConcepts, setCategories } = factDataStore;
+  // const [isConnected, setIsConnected] = useState(false);
+  // const [isReady, setIsReady] = useState(false);
 
-  const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
-  const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
+  // const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
+  // const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
 
   const establishCats = async () => {
     const concepts = await resolveUIDs(
@@ -120,109 +119,6 @@ export const App = () => {
     };
 
     foobarbaz();
-  }, []);
-
-  useEffect(() => {
-    const onConnect = () => {
-      setIsConnected(true);
-      console.log("//// CONNECTED SOCKET> CC");
-    };
-
-    const onDisconnect = () => {
-      setIsConnected(false);
-      console.log("//// DISCONNECTED SOCKET> CC");
-    };
-
-    const onSelectEntity = (d) => {
-      console.log("SELECT ENTITY");
-      console.log(d.uid);
-      memStore.setItem("selectedNode", d.uid); //
-      memStore.setItem("selectedEdge", null);
-    };
-
-    const onSelectFact = (d) => {
-      console.log("SELECT FACT");
-      console.log(d.uid);
-      memStore.setItem("selectedNode", null);
-      memStore.setItem("selectedEdge", d.uid);
-    };
-
-    const onAddFacts = (d) => {
-      factDataStore.addFacts(d.facts);
-    };
-
-    const onRemFacts = (d) => {
-      factDataStore.removeFacts(d.fact_uids);
-    };
-
-    const onAddModels = (d) => {
-      d.models.forEach((model: any) => {
-        const key = "model:" + model.uid;
-        memStore.removeItem(key);
-        memStore.setItem(key, model);
-      });
-    };
-
-    const onRemModels = (d) => {
-      d.model_uids.forEach((uid: number) => {
-        const key = "model:" + uid;
-        memStore.removeItem(key);
-      });
-    };
-
-    const onEntitiesCleared = () => {
-      factDataStore.clearFacts();
-      // semanticModelStore.clearModels();
-      memStore.setItem("selectedNode", null);
-    };
-
-    const onNoneSelected = () => {
-      console.log("SELECT NONE");
-      memStore.setItem("selectedNode", null);
-      memStore.setItem("selectedEdge", null);
-    };
-
-    const onStateInitialized = () => {
-      console.log("STATE INITIALIZED");
-      // setIsReady(true);
-    };
-
-    const onStateChange = () => {
-      console.log("STATE CHANGED");
-    };
-
-    ccSocket.on("connect", onConnect);
-    ccSocket.on("disconnect", onDisconnect);
-
-    ccSocket.on("system:selectedEntity", onSelectEntity);
-    ccSocket.on("system:selectedFact", onSelectFact);
-    ccSocket.on("system:selectedNone", onNoneSelected);
-    ccSocket.on("system:loadedFacts", onAddFacts);
-    ccSocket.on("system:unloadedFacts", onRemFacts);
-    ccSocket.on("system:loadedModels", onAddModels);
-    ccSocket.on("system:unloadedModels", onRemModels);
-    // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);
-    ccSocket.on("system:entitiesCleared", onEntitiesCleared);
-
-    ccSocket.on("system:stateInitialized", onStateInitialized);
-    ccSocket.on("system:stateChanged", onStateChange);
-
-    return () => {
-      ccSocket.off("connect", onConnect);
-      ccSocket.off("disconnect", onDisconnect);
-
-      ccSocket.off("system:selectedEntity", onSelectEntity);
-      ccSocket.off("system:selectedFact", onSelectFact);
-      ccSocket.off("system:selectedNone", onNoneSelected);
-      ccSocket.off("system:loadedFacts", onAddFacts);
-      ccSocket.off("system:unloadedFacts", onRemFacts);
-      // ccSocket.off("system:updateCategoryDescendantsCache", establishCats);
-      ccSocket.off("system:entitiesCleared", onEntitiesCleared);
-      ccSocket.off("system:loadedModels", onAddModels);
-      ccSocket.off("system:unloadedModels", onRemModels);
-      ccSocket.off("system:stateInitialized", onStateInitialized);
-      ccSocket.off("system:stateChanged", onStateChange);
-    };
   }, []);
 
   return (

@@ -6,7 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ModelSession } from './modelSession.entity';
 
-enum State {
+export enum State {
   REVIEW = 'REVIEW',
   MODELLING = 'MODELLING',
   SIMULATION = 'SIMULATION',

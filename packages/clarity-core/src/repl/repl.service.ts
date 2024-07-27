@@ -22,6 +22,7 @@ import { Logger } from '@nestjs/common';
 
 import { ArchivistService } from '../archivist/archivist.service';
 import { EnvironmentService } from '../environment/environment.service';
+import { State, StateService } from '../state/state.service';
 
 import { jsToMal, malToJs } from './utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -35,6 +36,7 @@ export class REPLService {
     private archivist: ArchivistService,
     private environment: EnvironmentService,
     private eventEmitter: EventEmitter2,
+    private stateService: StateService,
   ) {}
 
   // READ
@@ -350,6 +352,14 @@ export class REPLService {
           return MalNil.instance;
         },
       ),
+    );
+
+    replEnv.set(
+      MalSymbol.get('changeState'),
+      MalFunction.fromBootstrap(async (state: MalString) => {
+        this.stateService.setState(state.v as State);
+        return MalNil.instance;
+      }),
     );
 
     const loadAllRelatedFactsDef = `
