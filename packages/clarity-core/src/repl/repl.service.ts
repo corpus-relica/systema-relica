@@ -352,6 +352,28 @@ export class REPLService {
       ),
     );
 
+    const loadAllRelatedFactsDef = `
+(def! loadAllRelatedFacts (fn* [uid]
+(let* [result (retrieveAllFacts uid)
+models (modelsFromFacts result)]
+(do
+  (insertFacts result)
+  (insertModels models)))
+))`;
+    await this.rep(loadAllRelatedFactsDef, replEnv);
+
+    const loadSpecializationHierarchyDef = `
+(def! loadSpecializationHierarchy (fn* [uid]
+(let* [result (getSpecializationHierarchy uid)
+facts  (get result :facts )
+models (modelsFromFacts facts)
+payload {:facts facts :models models}]
+(do
+  (insertFacts facts)
+  (insertModels models)))
+))`;
+    await this.rep(loadSpecializationHierarchyDef, replEnv);
+
     await this.rep('(def! not (fn* (a) (if a false true)))', replEnv);
 
     try {

@@ -19,9 +19,10 @@ import { ArchivistModule } from './archivist/archivist.module';
 
 import { ArtificialIntelligenceModule } from './artificialIntelligence/artificialIntelligence.module';
 
-import { SemanticModelModule } from './semanticModel/semanticModel.module';
 import { REPLModule } from './repl/repl.module';
+
 import { StateModule } from './state/state.module';
+import { ModelSession } from './state/modelSession.entity';
 
 @Module({
   imports: [
@@ -36,14 +37,13 @@ import { StateModule } from './state/state.module';
       username: process.env.RELICA_POSTGRES_USER,
       password: process.env.RELICA_POSTGRES_PASSWORD,
       database: process.env.RELICA_POSTGRES_DB_NAME,
-      entities: [EnvFact, EnvModel, EnvSelectedEntity],
+      entities: [EnvFact, EnvModel, EnvSelectedEntity, ModelSession],
     }),
     EventsModule,
     EnvironmentModule,
     ModelModule,
     ArchivistModule,
     ArtificialIntelligenceModule,
-    SemanticModelModule,
     REPLModule,
     StateModule,
   ],

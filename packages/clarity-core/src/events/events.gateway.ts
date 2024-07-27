@@ -12,7 +12,7 @@ import { EnvironmentService } from '../environment/environment.service';
 import { ArchivistService } from '../archivist/archivist.service';
 import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
-import { SemanticModelService } from '../semanticModel/semanticModel.service';
+import { REPLService } from 'src/repl/repl.service';
 
 import {
   SELECT_ENTITY,
@@ -44,7 +44,7 @@ export class EventsGateway {
   constructor(
     private readonly environmentService: EnvironmentService,
     private readonly archivistService: ArchivistService,
-    private readonly semanticModel: SemanticModelService,
+    private readonly repl: REPLService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -74,6 +74,12 @@ export class EventsGateway {
     this.server.emit(payload.type, payload.payload);
   }
 
+  // Catch-all message handler
+  @SubscribeMessage('message')
+  async handleMessage(@MessageBody() data: any): Promise<any> {
+    this.logger.debug('MESSAGE:', data);
+    return data;
+  }
   // NOUS //
 
   @SubscribeMessage('nous:selectEntity')
@@ -111,112 +117,79 @@ export class EventsGateway {
 
   // CLIENT(knowledge-integrator) REPL
   @SubscribeMessage('repl:eval')
-  replEval(@MessageBody('command') command: string): string {
+  async replEval(@MessageBody('command') command: string): Promise<string> {
     this.logger.log('REPL:EVAL');
     this.logger.log(command);
-
-    this.semanticModel.dispatch({
-      type: REPL_EVAL,
-      payload: { command },
-    });
-    return command;
+    const result = await this.repl.exec(command);
+    return result;
   }
 
   // LEGACY //
 
   @SubscribeMessage('user:selectEntity')
-  userSelectEntity(@MessageBody('uid') uid: number): number {
-    this.semanticModel.dispatch({
-      type: SELECT_ENTITY,
-      payload: { uid },
-    });
-    return uid;
+  async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
+    const result = await this.repl.exec(`(selectEntity ${uid})`);
+    return result;
   }
 
   @SubscribeMessage('user:selectFact')
-  userSelectFact(@MessageBody('uid') uid: any): number {
-    this.semanticModel.dispatch({
-      type: SELECT_FACT,
-      payload: { uid },
-    });
-    return uid;
+  async userSelectFact(@MessageBody('uid') uid: any): Promise<number> {
+    const result = await this.repl.exec(`(selectFact ${uid})`);
+    return result;
   }
 
   @SubscribeMessage('user:selectNone')
-  userSelectNone(): Promise<number> {
-    this.semanticModel.dispatch({
-      type: SELECT_NONE,
-      payload: null,
-    });
-    return null;
+  async userSelectNone(): Promise<number> {
+    const result = await this.repl.exec(`(selectNone)`);
+    return result;
   }
 
   @SubscribeMessage('user:loadSubtypesCone')
   async userGetSubtypesCone(@MessageBody('uid') uid: any): Promise<number> {
-    this.semanticModel.dispatch({
-      type: LOAD_SUBTYPES_CONE,
-      payload: { uid },
-    });
-    return uid;
+    const result = await this.repl.exec(`(loadSubtypesCone ${uid})`);
+    return result;
   }
 
   @SubscribeMessage('user:loadSpecializationHierarchy')
   async userLoadSpecializationHierarchy(
     @MessageBody('uid') uid: number,
   ): Promise<any> {
-    this.semanticModel.dispatch({
-      type: LOAD_SPECIALIZATION_HIERARCHY,
-      payload: { uid },
-    });
-    return;
+    const result = await this.repl.exec(`(loadSpecializationHierarchy ${uid})`);
+    return result;
   }
 
   @SubscribeMessage('user:loadEntity')
   async userLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    this.semanticModel.dispatch({
-      type: LOAD_ENTITY,
-      payload: { uid },
-    });
-    return uid;
+    const result = await this.repl.exec(`(loadEntity ${uid})`);
+    return result;
   }
 
   @SubscribeMessage('user:loadEntities')
   async userLoadEntities(@MessageBody('uids') uids: number[]): Promise<any> {
-    this.semanticModel.dispatch({
-      type: LOAD_ENTITIES,
-      payload: { uids },
-    });
-    return uids;
+    const loadUidsStr = uids.join(' ');
+    const result = await this.repl.exec(`(loadEntities [${loadUidsStr}])`);
+    return result;
   }
 
   @SubscribeMessage('user:unloadEntity')
-  async userRemoveEntity(@MessageBody('uid') uid: number): Promise<number> {
-    this.semanticModel.dispatch({
-      type: UNLOAD_ENTITY,
-      payload: { uid },
-    });
-    return uid;
+  async userUnloadEntity(@MessageBody('uid') uid: number): Promise<number> {
+    const result = await this.repl.exec(`(unloadEntity ${uid})`);
+    return result;
   }
 
   @SubscribeMessage('user:unloadEntities')
-  async userRemoveEntities(
+  async userUnloadEntities(
     @MessageBody('uids') uids: number[],
   ): Promise<number[]> {
-    this.semanticModel.dispatch({
-      type: UNLOAD_ENTITIES,
-      payload: { uids },
-    });
-    return uids;
+    const loadUidsStr = uids.join(' ');
+    const result = await this.repl.exec(`(unloadEntities [${loadUidsStr}])`);
+    return result;
   }
 
   @SubscribeMessage('user:clearEntities')
-  userClearEntities(): Promise<number> {
-    this.semanticModel.dispatch({
-      type: CLEAR_ENTITIES,
-      payload: {},
-    });
-
-    return null;
+  async userClearEntities(): Promise<void> {
+    const result = await this.repl.exec(`(clearEntities)`);
+    return;
   }
 
   @SubscribeMessage('user:deleteEntity')
@@ -300,11 +273,7 @@ export class EventsGateway {
 
   @SubscribeMessage('user:loadAllRelatedFacts')
   async userGetAllRelatedFacts(@MessageBody('uid') uid: number): Promise<any> {
-    this.semanticModel.dispatch({
-      type: LOAD_ALL_RELATED,
-      payload: { uid },
-    });
-
-    return null;
+    const result = await this.repl.exec(`(loadAllRelatedFacts ${uid})`);
+    return result;
   }
 }

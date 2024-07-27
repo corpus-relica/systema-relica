@@ -182,6 +182,15 @@ export const App = () => {
       memStore.setItem("selectedEdge", null);
     };
 
+    const onStateInitialized = () => {
+      console.log("STATE INITIALIZED");
+      // setIsReady(true);
+    };
+
+    const onStateChange = () => {
+      console.log("STATE CHANGED");
+    };
+
     ccSocket.on("connect", onConnect);
     ccSocket.on("disconnect", onDisconnect);
 
@@ -195,6 +204,9 @@ export const App = () => {
     // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);
     ccSocket.on("system:entitiesCleared", onEntitiesCleared);
 
+    ccSocket.on("system:stateInitialized", onStateInitialized);
+    ccSocket.on("system:stateChanged", onStateChange);
+
     return () => {
       ccSocket.off("connect", onConnect);
       ccSocket.off("disconnect", onDisconnect);
@@ -206,6 +218,10 @@ export const App = () => {
       ccSocket.off("system:unloadedFacts", onRemFacts);
       // ccSocket.off("system:updateCategoryDescendantsCache", establishCats);
       ccSocket.off("system:entitiesCleared", onEntitiesCleared);
+      ccSocket.off("system:loadedModels", onAddModels);
+      ccSocket.off("system:unloadedModels", onRemModels);
+      ccSocket.off("system:stateInitialized", onStateInitialized);
+      ccSocket.off("system:stateChanged", onStateChange);
     };
   }, []);
 
