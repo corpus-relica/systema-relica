@@ -34,63 +34,35 @@ export class SemanticModelService {
         break;
       /////////
       case SELECT_ENTITY:
-        command = `
-        (do
-          (selectEntity ${payload.uid})
-          (emit \"system:selectedEntity\" {:uid ${payload.uid}}))
-        `;
+        command = `(selectEntity ${payload.uid})`;
         break;
       case SELECT_FACT:
-        command = `
-        (do
-          (selectFact ${payload.uid})
-          (emit \"system:selectedFact\" {:uid ${payload.uid}}))
-        `;
+        command = `(selectFact ${payload.uid})`;
         break;
       case SELECT_NONE:
-        command = `
-        (do
-          (selectNone)
-          (emit \"system:selectedNone\" {}))
-        `;
+        command = `(selectNone)`;
         break;
       /////////
       case LOAD_ENTITY:
-        command = `
-(let* [result (loadEntity ${payload.uid})]
-(emit \"system:loadedFacts\" result))
-`;
+        command = `(loadEntity ${payload.uid})`;
         break;
       case UNLOAD_ENTITY:
-        command = `
-        (let* [result (unloadEntity ${payload.uid})]
-(emit \"system:unloadedFacts\" {:fact_uids result}))
-        `;
+        command = `(unloadEntity ${payload.uid})`;
         break;
       case LOAD_ENTITIES:
         const loadUidsStr = payload.uids.join(' ');
-        command = `
-        (let* [result (loadEntities [${loadUidsStr}])]
-(emit \"system:loadedFacts\" result))`;
+        command = `(loadEntities [${loadUidsStr}])])`;
         break;
       case UNLOAD_ENTITIES:
         const unloadUidsStr = payload.uids.join(' ');
-        console.log('UNLOAD_ENTITIES', unloadUidsStr);
-        command = `
-        (let* [result (unloadEntities [${unloadUidsStr}])]
-(emit \"system:unloadedFacts\" {:fact_uids result}))`;
+        command = `(unloadEntities [${unloadUidsStr}])`;
         break;
       case CLEAR_ENTITIES:
-        command = `
-(do
-(clearEntities)
-(emit \"system:entitiesCleared\" {}))`;
+        command = `(clearEntities)`;
         break;
       /////////
       case LOAD_SUBTYPES_CONE:
-        command = `
-(let* [result (loadSubtypesCone ${payload.uid})]
-(emit \"system:loadedFacts\" result))`;
+        command = `(loadSubtypesCone ${payload.uid}))`;
         break;
       case LOAD_SPECIALIZATION_HIERARCHY:
         this.logger.log('SEMANTIC MODEL :: LOAD_SPECIALIZATION_HIERARCHY');
@@ -101,8 +73,7 @@ export class SemanticModelService {
                payload {:facts facts :models models}]
           (do
             (insertFacts facts)
-            (insertModels models)
-            (emit \"system:loadedFacts\" payload))))
+            (insertModels models)))
         `;
         break;
       case LOAD_ALL_RELATED:
@@ -111,8 +82,7 @@ export class SemanticModelService {
 models (modelsFromFacts result)]
 (do
   (insertFacts result)
-  (insertModels models)
-(emit \"system:loadedFacts\" {:facts result :models models})))
+  (insertModels models)))
 `;
         break;
       default:

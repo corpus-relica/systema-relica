@@ -148,9 +148,14 @@ export const App = () => {
     };
 
     const onAddFacts = (d) => {
-      console.log(d);
       factDataStore.addFacts(d.facts);
-      // semanticModelStore.addModels(d.models);
+    };
+
+    const onRemFacts = (d) => {
+      factDataStore.removeFacts(d.fact_uids);
+    };
+
+    const onAddModels = (d) => {
       d.models.forEach((model: any) => {
         const key = "model:" + model.uid;
         memStore.removeItem(key);
@@ -158,12 +163,11 @@ export const App = () => {
       });
     };
 
-    const onRemFacts = (d) => {
-      factDataStore.removeFacts(d.fact_uids);
-      // semanticModelStore.models.forEach((model) => {
-      //   if (!factDataStore.hasObject(model.uid))
-      //     semanticModelStore.removeModel(model.uid);
-      // });
+    const onRemModels = (d) => {
+      d.model_uids.forEach((uid: number) => {
+        const key = "model:" + uid;
+        memStore.removeItem(key);
+      });
     };
 
     const onEntitiesCleared = () => {
@@ -186,6 +190,8 @@ export const App = () => {
     ccSocket.on("system:selectedNone", onNoneSelected);
     ccSocket.on("system:loadedFacts", onAddFacts);
     ccSocket.on("system:unloadedFacts", onRemFacts);
+    ccSocket.on("system:loadedModels", onAddModels);
+    ccSocket.on("system:unloadedModels", onRemModels);
     // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);
     ccSocket.on("system:entitiesCleared", onEntitiesCleared);
 

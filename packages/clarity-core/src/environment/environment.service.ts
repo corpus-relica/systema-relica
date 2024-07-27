@@ -8,6 +8,7 @@ import { Fact } from '@relica/types';
 import { EntityFactEnum } from './envSelectedEntity.entity';
 import { ModelService } from '../model/model.service';
 import { ArchivistService } from '../archivist/archivist.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class EnvironmentService {
@@ -22,6 +23,7 @@ export class EnvironmentService {
     private readonly envSelectedEntityRepository: Repository<EnvSelectedEntity>,
     private readonly modelService: ModelService,
     private readonly archivistService: ArchivistService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async modelsFromFacts(facts: Fact[]) {
@@ -56,6 +58,11 @@ export class EnvironmentService {
       newFact.fact = fact;
       await this.envFactRepository.insert(newFact);
     }
+
+    this.eventEmitter.emit('emit', {
+      type: 'system:loadedFacts',
+      payload: { facts },
+    });
   }
 
   async insertModels(models: any[]) {
@@ -65,11 +72,21 @@ export class EnvironmentService {
       newModel.model = model;
       await this.envModelRepository.save(newModel);
     }
+
+    this.eventEmitter.emit('emit', {
+      type: 'system:loadedModels',
+      payload: { models },
+    });
   }
 
   async removeModels(uids: number[]) {
     if (uids.length === 0) return;
     await this.envModelRepository.delete(uids);
+
+    this.eventEmitter.emit('emit', {
+      type: 'system:unloadedModels',
+      payload: { model_uids: uids },
+    });
   }
 
   async clearEnvironment() {
@@ -82,20 +99,21 @@ export class EnvironmentService {
     return;
   }
 
-  async setSelectedEntity(uid: number | null, type: string | null = null) {
+  async setSelectedEntity(
+    uid: number | null,
+    type: string | null = null,
+  ): Promise<number | null> {
+    let ret: number | null = null;
     if (uid === null) {
-      return await this.envSelectedEntityRepository.update(1, {
+      await this.envSelectedEntityRepository.update(1, {
         uid: null,
         type: EntityFactEnum.NONE,
       });
+
+      ret = null;
     }
     if (type === 'entity') {
       // only if uid exists as lh_object_uid or rh_object_uid in env_fact
-      // env_fact schema is (uid, fact) where fact is a json object
-      // const res = await pgClient.query(
-      //   "SELECT * FROM env_fact WHERE fact->>'lh_object_uid' = $1 OR fact->>'rh_object_uid' = $1",
-      //   [uid],
-      // );
       const res = await this.envFactRepository
         .createQueryBuilder('fact')
         .where("fact.fact->>'lh_object_uid' = :uid", { uid })
@@ -106,22 +124,14 @@ export class EnvironmentService {
         return;
       }
 
-      // needs to insert into first row
-      // return await pgClient.query(
-      //   "UPDATE env_selected_entity SET uid = $1, type = 'entity' WHERE id = 1",
-      //   [uid],
-      // );
-      return await this.envSelectedEntityRepository.update(1, {
+      await this.envSelectedEntityRepository.update(1, {
         uid: uid + '',
         type: EntityFactEnum.ENTITY,
       });
+
+      ret = uid;
     } else if (type === 'fact') {
-      //   // only if uid exists as lh_object_uid or rh_object_uid in env_fact
-      //   // env_fact schema is (uid, fact) where fact is a json object
-      //   const res = await pgClient.query(
-      //     "SELECT * FROM env_fact WHERE fact->>'fact_uid' = $1",
-      //     [uid],
-      //   );
+      // only if uid exists as lh_object_uid or rh_object_uid in env_fact
       const res = await this.envFactRepository
         .createQueryBuilder('fact')
         .where("fact.fact->>'fact_uid' = :uid", { uid })
@@ -130,12 +140,21 @@ export class EnvironmentService {
       if (res.length === 0) {
         return;
       }
-      // needs to insert into first row
-      return await this.envSelectedEntityRepository.update(1, {
+
+      await this.envSelectedEntityRepository.update(1, {
         uid: uid + '',
         type: EntityFactEnum.FACT,
       });
+
+      ret = uid;
     }
+
+    this.eventEmitter.emit('emit', {
+      type: 'system:selectedEntity',
+      payload: { uid: ret },
+    });
+
+    return ret;
   }
 
   async getSelectedEntity() {
@@ -167,7 +186,7 @@ export class EnvironmentService {
     return payload;
   }
 
-  async loadEntityBase(uid: number) {
+  async loadEntity(uid: number) {
     if (uid === undefined) return { facts: [], models: [] };
     const selectedEntity = await this.getSelectedEntity();
     const defResult = await this.archivistService.getDefinitiveFacts(uid);
@@ -180,15 +199,11 @@ export class EnvironmentService {
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
+
     return payload;
   }
 
-  async loadEntity(uid: number) {
-    const payload = await this.loadEntityBase(uid);
-    return payload;
-  }
-
-  async removeEntity(uid: number) {
+  async unloadEntity(uid: number) {
     const env = await this.retrieveEnvironment();
     const facts = env.facts;
     let factsToRemove: Fact[] = [];
@@ -218,6 +233,7 @@ export class EnvironmentService {
     if (factUIDsToRemove.length > 0) this.removeFacts(factUIDsToRemove);
     if (candidateModelUIDsToRemove.size > 0)
       this.removeModels(Array.from(candidateModelUIDsToRemove));
+
     return factUIDsToRemove;
   }
 
@@ -239,7 +255,7 @@ export class EnvironmentService {
         }
       }
     });
-    this.removeFacts([uid]);
+    await this.removeFacts([uid]);
     if (candidateModelUIDsToRemove.size > 0)
       this.removeModels(Array.from(candidateModelUIDsToRemove));
   }
@@ -247,17 +263,27 @@ export class EnvironmentService {
   async removeFacts(uids: number[]) {
     if (uids.length === 0) return;
     await this.envFactRepository.delete(uids);
+
+    this.eventEmitter.emit('emit', {
+      type: 'system:unloadedFacts',
+      payload: { fact_uids: uids },
+    });
   }
 
   async clearEntities() {
     this.clearEnvironment();
+
+    this.eventEmitter.emit('emit', {
+      type: 'system:entitiesCleared',
+      payload: {},
+    });
   }
 
   async removeEntities(uids: number[]) {
     let removedFactUids = [];
     await Promise.all(
       uids.map(async (uid) => {
-        const removedFactUid = await this.removeEntity(uid);
+        const removedFactUid = await this.unloadEntity(uid);
         removedFactUids = removedFactUids.concat(removedFactUid);
       }),
     );

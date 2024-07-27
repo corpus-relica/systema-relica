@@ -257,23 +257,25 @@ export class REPLService {
     replEnv.set(
       MalSymbol.get('selectEntity'),
       MalFunction.fromBootstrap(async (uid: MalNumber) => {
-        this.environment.setSelectedEntity(uid.v, 'entity');
-        return MalNil.instance;
+        const entityUID: number | null =
+          await this.environment.setSelectedEntity(uid.v, 'entity');
+        return entityUID ? new MalNumber(entityUID) : MalNil.instance;
       }),
     );
 
     replEnv.set(
       MalSymbol.get('selectFact'),
       MalFunction.fromBootstrap(async (uid: MalNumber) => {
-        this.environment.setSelectedEntity(uid.v, 'fact');
-        return MalNil.instance;
+        const entityUID: number | null =
+          await this.environment.setSelectedEntity(uid.v, 'fact');
+        return entityUID ? new MalNumber(entityUID) : MalNil.instance;
       }),
     );
 
     replEnv.set(
       MalSymbol.get('selectNone'),
       MalFunction.fromBootstrap(async (uid: MalNumber) => {
-        this.environment.setSelectedEntity(null);
+        await this.environment.setSelectedEntity(null);
         return MalNil.instance;
       }),
     );
@@ -289,7 +291,7 @@ export class REPLService {
     replEnv.set(
       MalSymbol.get('unloadEntity'),
       MalFunction.fromBootstrap(async (uid: MalNumber) => {
-        const removedFacts = await this.environment.removeEntity(uid.v);
+        const removedFacts = await this.environment.unloadEntity(uid.v);
         return jsToMal(removedFacts);
       }),
     );
@@ -309,13 +311,11 @@ export class REPLService {
         let models: any[] = [];
         const xxx = malToJs(uids);
         for (let i = 0; i < xxx.length; i++) {
-          const payload = await this.environment.loadEntityBase(xxx[i]);
+          const payload = await this.environment.loadEntity(xxx[i]);
           facts = facts.concat(payload.facts);
           models = models.concat(payload.models);
         }
         const payload = { facts, models };
-        // this.server.emit('system:addFacts', payload);
-        // return payload;
         return jsToMal(payload);
       }),
     );
@@ -327,8 +327,6 @@ export class REPLService {
         const removedFacts = await this.environment.removeEntities(
           malToJs(uids),
         );
-
-        console.log('unloadEntities: AFTER !!!!!', removedFacts);
         return jsToMal(removedFacts);
       }),
     );

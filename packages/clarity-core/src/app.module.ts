@@ -21,6 +21,7 @@ import { ArtificialIntelligenceModule } from './artificialIntelligence/artificia
 
 import { SemanticModelModule } from './semanticModel/semanticModel.module';
 import { REPLModule } from './repl/repl.module';
+import { StateModule } from './state/state.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { REPLModule } from './repl/repl.module';
     ArtificialIntelligenceModule,
     SemanticModelModule,
     REPLModule,
+    StateModule,
   ],
   controllers: [AppController],
   providers: [AppService],

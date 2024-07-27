@@ -226,7 +226,7 @@ export class EventsGateway {
     const result = await this.archivistService.deleteEntity(uid);
     //if result is success
     console.log('DELETE ENTITY RESULT', result);
-    const removedFactUids = await this.environmentService.removeEntity(uid);
+    const removedFactUids = await this.environmentService.unloadEntity(uid);
     // console.log("Entity deleted");
 
     this.server.emit('system:remFacts', { fact_uids: removedFactUids });
