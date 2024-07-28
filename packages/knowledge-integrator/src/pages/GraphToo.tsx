@@ -30,6 +30,9 @@ const GraphAndSelectionLayout = ({
 }) => {
   const theme = useTheme();
 
+  console.log(" GRAPH TOOvvvv - CATEGORIES vvvv:");
+  console.log(categories);
+
   return (
     <Box
       sx={{

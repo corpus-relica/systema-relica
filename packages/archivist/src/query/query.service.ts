@@ -14,12 +14,12 @@ export class QueryService {
   constructor(private readonly graphService: GraphService) {}
 
   async handleGellishQuery(queryTable: Fact[]) {
-    console.log('handleGellishQuery', queryTable);
+    this.logger.verbose('handleGellishQuery', queryTable);
     const { lh_object_uid, rel_type_uid, rh_object_uid } = queryTable[0];
 
-    console.log('lh_object_uid', lh_object_uid);
-    console.log('rel_type_uid', rel_type_uid);
-    console.log('rh_object_uid', rh_object_uid);
+    this.logger.verbose('lh_object_uid', lh_object_uid);
+    this.logger.verbose('rel_type_uid', rel_type_uid);
+    this.logger.verbose('rh_object_uid', rh_object_uid);
 
     // const result = await this.graphService.execWriteQuery(reparentKindQuery, {
     //   uid,
@@ -33,5 +33,6 @@ export class QueryService {
     // }
     // // TODO: Important!!! update caches!!!
     // return result.map((r) => this.graphService.transformResult(r));
+    return [];
   }
 }

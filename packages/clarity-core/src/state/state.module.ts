@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StateService } from './state.service';
-import { ModelSession } from './modelSession.entity';
+import { AppState } from './appState.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ModelSession])],
+  imports: [TypeOrmModule.forFeature([AppState])],
   providers: [StateService],
   exports: [StateService],
 })

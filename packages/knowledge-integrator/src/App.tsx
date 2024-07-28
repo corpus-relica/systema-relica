@@ -77,9 +77,8 @@ export const App = () => {
   console.log(rootStore);
   const { factDataStore } = rootStore;
 
-  // const { addFacts, addConcepts, setCategories } = factDataStore;
+  const { setCategories } = factDataStore;
   // const [isConnected, setIsConnected] = useState(false);
-  // const [isReady, setIsReady] = useState(false);
 
   // const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   // const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
@@ -115,7 +114,6 @@ export const App = () => {
       await establishCats();
       await retrieveEnv();
       console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
-      setIsReady(true);
     };
 
     foobarbaz();

@@ -13,7 +13,7 @@ import { useStores } from "../context/RootStoreContext";
 import { observer } from "mobx-react";
 import { toJS } from "mobx";
 
-import { useStore, useDataProvider } from "react-admin";
+import { useStore, useDataProvider, localStorageStore } from "react-admin";
 import { nodeData, edgeData } from "../types";
 
 import GraphContextMenu from "../components/GraphContextMenu";
@@ -46,6 +46,8 @@ const cats = {
   //970002: "Information",
   2850: "Relation",
 };
+
+const memStore = localStorageStore();
 
 const Graph = observer(() => {
   const theme = useTheme();
@@ -136,6 +138,9 @@ const Graph = observer(() => {
     }
     selectNode(lh_object_uid);
   };
+
+  console.log("GRAPH RENDER");
+  console.log("categories", categories);
 
   return (
     <Box

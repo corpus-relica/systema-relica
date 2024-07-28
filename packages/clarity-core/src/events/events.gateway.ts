@@ -14,20 +14,6 @@ import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
 import { REPLService } from 'src/repl/repl.service';
 
-import {
-  SELECT_ENTITY,
-  SELECT_FACT,
-  SELECT_NONE,
-  LOAD_SUBTYPES_CONE,
-  LOAD_SPECIALIZATION_HIERARCHY,
-  UNLOAD_ENTITY,
-  LOAD_ENTITY,
-  LOAD_ENTITIES,
-  UNLOAD_ENTITIES,
-  CLEAR_ENTITIES,
-  LOAD_ALL_RELATED,
-  REPL_EVAL,
-} from '../semanticModel/actions';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @WebSocketGateway({
@@ -74,12 +60,6 @@ export class EventsGateway {
     this.server.emit(payload.type, payload.payload);
   }
 
-  // Catch-all message handler
-  @SubscribeMessage('message')
-  async handleMessage(@MessageBody() data: any): Promise<any> {
-    this.logger.debug('MESSAGE:', data);
-    return data;
-  }
   // NOUS //
 
   @SubscribeMessage('nous:selectEntity')

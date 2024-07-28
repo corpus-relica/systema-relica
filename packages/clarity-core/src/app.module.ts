@@ -22,7 +22,10 @@ import { ArtificialIntelligenceModule } from './artificialIntelligence/artificia
 import { REPLModule } from './repl/repl.module';
 
 import { StateModule } from './state/state.module';
-import { ModelSession } from './state/modelSession.entity';
+import { AppState } from './state/appState.entity';
+
+import { ModellingModule } from './modelling/modelling.module';
+import { ModellingSession } from './modelling/modellingSession.entity';
 
 @Module({
   imports: [
@@ -37,7 +40,13 @@ import { ModelSession } from './state/modelSession.entity';
       username: process.env.RELICA_POSTGRES_USER,
       password: process.env.RELICA_POSTGRES_PASSWORD,
       database: process.env.RELICA_POSTGRES_DB_NAME,
-      entities: [EnvFact, EnvModel, EnvSelectedEntity, ModelSession],
+      entities: [
+        EnvFact,
+        EnvModel,
+        EnvSelectedEntity,
+        AppState,
+        ModellingSession,
+      ],
     }),
     EventsModule,
     EnvironmentModule,
@@ -46,6 +55,7 @@ import { ModelSession } from './state/modelSession.entity';
     ArtificialIntelligenceModule,
     REPLModule,
     StateModule,
+    ModellingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

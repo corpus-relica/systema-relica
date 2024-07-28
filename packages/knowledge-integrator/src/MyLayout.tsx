@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout, useRedirect, useStore, localStorageStore } from "react-admin";
+import { Layout, useRedirect, useStore } from "react-admin";
 import { Slide, IconButton } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { MyMenu } from "./MyMenu";
@@ -11,7 +11,7 @@ const replHeight = "40vh"; // Adjust as needed
 
 import { ccSocket } from "./socket";
 
-const memStore = localStorageStore();
+// const memStore = localStorageStore();
 
 export const MyLayout = (props) => {
   const redirect = useRedirect();
@@ -25,7 +25,6 @@ export const MyLayout = (props) => {
 
   const { addFacts, addConcepts, setCategories } = factDataStore;
   const [isConnected, setIsConnected] = useState(false);
-  const [isReady, setIsReady] = useState(false);
 
   const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
@@ -48,15 +47,19 @@ export const MyLayout = (props) => {
     const onSelectEntity = (d) => {
       console.log("SELECT ENTITY");
       console.log(d.uid);
-      memStore.setItem("selectedNode", d.uid); //
-      memStore.setItem("selectedEdge", null);
+      setSelectedNode(d.uid);
+      setSelectedEdge(null);
+      // memStore.setItem("selectedNode", d.uid); //
+      // memStore.setItem("selectedEdge", null);
     };
 
     const onSelectFact = (d) => {
       console.log("SELECT FACT");
       console.log(d.uid);
-      memStore.setItem("selectedNode", null);
-      memStore.setItem("selectedEdge", d.uid);
+      setSelectedNode(null);
+      setSelectedEdge(d.uid);
+      // memStore.setItem("selectedNode", null);
+      // memStore.setItem("selectedEdge", d.uid);
     };
 
     const onAddFacts = (d) => {
@@ -70,28 +73,33 @@ export const MyLayout = (props) => {
     const onAddModels = (d) => {
       d.models.forEach((model: any) => {
         const key = "model:" + model.uid;
-        memStore.removeItem(key);
-        memStore.setItem(key, model);
+        console.log("WHAT THE FUCK IS HAPPENING HERE!!", key);
+        // memStore.removeItem(key);
+        // memStore.setItem(key, model);
       });
     };
 
     const onRemModels = (d) => {
       d.model_uids.forEach((uid: number) => {
         const key = "model:" + uid;
-        memStore.removeItem(key);
+        console.log("AND HERE!!", key);
+        // memStore.removeItem(key);
       });
     };
 
     const onEntitiesCleared = () => {
       factDataStore.clearFacts();
       // semanticModelStore.clearModels();
-      memStore.setItem("selectedNode", null);
+      // memStore.setItem("selectedNode", null);
+      setSelectedNode(null);
     };
 
     const onNoneSelected = () => {
       console.log("SELECT NONE");
-      memStore.setItem("selectedNode", null);
-      memStore.setItem("selectedEdge", null);
+      setSelectedNode(null);
+      setSelectedEdge(null);
+      // memStore.setItem("selectedNode", null);
+      // memStore.setItem("selectedEdge", null);
     };
 
     const onStateInitialized = (state: any) => {

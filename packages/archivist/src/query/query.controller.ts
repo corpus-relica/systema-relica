@@ -1,14 +1,19 @@
 import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { ApiOperation, ApiBody } from '@nestjs/swagger';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { QueryService } from './query.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { Fact } from '@relica/types';
+import { QueryStringDto } from './queryString.dto';
+
+import { GellishParser } from './GellishParser2';
 
 @ApiTags('Query')
 @Controller('qeury')
 export class QueryController {
   private readonly logger = new Logger(QueryController.name);
+  private readonly parser = new GellishParser();
 
   constructor(
     private readonly queryService: QueryService,
@@ -21,5 +26,17 @@ export class QueryController {
   ): Promise<any> {
     // Process the query and return results
     return this.queryService.handleGellishQuery(queryTable);
+  }
+
+  @Post('queryString')
+  @ApiOperation({ summary: 'Process a Gellish query string' })
+  @ApiBody({ type: QueryStringDto })
+  async handleGellishQueryString(@Body() body: QueryStringDto): Promise<any> {
+    // Process the query and return results
+    // const queryStringArray: string[] = body.queryString.split('\n');
+    // this.logger.debug('queryStringArray: ' + queryStringArray);
+    const queryTable = this.parser.parse(body.queryString);
+    const result = await this.queryService.handleGellishQuery([queryTable]);
+    return result;
   }
 }
