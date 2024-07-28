@@ -1,0 +1,110 @@
+# Refined Gellish Notation System (RGNS)
+
+# Basic Fact Structure
+LH > REL > RH
+
+# Full Fact with Roles (optional)
+LH : ROLE1 > REL : ROLE2 > RH
+
+# Metadata
+@KEY=VALUE
+
+# Specific Query
+?LH > REL > RH
+
+# 'What' Query
+*LH > REL > RH
+
+# Entity Structure
+UID.NAME
+
+# Nested Structures
+LH > REL > (RH1, RH2, RH3)
+
+/////////////////////////////////////////
+
+```
+# Refined Gellish Notation System (RGNS)
+
+# Basic Fact Structure
+LH > REL > RH
+
+# Full Fact with Roles (optional)
+LH : ROLE1 > REL : ROLE2 > RH
+
+# Metadata
+@KEY=VALUE
+
+# Specific Query
+?LH > REL > RH
+
+# 'What' Query
+*LH > REL > RH
+
+# Entity Structure
+UID.NAME
+
+# Nested Structures
+LH > REL > (RH1, RH2, RH3)
+```
+
+Examples:
+
+1. Basic fact:
+```
+101.Pump A > 1190.has as part > 201.Impeller
+```
+
+2. Fact with roles (optional):
+```
+101.Pump A : 4732.whole > 1190.has as part : 4731.part > 201.Impeller
+```
+
+3. Fact with metadata:
+```
+@INTENTION=statement
+@VALIDITY=design_phase
+101.Pump A > 1726.rotation speed > 4325.3000 rpm
+```
+
+4. Specific query:
+```
+?101.Pump A > 1190.has as part > ?
+```
+
+5. 'What' query with metadata:
+```
+@INTENTION=question
+* > 4658.is related to > 101.Pump A
+```
+
+6. Multiple facts:
+```
+101.Pump A > 5935.is classified as > 40043.pump
+101.Pump A > 1190.has as part > 201.Impeller
+101.Pump A > 1726.rotation speed > 4325.3000 rpm
+```
+
+7. Nested structures:
+```
+101.Pump A > 1190.has as part > (201.Impeller, 202.Shaft, 203.Casing)
+```
+
+8. Using quotes for names with special characters (optional):
+```
+101."Pump A (2023 model)" > 1190.has as part > 201.Impeller
+```
+
+Key features of this notation:
+
+1. Maintains the '>' symbol for relationships, which is visually intuitive.
+2. Uses '.' to separate UIDs from names, keeping it simple and readable.
+3. Roles are optional and use ':' when needed, maintaining flexibility.
+4. Quotes are optional and used only when names contain special characters.
+5. Uses '*' for 'what' queries to differentiate from specific '?' queries.
+6. Nested structures use parentheses and commas, which are easy to type and read.
+7. Metadata is clearly marked with '@' and uses '=' for key-value pairs.
+
+This notation balances readability, ease of typing, and parseability. It's flexible enough to handle simple and complex Gellish expressions while remaining intuitive for users.
+
+For parsing, you can rely on the '>', '.', and other delimiters to split the components. The parser would need to be smart enough to handle quoted strings when they appear, but for most cases, it can simply split on the main delimiters.
