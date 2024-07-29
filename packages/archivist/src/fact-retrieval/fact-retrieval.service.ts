@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Fact } from '@relica/types';
 import { GraphService } from 'src/graph/graph.service';
 
 import {
@@ -12,6 +13,8 @@ import { CacheService } from 'src/cache/cache.service';
 
 @Injectable()
 export class FactRetrievalService {
+  private readonly logger = new Logger(FactRetrievalService.name);
+
   constructor(
     private readonly graphService: GraphService,
     private readonly gellishBaseService: GellishBaseService,
@@ -317,4 +320,91 @@ RETURN r
 
     return uniqueResults;
   };
+
+  async confirmFact(fact: Fact): Promise<Fact | null> {
+    try {
+      const result = await this.graphService.execQuery(
+        `
+MATCH (r:Fact {lh_object_uid: $lh_object_uid, rh_object_uid: $rh_object_uid, rel_type_uid: $rel_type_uid})
+RETURN r
+`,
+        {
+          lh_object_uid: fact.lh_object_uid,
+          rh_object_uid: fact.rh_object_uid,
+          rel_type_uid: fact.rel_type_uid,
+        },
+      );
+      if (result.length === 0) {
+        return null;
+      }
+      return this.graphService.transformResults(result)[0];
+    } catch (error) {
+      this.logger.error('Error while finding fact:', error);
+    } finally {
+    }
+    return null;
+  }
+
+  async confirmFactInRelationCone(
+    lh_object_uids: number[] | null,
+    rel_type_uids: number[] | null,
+    rh_object_uids: number[] | null,
+  ): Promise<Fact[] | null> {
+    if (
+      lh_object_uids === null &&
+      rel_type_uids === null &&
+      rh_object_uids === null
+    ) {
+      throw new Error(
+        'At least one of lh_object_uid, rel_type_uid, or rh_object_uid must be non-null',
+      );
+    }
+
+    let query = `MATCH (r:Fact) WHERE 1=1`;
+    const params: any = {};
+
+    if (lh_object_uids !== null) {
+      query += ` AND r.lh_object_uid IN $lh_object_uids`;
+      params.lh_object_uids = lh_object_uids;
+    }
+
+    if (rh_object_uids !== null) {
+      query += ` AND r.rh_object_uid IN $rh_object_uids`;
+      params.rh_object_uids = rh_object_uids;
+    }
+
+    if (rel_type_uids !== null) {
+      // const relSubtypes = rel_type_uids.reduce((acc, curr) => {
+      //   return acc.concat(this.cacheService.allDescendantsOf(curr));
+      // }, []);
+      const relSubtypes = [];
+      for (let i = 0; i < rel_type_uids.length; i++) {
+        const tempSubtypes = await this.cacheService.allDescendantsOf(
+          rel_type_uids[i],
+        );
+        relSubtypes.push(rel_type_uids[i]);
+        relSubtypes.push(...tempSubtypes);
+      }
+      query += ` AND r.rel_type_uid IN $relSubtypes`;
+      params.relSubtypes = relSubtypes;
+    }
+
+    query += ` RETURN r`;
+
+    this.logger.verbose('Query:', query);
+    this.logger.verbose('Params:', params);
+
+    try {
+      const results = await this.graphService.execQuery(query, params);
+
+      if (results.length === 0) {
+        return [];
+      }
+
+      return this.graphService.transformResults(results);
+    } catch (error) {
+      this.logger.error('Error while finding facts:', error);
+      return null;
+    }
+  }
 }

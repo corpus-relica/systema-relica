@@ -25,7 +25,7 @@ export class QueryController {
     @Body() queryTable: Fact[], //GellishTable,
   ): Promise<any> {
     // Process the query and return results
-    return this.queryService.handleGellishQuery(queryTable);
+    return this.queryService.interpretTable(queryTable);
   }
 
   @Post('queryString')
@@ -33,10 +33,24 @@ export class QueryController {
   @ApiBody({ type: QueryStringDto })
   async handleGellishQueryString(@Body() body: QueryStringDto): Promise<any> {
     // Process the query and return results
-    // const queryStringArray: string[] = body.queryString.split('\n');
-    // this.logger.debug('queryStringArray: ' + queryStringArray);
-    const queryTable = this.parser.parse(body.queryString);
-    const result = await this.queryService.handleGellishQuery([queryTable]);
+    const queryStringArray: string[] = body.queryString.split('\n');
+
+    let qStr = '';
+    let finalArray = [];
+    queryStringArray.forEach((queryString) => {
+      qStr += queryString + '\n';
+      if (!queryString.startsWith('@')) {
+        finalArray.push(qStr);
+        qStr = '';
+      }
+    });
+
+    const queryTable = finalArray.reduce(
+      (memo, queryString) => memo.concat(this.parser.parse(queryString)),
+      [],
+    );
+
+    const result = await this.queryService.interpretTable(queryTable);
     return result;
   }
 }

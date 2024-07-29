@@ -54,7 +54,7 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
         handleClose();
         break;
       case REIFY:
-        sockSendCC("user", "getSpecializationHierarchy", { uid: relType });
+        sockSendCC("user", "loadSpecializationHierarchy", { uid: relType });
         sockSendCC("user", "selectEntity", { uid: relType });
         handleClose();
         break;
