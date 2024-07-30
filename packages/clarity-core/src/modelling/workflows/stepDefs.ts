@@ -89,7 +89,7 @@ const step4: Step = {
       field: 'qualitative subtype',
       source: 'knowledge-graph | workflow',
       query: '* > 1726 > 730044',
-      workflowId: 'define-qualitative-subtype',
+      workflowId: 'workflowB',
     },
   ],
 };

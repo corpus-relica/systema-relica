@@ -80,7 +80,7 @@ export const getWorkflows = async () => {
   return response.data;
 };
 
-export const getState = async () => {
+export const getWorkflowState = async () => {
   const response = await CCAxiosInstance.get("/modelling/state");
   return response.data;
 };
@@ -88,6 +88,13 @@ export const getState = async () => {
 export const initWorkflow = async (workflowId: string) => {
   const response = await CCAxiosInstance.get(
     "/modelling/workflow/init/" + workflowId
+  );
+  return response.data;
+};
+
+export const branchWorkflow = async (workflowId: string) => {
+  const response = await CCAxiosInstance.get(
+    "/modelling/workflow/branch/" + workflowId
   );
   return response.data;
 };

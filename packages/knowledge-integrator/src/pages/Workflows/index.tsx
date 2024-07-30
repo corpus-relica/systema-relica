@@ -8,16 +8,20 @@ import React, {
 } from "react";
 import {
   getWorkflows,
+  getWorkflowState,
   initWorkflow,
+  branchWorkflow,
   incrementWorkflowStep,
   decrementWorkflowStep,
 } from "../../CCClient";
 
+import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
 
-import TreeVizualization from "./TreeVizualization";
+import WorkflowTreeVisualizer from "./WorkflowTreeVisualizer";
+import WorkflowStackVisualizer from "./WorkflowStackVisualizer";
 
 const Workflows = () => {
   const [workflows, setWorkflows] = useState([]);
@@ -26,26 +30,45 @@ const Workflows = () => {
   const [id, setId] = useState("");
   const [pattern, setPattern] = useState([]);
   const [fieldSources, setFieldSources] = useState([]);
+  const [stack, setStack] = useState([]);
 
   useEffect(() => {
     const init = async () => {
       const workflows = await getWorkflows();
       setWorkflows(workflows);
+      const state = await getWorkflowState();
+      processState(state);
     };
     init();
   }, []);
 
-  const processState = (res: any) => {
+  const processStepState = (res: any) => {
     setId(res.id);
     setDescription(res.description);
     setPattern(res.pattern);
     setFieldSources(res.fieldSources);
   };
 
+  const processStackState = (res: any) => {
+    setStack(res);
+  };
+
+  const processState = (res: any) => {
+    res.currentStep && processStepState(res.currentStep);
+    res.stack && processStackState(res.stack);
+  };
+
   const handleWorkflowClick = async (workflowId: any) => {
     setWorkflowId(workflowId);
     const firstStep = await initWorkflow(workflowId);
-    processState(firstStep);
+    const state = await getWorkflowState();
+    processState(state);
+  };
+
+  const handleWorkflowButtonClick = async (workflowId: string) => {
+    const firstStep = await branchWorkflow(workflowId);
+    const state = await getWorkflowState();
+    processState(state);
   };
 
   console.log("workflows");
@@ -61,21 +84,27 @@ const Workflows = () => {
   const inputs = relavantFieldSources.map((fs: any) => {
     if (fs.source === "free") {
       return (
-        <Box>
+        <Box key={fs.field}>
           <input type="text" placeholder={fs.field} />
         </Box>
       );
     } else if (fs.source === "knowledge-graph") {
       return (
-        <Box>
+        <Box key={fs.field}>
           <input type="text" placeholder={fs.field} />
         </Box>
       );
     } else if (fs.source === "knowledge-graph | workflow") {
       return (
-        <Box>
+        <Box key={fs.field}>
           <input type="text" placeholder={fs.field} />
-          <input type="text" placeholder={fs.workflowId} />
+          <Button
+            onClick={() => {
+              handleWorkflowButtonClick(fs.workflowId);
+            }}
+          >
+            {fs.workflowId}
+          </Button>
         </Box>
       );
     }
@@ -83,6 +112,7 @@ const Workflows = () => {
 
   const workflowsList = Object.keys(workflows).map((k) => (
     <Box
+      key={k}
       onClick={() => {
         handleWorkflowClick(k);
       }}
@@ -105,9 +135,11 @@ const Workflows = () => {
       </Box>
       <Box>
         <Stack divider={<Divider orientation="horizontal" flexItem />}>
-          <Box>stack</Box>
           <Box>
-            <TreeVizualization />
+            <WorkflowStackVisualizer stack={stack} />
+          </Box>
+          <Box>
+            <WorkflowTreeVisualizer />
           </Box>
         </Stack>
       </Box>
@@ -121,22 +153,24 @@ const Workflows = () => {
         </Box>
         <Box>{inputs}</Box>
         <Box>
-          <button
+          <Button
             onClick={async () => {
               const res = await decrementWorkflowStep(workflowId);
-              processState(res);
+              const state = await getWorkflowState();
+              processState(state);
             }}
           >
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={async () => {
               const res = await incrementWorkflowStep(workflowId);
-              processState(res);
+              const state = await getWorkflowState();
+              processState(state);
             }}
           >
             Next
-          </button>
+          </Button>
         </Box>
       </Box>
     </Stack>

@@ -2,13 +2,25 @@ import { Fact } from '@relica/types';
 import { stepDefs } from './stepDefs';
 
 class WorkflowManager {
-  private def: any = {};
+  private _def: any = {};
   private currStepIdx: number = 0;
   private currStepDef: any = {};
   private context: Fact[] = [];
 
   constructor(def: any) {
-    this.def = def;
+    this._def = def;
+  }
+
+  get id() {
+    return this._def.id;
+  }
+
+  get def() {
+    return this._def;
+  }
+
+  get currentStep() {
+    return this.currStepDef;
   }
 
   start() {
@@ -18,7 +30,6 @@ class WorkflowManager {
   }
 
   next() {
-    if (this.currStepIdx === this.def.steps.length - 1) return this.currStepDef;
     this.currStepIdx++;
     this.currStepDef = stepDefs[this.def.steps[this.currStepIdx]];
     return this.currStepDef;

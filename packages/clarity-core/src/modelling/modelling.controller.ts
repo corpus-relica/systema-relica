@@ -68,6 +68,21 @@ export class ModellingController {
     }
   }
 
+  @Get('/workflow/branch/:workflowId')
+  async branchWorkflow(@Param('workflowId') workflowId: string) {
+    this.logger.log('~~~~~~~~~~~~BRANCH WORKFLOW~~~~~~~~~~~~');
+
+    try {
+      return this.modelling.branchWorkflow(workflowId);
+    } catch (e) {
+      this.logger.error('Error branching workflow:', e);
+      throw new HttpException(
+        'Error branching workflow',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get('workflow/increment/:workflowId')
   async incrementWorkflowStep(@Param('workflowId') workflowId: string) {
     this.logger.log('~~~~~~~~~~~~INCREMENT WORKFLOW STEP~~~~~~~~~~~~');
