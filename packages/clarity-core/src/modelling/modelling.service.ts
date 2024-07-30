@@ -6,6 +6,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ModellingSession } from './modellingSession.entity';
 
+import { workflowDefs } from './workflows/workflowDefs';
+import { stepDefs } from './workflows/stepDefs';
+import WorkflowManager from './workflows/workflowManager';
+
 export enum State {
   REVIEW = 'REVIEW',
   MODELLING = 'MODELLING',
@@ -17,6 +21,8 @@ export enum State {
 export class ModellingService {
   private logger: Logger = new Logger('ModellingService');
   private state: any = { mainstate: State.REVIEW };
+  private workflows = {};
+  private manager: WorkflowManager;
 
   async onApplicationBootstrap() {
     const state = await this.modelSessionRepository.find({
@@ -34,7 +40,9 @@ export class ModellingService {
     @InjectRepository(ModellingSession)
     private modelSessionRepository: Repository<ModellingSession>,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) {
+    this.workflows = workflowDefs;
+  }
 
   getState() {
     return this.state;
@@ -51,5 +59,27 @@ export class ModellingService {
     //   type: 'system:stateChanged',
     //   payload: this.state,
     // });
+  }
+
+  async getWorkflows() {
+    return this.workflows;
+  }
+
+  async initWorkflow(workflowId: string) {
+    const workflow = this.workflows[workflowId];
+    const steps = workflow.steps;
+
+    const workflowManager = new WorkflowManager(workflow);
+    this.manager = workflowManager;
+
+    return this.manager.start();
+  }
+
+  incrementWorkflowStep() {
+    return this.manager.next();
+  }
+
+  decrementWorkflowStep() {
+    return this.manager.prev();
   }
 }

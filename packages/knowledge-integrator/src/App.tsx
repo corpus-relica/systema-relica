@@ -29,6 +29,7 @@ import { MyLayout } from "./MyLayout";
 import Graph from "./pages/Graph";
 import Settings from "./pages/Settings";
 import Modelling from "./pages/Modelling/";
+import Workflows from "./pages/Workflows";
 import Dashboard from "./Dashboard";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -132,6 +133,7 @@ export const App = () => {
         <CustomRoutes>
           <Route path="env/graph" element={<Graph />} />
           <Route path="/modelling" element={<Modelling />} />
+          <Route path="/workflows" element={<Workflows />} />
           <Route path="/settings" element={<Settings />} />
         </CustomRoutes>
       </Admin>

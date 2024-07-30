@@ -19,5 +19,10 @@ export const MyMenu = () => (
       primaryText="Modelling"
       leftIcon={<PlumbingIcon />}
     />
+    <Menu.Item
+      to="/workflows"
+      primaryText="Workflows"
+      leftIcon={<FoundationIcon />}
+    />
   </Menu>
 );

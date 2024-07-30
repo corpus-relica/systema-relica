@@ -72,3 +72,36 @@ export const conjureDefinition = async (
   );
   return response.data;
 };
+
+/////////////////////////////////////////////// MODELLING /////////////////
+
+export const getWorkflows = async () => {
+  const response = await CCAxiosInstance.get("/modelling/workflows");
+  return response.data;
+};
+
+export const getState = async () => {
+  const response = await CCAxiosInstance.get("/modelling/state");
+  return response.data;
+};
+
+export const initWorkflow = async (workflowId: string) => {
+  const response = await CCAxiosInstance.get(
+    "/modelling/workflow/init/" + workflowId
+  );
+  return response.data;
+};
+
+export const incrementWorkflowStep = async (workflowId: string) => {
+  const response = await CCAxiosInstance.get(
+    "/modelling/workflow/increment/" + workflowId
+  );
+  return response.data;
+};
+
+export const decrementWorkflowStep = async (workflowId: string) => {
+  const response = await CCAxiosInstance.get(
+    "/modelling/workflow/decrement/" + workflowId
+  );
+  return response.data;
+};
