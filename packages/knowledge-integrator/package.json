@@ -22,6 +22,7 @@
     "ag-grid-react": "^31.3.2",
     "axios": "^1.7.2",
     "formik": "^2.4.6",
+    "mermaid": "^10.9.1",
     "mobx": "^6.10.2",
     "ra-data-simple-rest": "^5.0.2",
     "react": "^18.2.0",

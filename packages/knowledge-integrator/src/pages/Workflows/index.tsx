@@ -11,7 +11,13 @@ import {
   initWorkflow,
   incrementWorkflowStep,
   decrementWorkflowStep,
-} from "../CCClient";
+} from "../../CCClient";
+
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Divider from "@mui/material/Divider";
+
+import TreeVizualization from "./TreeVizualization";
 
 const Workflows = () => {
   const [workflows, setWorkflows] = useState([]);
@@ -55,70 +61,88 @@ const Workflows = () => {
   const inputs = relavantFieldSources.map((fs: any) => {
     if (fs.source === "free") {
       return (
-        <div>
+        <Box>
           <input type="text" placeholder={fs.field} />
-        </div>
+        </Box>
       );
     } else if (fs.source === "knowledge-graph") {
       return (
-        <div>
+        <Box>
           <input type="text" placeholder={fs.field} />
-        </div>
+        </Box>
       );
     } else if (fs.source === "knowledge-graph | workflow") {
       return (
-        <div>
+        <Box>
           <input type="text" placeholder={fs.field} />
           <input type="text" placeholder={fs.workflowId} />
-        </div>
+        </Box>
       );
     }
   });
 
   const workflowsList = Object.keys(workflows).map((k) => (
-    <div
+    <Box
       onClick={() => {
         handleWorkflowClick(k);
       }}
     >
       {k}
-    </div>
+    </Box>
   ));
 
   return (
-    <div>
-      <div>{workflowsList}</div>
-      <hr />
-      <div>{id}</div>
-      <div>{description}</div>
-      <div>
-        {pattern.map((fact) => (
-          <div>{fact}</div>
-        ))}
-      </div>
-      <div>{inputs}</div>
-      <div>
-        <button
-          onClick={async () => {
-            const res = await decrementWorkflowStep(workflowId);
-            processState(res);
-          }}
-        >
-          Back
-        </button>
-        <button
-          onClick={async () => {
-            const res = await incrementWorkflowStep(workflowId);
-            processState(res);
-          }}
-        >
-          Next
-        </button>
-      </div>
-    </div>
+    <Stack
+      direction={"row"}
+      divider={<Divider orientation="vertical" flexItem />}
+      spacing={2}
+    >
+      <Box>
+        <Stack divider={<Divider orientation="horizontal" flexItem />}>
+          <Box>{workflowsList}</Box>
+          <Box>environment</Box>
+        </Stack>
+      </Box>
+      <Box>
+        <Stack divider={<Divider orientation="horizontal" flexItem />}>
+          <Box>stack</Box>
+          <Box>
+            <TreeVizualization />
+          </Box>
+        </Stack>
+      </Box>
+      <Box>
+        <Box>{id}</Box>
+        <Box>{description}</Box>
+        <Box>
+          {pattern.map((fact) => (
+            <Box>{fact}</Box>
+          ))}
+        </Box>
+        <Box>{inputs}</Box>
+        <Box>
+          <button
+            onClick={async () => {
+              const res = await decrementWorkflowStep(workflowId);
+              processState(res);
+            }}
+          >
+            Back
+          </button>
+          <button
+            onClick={async () => {
+              const res = await incrementWorkflowStep(workflowId);
+              processState(res);
+            }}
+          >
+            Next
+          </button>
+        </Box>
+      </Box>
+    </Stack>
   );
 
-  // <div>{fieldSources}</div>
+  // <Box>{fieldSources}</Box>
 };
 
 export default Workflows;
