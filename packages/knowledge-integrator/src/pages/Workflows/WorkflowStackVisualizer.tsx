@@ -37,6 +37,9 @@ const WorkflowStackVisualizer = (props: any) => {
 
         let graphDefinition = "graph TB\n"; //a-->b";
         stack.push("e");
+        // for (let i = stack.length - 2; i >= 0; i--) {
+        //   graphDefinition += `${stack[i]}-->${stack[i + 1]}\n`;
+        // }
         for (let i = 0; i < stack.length - 1; i++) {
           graphDefinition += `${stack[i]}-->${stack[i + 1]}\n`;
         }

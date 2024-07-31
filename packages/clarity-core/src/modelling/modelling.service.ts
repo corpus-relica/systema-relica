@@ -22,9 +22,8 @@ export class ModellingService {
   private logger: Logger = new Logger('ModellingService');
   // private state: any = { mainstate: State.REVIEW };
   private workflows = {};
-  //
-  private manager: WorkflowManager;
-  private stack: WorkflowManager[] = [];
+  private stack: WorkflowManager[] = undefined;
+  private context: any = {};
 
   async onApplicationBootstrap() {
     const state = await this.modelSessionRepository.find({
@@ -42,12 +41,16 @@ export class ModellingService {
   }
 
   getState() {
+    const manager = this.stack && this.stack[0];
     return {
       environment: [],
       stack: this.stack.map((w) => w.id),
       tree: [],
-      workflow: this.manager?.def,
-      currentStep: this.manager?.currentStep, //,
+      workflow: manager?.state,
+      // currentStep: manager?.currentStep, //,
+      // isFinalStep: manager?.isFinalStep,
+      isComplete: this.stack !== undefined && this.stack.length === 0,
+      context: this.context,
     };
   }
 
@@ -71,10 +74,11 @@ export class ModellingService {
   async initWorkflow(workflowId: string) {
     const workflow = this.workflows[workflowId];
 
-    const workflowManager = new WorkflowManager(workflow);
-    this.manager = workflowManager;
+    const manager = new WorkflowManager(workflow);
 
-    return this.manager.start();
+    this.stack = [manager];
+
+    return manager.start();
   }
 
   async branchWorkflow(workflowId: string) {
@@ -83,19 +87,27 @@ export class ModellingService {
 
     const workflow = this.workflows[workflowId];
 
-    const workflowManager = new WorkflowManager(workflow);
+    const manager = new WorkflowManager(workflow);
 
-    this.stack.push(this.manager);
-    this.manager = workflowManager;
+    this.stack.unshift(manager);
 
-    return this.manager.start();
+    return manager.start();
   }
 
   incrementWorkflowStep() {
-    return this.manager.next();
+    return this.stack[0].next();
   }
 
   decrementWorkflowStep() {
-    return this.manager.prev();
+    return this.stack[0].prev();
+  }
+
+  commitWorkflow() {
+    // this.manager.commit();
+    this.stack.shift();
+  }
+
+  setWorkflowValue(key: string, value: any) {
+    this.context[key] = value;
   }
 }

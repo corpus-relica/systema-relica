@@ -5,10 +5,9 @@ class WorkflowManager {
   private _def: any = {};
   private currStepIdx: number = 0;
   private currStepDef: any = {};
-  private context: Fact[] = [];
 
   constructor(def: any) {
-    this._def = def;
+    this._def = Object.assign({}, def);
   }
 
   get id() {
@@ -21,6 +20,18 @@ class WorkflowManager {
 
   get currentStep() {
     return this.currStepDef;
+  }
+
+  get isFinalStep() {
+    return this.currStepIdx === this.def.steps.length - 1;
+  }
+
+  get state() {
+    return {
+      id: this.id,
+      currentStep: this.currentStep,
+      isFinalStep: this.isFinalStep,
+    };
   }
 
   start() {

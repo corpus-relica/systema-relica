@@ -13,6 +13,8 @@ import {
   branchWorkflow,
   incrementWorkflowStep,
   decrementWorkflowStep,
+  commitWorkflow,
+  setWorkflowValue,
 } from "../../CCClient";
 
 import Button from "@mui/material/Button";
@@ -22,6 +24,7 @@ import Divider from "@mui/material/Divider";
 
 import WorkflowTreeVisualizer from "./WorkflowTreeVisualizer";
 import WorkflowStackVisualizer from "./WorkflowStackVisualizer";
+import ContextVisualizer from "./ContextVisualizer";
 
 const Workflows = () => {
   const [workflows, setWorkflows] = useState([]);
@@ -31,6 +34,9 @@ const Workflows = () => {
   const [pattern, setPattern] = useState([]);
   const [fieldSources, setFieldSources] = useState([]);
   const [stack, setStack] = useState([]);
+  const [isFinalStep, setIsFinalStep] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [context, setContext] = useState(null);
 
   useEffect(() => {
     const init = async () => {
@@ -54,9 +60,14 @@ const Workflows = () => {
   };
 
   const processState = (res: any) => {
-    res.currentStep && processStepState(res.currentStep);
+    res.workflow && processStepState(res.workflow.currentStep);
+    res.workflow && setIsFinalStep(res.workflow.isFinalStep);
+    res.context && setContext(res.context);
     res.stack && processStackState(res.stack);
+    res.isComplete && setIsComplete(res.isComplete);
   };
+
+  if (isComplete === true) return <Box>Finished!</Box>;
 
   const handleWorkflowClick = async (workflowId: any) => {
     setWorkflowId(workflowId);
@@ -71,9 +82,7 @@ const Workflows = () => {
     processState(state);
   };
 
-  console.log("workflows");
-  console.log(fieldSources);
-  const relavantFieldSources = fieldSources.filter((fs: any) => {
+  const relevantFieldSources = fieldSources.filter((fs: any) => {
     return (
       fs.source === "free" ||
       fs.source === "knowledge-graph" ||
@@ -81,29 +90,61 @@ const Workflows = () => {
     );
   });
 
-  const inputs = relavantFieldSources.map((fs: any) => {
+  const inputs = relevantFieldSources.map((fs: any) => {
     if (fs.source === "free") {
+      console.log("RERENDER THIS, WHY NOT???");
       return (
         <Box key={fs.field}>
-          <input type="text" placeholder={fs.field} />
+          FREE:{" "}
+          <input
+            type="text"
+            onChange={async (e) => {
+              await setWorkflowValue(fs.field, e.target.value);
+              const state = await getWorkflowState();
+              processState(state);
+              console.log(state);
+            }}
+            value={(context && context[fs.field]) || ""}
+            placeholder={fs.field}
+          />
         </Box>
       );
     } else if (fs.source === "knowledge-graph") {
       return (
         <Box key={fs.field}>
-          <input type="text" placeholder={fs.field} />
+          KG:{" "}
+          <input
+            type="text"
+            onChange={async (e) => {
+              await setWorkflowValue(fs.field, e.target.value);
+              const state = await getWorkflowState();
+              processState(state);
+            }}
+            value={(context && context[fs.field]) || ""}
+            placeholder={fs.field}
+          />
         </Box>
       );
     } else if (fs.source === "knowledge-graph | workflow") {
       return (
         <Box key={fs.field}>
-          <input type="text" placeholder={fs.field} />
+          KG:{" "}
+          <input
+            type="text"
+            onChange={async (e) => {
+              await setWorkflowValue(fs.field, e.target.value);
+              const state = await getWorkflowState();
+              processState(state);
+            }}
+            value={(context && context[fs.field]) || ""}
+            placeholder={fs.field}
+          />
           <Button
             onClick={() => {
               handleWorkflowButtonClick(fs.workflowId);
             }}
           >
-            {fs.workflowId}
+            Create New {fs.workflowId}
           </Button>
         </Box>
       );
@@ -130,7 +171,9 @@ const Workflows = () => {
       <Box>
         <Stack divider={<Divider orientation="horizontal" flexItem />}>
           <Box>{workflowsList}</Box>
-          <Box>environment</Box>
+          <Box>
+            <ContextVisualizer context={context} />
+          </Box>
         </Stack>
       </Box>
       <Box>
@@ -148,7 +191,7 @@ const Workflows = () => {
         <Box>{description}</Box>
         <Box>
           {pattern.map((fact) => (
-            <Box>{fact}</Box>
+            <Box key={fact}>{fact}</Box>
           ))}
         </Box>
         <Box>{inputs}</Box>
@@ -162,21 +205,31 @@ const Workflows = () => {
           >
             Back
           </Button>
-          <Button
-            onClick={async () => {
-              const res = await incrementWorkflowStep(workflowId);
-              const state = await getWorkflowState();
-              processState(state);
-            }}
-          >
-            Next
-          </Button>
+          {isFinalStep ? (
+            <Button
+              onClick={async () => {
+                const res = await commitWorkflow();
+                const state = await getWorkflowState();
+                processState(state);
+              }}
+            >
+              End
+            </Button>
+          ) : (
+            <Button
+              onClick={async () => {
+                const res = await incrementWorkflowStep(workflowId);
+                const state = await getWorkflowState();
+                processState(state);
+              }}
+            >
+              Next
+            </Button>
+          )}
         </Box>
       </Box>
     </Stack>
   );
-
-  // <Box>{fieldSources}</Box>
 };
 
 export default Workflows;

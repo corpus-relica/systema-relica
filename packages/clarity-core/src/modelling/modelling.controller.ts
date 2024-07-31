@@ -112,4 +112,37 @@ export class ModellingController {
       );
     }
   }
+
+  @Get('workflow/commit')
+  async commitWorkflow(@Param('workflowId') workflowId: string) {
+    this.logger.log('~~~~~~~~~~~~COMMIT WORKFLOW~~~~~~~~~~~~');
+
+    try {
+      return this.modelling.commitWorkflow();
+    } catch (e) {
+      this.logger.error('Error commiting workflow:', e);
+      throw new HttpException(
+        'Error commiting workflow',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('workflow/setValue/:key/:value')
+  async setWorkflowValue(
+    @Param('key') key: string,
+    @Param('value') value: string,
+  ) {
+    this.logger.log('~~~~~~~~~~~~SET WORKFLOW VALUE~~~~~~~~~~~~');
+
+    try {
+      return this.modelling.setWorkflowValue(key, value);
+    } catch (e) {
+      this.logger.error('Error setting workflow value:', e);
+      throw new HttpException(
+        'Error setting workflow value',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

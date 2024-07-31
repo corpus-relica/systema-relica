@@ -112,3 +112,15 @@ export const decrementWorkflowStep = async (workflowId: string) => {
   );
   return response.data;
 };
+
+export const commitWorkflow = async () => {
+  const response = await CCAxiosInstance.get("/modelling/workflow/commit/");
+  return response.data;
+};
+
+export const setWorkflowValue = async (key: string, value: any) => {
+  const response = await CCAxiosInstance.get(
+    `/modelling/workflow/setValue/${key}/${value}`
+  );
+  return response.data;
+};
