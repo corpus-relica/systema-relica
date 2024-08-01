@@ -26,45 +26,52 @@ const WorkflowStackVisualizer = (props: any) => {
   const { stack } = props;
   const [svgstr, setSvgstr] = useState("");
 
-  useEffect(() => {
-    mermaid.initialize({
-      startOnLoad: false,
-    });
+  // useEffect(() => {
+  //   mermaid.initialize({
+  //     startOnLoad: false,
+  //   });
+  // }, []);
 
-    const init = async () => {
-      const drawDiagram = async function () {
-        if (!stack || stack.length === 0) return;
+  // useEffect(() => {
+  //   const init = async () => {
+  //     const drawDiagram = async function () {
+  //       if (!stack || stack.length === 0) return;
 
-        let graphDefinition = "graph TB\n"; //a-->b";
-        stack.push("e");
-        // for (let i = stack.length - 2; i >= 0; i--) {
-        //   graphDefinition += `${stack[i]}-->${stack[i + 1]}\n`;
-        // }
-        for (let i = 0; i < stack.length - 1; i++) {
-          graphDefinition += `${stack[i]}-->${stack[i + 1]}\n`;
-        }
-        console.log(graphDefinition);
+  //       let s = [...stack];
+  //       let graphDefinition = "graph TB\n"; //a-->b";
+  //       s.push("e");
 
-        const { svg } = await mermaid.render("graphDiv", graphDefinition);
-        setSvgstr(svg);
-      };
-      await drawDiagram();
-    };
-    init();
-  }, [stack]);
+  //       // for (let i = stack.length - 2; i >= 0; i--) {
+  //       //   graphDefinition += `${stack[i]}-->${stack[i + 1]}\n`;
+  //       // }
+  //       for (let i = 0; i < s.length - 1; i++) {
+  //         graphDefinition += `${s[i]}-->${s[i + 1]}\n`;
+  //       }
+
+  //       const { svg } = await mermaid.render("graphDiv", graphDefinition);
+  //       setSvgstr(svg);
+  //     };
+  //     await drawDiagram();
+  //   };
+  //   init();
+  // }, [stack]);
 
   return (
     <ThemeProvider theme={theme}>
       <Stack>
         <Box>StackVisualization</Box>
-        <Box
+        {/*<Box
           sx={{
             bgcolor: "background.paper",
             boxShadow: 1,
             borderRadius: 2,
           }}
           dangerouslySetInnerHTML={{ __html: svgstr }}
-        />
+        />*/}
+        {stack &&
+          stack.map((item: any, index: number) => {
+            return <Box key={index}>{item}</Box>;
+          })}
       </Stack>
     </ThemeProvider>
   );

@@ -113,8 +113,18 @@ export const decrementWorkflowStep = async (workflowId: string) => {
   return response.data;
 };
 
-export const commitWorkflow = async () => {
-  const response = await CCAxiosInstance.get("/modelling/workflow/commit/");
+export const validateWorkflow = async () => {
+  const response = await CCAxiosInstance.get("/modelling/workflow/validate");
+  return response.data;
+};
+
+export const finalizeWorkflow = async () => {
+  const response = await CCAxiosInstance.get("/modelling/workflow/finalize");
+  return response.data;
+};
+
+export const popWorkflow = async () => {
+  const response = await CCAxiosInstance.get("/modelling/workflow/pop");
   return response.data;
 };
 

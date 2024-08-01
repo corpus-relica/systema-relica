@@ -1,10 +1,18 @@
 import { Fact } from '@relica/types';
 import { stepDefs } from './stepDefs';
 
+export enum WorkflowStatus {
+  NOT_STARTED = 'not-started',
+  IN_PROGRESS = 'in-progress',
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+}
+
 class WorkflowManager {
   private _def: any = {};
   private currStepIdx: number = 0;
   private currStepDef: any = {};
+  private status: WorkflowStatus = WorkflowStatus.NOT_STARTED;
 
   constructor(def: any) {
     this._def = Object.assign({}, def);
@@ -31,12 +39,27 @@ class WorkflowManager {
       id: this.id,
       currentStep: this.currentStep,
       isFinalStep: this.isFinalStep,
+      status: this.status,
     };
   }
+
+  get steps() {
+    return this.def.steps;
+  }
+
+  //
+
+  areAllFieldsValid() {
+    // Check if all required fields are filled and valid
+    return true;
+  }
+
+  //
 
   start() {
     this.currStepIdx = 0;
     this.currStepDef = stepDefs[this.def.steps[this.currStepIdx]];
+    this.status = WorkflowStatus.IN_PROGRESS;
     return this.currStepDef;
   }
 
@@ -53,8 +76,23 @@ class WorkflowManager {
     return this.currStepDef;
   }
 
-  getSteps() {
-    return this.def.steps;
+  validate() {
+    // Check if all required fields are filled and valid
+    if (this.areAllFieldsValid()) {
+      this.status = WorkflowStatus.PENDING;
+    } else {
+      throw new Error(
+        'All required fields must be valid to validate the workflow',
+      );
+    }
+  }
+
+  finalize() {
+    if (this.status !== WorkflowStatus.PENDING) {
+      throw new Error("Workflow must be in 'pending' status to finalize");
+    }
+    // Perform final actions (e.g., inserting into knowledge graph)
+    this.status = WorkflowStatus.COMPLETED;
   }
 }
 

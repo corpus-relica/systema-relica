@@ -113,16 +113,46 @@ export class ModellingController {
     }
   }
 
-  @Get('workflow/commit')
-  async commitWorkflow(@Param('workflowId') workflowId: string) {
-    this.logger.log('~~~~~~~~~~~~COMMIT WORKFLOW~~~~~~~~~~~~');
+  @Get('workflow/validate')
+  async validateWorkflow() {
+    this.logger.log('~~~~~~~~~~~~VALIDATE WORKFLOW~~~~~~~~~~~~');
 
     try {
-      return this.modelling.commitWorkflow();
+      return this.modelling.validateWorkflow();
     } catch (e) {
-      this.logger.error('Error commiting workflow:', e);
+      this.logger.error('Error validating workflow:', e);
       throw new HttpException(
-        'Error commiting workflow',
+        'Error validating workflow',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('workflow/finalize')
+  async finalizeWorkflow() {
+    this.logger.log('~~~~~~~~~~~~FINALIZE WORKFLOW~~~~~~~~~~~~');
+
+    try {
+      return this.modelling.finalizeWorkflow();
+    } catch (e) {
+      this.logger.error('Error finalizing workflow:', e);
+      throw new HttpException(
+        'Error finalizing workflow',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('workflow/pop')
+  async popWorkflow() {
+    this.logger.log('~~~~~~~~~~~~POP WORKFLOW~~~~~~~~~~~~');
+
+    try {
+      return this.modelling.popWorkflow();
+    } catch (e) {
+      this.logger.error('Error poping workflow:', e);
+      throw new HttpException(
+        'Error poping workflow',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
