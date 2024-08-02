@@ -3,25 +3,9 @@ import { useState, useEffect, useRef } from "react";
 
 const WorkflowTreeVisualizer = (props: any) => {
   const { tree } = props;
-
-  const ref = useRef();
   const ref2 = useRef();
 
-  const [dy, setDY] = useState(0);
-  const [dx, setDX] = useState(0);
-  const [x0, setX0] = useState(Infinity);
-  const [x1, setX1] = useState(-Infinity);
-  const [width, setWidth] = useState(0);
-  const [height, setHeight] = useState(0);
-  const [padding, setPadding] = useState(1);
-
-  // useEffect(() => {}, []);
   useEffect(() => {
-    console.log(
-      "-------------------------------------------------REDRAW BAR GRAPH?????",
-      tree
-    );
-
     if (tree.length === 0) return;
 
     const foo = tree.map((t) => {
@@ -35,116 +19,106 @@ const WorkflowTreeVisualizer = (props: any) => {
       .id((d: any) => d.name)
       .parentId((d: any) => d.parent)(foo);
 
-    console.log("ROOT ROOT ROOT ROOT ROOT ROOT ROOT ");
-    console.log(root);
+    // Set dimensions
+    const margin = { top: 10, right: 40, bottom: 10, left: 40 };
+    // const margin = { top: 0, right: 0, bottom: 0, left: 0 };
 
-    /////////////////////////////////////////////////////////////
-    // set the dimensions and margins of the graph
-    const margin = { top: 30, right: 30, bottom: 70, left: 60 },
-      width = 460 - margin.left - margin.right;
-    let height = 400 - margin.top - margin.bottom;
+    // Compute the layout
+    const nodeSize = [20, 100]; // [height, width] for each node
+    const treeLayout = d3.tree().nodeSize(nodeSize);
+    treeLayout(root);
 
-    // Compute labels and titles.
-    const descendants = root.descendants();
-    const L = descendants.map((d: any) => d.data.name);
-
-    // Compute the layout.
-    const padding = 1;
-    const dx = height / 2;
-    const dy = width / (root.height + padding);
-    d3.tree().nodeSize([dx, dy])(root);
-
-    // Center the tree.
-    let x0 = Infinity;
-    let x1 = -x0;
+    // Calculate the bounds of the tree
+    let x0 = Infinity,
+      y0 = Infinity,
+      x1 = -Infinity,
+      y1 = -Infinity;
     root.each((d) => {
       if (d.x > x1) x1 = d.x;
       if (d.x < x0) x0 = d.x;
+      if (d.y > y1) y1 = d.y;
+      if (d.y < y0) y0 = d.y;
     });
 
-    console.log(x0, x1);
-    // Compute the default height.
-    if (height === undefined) height = x1 - x0 + dx * 2;
+    console.log("--------------------1------------------");
+    console.log(x0, x1, y0, y1);
 
-    console.log("%%%%%%%%%%%%%%%%%%%% DX DY", dx, dy, width, height);
-    console.log((-dy * padding) / 2, x0 - dx, width, height);
+    const width = y1 - y0 + margin.left + margin.right;
+    const height = x1 - x0 + margin.top + margin.bottom;
 
-    const svg2 = d3
-      // @ts-ignore
+    // Calculate offsets to center the tree
+    const xOffset = -((x0 + x1) / 2);
+    const yOffset = -y0;
+    console.log("--------------------1------------------");
+    console.log(xOffset, yOffset);
+
+    // Create SVG
+    const svg = d3
       .select(ref2.current)
-      .attr("viewBox", [(-dy * padding) / 2, x0 - dx, width, height])
-      .attr("width", width)
-      .attr("height", height)
-      .attr(
-        "style",
-        "background-color:#ffffff; max-width: 100%; height: auto; height: intrinsic;"
-      )
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .attr("viewBox", [
+        -margin.left,
+        -margin.top,
+        width + margin.left + margin.right,
+        height + margin.top + margin.bottom,
+      ])
+      .attr("style", "max-width: 100%; height: auto; background-color:#ffffff;")
       .attr("font-family", "sans-serif")
       .attr("font-size", 10);
 
-    const stroke = "#555"; // stroke for links
-    const strokeWidth = 1.5; // stroke width for links
-    const strokeOpacity = 0.4; // stroke opacity for links
-
-    svg2
+    // Create a group for the tree and center it
+    const g = svg
       .append("g")
-      .attr("fill", "none")
-      .attr("stroke", stroke)
-      .attr("stroke-opacity", strokeOpacity)
-      // .attr("stroke-linecap", strokeLinecap)
-      // .attr("stroke-linejoin", strokeLinejoin)
-      .attr("stroke-width", strokeWidth)
-      .selectAll("path")
+      .attr("transform", `translate(${width / 2 - y1 / 2},${height / 2})`);
+
+    // Add links
+    g.selectAll(".link")
       .data(root.links())
-      .join("path")
+      .enter()
+      .append("path")
+      .attr("class", "link")
+      .attr("fill", "none")
+      .attr("stroke", "#555")
+      .attr("stroke-opacity", 0.4)
+      .attr("stroke-width", 1.5)
       .attr(
         "d",
-        //@ts-ignore
         d3
-          .link(d3.curveBumpX)
-          .x((d) => d.y)
-          .y((d) => d.x)
+          .linkHorizontal()
+          .x((d: any) => d.y)
+          .y((d: any) => d.x)
       );
 
-    const link = null;
-    const linkTarget = "";
-
-    const node = svg2
-      .append("g")
-      .selectAll("a")
+    // Add nodes
+    const node = g
+      .selectAll(".node")
       .data(root.descendants())
-      .join("a")
-      // .attr("xlink:href", link == null ? null : (d) => link(d.data, d))
-      .attr("target", link == null ? null : linkTarget)
-      .attr("transform", (d) => `translate(${d.y},${d.x})`);
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .attr("transform", (d: any) => `translate(${d.y},${d.x})`);
 
-    const fill = "#999";
-    const r = 10;
+    // Add circles to nodes
     node
       .append("circle")
-      .attr("fill", (d) => (d.children ? stroke : fill))
-      .attr("r", r);
+      .attr("fill", (d: any) => (d.children ? "#555" : "#999"))
+      .attr("r", 5);
 
-    const halo = "#fff"; // color of label halo
-    const haloWidth = 3; // padding around the labels
-
-    if (L)
-      node
-        .append("text")
-        .attr("dy", "0.32em")
-        .attr("x", (d) => (d.children ? -6 : 6))
-        .attr("text-anchor", (d) => (d.children ? "end" : "start"))
-        .attr("paint-order", "stroke")
-        .attr("stroke", halo)
-        .attr("stroke-width", haloWidth)
-        .text((d, i) => L[i]);
+    // Add labels to nodes
+    node
+      .append("text")
+      .attr("dy", "0.31em")
+      .attr("x", (d: any) => (d.children ? -6 : 6))
+      .attr("text-anchor", (d: any) => (d.children ? "end" : "start"))
+      .text((d: any) => d.data.name)
+      .clone(true)
+      .lower()
+      .attr("stroke", "white")
+      .attr("stroke-width", 3);
   }, [tree]);
 
-  return (
-    <>
-      <svg id="tree" ref={ref2} />
-    </>
-  );
+  return <svg ref={ref2} />;
 };
 
 export default WorkflowTreeVisualizer;
