@@ -9,17 +9,21 @@ export enum WorkflowStatus {
 }
 
 class WorkflowManager {
+  private _id: number;
   private _def: any = {};
   private currStepIdx: number = 0;
   private currStepDef: any = {};
   private status: WorkflowStatus = WorkflowStatus.NOT_STARTED;
 
+  private scope: any = {};
+
   constructor(def: any) {
+    this._id = Math.floor(10000 + Math.random() * 90000);
     this._def = Object.assign({}, def);
   }
 
   get id() {
-    return this._def.id;
+    return this._id + ':' + this._def.id;
   }
 
   get def() {

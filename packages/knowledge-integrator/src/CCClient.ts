@@ -92,9 +92,9 @@ export const initWorkflow = async (workflowId: string) => {
   return response.data;
 };
 
-export const branchWorkflow = async (workflowId: string) => {
+export const branchWorkflow = async (fieldId: string, workflowId: string) => {
   const response = await CCAxiosInstance.get(
-    "/modelling/workflow/branch/" + workflowId
+    "/modelling/workflow/branch/" + fieldId + "/" + workflowId
   );
   return response.data;
 };

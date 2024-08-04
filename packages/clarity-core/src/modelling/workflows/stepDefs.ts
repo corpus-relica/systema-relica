@@ -21,8 +21,8 @@ interface Step {
   fieldSources: FieldSource[];
 }
 
-const step1: Step = {
-  id: 'define-supertype-physical-object-name-and-definition',
+const defineSupertypePhysicalObject: Step = {
+  id: 'define-supertype-physical-object',
   description:
     'Choose or define a new physical objecct as a supertype of the new concept, and define the new concept',
   pattern: [
@@ -47,7 +47,7 @@ const step1: Step = {
   ],
 };
 
-const step3: Step = {
+const defineSynonymsCodesAndAbbreviations: Step = {
   id: 'define-synonyms-codes-and-abbreviations',
   description: 'define synonyms, codes, and abbreviations for the new concept',
   pattern: [
@@ -75,10 +75,10 @@ const step3: Step = {
   ],
 };
 
-const step4: Step = {
-  id: 'define-desciminating-aspects',
+const specifyDistignuishingQualitativeAspect: Step = {
+  id: 'specify-distinguishing-qualitative-aspects',
   description:
-    'Define the discriminating aspects of the new concept that distinguish it from other concepts',
+    'Specify the distinguishing qualitative aspects of the new concept',
   pattern: ['?.New Concept > 5283.is by definition > ?.qaulitative subtype'],
   fieldSources: [
     {
@@ -94,7 +94,7 @@ const step4: Step = {
   ],
 };
 
-const someOtherWorkflowStep1: Step = {
+const defineQualitativeSubtype: Step = {
   id: 'define-qualitative-subtype',
   description: 'Define the qualitative subtype of the new concept',
   pattern: [
@@ -123,9 +123,195 @@ const someOtherWorkflowStep1: Step = {
   ],
 };
 
+// @BULLSHIT
+const specifyDefiningNatureOfIntrinsicAspect: Step = {
+  id: 'specify-defining-nature-of-intrinsic-aspect',
+  description: 'Specify the defining nature of the intrinsic aspect',
+  pattern: [
+    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
+    '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
+  ],
+  fieldSources: [
+    {
+      field: 'New Concept',
+      source: 'context',
+    },
+    {
+      field: 'Supertype Concept',
+      source: 'context',
+    },
+    {
+      field: 'Intrinsic Aspect',
+      source: 'knowledge-graph',
+      query: '* > 1146 > 730044',
+    },
+  ],
+};
+
+//@Bullshit
+const specifyDefiningValuesOfIntrinsicAspect: Step = {
+  id: 'specify-defining-values-of-intrinsic-aspect',
+  description: 'Specify the defining values of the intrinsic aspect',
+  pattern: [
+    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
+    '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
+  ],
+  fieldSources: [
+    {
+      field: 'New Concept',
+      source: 'context',
+    },
+    {
+      field: 'Supertype Concept',
+      source: 'context',
+    },
+    {
+      field: 'Intrinsic Aspect',
+      source: 'knowledge-graph',
+      query: '* > 1146 > 730044',
+    },
+  ],
+};
+
+//@BULLSHIT
+const defineQuantitativeAspect: Step = {
+  id: 'define-quantitative-aspect',
+  description: 'Define the quantitative aspect of the new concept',
+  pattern: [
+    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
+    '?.Quantitative Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?.Quantitative Aspect > 1146.is a specialization of > ?.Supertype Concept',
+  ],
+  fieldSources: [
+    {
+      field: 'New Concept',
+      source: 'context',
+    },
+    {
+      field: 'Supertype Concept',
+      source: 'context',
+    },
+    {
+      field: 'Quantitative Aspect',
+      source: 'knowledge-graph',
+      query: '* > 1146 > 730044',
+    },
+  ],
+};
+
+//@BULLSHIT
+const specifyIntendedFunction: Step = {
+  id: 'specify-intended-function',
+  description: 'Specify the intended function of the new concept',
+  pattern: [
+    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
+    '?.Intended Function > 1146.is a specialization of > 730044.Physical Object',
+    '?.Intended Function > 1146.is a specialization of > ?.Supertype Concept',
+  ],
+  fieldSources: [
+    {
+      field: 'New Concept',
+      source: 'context',
+    },
+    {
+      field: 'Supertype Concept',
+      source: 'context',
+    },
+    {
+      field: 'Intended Function',
+      source: 'knowledge-graph',
+      query: '* > 1146 > 730044',
+    },
+  ],
+};
+
+//@BULLSHIT (but slightly less so)
+const specifyDecompositionStructureOfPhysicalObject: Step = {
+  id: 'specify-decomposition-structure-of-physical-object',
+  description:
+    'Specify the decomposition structure of the new concept physical object',
+  pattern: [
+    '?.Part Object > 1190.is a part of > ?.New Concept',
+    '?.New Concept > 1190.is a part of > ?.Whole Object',
+  ],
+  fieldSources: [
+    {
+      field: 'Part Object',
+      source: 'knowledge-graph | workflow',
+      query: '* > 1146 > 730044',
+      workflowId: 'new-physical-object',
+    },
+    {
+      field: 'Whole Object',
+      source: 'knowledge-graph | workflow',
+      query: '* > 1146 > 730044',
+      workflowId: 'new-physical-object',
+    },
+  ],
+};
+
+//@BULLSHIT
+const denotationByGraphicalObject: Step = {
+  id: 'denotation-by-graphical-object',
+  description: 'Denote the new concept by a graphical object',
+  pattern: ['?.New Concept > 1146.is denoted by > ?.Graphical Object'],
+  fieldSources: [
+    {
+      field: 'New Concept',
+      source: 'context',
+    },
+    {
+      field: 'Graphical Object',
+      source: 'free',
+    },
+  ],
+};
+
+//@BULLSHIT
+const denotationByTextObject: Step = {
+  id: 'denotation-by-text-object',
+  description: 'Denote the new concept by a text object',
+  pattern: ['?.New Concept > 1146.is denoted by > ?.Text Object'],
+  fieldSources: [
+    {
+      field: 'New Concept',
+      source: 'context',
+    },
+    {
+      field: 'Text Object',
+      source: 'free',
+    },
+  ],
+};
+
+//@BULLSHIT
+const inclusionOfTextInModel: Step = {
+  id: 'inclusion-of-text-in-model',
+  description: 'Inclusion of text in the model',
+  pattern: [
+    '?.Text Object > 1146.is a specialization of > 730044.Physical Object',
+  ],
+  fieldSources: [
+    {
+      field: 'Text Object',
+      source: 'context',
+    },
+  ],
+};
+
 export const stepDefs = {
-  step1: step1,
-  step3: step3,
-  step4: step4,
-  someOtherWorkflowStep1: someOtherWorkflowStep1,
+  defineSupertypePhysicalObject,
+  defineSynonymsCodesAndAbbreviations,
+  specifyDistignuishingQualitativeAspect,
+  defineQualitativeSubtype,
+  specifyDefiningNatureOfIntrinsicAspect,
+  specifyDefiningValuesOfIntrinsicAspect,
+  defineQuantitativeAspect,
+  specifyIntendedFunction,
+  specifyDecompositionStructureOfPhysicalObject,
+  denotationByGraphicalObject,
+  denotationByTextObject,
+  inclusionOfTextInModel,
 };

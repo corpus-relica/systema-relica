@@ -1,10 +1,22 @@
 export const workflowDefs = {
-  workflowA: {
-    id: 'workflowA',
-    steps: ['step1', 'step3', 'step4'],
+  'new-physical-object': {
+    id: 'new-physical-object',
+    steps: [
+      'defineSupertypePhysicalObject',
+      'defineSynonymsCodesAndAbbreviations',
+      'specifyDistignuishingQualitativeAspect',
+      'defineQualitativeSubtype',
+      'specifyDefiningNatureOfIntrinsicAspect',
+      'specifyDefiningValuesOfIntrinsicAspect',
+      'specifyIntendedFunction',
+      'specifyDecompositionStructureOfPhysicalObject',
+      'denotationByGraphicalObject',
+      'denotationByTextObject',
+      'inclusionOfTextInModel',
+    ],
   },
   workflowB: {
     id: 'workflowB',
-    steps: ['someOtherWorkflowStep1'],
+    steps: ['inclusionOfTextInModel', 'denotationByTextObject'],
   },
 };

@@ -44,8 +44,12 @@ const InProgressStep = (props: any) => {
 
   if (isComplete === true) return <Box>Finished!</Box>;
 
-  const handleWorkflowButtonClick = async (workflowId: string) => {
-    const firstStep = await branchWorkflow(workflowId);
+  const handleWorkflowButtonClick = async (
+    fieldId: string,
+    workflowId: string
+  ) => {
+    console.log("handleWorkflowButtonClick", fieldId, workflowId);
+    const firstStep = await branchWorkflow(fieldId, workflowId);
     const state = await getWorkflowState();
     processState(state);
   };
@@ -109,7 +113,7 @@ const InProgressStep = (props: any) => {
           />
           <Button
             onClick={() => {
-              handleWorkflowButtonClick(fs.workflowId);
+              handleWorkflowButtonClick(fs.field, fs.workflowId);
             }}
           >
             Create New {fs.workflowId}

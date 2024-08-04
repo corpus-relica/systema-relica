@@ -68,12 +68,15 @@ export class ModellingController {
     }
   }
 
-  @Get('/workflow/branch/:workflowId')
-  async branchWorkflow(@Param('workflowId') workflowId: string) {
+  @Get('/workflow/branch/:fieldId/:workflowId')
+  async branchWorkflow(
+    @Param('fieldId') fieldId: string,
+    @Param('workflowId') workflowId: string,
+  ) {
     this.logger.log('~~~~~~~~~~~~BRANCH WORKFLOW~~~~~~~~~~~~');
 
     try {
-      return this.modelling.branchWorkflow(workflowId);
+      return this.modelling.branchWorkflow(fieldId, workflowId);
     } catch (e) {
       this.logger.error('Error branching workflow:', e);
       throw new HttpException(

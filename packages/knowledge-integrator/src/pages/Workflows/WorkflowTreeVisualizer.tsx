@@ -8,6 +8,11 @@ const WorkflowTreeVisualizer = (props: any) => {
   useEffect(() => {
     if (tree.length === 0) return;
 
+    console.log("GOT TREE:", tree);
+
+    // Clear the existing SVG content
+    d3.select(ref2.current).selectAll("*").remove();
+
     const foo = tree.map((t) => {
       return { name: t[0], parent: t[1] };
     });
@@ -20,7 +25,7 @@ const WorkflowTreeVisualizer = (props: any) => {
       .parentId((d: any) => d.parent)(foo);
 
     // Set dimensions
-    const margin = { top: 10, right: 40, bottom: 10, left: 40 };
+    const margin = { top: 10, right: 80, bottom: 10, left: 80 };
     // const margin = { top: 0, right: 0, bottom: 0, left: 0 };
 
     // Compute the layout
@@ -40,17 +45,12 @@ const WorkflowTreeVisualizer = (props: any) => {
       if (d.y < y0) y0 = d.y;
     });
 
-    console.log("--------------------1------------------");
-    console.log(x0, x1, y0, y1);
-
     const width = y1 - y0 + margin.left + margin.right;
     const height = x1 - x0 + margin.top + margin.bottom;
 
     // Calculate offsets to center the tree
     const xOffset = -((x0 + x1) / 2);
     const yOffset = -y0;
-    console.log("--------------------1------------------");
-    console.log(xOffset, yOffset);
 
     // Create SVG
     const svg = d3

@@ -17,6 +17,8 @@ export class ModellingService {
   private stack: WorkflowManager[] = undefined;
   private context: any = {};
   private tree: any[] = [];
+  private managers: { [key: string]: WorkflowManager } = {};
+  private fields: { [key: string]: WorkflowManager } = {};
 
   async onApplicationBootstrap() {
     const state = await this.modelSessionRepository.find({
@@ -54,23 +56,35 @@ export class ModellingService {
 
     const manager = new WorkflowManager(workflow);
 
+    this.managers[manager.id] = manager;
+
     this.stack = [manager];
 
     return manager.start();
   }
 
-  async branchWorkflow(workflowId: string) {
+  async branchWorkflow(fieldId: string, workflowId: string) {
     console.log('BRANCHING WORKFLOW');
-    console.log(workflowId);
-    this.tree.push([workflowId, this.stack[0].id]);
+    console.log(fieldId, workflowId);
 
-    const workflow = this.workflows[workflowId];
+    const currentManager = this.stack[0];
 
-    const manager = new WorkflowManager(workflow);
+    const address =
+      currentManager.id + '.' + currentManager.currentStep.id + '.' + fieldId;
 
-    this.stack.unshift(manager);
-
-    return manager.start();
+    if (this.fields[address]) {
+      const nextManager = this.fields[address];
+      this.stack.unshift(nextManager);
+      return nextManager.start();
+    } else {
+      const workflow = this.workflows[workflowId];
+      const nextManager = new WorkflowManager(workflow);
+      this.managers[nextManager.id] = nextManager;
+      this.fields[address] = nextManager;
+      this.stack.unshift(nextManager);
+      this.tree.push([nextManager.id, currentManager.id]);
+      return nextManager.start();
+    }
   }
 
   incrementWorkflowStep() {
