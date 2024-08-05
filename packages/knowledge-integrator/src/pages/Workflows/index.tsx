@@ -37,6 +37,8 @@ const Workflows = () => {
   const [context, setContext] = useState(null);
   const [tree, setTree] = useState([]);
 
+  const [currentId, setCurrentId] = useState(null);
+
   const [state, setState] = useState({});
 
   useEffect(() => {
@@ -44,6 +46,8 @@ const Workflows = () => {
       const workflows = await getWorkflows();
       setWorkflows(workflows);
       const state = await getWorkflowState();
+      console.log("state");
+      console.log(state);
       processState(state);
     };
     init();
@@ -73,6 +77,7 @@ const Workflows = () => {
     res.stack && processStack(res.stack);
 
     res.isComplete !== undefined && setIsComplete(res.isComplete);
+    res.workflow?.id && setCurrentId(res.workflow.id);
     res.tree && setTree(res.tree);
   };
 
@@ -93,8 +98,6 @@ const Workflows = () => {
     </Box>
   ));
 
-  console.log("WTF WTF WTF WTF WTF WTF WTF WTF WTF");
-  console.log(tree);
   return (
     <Stack
       direction={"row"}
@@ -120,7 +123,7 @@ const Workflows = () => {
               </Box>
               <Box>TreeVisualization</Box>
               <Box>
-                <WorkflowTreeVisualizer tree={tree} />
+                <WorkflowTreeVisualizer tree={tree} currentId={currentId} />
               </Box>
             </Stack>
           </Box>

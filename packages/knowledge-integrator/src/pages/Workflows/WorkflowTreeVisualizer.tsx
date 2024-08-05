@@ -2,7 +2,8 @@ import * as d3 from "d3";
 import { useState, useEffect, useRef } from "react";
 
 const WorkflowTreeVisualizer = (props: any) => {
-  const { tree } = props;
+  const { tree, currentId } = props;
+
   const ref2 = useRef();
 
   useEffect(() => {
@@ -102,7 +103,12 @@ const WorkflowTreeVisualizer = (props: any) => {
     // Add circles to nodes
     node
       .append("circle")
-      .attr("fill", (d: any) => (d.children ? "#555" : "#999"))
+      .attr("fill", (d: any) => {
+        if (d.id === currentId) {
+          return "red";
+        }
+        return d.children ? "#555" : "#999";
+      })
       .attr("r", 5);
 
     // Add labels to nodes

@@ -14,11 +14,13 @@ import WorkflowManager from './workflows/workflowManager';
 export class ModellingService {
   private logger: Logger = new Logger('ModellingService');
   private workflows = {};
-  private stack: WorkflowManager[] = undefined;
-  private context: any = {};
-  private tree: any[] = [];
-  private managers: { [key: string]: WorkflowManager } = {};
-  private fields: { [key: string]: WorkflowManager } = {};
+  // private stack: WorkflowManager[] = undefined;
+  // private context: any = {};
+  // private tree: any[] = [];
+  // private managers: { [key: string]: WorkflowManager } = {};
+  // private fields: { [key: string]: WorkflowManager } = {};
+  private root: WorkflowManager;
+  private current: WorkflowManager;
 
   async onApplicationBootstrap() {
     const state = await this.modelSessionRepository.find({
@@ -34,16 +36,25 @@ export class ModellingService {
     this.workflows = workflowDefs;
   }
 
+  get stack() {
+    const stack = [];
+    let current = this.current;
+    while (current) {
+      stack.unshift(current.id);
+      current = current.parent;
+    }
+    return stack;
+  }
+
   getState() {
-    const manager = this.stack && this.stack[0];
     return {
       environment: [],
-      stack: this.stack?.map((w) => w.id),
-      tree: this.tree,
-      workflow: manager?.state,
+      stack: this.stack,
+      tree: this.root?.tree,
+      workflow: this.current?.state,
       //TODO: this is a hack; figure a better way to do this
-      isComplete: this.stack !== undefined && this.stack.length === 0,
-      context: this.context,
+      isComplete: false,
+      context: {}, //this.context,
     };
   }
 
@@ -53,12 +64,13 @@ export class ModellingService {
 
   async initWorkflow(workflowId: string) {
     const workflow = this.workflows[workflowId];
-
     const manager = new WorkflowManager(workflow);
 
-    this.managers[manager.id] = manager;
+    this.root = manager;
+    this.current = manager;
 
-    this.stack = [manager];
+    // this.managers[manager.id] = manager;
+    // this.stack = [manager];
 
     return manager.start();
   }
@@ -67,51 +79,49 @@ export class ModellingService {
     console.log('BRANCHING WORKFLOW');
     console.log(fieldId, workflowId);
 
-    const currentManager = this.stack[0];
-
-    const address =
-      currentManager.id + '.' + currentManager.currentStep.id + '.' + fieldId;
-
-    if (this.fields[address]) {
-      const nextManager = this.fields[address];
-      this.stack.unshift(nextManager);
-      return nextManager.start();
+    const currentManager = this.current;
+    if (currentManager.children[fieldId]) {
+      this.current = currentManager.children[fieldId];
+      return this.current.start();
     } else {
       const workflow = this.workflows[workflowId];
-      const nextManager = new WorkflowManager(workflow);
-      this.managers[nextManager.id] = nextManager;
-      this.fields[address] = nextManager;
-      this.stack.unshift(nextManager);
-      this.tree.push([nextManager.id, currentManager.id]);
-      return nextManager.start();
+      const manager = new WorkflowManager(workflow);
+      currentManager.children[fieldId] = manager;
+      manager.parent = currentManager;
+      this.current = manager;
+      return this.current.start();
     }
   }
 
   incrementWorkflowStep() {
-    return this.stack[0].next();
+    return this.current.next();
   }
 
   decrementWorkflowStep() {
-    return this.stack[0].prev();
+    return this.current.prev();
   }
 
   validateWorkflow() {
-    this.stack[0].validate();
+    this.current.validate();
   }
 
   finalizeWorkflow() {
     //presumably this is the last/only workflow in the stack
-    this.stack[0].finalize();
-    this.stack.shift();
-    this.context = {};
-    this.tree = [];
+    this.root.finalize();
+
+    // this.stack.shift();
+    // this.context = {};
+    // this.tree = [];
   }
 
   popWorkflow() {
-    this.stack.shift();
+    // this.stack.shift();
+    if (this.current.parent) {
+      this.current = this.current.parent;
+    }
   }
 
   setWorkflowValue(key: string, value: any) {
-    this.context[key] = value;
+    // this.context[key] = value;
   }
 }

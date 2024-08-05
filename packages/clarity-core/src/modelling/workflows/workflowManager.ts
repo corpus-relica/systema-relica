@@ -15,6 +15,9 @@ class WorkflowManager {
   private currStepDef: any = {};
   private status: WorkflowStatus = WorkflowStatus.NOT_STARTED;
 
+  public parent: WorkflowManager | null = null;
+  public children: Record<string, WorkflowManager> = {};
+
   private scope: any = {};
 
   constructor(def: any) {
@@ -49,6 +52,22 @@ class WorkflowManager {
 
   get steps() {
     return this.def.steps;
+  }
+
+  get tree() {
+    // depth-first traversal
+    // tree is array of tuples: [childId, parentId]
+    // root node has parentId = null
+    const tree = [];
+    const stack: WorkflowManager[] = [this];
+    while (stack.length > 0) {
+      const node: WorkflowManager = stack.pop();
+      for (const childId in node.children) {
+        tree.push([node.children[childId].id, node.id]);
+        stack.push(node.children[childId]);
+      }
+    }
+    return tree;
   }
 
   //
