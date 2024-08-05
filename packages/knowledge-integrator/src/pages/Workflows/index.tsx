@@ -28,6 +28,7 @@ import Divider from "@mui/material/Divider";
 
 import WorkflowTreeVisualizer from "./WorkflowTreeVisualizer";
 import WorkflowStackVisualizer from "./WorkflowStackVisualizer";
+import WorkflowFactsVisualizer from "./WorkflowFactsVisualizer";
 import ContextVisualizer from "./ContextVisualizer";
 
 const Workflows = () => {
@@ -38,6 +39,7 @@ const Workflows = () => {
   const [tree, setTree] = useState([]);
 
   const [currentId, setCurrentId] = useState(null);
+  const [facts, setFacts] = useState([]);
 
   const [state, setState] = useState({});
 
@@ -79,6 +81,7 @@ const Workflows = () => {
     res.isComplete !== undefined && setIsComplete(res.isComplete);
     res.workflow?.id && setCurrentId(res.workflow.id);
     res.tree && setTree(res.tree);
+    res.facts && setFacts(res.facts);
   };
 
   const handleWorkflowClick = async (workflowId: any) => {
@@ -108,7 +111,7 @@ const Workflows = () => {
         <Stack divider={<Divider orientation="horizontal" flexItem />}>
           <Box>{workflowsList}</Box>
           <Box>
-            <ContextVisualizer context={context} />
+            <WorkflowFactsVisualizer facts={facts} />
           </Box>
         </Stack>
       </Box>
@@ -118,9 +121,18 @@ const Workflows = () => {
         <>
           <Box>
             <Stack divider={<Divider orientation="horizontal" flexItem />}>
-              <Box>
-                <WorkflowStackVisualizer stack={stack} />
-              </Box>
+              <Stack
+                direction={"row"}
+                spacing={2}
+                divider={<Divider orientation="vertical" flexItem />}
+              >
+                <Box>
+                  <WorkflowStackVisualizer stack={stack} />
+                </Box>
+                <Box>
+                  <ContextVisualizer context={context} />
+                </Box>
+              </Stack>
               <Box>TreeVisualization</Box>
               <Box>
                 <WorkflowTreeVisualizer tree={tree} currentId={currentId} />

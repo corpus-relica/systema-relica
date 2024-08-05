@@ -11,14 +11,14 @@ export enum WorkflowStatus {
 class WorkflowManager {
   private _id: number;
   private _def: any = {};
+  private _context: any = { foo: 'bar' };
+
   private currStepIdx: number = 0;
   private currStepDef: any = {};
   private status: WorkflowStatus = WorkflowStatus.NOT_STARTED;
 
-  public parent: WorkflowManager | null = null;
-  public children: Record<string, WorkflowManager> = {};
-
-  private scope: any = {};
+  private _parent: WorkflowManager | null = null;
+  private _children: Record<string, WorkflowManager> = {};
 
   constructor(def: any) {
     this._id = Math.floor(10000 + Math.random() * 90000);
@@ -68,6 +68,41 @@ class WorkflowManager {
       }
     }
     return tree;
+  }
+
+  get context() {
+    if (this._parent) {
+      return Object.assign({}, this._parent.context, this._context);
+    }
+    return this._context;
+  }
+
+  get parent() {
+    return this._parent;
+  }
+
+  set parent(parent: WorkflowManager) {
+    this._parent = parent;
+  }
+
+  get children() {
+    return this._children;
+  }
+
+  get facts() {
+    // gather facts from all steps, recursing through children
+    const facts: Fact[] = [];
+    const stack: WorkflowManager[] = [this];
+    while (stack.length > 0) {
+      const node: WorkflowManager = stack.pop();
+      for (const stepId of node.steps) {
+        facts.push(stepDefs[stepId].facts);
+      }
+      for (const childId in node.children) {
+        stack.push(node.children[childId]);
+      }
+    }
+    return facts;
   }
 
   //

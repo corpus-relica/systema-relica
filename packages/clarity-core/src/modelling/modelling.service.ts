@@ -14,11 +14,6 @@ import WorkflowManager from './workflows/workflowManager';
 export class ModellingService {
   private logger: Logger = new Logger('ModellingService');
   private workflows = {};
-  // private stack: WorkflowManager[] = undefined;
-  // private context: any = {};
-  // private tree: any[] = [];
-  // private managers: { [key: string]: WorkflowManager } = {};
-  // private fields: { [key: string]: WorkflowManager } = {};
   private root: WorkflowManager;
   private current: WorkflowManager;
 
@@ -54,7 +49,8 @@ export class ModellingService {
       workflow: this.current?.state,
       //TODO: this is a hack; figure a better way to do this
       isComplete: false,
-      context: {}, //this.context,
+      context: this.current?.context,
+      facts: this.root?.facts,
     };
   }
 
@@ -68,9 +64,6 @@ export class ModellingService {
 
     this.root = manager;
     this.current = manager;
-
-    // this.managers[manager.id] = manager;
-    // this.stack = [manager];
 
     return manager.start();
   }
