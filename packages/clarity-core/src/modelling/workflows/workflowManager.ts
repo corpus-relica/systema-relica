@@ -96,7 +96,7 @@ class WorkflowManager {
     while (stack.length > 0) {
       const node: WorkflowManager = stack.pop();
       for (const stepId of node.steps) {
-        facts.push(stepDefs[stepId].facts);
+        facts.push(stepDefs[stepId].pattern);
       }
       for (const childId in node.children) {
         stack.push(node.children[childId]);

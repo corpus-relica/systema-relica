@@ -110,9 +110,6 @@ const Workflows = () => {
       <Box>
         <Stack divider={<Divider orientation="horizontal" flexItem />}>
           <Box>{workflowsList}</Box>
-          <Box>
-            <WorkflowFactsVisualizer facts={facts} />
-          </Box>
         </Stack>
       </Box>
       {isComplete === true ? (
@@ -144,6 +141,10 @@ const Workflows = () => {
           </Box>
         </>
       )}
+
+      <Box>
+        <WorkflowFactsVisualizer facts={facts} />
+      </Box>
     </Stack>
   );
 };

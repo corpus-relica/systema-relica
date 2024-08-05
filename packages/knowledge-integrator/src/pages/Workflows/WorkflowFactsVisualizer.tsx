@@ -2,11 +2,30 @@ import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { ThemeProvider, createTheme } from "@mui/system";
+import { styled } from "@mui/system";
+import Typography from "@mui/material/Typography";
+
+// Import the font file directly
+// const CustomFontUrl = "./fonts/BMSPA___.TTF";
+const CustomFontUrl = "./fonts/TTF/dogicapixel.ttf";
+
+// Create a style tag to define the font
+const FontStyle = styled("style")({
+  "@font-face": {
+    fontFamily: "dogicapixel",
+    src: `url(${CustomFontUrl}) format('truetype')`,
+    // fontWeight: "normal",
+    // fontStyle: "normal",
+  },
+});
 
 const theme = createTheme({
+  typography: {
+    fontFamily: "dogicapixel, Arial, sans-serif",
+  },
   palette: {
     background: {
-      paper: "#fff",
+      paper: "#333",
     },
     text: {
       primary: "#173A5E",
@@ -21,28 +40,39 @@ const theme = createTheme({
   },
 });
 
-const WorkflowFactsVisualizer = (props: any) => {
+const PixelText = styled(Box)({
+  fontFamily: "dogicapixel",
+  fontSize: "8px",
+  // whiteSpace: "pre-wrap",
+  // wordBreak: "break-word",
+});
+
+const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
   const { facts } = props;
-  // const [svgstr, setSvgstr] = useState("");
 
   return (
-    <ThemeProvider theme={theme}>
-      <Stack>
-        <Box>FactsVisualization</Box>
-        {/*<Box
+    <>
+      <FontStyle />
+      <Stack spacing={1}>
+        <Typography variant="h6">FactsVisualization</Typography>
+        <Box
           sx={{
             bgcolor: "background.paper",
             boxShadow: 1,
             borderRadius: 2,
+            overflow: "hidden",
+            padding: 1,
           }}
-          dangerouslySetInnerHTML={{ __html: svgstr }}
-        />*/}
-        {facts &&
-          facts.map((item: any, index: number) => {
-            return <Box key={index}>{item}</Box>;
-          })}
+        >
+          <Box sx={{ maxHeight: "80vh", overflowY: "auto" }}>
+            {facts &&
+              facts.map((item, index) => (
+                <PixelText key={index}>{item}</PixelText>
+              ))}
+          </Box>
+        </Box>
       </Stack>
-    </ThemeProvider>
+    </>
   );
 };
 
