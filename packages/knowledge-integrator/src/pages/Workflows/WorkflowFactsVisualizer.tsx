@@ -4,6 +4,8 @@ import Stack from "@mui/material/Stack";
 import { ThemeProvider, createTheme } from "@mui/system";
 import { styled } from "@mui/system";
 import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Unstable_Grid2";
+import { Fact } from "../../types";
 
 // Import the font file directly
 // const CustomFontUrl = "./fonts/BMSPA___.TTF";
@@ -64,12 +66,34 @@ const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
             padding: 1,
           }}
         >
-          <Box sx={{ maxHeight: "80vh", overflowY: "auto" }}>
+          <Grid container spacing={2}>
             {facts &&
-              facts.map((item, index) => (
-                <PixelText key={index}>{item}</PixelText>
+              facts.map((item: Fact, index) => (
+                <>
+                  <Grid xs={0.5}>
+                    <PixelText key={index}>{item.fact_uid}</PixelText>
+                  </Grid>
+                  <Grid xs={0.5}>
+                    <PixelText key={index}>{item.lh_object_uid}</PixelText>
+                  </Grid>
+                  <Grid xs={3}>
+                    <PixelText key={index}>{item.lh_object_name}</PixelText>
+                  </Grid>
+                  <Grid xs={1}>
+                    <PixelText key={index}>{item.rel_type_uid}</PixelText>
+                  </Grid>
+                  <Grid xs={3}>
+                    <PixelText key={index}>{item.rel_type_name}</PixelText>
+                  </Grid>
+                  <Grid xs={1}>
+                    <PixelText key={index}>{item.rh_object_uid}</PixelText>
+                  </Grid>
+                  <Grid xs={3}>
+                    <PixelText key={index}>{item.rh_object_name}</PixelText>
+                  </Grid>
+                </>
               ))}
-          </Box>
+          </Grid>
         </Box>
       </Stack>
     </>

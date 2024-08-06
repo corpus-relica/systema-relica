@@ -63,6 +63,7 @@ const InProgressStep = (props: any) => {
   });
 
   const inputs = relevantFieldSources.map((fs: any) => {
+    console.log("!!!!!!!!!!!!!!!!!!!!!!!!!1", fs.field, context);
     if (fs.source === "free") {
       console.log("RERENDER THIS, WHY NOT???");
       return (
@@ -76,7 +77,7 @@ const InProgressStep = (props: any) => {
               processState(state);
               console.log(state);
             }}
-            value={(context && context[fs.field]) || ""}
+            value={(context && context[fs.field].value) || ""}
             placeholder={fs.field}
           />
         </Box>
@@ -92,7 +93,7 @@ const InProgressStep = (props: any) => {
               const state = await getWorkflowState();
               processState(state);
             }}
-            value={(context && context[fs.field]) || ""}
+            value={(context && context[fs.field].value) || ""}
             placeholder={fs.field}
           />
         </Box>
@@ -108,7 +109,7 @@ const InProgressStep = (props: any) => {
               const state = await getWorkflowState();
               processState(state);
             }}
-            value={(context && context[fs.field]) || ""}
+            value={(context && context[fs.field].value) || ""}
             placeholder={fs.field}
           />
           <Button

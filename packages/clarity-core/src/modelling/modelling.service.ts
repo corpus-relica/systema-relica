@@ -75,7 +75,7 @@ export class ModellingService {
     const currentManager = this.current;
     if (currentManager.children[fieldId]) {
       this.current = currentManager.children[fieldId];
-      return this.current.start();
+      // return this.current.start();
     } else {
       const workflow = this.workflows[workflowId];
       const manager = new WorkflowManager(workflow);
@@ -116,5 +116,7 @@ export class ModellingService {
 
   setWorkflowValue(key: string, value: any) {
     // this.context[key] = value;
+
+    this.current.setContext(key, value);
   }
 }

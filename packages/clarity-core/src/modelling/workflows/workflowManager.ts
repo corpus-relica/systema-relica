@@ -1,5 +1,6 @@
 import { Fact } from '@relica/types';
 import { stepDefs } from './stepDefs';
+import TempUIDManager from './UIDManager';
 
 export enum WorkflowStatus {
   NOT_STARTED = 'not-started',
@@ -11,7 +12,7 @@ export enum WorkflowStatus {
 class WorkflowManager {
   private _id: number;
   private _def: any = {};
-  private _context: any = { foo: 'bar' };
+  private _context: any = {};
 
   private currStepIdx: number = 0;
   private currStepDef: any = {};
@@ -89,19 +90,77 @@ class WorkflowManager {
     return this._children;
   }
 
+  fuckit(pattern) {
+    const facts = [];
+    pattern.forEach((expression) => {
+      if (expression.startsWith('@')) return;
+
+      const parts = expression
+        .split('>')
+        .map((e: string) => e.trim())
+        .map((e: string) => {
+          const [id, name] = e.split('.');
+          const newName =
+            name.endsWith('*') || name.endsWith('+')
+              ? name.substring(0, name.length - 1)
+              : name;
+          // console.log('NEW NAME -- ', newName);
+          return [id, newName];
+        });
+
+      let lh_object_uid = parts[0][0];
+      let lh_object_name = parts[0][1];
+      let rh_object_uid = parts[2][0];
+      let rh_object_name = parts[2][1];
+
+      if (lh_object_uid === '?') {
+        // console.log('THIS ID', this.id);
+        const lh_object = this.getContext(lh_object_name);
+        // console.log('THIS LH OBJ', lh_object);
+        lh_object_uid = lh_object?.uid;
+        lh_object_name = lh_object?.value;
+      }
+
+      if (rh_object_uid === '?') {
+        // console.log('THIS ID', this.id);
+        const rh_object = this.getContext(rh_object_name);
+        // console.log('THIS RH OBJ', rh_object);
+        rh_object_uid = rh_object?.uid;
+        rh_object_name = rh_object?.value;
+      }
+
+      const fact: Fact = {
+        fact_uid: 1,
+        lh_object_uid,
+        lh_object_name,
+        rel_type_uid: parts[1][0],
+        rel_type_name: parts[1][1],
+        rh_object_uid,
+        rh_object_name,
+      };
+
+      facts.push(fact);
+    });
+
+    console.log('FACTS', facts);
+    return facts;
+  }
+
   get facts() {
     // gather facts from all steps, recursing through children
     const facts: Fact[] = [];
-    const stack: WorkflowManager[] = [this];
-    while (stack.length > 0) {
-      const node: WorkflowManager = stack.pop();
-      for (const stepId of node.steps) {
-        facts.push(stepDefs[stepId].pattern);
-      }
-      for (const childId in node.children) {
-        stack.push(node.children[childId]);
-      }
+    // const stack: WorkflowManager[] = [this];
+    // while (stack.length > 0) {
+    // const node: WorkflowManager = stack.pop();
+    for (const stepId of this.steps) {
+      const f = this.fuckit(stepDefs[stepId].pattern);
+      facts.push(...f);
     }
+    for (const childId in this.children) {
+      facts.push(...this.children[childId].facts);
+    }
+    // }
+
     return facts;
   }
 
@@ -113,11 +172,23 @@ class WorkflowManager {
   }
 
   //
-
   start() {
     this.currStepIdx = 0;
     this.currStepDef = stepDefs[this.def.steps[this.currStepIdx]];
     this.status = WorkflowStatus.IN_PROGRESS;
+
+    Object.entries(stepDefs).forEach(([key, val]) => {
+      val.fieldSources.forEach((field: any) => {
+        // this._context[field.field] = 'foobarbaz';
+
+        console.log('FUCKING INCREMENT TEMP UID......');
+        this._context[field.field] = {
+          uid: TempUIDManager.getNextUID(),
+          value: '',
+        };
+      });
+    });
+
     return this.currStepDef;
   }
 
@@ -151,6 +222,24 @@ class WorkflowManager {
     }
     // Perform final actions (e.g., inserting into knowledge graph)
     this.status = WorkflowStatus.COMPLETED;
+  }
+
+  //
+
+  setContext(key: string, value: any) {
+    console.log('SETTING CONTEXT', this.id, key, value);
+    this._context[key].value = value;
+  }
+
+  getContext(key: string) {
+    console.log('GETTING CONTEXT', this.id, key, this._context);
+    if (this._context[key]) {
+      return this._context[key];
+    }
+    if (this._parent) {
+      return this._parent.getContext(key);
+    }
+    return null;
   }
 }
 

@@ -51,9 +51,11 @@ const PendingStep = (props: any) => {
   });
 
   const inputs = relevantFieldSources.map((fs: any) => {
+    console.log("fieldSources", fs, context, context[fs.field].value);
     return (
       <Box key={fs.field}>
-        {fs.field}:{context && context[fs.field]}
+        {context && context[fs.field].uid}:{fs.field}:
+        {context && context[fs.field].value}
       </Box>
     );
   });

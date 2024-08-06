@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import mermaid from "mermaid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { ThemeProvider, createTheme } from "@mui/system";
@@ -35,7 +34,7 @@ const ContextVisualizer = (props: any) => {
           Object.keys(context).map((key) => {
             return (
               <Box key={key}>
-                {key}: {context[key]}
+                {key}: [{context[key].uid}, {context[key].value}]
               </Box>
             );
           })}
