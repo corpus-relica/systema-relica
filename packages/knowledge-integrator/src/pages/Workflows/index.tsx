@@ -114,7 +114,7 @@ const Workflows = () => {
           </Grid>
         ) : (
           <>
-            <Grid xs={6}>
+            <Grid xs={3}>
               <Stack divider={<Divider orientation="horizontal" flexItem />}>
                 <Stack
                   direction={"row"}
@@ -134,13 +134,13 @@ const Workflows = () => {
                 </Box>
               </Stack>
             </Grid>
-            <Grid xs={6}>
+            <Grid xs={4}>
               <Step state={state} processState={processState} />
             </Grid>
           </>
         )}
 
-        <Grid xs={6}>
+        <Grid xs={5}>
           <WorkflowFactsVisualizer facts={facts} />
         </Grid>
       </Grid>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { ThemeProvider, createTheme } from "@mui/system";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const theme = createTheme({
   palette: {
@@ -23,22 +24,35 @@ const theme = createTheme({
 
 const ContextVisualizer = (props: any) => {
   const { context } = props;
-  console.log("???????????????????????????? context");
-  console.log(context);
 
   return (
     <ThemeProvider theme={theme}>
-      <Stack>
-        <Box>ContextVisualization</Box>
+      <Grid container spacing={0} padding={0}>
+        <Grid xs={12}>
+          <Box>ContextVisualization</Box>
+        </Grid>
+      </Grid>
+      <Grid xs={12} spacing={0} padding={0}>
         {context &&
           Object.keys(context).map((key) => {
             return (
-              <Box key={key}>
-                {key}: [{context[key].uid}, {context[key].value}]
-              </Box>
+              <Grid
+                key={key}
+                style={{ fontSize: "12px" }}
+                container
+                spacing={0}
+                padding={0}
+              >
+                <Grid xs={5} spacing={0}>
+                  {key}:
+                </Grid>
+                <Grid xs={5} spacing={0}>
+                  {context[key].uid}: {context[key].value}
+                </Grid>
+              </Grid>
             );
           })}
-      </Stack>
+      </Grid>
     </ThemeProvider>
   );
 };

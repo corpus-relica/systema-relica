@@ -70,7 +70,11 @@ const WorkflowStackVisualizer = (props: any) => {
         />*/}
         {stack &&
           stack.map((item: any, index: number) => {
-            return <Box key={index}>{item}</Box>;
+            return (
+              <Box key={index} style={{ fontSize: 12 }}>
+                {item}
+              </Box>
+            );
           })}
       </Stack>
     </ThemeProvider>
