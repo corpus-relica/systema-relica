@@ -66,10 +66,18 @@ const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
             padding: 1,
           }}
         >
-          <Grid container spacing={2}>
+          <Grid container spacing={0.15}>
             {facts &&
               facts.map((item: Fact, index) => (
-                <>
+                <Grid
+                  key={index}
+                  container
+                  xs={12}
+                  style={{
+                    backgroundColor: index % 2 === 0 ? "#000C1A" : "#05183C",
+                    color: "#cce",
+                  }}
+                >
                   <Grid xs={0.5}>
                     <PixelText key={index}>{item.fact_uid}</PixelText>
                   </Grid>
@@ -91,7 +99,7 @@ const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
                   <Grid xs={3}>
                     <PixelText key={index}>{item.rh_object_name}</PixelText>
                   </Grid>
-                </>
+                </Grid>
               ))}
           </Grid>
         </Box>

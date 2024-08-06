@@ -25,6 +25,7 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import WorkflowTreeVisualizer from "./WorkflowTreeVisualizer";
 import WorkflowStackVisualizer from "./WorkflowStackVisualizer";
@@ -102,50 +103,48 @@ const Workflows = () => {
   ));
 
   return (
-    <Stack
-      direction={"row"}
-      divider={<Divider orientation="vertical" flexItem />}
-      spacing={2}
-    >
-      <Box>
-        <Stack divider={<Divider orientation="horizontal" flexItem />}>
-          <Box>{workflowsList}</Box>
-        </Stack>
-      </Box>
-      {isComplete === true ? (
-        <Box>Finished!</Box>
-      ) : (
-        <>
-          <Box>
-            <Stack divider={<Divider orientation="horizontal" flexItem />}>
-              <Stack
-                direction={"row"}
-                spacing={2}
-                divider={<Divider orientation="vertical" flexItem />}
-              >
+    <Grid container spacing={2}>
+      <Grid xs={1}>
+        <Box>{workflowsList}</Box>
+      </Grid>
+      <Grid container spacing={2} xs={11}>
+        {isComplete === true ? (
+          <Grid xs={11}>
+            <Box>Finished!</Box>
+          </Grid>
+        ) : (
+          <>
+            <Grid xs={6}>
+              <Stack divider={<Divider orientation="horizontal" flexItem />}>
+                <Stack
+                  direction={"row"}
+                  spacing={2}
+                  divider={<Divider orientation="vertical" flexItem />}
+                >
+                  <Box>
+                    <WorkflowStackVisualizer stack={stack} />
+                  </Box>
+                  <Box>
+                    <ContextVisualizer context={context} />
+                  </Box>
+                </Stack>
+                <Box>TreeVisualization</Box>
                 <Box>
-                  <WorkflowStackVisualizer stack={stack} />
-                </Box>
-                <Box>
-                  <ContextVisualizer context={context} />
+                  <WorkflowTreeVisualizer tree={tree} currentId={currentId} />
                 </Box>
               </Stack>
-              <Box>TreeVisualization</Box>
-              <Box>
-                <WorkflowTreeVisualizer tree={tree} currentId={currentId} />
-              </Box>
-            </Stack>
-          </Box>
-          <Box>
-            <Step state={state} processState={processState} />
-          </Box>
-        </>
-      )}
+            </Grid>
+            <Grid xs={6}>
+              <Step state={state} processState={processState} />
+            </Grid>
+          </>
+        )}
 
-      <Box>
-        <WorkflowFactsVisualizer facts={facts} />
-      </Box>
-    </Stack>
+        <Grid xs={6}>
+          <WorkflowFactsVisualizer facts={facts} />
+        </Grid>
+      </Grid>
+    </Grid>
   );
 };
 

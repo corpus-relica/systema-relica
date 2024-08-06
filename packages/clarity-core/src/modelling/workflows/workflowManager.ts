@@ -142,7 +142,7 @@ class WorkflowManager {
       facts.push(fact);
     });
 
-    console.log('FACTS', facts);
+    // console.log('FACTS', facts);
     return facts;
   }
 
@@ -181,11 +181,15 @@ class WorkflowManager {
       val.fieldSources.forEach((field: any) => {
         // this._context[field.field] = 'foobarbaz';
 
-        console.log('FUCKING INCREMENT TEMP UID......');
-        this._context[field.field] = {
-          uid: TempUIDManager.getNextUID(),
-          value: '',
-        };
+        if (!this._context[field.field]) {
+          const uid = TempUIDManager.getNextUID();
+          console.log('FUCKING INCREMENT TEMP UID......', uid);
+
+          this._context[field.field] = {
+            uid,
+            value: '',
+          };
+        }
       });
     });
 
@@ -227,12 +231,12 @@ class WorkflowManager {
   //
 
   setContext(key: string, value: any) {
-    console.log('SETTING CONTEXT', this.id, key, value);
+    // console.log('SETTING CONTEXT', this.id, key, value);
     this._context[key].value = value;
   }
 
   getContext(key: string) {
-    console.log('GETTING CONTEXT', this.id, key, this._context);
+    // console.log('GETTING CONTEXT', this.id, key, this._context);
     if (this._context[key]) {
       return this._context[key];
     }
