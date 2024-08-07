@@ -8,6 +8,7 @@ export type SourceType =
 
 interface FieldSource {
   field: string;
+  thatField?: string;
   source: SourceType;
   workflowId?: string;
   query?: string;
@@ -87,9 +88,10 @@ const specifyDistignuishingQualitativeAspect: Step = {
     },
     {
       field: 'qualitative subtype',
+      thatField: 'qualitative subtype',
       source: 'knowledge-graph | workflow',
       query: '* > 1726 > 730044',
-      workflowId: 'workflowB',
+      workflowId: 'new-qualitative-subtype',
     },
   ],
 };
@@ -239,12 +241,14 @@ const specifyDecompositionStructureOfPhysicalObject: Step = {
   fieldSources: [
     {
       field: 'Part Object',
+      thatField: 'New Concept',
       source: 'knowledge-graph | workflow',
       query: '* > 1146 > 730044',
       workflowId: 'new-physical-object',
     },
     {
       field: 'Whole Object',
+      thatField: 'New Concept',
       source: 'knowledge-graph | workflow',
       query: '* > 1146 > 730044',
       workflowId: 'new-physical-object',

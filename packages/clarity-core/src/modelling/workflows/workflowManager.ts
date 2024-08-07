@@ -172,23 +172,26 @@ class WorkflowManager {
   }
 
   //
-  start() {
+  start(linkedField: any) {
+    const { fieldDef, entity } = linkedField;
+    const thatFieldId = fieldDef?.thatField;
+
     this.currStepIdx = 0;
     this.currStepDef = stepDefs[this.def.steps[this.currStepIdx]];
     this.status = WorkflowStatus.IN_PROGRESS;
 
     Object.entries(stepDefs).forEach(([key, val]) => {
       val.fieldSources.forEach((field: any) => {
-        // this._context[field.field] = 'foobarbaz';
-
         if (!this._context[field.field]) {
-          const uid = TempUIDManager.getNextUID();
-          console.log('FUCKING INCREMENT TEMP UID......', uid);
-
-          this._context[field.field] = {
-            uid,
-            value: '',
-          };
+          if (field.field === thatFieldId) {
+            this._context[field.field] = entity;
+          } else {
+            const uid = TempUIDManager.getNextUID();
+            this._context[field.field] = {
+              uid,
+              value: '',
+            };
+          }
         }
       });
     });

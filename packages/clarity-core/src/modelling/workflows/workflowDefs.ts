@@ -15,6 +15,10 @@ export const workflowDefs = {
       'inclusionOfTextInModel',
     ],
   },
+  'new-qualitative-subtype': {
+    id: 'new-qualitative-subtype',
+    steps: ['defineQualitativeSubtype'],
+  },
   workflowB: {
     id: 'workflowB',
     steps: ['inclusionOfTextInModel', 'denotationByTextObject'],

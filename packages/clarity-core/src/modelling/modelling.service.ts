@@ -65,24 +65,27 @@ export class ModellingService {
     this.root = manager;
     this.current = manager;
 
-    return manager.start();
+    return manager.start({ fieldId: null, entity: null });
   }
 
   async branchWorkflow(fieldId: string, workflowId: string) {
-    console.log('BRANCHING WORKFLOW');
-    console.log(fieldId, workflowId);
-
     const currentManager = this.current;
     if (currentManager.children[fieldId]) {
       this.current = currentManager.children[fieldId];
-      // return this.current.start();
     } else {
       const workflow = this.workflows[workflowId];
       const manager = new WorkflowManager(workflow);
       currentManager.children[fieldId] = manager;
       manager.parent = currentManager;
       this.current = manager;
-      return this.current.start();
+
+      const fieldDef = currentManager.currentStep.fieldSources.filter(
+        (field) => field.field === fieldId,
+      )[0];
+
+      const entity = currentManager.context[fieldId];
+
+      return this.current.start({ fieldDef, entity });
     }
   }
 
