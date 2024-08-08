@@ -30,7 +30,7 @@ const WorkflowTreeVisualizer = (props: any) => {
     // const margin = { top: 0, right: 0, bottom: 0, left: 0 };
 
     // Compute the layout
-    const nodeSize = [20, 100]; // [height, width] for each node
+    const nodeSize = [40, 100]; // [height, width] for each node
     const treeLayout = d3.tree().nodeSize(nodeSize);
     treeLayout(root);
 
