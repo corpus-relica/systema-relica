@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { ModellingSession } from './modellingSession.entity';
 
 import { workflowDefs } from './workflows/workflowDefs';
-import { stepDefs } from './workflows/stepDefs';
 import WorkflowManager from './workflows/workflowManager';
 
 @Injectable()

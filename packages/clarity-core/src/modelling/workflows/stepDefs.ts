@@ -18,7 +18,6 @@ interface Step {
   id: string;
   description: string;
   pattern: string[]; // GNS strings
-  isRepeatable?: boolean;
   fieldSources: FieldSource[];
 }
 

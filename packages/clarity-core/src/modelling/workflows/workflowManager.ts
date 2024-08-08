@@ -9,6 +9,48 @@ export enum WorkflowStatus {
   COMPLETED = 'completed',
 }
 
+const emptyFactsP = (facts: Fact[]): boolean => {
+  // check if all facts have empty lh_object_uid or rh_object_uid and lh_object_name or rh_object_name
+  // return true if all facts are empty
+  // return false if any fact is not empty
+  return facts.every((fact) => {
+    return (
+      // fact.lh_object_uid === '' &&
+      fact.lh_object_name === '' &&
+      // fact.rh_object_uid === '' &&
+      fact.rh_object_name === ''
+    );
+  });
+};
+
+const completeFactsP = (facts: Fact[]): boolean => {
+  // check if all facts have non-empty lh_object_uid and rh_object_uid and lh_object_name and rh_object_name
+  // return true if all facts are complete
+  // return false if any fact is not complete
+  return facts.every((fact) => {
+    return (
+      // fact.lh_object_uid !== '' &&
+      fact.lh_object_name !== '' &&
+      // fact.rh_object_uid !== '' &&
+      fact.rh_object_name !== ''
+    );
+  });
+};
+
+const someCompleteFactsP = (facts: Fact[]): boolean => {
+  // check if any fact has non-empty lh_object_uid and rh_object_uid and lh_object_name and rh_object_name
+  // return true if any fact is complete
+  // return false if all facts are empty
+  return facts.some((fact) => {
+    return (
+      // fact.lh_object_uid !== '' &&
+      fact.lh_object_name !== '' &&
+      // fact.rh_object_uid !== '' &&
+      fact.rh_object_name !== ''
+    );
+  });
+};
+
 class WorkflowManager {
   private _id: number;
   private _def: any = {};
@@ -40,6 +82,10 @@ class WorkflowManager {
 
   get isFinalStep() {
     return this.currStepIdx === this.def.steps.length - 1;
+  }
+
+  get isRequiredStep() {
+    return this.def.steps[this.currStepIdx].required;
   }
 
   get state() {
@@ -149,12 +195,20 @@ class WorkflowManager {
   get facts() {
     // gather facts from all steps, recursing through children
     const facts: Fact[] = [];
-    // const stack: WorkflowManager[] = [this];
-    // while (stack.length > 0) {
-    // const node: WorkflowManager = stack.pop();
-    for (const stepId of this.steps) {
-      const f = this.fuckit(stepDefs[stepId].pattern);
-      facts.push(...f);
+    for (const step of this.steps) {
+      const f = this.fuckit(stepDefs[step.id].pattern);
+
+      if (step.required) {
+        facts.push(...f);
+      } else {
+        if (someCompleteFactsP(f)) {
+          f.forEach((fact) => {
+            if (completeFactsP([fact])) {
+              facts.push(fact);
+            }
+          });
+        }
+      }
     }
     for (const childId in this.children) {
       facts.push(...this.children[childId].facts);
@@ -177,7 +231,7 @@ class WorkflowManager {
     const thatFieldId = fieldDef?.thatField;
 
     this.currStepIdx = 0;
-    this.currStepDef = stepDefs[this.def.steps[this.currStepIdx]];
+    this.currStepDef = stepDefs[this.def.steps[this.currStepIdx].id];
     this.status = WorkflowStatus.IN_PROGRESS;
 
     Object.entries(stepDefs).forEach(([key, val]) => {
@@ -201,14 +255,14 @@ class WorkflowManager {
 
   next() {
     this.currStepIdx++;
-    this.currStepDef = stepDefs[this.def.steps[this.currStepIdx]];
+    this.currStepDef = stepDefs[this.def.steps[this.currStepIdx].id];
     return this.currStepDef;
   }
 
   prev() {
     if (this.currStepIdx === 0) return this.currStepDef;
     this.currStepIdx--;
-    this.currStepDef = stepDefs[this.def.steps[this.currStepIdx]];
+    this.currStepDef = stepDefs[this.def.steps[this.currStepIdx].id];
     return this.currStepDef;
   }
 
