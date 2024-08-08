@@ -178,4 +178,23 @@ export class ModellingController {
       );
     }
   }
+
+  @Get('workflow/setKGValue/:key/:uid/:value')
+  async setWorkflowKGValue(
+    @Param('key') key: string,
+    @Param('uid') uid: string,
+    @Param('value') value: string,
+  ) {
+    this.logger.log('~~~~~~~~~~~~SET WORKFLOW KG VALUE~~~~~~~~~~~~');
+
+    try {
+      return this.modelling.setWorkflowKGValue(key, +uid, value);
+    } catch (e) {
+      this.logger.error('Error setting workflow value:', e);
+      throw new HttpException(
+        'Error setting workflow value',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

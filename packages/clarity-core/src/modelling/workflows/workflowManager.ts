@@ -198,6 +198,8 @@ class WorkflowManager {
     for (const step of this.steps) {
       const f = this.fuckit(stepDefs[step.id].pattern);
 
+      console.log('FACT', f);
+
       if (step.required) {
         facts.push(...f);
       } else {
@@ -211,11 +213,18 @@ class WorkflowManager {
       }
     }
     for (const childId in this.children) {
-      facts.push(...this.children[childId].facts);
+      facts.push(...(this.children[childId].facts as Fact[]));
     }
     // }
 
-    return facts;
+    //make sure quintuples are unique
+    const foo = {};
+    facts.forEach((f) => {
+      const key = `${f.lh_object_uid}:${f.lh_object_name}:${f.rel_type_uid}:${f.rh_object_uid}:${f.rh_object_name}`;
+      if (!foo[key]) foo[key] = f;
+    });
+
+    return Object.values(foo);
   }
 
   //
@@ -287,9 +296,14 @@ class WorkflowManager {
 
   //
 
-  setContext(key: string, value: any) {
-    // console.log('SETTING CONTEXT', this.id, key, value);
-    this._context[key].value = value;
+  setContext(key: string, value: { uid: number; value: string }) {
+    console.log('SETTING CONTEXT', this.id, key, value);
+    if (value.uid) {
+      this._context[key].uid = value.uid;
+    }
+    if (value.value) {
+      this._context[key].value = value.value;
+    }
   }
 
   getContext(key: string) {

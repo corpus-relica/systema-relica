@@ -119,6 +119,12 @@ export class ModellingService {
   setWorkflowValue(key: string, value: any) {
     // this.context[key] = value;
 
-    this.current.setContext(key, value);
+    this.current.setContext(key, { uid: null, value });
+  }
+
+  setWorkflowKGValue(key: string, uid: number, value: any) {
+    // this.context[key] = value;
+
+    this.current.setContext(key, { uid, value });
   }
 }

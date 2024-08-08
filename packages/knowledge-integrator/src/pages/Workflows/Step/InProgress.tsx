@@ -10,12 +10,35 @@ import {
   finalizeWorkflow,
   popWorkflow,
   setWorkflowValue,
+  setWorkflowKGValue,
 } from "../../../CCClient";
 
-import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
+import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import Modal from "@mui/material/Modal";
+import Stack from "@mui/material/Stack";
+
+import XXX from "@relica/fact-search-ui";
+
+const KGInput = (props: any) => {
+  const { field, value, onChange, handleOpen } = props;
+  return (
+    <Box>
+      {field}(KG):
+      <input
+        type="text"
+        // onChange={onChange}
+        onClick={() => {
+          // console.log("clicked");
+          handleOpen(field, onChange, 730000);
+        }}
+        defaultValue={value}
+        placeholder={field}
+      />
+    </Box>
+  );
+};
 
 const InProgressStep = (props: any) => {
   const { state, processState } = props;
@@ -27,6 +50,10 @@ const InProgressStep = (props: any) => {
   const [pattern, setPattern] = useState([]);
   const [fieldSources, setFieldSources] = useState([]);
   const [workflowStatus, setWorkflowStatus] = useState("none");
+
+  const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState<number>(0);
+  const [openKey, setOpenKey] = useState("");
 
   const processStepState = (res: any) => {
     if (res) {
@@ -62,55 +89,77 @@ const InProgressStep = (props: any) => {
     );
   });
 
+  const handleOpen = (key: string, filter: number = 0) => {
+    filter !== 730000 ? setFilter(filter) : setFilter(0);
+    // setSfv(() => (key, res) => {
+    //   setFieldValue(key, res);
+    // });
+    setOpenKey(key);
+    setOpen(true);
+  };
+
+  const handleClose = async (res: any) => {
+    setFilter(0);
+    if (
+      res &&
+      res.lh_object_uid &&
+      res.lh_object_name &&
+      res.rel_type_uid &&
+      res.rel_type_name &&
+      res.rh_object_uid &&
+      res.rh_object_name
+    ) {
+      if (openKey) {
+        console.log("Setting field value", openKey, res);
+        setWorkflowKGValue(openKey, res.lh_object_uid, res.lh_object_name);
+
+        const state = await getWorkflowState();
+        processState(state);
+      }
+    }
+    // setSfv(() => {});
+    // setOpenKey("");
+    setOpen(false);
+  };
+
   const inputs = relevantFieldSources.map((fs: any) => {
-    console.log("!!!!!!!!!!!!!!!!!!!!!!!!!1", fs.field, context);
     if (fs.source === "free") {
-      console.log("RERENDER THIS, WHY NOT???");
       return (
         <Box key={fs.field}>
-          FREE:{" "}
+          {fs.field}(FREE):
           <input
             type="text"
-            onChange={async (e) => {
+            value={(context && context[fs.field].value) || ""}
+            placeholder={fs.field}
+            onChange={async (e: any) => {
               await setWorkflowValue(fs.field, e.target.value);
               const state = await getWorkflowState();
               processState(state);
-              console.log(state);
             }}
-            value={(context && context[fs.field].value) || ""}
-            placeholder={fs.field}
           />
         </Box>
       );
     } else if (fs.source === "knowledge-graph") {
       return (
         <Box key={fs.field}>
-          KG:{" "}
-          <input
-            type="text"
-            onChange={async (e) => {
-              await setWorkflowValue(fs.field, e.target.value);
-              const state = await getWorkflowState();
-              processState(state);
-            }}
+          <KGInput
+            field={fs.field}
             value={(context && context[fs.field].value) || ""}
-            placeholder={fs.field}
+            handleOpen={() => {
+              handleOpen(fs.field);
+            }}
           />
         </Box>
       );
     } else if (fs.source === "knowledge-graph | workflow") {
       return (
         <Box key={fs.field}>
-          KG:{" "}
-          <input
-            type="text"
-            onChange={async (e) => {
-              await setWorkflowValue(fs.field, e.target.value);
-              const state = await getWorkflowState();
-              processState(state);
-            }}
+          <KGInput
+            field={fs.field}
             value={(context && context[fs.field].value) || ""}
-            placeholder={fs.field}
+            handleOpen={() => {
+              handleOpen(fs.field);
+            }}
           />
           <Button
             onClick={() => {
@@ -125,55 +174,87 @@ const InProgressStep = (props: any) => {
   });
 
   return (
-    <Stack
-      direction={"column"}
-      divider={<Divider orientation="horizontal" flexItem />}
-      spacing={2}
-    >
-      <Box>
-        <h4>{workflowStatus}</h4>
-      </Box>
-      <Box>{id}</Box>
-      <Box>{description}</Box>
-      <Box>
-        {pattern.map((fact) => (
-          <Box key={fact}>{fact}</Box>
-        ))}
-      </Box>
-      <Box>{inputs}</Box>
-      <Box>
-        <Button
-          onClick={async () => {
-            const res = await decrementWorkflowStep(workflow.id);
-            const state = await getWorkflowState();
-            processState(state);
+    <>
+      <Modal
+        open={open}
+        onClose={() => {
+          handleClose(null);
+        }}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box
+          sx={{
+            bgcolor: "gray",
+            border: "2px solid #000",
+            p: 2,
           }}
         >
-          Back
-        </Button>
-        {isFinalStep ? (
+          <XXX
+            filter={{ type: "should't matter", uid: filter }}
+            callback={(res: any) => {
+              handleClose(res);
+            }}
+          />
+          <Button
+            onClick={() => {
+              handleClose(null);
+            }}
+          >
+            Close
+          </Button>
+        </Box>
+      </Modal>
+      <Stack
+        direction={"column"}
+        divider={<Divider orientation="horizontal" flexItem />}
+        spacing={2}
+      >
+        <Box>
+          <h4>{workflowStatus}</h4>
+        </Box>
+        <Box>{id}</Box>
+        <Box>{description}</Box>
+        <Box>
+          {pattern.map((fact) => (
+            <Box key={fact}>{fact}</Box>
+          ))}
+        </Box>
+        <Box>{inputs}</Box>
+        <Box>
           <Button
             onClick={async () => {
-              const res = await validateWorkflow();
+              const res = await decrementWorkflowStep(workflow.id);
               const state = await getWorkflowState();
               processState(state);
             }}
           >
-            End
+            Back
           </Button>
-        ) : (
-          <Button
-            onClick={async () => {
-              const res = await incrementWorkflowStep(workflow.id);
-              const state = await getWorkflowState();
-              processState(state);
-            }}
-          >
-            Next
-          </Button>
-        )}
-      </Box>
-    </Stack>
+          {isFinalStep ? (
+            <Button
+              onClick={async () => {
+                const res = await validateWorkflow();
+                const state = await getWorkflowState();
+                processState(state);
+              }}
+            >
+              End
+            </Button>
+          ) : (
+            <Button
+              onClick={async () => {
+                const res = await incrementWorkflowStep(workflow.id);
+                const state = await getWorkflowState();
+                processState(state);
+              }}
+            >
+              Next
+            </Button>
+          )}
+        </Box>
+      </Stack>
+    </>
   );
 };
 

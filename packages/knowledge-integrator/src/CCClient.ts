@@ -134,3 +134,14 @@ export const setWorkflowValue = async (key: string, value: any) => {
   );
   return response.data;
 };
+
+export const setWorkflowKGValue = async (
+  key: string,
+  uid: number,
+  value: any
+) => {
+  const response = await CCAxiosInstance.get(
+    `/modelling/workflow/setKGValue/${key}/${uid}/${value}`
+  );
+  return response.data;
+};
