@@ -31,7 +31,7 @@ const PendingStep = (props: any) => {
   const processStepState = (res: any) => {
     setId(res.id);
     setDescription(res.description);
-    setPattern(res.pattern);
+    setPattern(res.match); //pattern);
     setFieldSources(res.fieldSources);
   };
 
@@ -44,14 +44,13 @@ const PendingStep = (props: any) => {
 
   const relevantFieldSources = fieldSources.filter((fs: any) => {
     return (
-      fs.source === "free" ||
+      fs.source === "context" ||
       fs.source === "knowledge-graph" ||
       fs.source === "knowledge-graph | workflow"
     );
   });
 
   const inputs = relevantFieldSources.map((fs: any) => {
-    console.log("fieldSources", fs, context, context[fs.field].value);
     return (
       <Box key={fs.field}>
         {context && context[fs.field].uid}:{fs.field}:
@@ -60,7 +59,6 @@ const PendingStep = (props: any) => {
     );
   });
 
-  console.log("pending step -------------->", stack, "-----------------");
   return (
     <Stack
       direction={"column"}

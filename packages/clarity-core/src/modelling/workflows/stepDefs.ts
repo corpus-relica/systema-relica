@@ -1,5 +1,4 @@
 export type SourceType =
-  | 'free'
   | 'context'
   | 'knowledge-graph'
   | 'workflow'
@@ -17,7 +16,8 @@ interface FieldSource {
 interface Step {
   id: string;
   description: string;
-  pattern: string[]; // GNS strings
+  match: string[]; // GNS strings
+  create: string[]; // GNS strings
   fieldSources: FieldSource[];
 }
 
@@ -25,35 +25,12 @@ const defineSupertypePhysicalObject: Step = {
   id: 'define-supertype-physical-object',
   description:
     'Choose or define a new physical objecct as a supertype of the new concept, and define the new concept',
-  pattern: [
+  match: [
+    '?.Supertype Concept > 1146.is a specialization of > [730044.Physical Object]',
+  ],
+  create: [
     '@full_definition:?definition',
     '?.New Concept > 1146.is a specialization of > ?.Supertype Concept+',
-    '?.Supertype Concept > 1146.is a specialization of > 730044.Physical Object',
-  ],
-  fieldSources: [
-    {
-      field: 'definition',
-      source: 'free',
-    },
-    {
-      field: 'Supertype Concept',
-      source: 'knowledge-graph',
-      query: '* > 1146 > 730044',
-    },
-    {
-      field: 'New Concept',
-      source: 'free',
-    },
-  ],
-};
-
-const defineSynonymsCodesAndAbbreviations: Step = {
-  id: 'define-synonyms-codes-and-abbreviations',
-  description: 'define synonyms, codes, and abbreviations for the new concept',
-  pattern: [
-    '?.Syn* > 1981.is a synonym of > ?.New Concept',
-    '?.Abbrv* > 1982.is an abbreviation of > ?.New Concept',
-    '?.Code* > 1983.is a code for > ?.New Concept',
   ],
   fieldSources: [
     {
@@ -61,16 +38,41 @@ const defineSynonymsCodesAndAbbreviations: Step = {
       source: 'context',
     },
     {
+      field: 'Supertype Concept',
+      source: 'knowledge-graph',
+    },
+    {
+      field: 'definition',
+      source: 'context',
+    },
+  ],
+};
+
+const defineSynonymsCodesAndAbbreviations: Step = {
+  id: 'define-synonyms-codes-and-abbreviations',
+  description: 'define synonyms, codes, and abbreviations for the new concept',
+  match: ['?.New Concept > 1146.is a specialization of > [730000.Anything]'],
+  create: [
+    '?.Syn* > 1981.is a synonym of > ?.New Concept',
+    '?.Abbrv* > 1982.is an abbreviation of > ?.New Concept',
+    '?.Code* > 1983.is a code for > ?.New Concept',
+  ],
+  fieldSources: [
+    {
+      field: 'New Concept',
+      source: 'context', // realistically, this would be 'knowledge-graph', but then 'knowledge-graph' would need to account for pending/established facts as well
+    },
+    {
       field: 'Syn',
-      source: 'free',
+      source: 'context',
     },
     {
       field: 'Abbrv',
-      source: 'free',
+      source: 'context',
     },
     {
       field: 'Code',
-      source: 'free',
+      source: 'context',
     },
   ],
 };
@@ -79,47 +81,72 @@ const specifyDistignuishingQualitativeAspect: Step = {
   id: 'specify-distinguishing-qualitative-aspects',
   description:
     'Specify the distinguishing qualitative aspects of the new concept',
-  pattern: ['?.New Concept > 5283.is by definition > ?.qaulitative subtype'],
+  match: [
+    '?.Supertype Concept > 1146.is a specialization of > [730000.anything]',
+    '?.Conceptual Aspect > 1146.is a specialization of > [790229.aspect]',
+    '?.Supertype Concept > 5652.has subtypes that have as distinguishing aspect a > ?.Conceptual Aspect',
+    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
+    '?.qualitative aspect > 1726.is a qualitative subtype of > ?.Conceptual Aspect',
+  ],
+  create: ['?.New Concept > 5283.is by definition > ?.qualitative aspect'],
   fieldSources: [
     {
       field: 'New Concept',
       source: 'context',
     },
     {
-      field: 'qualitative subtype',
-      thatField: 'qualitative subtype',
+      field: 'qualitative aspect',
       source: 'knowledge-graph | workflow',
-      query: '* > 1726 > 730044',
-      workflowId: 'new-qualitative-subtype',
+      thatField: 'qualitative aspect',
+      workflowId: 'new-qualitative-aspect',
     },
   ],
 };
 
-const defineQualitativeSubtype: Step = {
-  id: 'define-qualitative-subtype',
-  description: 'Define the qualitative subtype of the new concept',
-  pattern: [
-    '?.Supertype Concept > 5652.has subtypes that have as discriminating aspect a > ?.Aspect',
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.qualitative subtype > 1726.s a qualitative subtype of > ?.Aspect',
+const defineQualitativeAspect: Step = {
+  id: 'define-qualitative-aspect',
+  description: 'Define the qualitative subtype of the conceptual aspect',
+  match: [
+    '?.Supertype Concept > 1146.is a specialization of > [730000.anything]',
+    '?.Conceptual Aspect > 1146.is a specialization of > [790229.aspect]',
+    '?.Supertype Concept > 5652.has subtypes that have as distinguishing aspect a > ?.Conceptual Aspect',
+  ],
+  create: [
+    '?.qualitative aspect > 1726.is a qualitative subtype of > ?.Conceptual Aspect',
   ],
   fieldSources: [
     {
+      field: 'qualitative aspect',
+      source: 'context',
+    },
+    {
+      field: 'Conceptual Aspect',
+      source: 'knowledge-graph | workflow',
+      thatField: 'Conceptual Aspect',
+      workflowId: 'new-conceptual-aspect',
+    },
+  ],
+};
+
+const defineConceptualAspect: Step = {
+  id: 'define-conceptual-aspect',
+  description: 'Define the conceptual aspect',
+  match: [
+    '?.Supertype Concept > 1146.is a specialization of > [790229.aspect]',
+  ],
+  create: [
+    '?.Conceptual Aspect > 1146.is a specialization of > ?.Supertype Concept',
+  ],
+  fieldSources: [
+    {
+      field: 'Conceptual Aspect',
+      source: 'context',
+    },
+    {
       field: 'Supertype Concept',
-      source: 'context',
-    },
-    {
-      field: 'Aspect',
-      source: 'knowledge-graph',
-      query: '* > 1146 > xxx.aspect...',
-    },
-    {
-      field: 'New Concept',
-      source: 'context',
-    },
-    {
-      field: 'qualitative subtype',
-      source: 'free', // or is it 'knowledge-graph | workflow'?
+      source: 'knowledge-graph | workflow',
+      thatField: 'Conceptual Aspect',
+      workflowId: 'new-conceptual-aspect',
     },
   ],
 };
@@ -128,11 +155,12 @@ const defineQualitativeSubtype: Step = {
 const specifyDefiningNatureOfIntrinsicAspect: Step = {
   id: 'specify-defining-nature-of-intrinsic-aspect',
   description: 'Specify the defining nature of the intrinsic aspect',
-  pattern: [
+  match: [
     '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
     '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
     '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
   ],
+  create: [],
   fieldSources: [
     {
       field: 'New Concept',
@@ -154,7 +182,12 @@ const specifyDefiningNatureOfIntrinsicAspect: Step = {
 const specifyDefiningValuesOfIntrinsicAspect: Step = {
   id: 'specify-defining-values-of-intrinsic-aspect',
   description: 'Specify the defining values of the intrinsic aspect',
-  pattern: [
+  match: [
+    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
+    '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
+  ],
+  create: [
     '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
     '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
     '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
@@ -180,11 +213,12 @@ const specifyDefiningValuesOfIntrinsicAspect: Step = {
 const defineQuantitativeAspect: Step = {
   id: 'define-quantitative-aspect',
   description: 'Define the quantitative aspect of the new concept',
-  pattern: [
+  match: [
     '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
     '?.Quantitative Aspect > 1146.is a specialization of > 730044.Physical Object',
     '?.Quantitative Aspect > 1146.is a specialization of > ?.Supertype Concept',
   ],
+  create: [],
   fieldSources: [
     {
       field: 'New Concept',
@@ -202,14 +236,16 @@ const defineQuantitativeAspect: Step = {
   ],
 };
 
-//@BULLSHIT
 const specifyIntendedFunction: Step = {
   id: 'specify-intended-function',
   description: 'Specify the intended function of the new concept',
-  pattern: [
+  match: [
+    '?.Supertype Concept > 1146.is a specialization of > [730000.anything]',
     '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.Intended Function > 1146.is a specialization of > 730044.Physical Object',
-    '?.Intended Function > 1146.is a specialization of > ?.Supertype Concept',
+    '?.Function > 1146.is a specialization of > [193671.occurrence]',
+  ],
+  create: [
+    '?.New Concept > 5536.has by definition as intended function > ?.Function',
   ],
   fieldSources: [
     {
@@ -217,40 +253,32 @@ const specifyIntendedFunction: Step = {
       source: 'context',
     },
     {
-      field: 'Supertype Concept',
-      source: 'context',
-    },
-    {
-      field: 'Intended Function',
+      field: 'Function',
       source: 'knowledge-graph',
-      query: '* > 1146 > 730044',
     },
   ],
 };
 
-//@BULLSHIT (but slightly less so)
-const specifyDecompositionStructureOfPhysicalObject: Step = {
-  id: 'specify-decomposition-structure-of-physical-object',
+const specifyDefiningComponentsOfPhysicalObject: Step = {
+  id: 'specify-defining-components-of-physical-object',
   description:
-    'Specify the decomposition structure of the new concept physical object',
-  pattern: [
-    '?.Part Object > 1190.is a part of > ?.New Concept',
-    '?.New Concept > 1190.is a part of > ?.Whole Object',
+    'Specify the defining component(s) of the new concept physical object',
+  match: [
+    '?.Supertype Concept > 1146.is a specialization of > [730044.Physical Object]',
+    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
+    '?.Part Object > 1146.is a specialization of > [730044.Physical Object]',
   ],
+  create: ['?.Part Object > 1190.is a part of > ?.New Concept'],
   fieldSources: [
     {
       field: 'Part Object',
-      thatField: 'New Concept',
       source: 'knowledge-graph | workflow',
-      query: '* > 1146 > 730044',
+      thatField: 'New Concept',
       workflowId: 'new-physical-object',
     },
     {
-      field: 'Whole Object',
-      thatField: 'New Concept',
-      source: 'knowledge-graph | workflow',
-      query: '* > 1146 > 730044',
-      workflowId: 'new-physical-object',
+      field: 'New Concept',
+      source: 'context',
     },
   ],
 };
@@ -259,7 +287,8 @@ const specifyDecompositionStructureOfPhysicalObject: Step = {
 const denotationByGraphicalObject: Step = {
   id: 'denotation-by-graphical-object',
   description: 'Denote the new concept by a graphical object',
-  pattern: ['?.New Concept > 1146.is denoted by > ?.Graphical Object'],
+  match: ['?.New Concept > 1146.is a specialization of > ?.Supertype Concept'],
+  create: ['?.New Concept > 1146.is denoted by > ?.Graphical Object'],
   fieldSources: [
     {
       field: 'New Concept',
@@ -267,7 +296,7 @@ const denotationByGraphicalObject: Step = {
     },
     {
       field: 'Graphical Object',
-      source: 'free',
+      source: 'context',
     },
   ],
 };
@@ -276,7 +305,8 @@ const denotationByGraphicalObject: Step = {
 const denotationByTextObject: Step = {
   id: 'denotation-by-text-object',
   description: 'Denote the new concept by a text object',
-  pattern: ['?.New Concept > 1146.is denoted by > ?.Text Object'],
+  match: ['?.New Concept > 1146.is a specialization of > ?.Supertype Concept'],
+  create: ['?.New Concept > 1146.is denoted by > ?.Text Object'],
   fieldSources: [
     {
       field: 'New Concept',
@@ -284,7 +314,7 @@ const denotationByTextObject: Step = {
     },
     {
       field: 'Text Object',
-      source: 'free',
+      source: 'context',
     },
   ],
 };
@@ -293,9 +323,10 @@ const denotationByTextObject: Step = {
 const inclusionOfTextInModel: Step = {
   id: 'inclusion-of-text-in-model',
   description: 'Inclusion of text in the model',
-  pattern: [
+  match: [
     '?.Text Object > 1146.is a specialization of > 730044.Physical Object',
   ],
+  create: [],
   fieldSources: [
     {
       field: 'Text Object',
@@ -308,13 +339,16 @@ export const stepDefs = {
   defineSupertypePhysicalObject,
   defineSynonymsCodesAndAbbreviations,
   specifyDistignuishingQualitativeAspect,
-  defineQualitativeSubtype,
-  specifyDefiningNatureOfIntrinsicAspect,
-  specifyDefiningValuesOfIntrinsicAspect,
-  defineQuantitativeAspect,
+  defineQualitativeAspect,
+  defineConceptualAspect,
+  //
+  // specifyDefiningNatureOfIntrinsicAspect,
+  // specifyDefiningValuesOfIntrinsicAspect,
+  // defineQuantitativeAspect,
+  //
   specifyIntendedFunction,
-  specifyDecompositionStructureOfPhysicalObject,
-  denotationByGraphicalObject,
-  denotationByTextObject,
-  inclusionOfTextInModel,
+  specifyDefiningComponentsOfPhysicalObject,
+  // denotationByGraphicalObject,
+  // denotationByTextObject,
+  // inclusionOfTextInModel,
 };

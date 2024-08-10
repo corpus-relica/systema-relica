@@ -59,7 +59,7 @@ const InProgressStep = (props: any) => {
     if (res) {
       setId(res.id);
       setDescription(res.description);
-      setPattern(res.pattern);
+      setPattern(res.match); //pattern);
       setFieldSources(res.fieldSources);
     }
   };
@@ -83,7 +83,7 @@ const InProgressStep = (props: any) => {
 
   const relevantFieldSources = fieldSources.filter((fs: any) => {
     return (
-      fs.source === "free" ||
+      fs.source === "context" ||
       fs.source === "knowledge-graph" ||
       fs.source === "knowledge-graph | workflow"
     );
@@ -123,7 +123,7 @@ const InProgressStep = (props: any) => {
   };
 
   const inputs = relevantFieldSources.map((fs: any) => {
-    if (fs.source === "free") {
+    if (fs.source === "context") {
       return (
         <Box key={fs.field}>
           {fs.field}(FREE):

@@ -196,7 +196,7 @@ class WorkflowManager {
     // gather facts from all steps, recursing through children
     const facts: Fact[] = [];
     for (const step of this.steps) {
-      const f = this.fuckit(stepDefs[step.id].pattern);
+      const f = this.fuckit(stepDefs[step.id].create);
 
       console.log('FACT', f);
 
