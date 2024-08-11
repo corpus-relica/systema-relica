@@ -8,6 +8,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import SearchMode from "./SearchMode";
 import QueryMode from "./QueryMode";
+import QueryResultsDisplay from "./QueryResultsDisplay";
 
 interface HeaderProps {
   showModeToggle?: boolean;
@@ -23,7 +24,7 @@ const Header: React.FC<HeaderProps> = observer(({ showModeToggle = false }) => {
 
   return (
     <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={2} alignItems="flex-start">
         {rootStore.filter && (
           <Grid item xs={12}>
             <Typography>
@@ -45,7 +46,20 @@ const Header: React.FC<HeaderProps> = observer(({ showModeToggle = false }) => {
             />
           </Grid>
         )}
-        {isQueryMode ? <QueryMode /> : <SearchMode />}
+        {isQueryMode ? (
+          <Grid container item xs={12} spacing={2}>
+            <Grid item xs={6}>
+              <QueryMode />
+            </Grid>
+            <Grid item xs={6} sx={{ height: "160px" }}>
+              {" "}
+              {/* Adjust height to match your query textfield */}
+              <QueryResultsDisplay />
+            </Grid>
+          </Grid>
+        ) : (
+          <SearchMode />
+        )}
       </Grid>
     </Box>
   );

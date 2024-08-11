@@ -168,7 +168,7 @@ function itemString(item) {
   if (item.type === 'regular') {
     return item.name;
   } else if (item.type === 'placeholder') {
-    return '?';
+    return item.name;
   }
 }
 

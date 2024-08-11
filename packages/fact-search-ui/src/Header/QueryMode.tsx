@@ -4,10 +4,13 @@ import { useStores } from "../context/RootStoreContext";
 import { observer } from "mobx-react-lite";
 import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
+import QueryResults from "./QueryResultsDisplay";
 
 const QueryMode: React.FC = observer(() => {
   const rootStore = useStores();
-  const [queryTerm, setQueryTerm] = useState("");
+  const [queryTerm, setQueryTerm] = useState(
+    '@intention="question"\n?12.foobar > 1190 > 1000000235\n?2.bazquux > 1190 > ?12.foobar'
+  );
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQueryTerm(event.target.value);
@@ -21,7 +24,8 @@ const QueryMode: React.FC = observer(() => {
       // Execute query
       console.log("Executing query:", queryTerm);
       const res = await performQuery(queryTerm);
-      rootStore.facts = res;
+      rootStore.facts = res.facts;
+      rootStore.queryResult = res;
     }
   };
 

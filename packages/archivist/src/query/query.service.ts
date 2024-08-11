@@ -5,6 +5,7 @@ import { FactRetrievalService } from 'src/fact-retrieval/fact-retrieval.service'
 import { Fact } from '@relica/types';
 
 type VariableState = {
+  name: string;
   possibleValues: number[];
   isResolved: boolean;
 };
@@ -20,7 +21,7 @@ export class QueryService {
   ) {}
 
   async interpretTable(table: Fact[]): Promise<{ facts: Fact[]; vars: any[] }> {
-    this.logger.verbose('handleGellishQuery', table);
+    // this.logger.verbose('handleGellishQuery', table);
     const variableStates = new Map<number, VariableState>();
     const results: Fact[] = [];
 
@@ -29,7 +30,7 @@ export class QueryService {
       results.push(...rowResults);
 
       if (rowResults.length === 0) {
-        this.logger.warn('Query failed: no results for row', row);
+        // this.logger.warn('Query failed: no results for row', row);
         return { facts: [], vars: [] }; // Query fails if any row produces no results
       }
 
@@ -43,13 +44,15 @@ export class QueryService {
 
     // this.logger.verbose('Query results', results);
 
-    // return this.finalizeResults(results, variableStates);
+    // return
     // return results;
     return {
-      facts: results,
+      facts: await this.finalizeResults(results, variableStates),
       vars: Array.from(variableStates.entries()).map(([key, value]) => ({
-        key,
-        value,
+        uid: key,
+        name: value.name,
+        possibleValues: value.possibleValues,
+        isResolved: value.isResolved,
       })),
     };
   }
@@ -58,7 +61,7 @@ export class QueryService {
     row: Fact,
     variableStates: Map<number, VariableState>,
   ): Promise<Fact[]> {
-    this.logger.verbose('executeQuery', row);
+    // this.logger.verbose('executeQuery', row);
 
     const { lh_object_uid, rel_type_uid, rh_object_uid } = row;
 
@@ -66,12 +69,12 @@ export class QueryService {
     const rel = this.resolveValue(rel_type_uid, variableStates);
     const rh = this.resolveValue(rh_object_uid, variableStates);
 
-    this.logger.verbose('object ids', {
-      lh_object_uid,
-      rel_type_uid,
-      rh_object_uid,
-    });
-    this.logger.verbose('Resolved values', { lh, rel, rh });
+    // this.logger.verbose('object ids', {
+    //   lh_object_uid,
+    //   rel_type_uid,
+    //   rh_object_uid,
+    // });
+    // this.logger.verbose('Resolved values', { lh, rel, rh });
     const result: Fact[] = await this.factRetrieval.confirmFactInRelationCone(
       lh,
       rel,
@@ -118,16 +121,19 @@ export class QueryService {
 
     this.updateVariableState(
       row.lh_object_uid,
+      row.lh_object_name,
       results.map((r) => r.lh_object_uid),
       variableStates,
     );
     this.updateVariableState(
       row.rel_type_uid,
+      row.rel_type_name,
       results.map((r) => r.rel_type_uid),
       variableStates,
     );
     this.updateVariableState(
       row.rh_object_uid,
+      row.rh_object_name,
       results.map((r) => r.rh_object_uid),
       variableStates,
     );
@@ -135,6 +141,7 @@ export class QueryService {
 
   private updateVariableState(
     value: number,
+    name: string,
     newValues: number[],
     variableStates: Map<number, VariableState>,
   ) {
@@ -144,6 +151,7 @@ export class QueryService {
 
     // this.logger.verbose('updateVariableState', { value, newValues });
     const currentState = variableStates.get(value) || {
+      name,
       possibleValues: [],
       isResolved: false,
     };
@@ -152,10 +160,13 @@ export class QueryService {
         ? newValues
         : currentState.possibleValues.filter((v) => newValues.includes(v));
 
-    variableStates.set(value, {
-      possibleValues: [...new Set(updatedValues)], // Ensure uniqueness
-      isResolved: updatedValues.length === 1,
-    });
+    variableStates.set(
+      value,
+      Object.assign({}, currentState, {
+        possibleValues: [...new Set(updatedValues)], // Ensure uniqueness
+        isResolved: updatedValues.length === 1,
+      }),
+    );
     // this.logger.verbose('updateVariableState end', variableStates.get(value));
   }
 
