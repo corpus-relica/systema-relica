@@ -195,6 +195,9 @@ const InProgressStep = (props: any) => {
             callback={(res: any) => {
               handleClose(res);
             }}
+            mode="query"
+            initialQuery={pattern.join("\n")}
+            height="400px"
           />
           <Button
             onClick={() => {

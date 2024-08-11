@@ -17,6 +17,7 @@ interface FactTableProps {
   };
   initialQuery?: string;
   showModeToggle?: boolean;
+  mode?: "search" | "query";
   height?: string | number;
 }
 
@@ -25,10 +26,12 @@ const FactTable: React.FC<FactTableProps> = ({
   filter,
   initialQuery = "",
   showModeToggle = false,
+  mode = "search",
   height = "100%",
 }) => {
   rootStore.filter = filter;
   rootStore.initialQuery = initialQuery;
+  rootStore.mode = mode;
 
   return (
     <RootStoreContext.Provider value={rootStore}>

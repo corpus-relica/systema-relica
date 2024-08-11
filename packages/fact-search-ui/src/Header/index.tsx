@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { useStores } from "../context/RootStoreContext";
 import Box from "@mui/material/Box";
@@ -16,10 +16,22 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = observer(({ showModeToggle = false }) => {
   const rootStore = useStores();
+  const { mode } = rootStore;
   const [isQueryMode, setIsQueryMode] = useState(false);
 
+  useEffect(() => {
+    if (mode === "query") {
+      setIsQueryMode(true);
+    } else {
+      setIsQueryMode(false);
+    }
+  }, [mode]);
+
   const handleModeToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setIsQueryMode(event.target.checked);
+    // setIsQueryMode(event.target.checked);
+    rootStore.mode = event.target.checked ? "query" : "search";
+    rootStore.facts = [];
+    rootStore.queryResult = null;
   };
 
   return (

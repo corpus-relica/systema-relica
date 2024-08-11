@@ -8,8 +8,10 @@ import QueryResults from "./QueryResultsDisplay";
 
 const QueryMode: React.FC = observer(() => {
   const rootStore = useStores();
+  const { initialQuery } = rootStore;
   const [queryTerm, setQueryTerm] = useState(
-    '@intention="question"\n?12.foobar > 1190 > 1000000235\n?2.bazquux > 1190 > ?12.foobar'
+    initialQuery ||
+      '@intention="question"\n?12.foobar > 1190 > 1000000235\n?2.bazquux > 1190 > ?12.foobar'
   );
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {

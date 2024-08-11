@@ -6,6 +6,7 @@ export class RootStore {
   filter: { uid: number; type: string } | undefined;
   initialQuery = "";
   queryResult = { facts: [], vars: [] };
+  mode: "search" | "query" = "search";
   constructor() {
     makeAutoObservable(this);
   }

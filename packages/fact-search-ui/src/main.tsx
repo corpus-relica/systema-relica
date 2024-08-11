@@ -13,6 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         }}
         showModeToggle={true}
         height="100%"
+        mode="query"
       />
     </Box>
   </React.StrictMode>
