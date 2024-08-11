@@ -3,12 +3,9 @@ import { GraphService } from 'src/graph/graph.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { FactRetrievalService } from 'src/fact-retrieval/fact-retrieval.service';
 import { Fact } from '@relica/types';
+import { GellishToCypherConverter } from './GellishToCypherConverter';
 
-type VariableState = {
-  name: string;
-  possibleValues: number[];
-  isResolved: boolean;
-};
+import { Record } from 'neo4j-driver';
 
 @Injectable()
 export class QueryService {
@@ -18,203 +15,138 @@ export class QueryService {
     private readonly graphService: GraphService,
     private readonly factRetrieval: FactRetrievalService,
     private readonly gellishBaseService: GellishBaseService,
+    private readonly gellishToCypherConverter: GellishToCypherConverter,
   ) {}
 
   async interpretTable(table: Fact[]): Promise<{ facts: Fact[]; vars: any[] }> {
-    // this.logger.verbose('handleGellishQuery', table);
-    const variableStates = new Map<number, VariableState>();
-    const results: Fact[] = [];
+    try {
+      const { query, params } =
+        await this.gellishToCypherConverter.processGellishQuery(table);
+      const result = await this.graphService.execQuery(query, params);
 
-    for (const row of table) {
-      const rowResults = await this.executeQuery(row, variableStates);
-      results.push(...rowResults);
+      // this.logger.debug('Cypher query results:', result);
 
-      if (rowResults.length === 0) {
-        // this.logger.warn('Query failed: no results for row', row);
-        return { facts: [], vars: [] }; // Query fails if any row produces no results
-      }
+      const { facts, variables } = this.processCypherResults(result);
+      this.logger.debug('Interpreted facts:', facts);
+      this.logger.debug(
+        'Variables:',
+        Array.from(variables.entries()).map(([key, value]) => ({
+          key,
+          value: Array.from(value),
+        })),
+      );
+      const resolvedVars = this.resolveVariables(variables, table);
 
-      this.updateVariableStates(row, rowResults, variableStates);
-
-      // if (variableStates.size === 0) {
-      //   this.logger.warn('Query failed: no variable states');
-      //   return []; // Query fails if no variable states found
-      // }
-    }
-
-    // this.logger.verbose('Query results', results);
-
-    // return
-    // return results;
-    return {
-      facts: await this.finalizeResults(results, variableStates),
-      vars: Array.from(variableStates.entries()).map(([key, value]) => ({
-        uid: key,
-        name: value.name,
-        possibleValues: value.possibleValues,
-        isResolved: value.isResolved,
-      })),
-    };
-  }
-
-  private async executeQuery(
-    row: Fact,
-    variableStates: Map<number, VariableState>,
-  ): Promise<Fact[]> {
-    // this.logger.verbose('executeQuery', row);
-
-    const { lh_object_uid, rel_type_uid, rh_object_uid } = row;
-
-    const lh = this.resolveValue(lh_object_uid, variableStates);
-    const rel = this.resolveValue(rel_type_uid, variableStates);
-    const rh = this.resolveValue(rh_object_uid, variableStates);
-
-    // this.logger.verbose('object ids', {
-    //   lh_object_uid,
-    //   rel_type_uid,
-    //   rh_object_uid,
-    // });
-    // this.logger.verbose('Resolved values', { lh, rel, rh });
-    const result: Fact[] = await this.factRetrieval.confirmFactInRelationCone(
-      lh,
-      rel,
-      rh,
-    );
-    // this.logger.verbose('result', result);
-
-    if (result.length === 0) {
-      return [{ ...row, intention: 'denial' }];
-    } else {
-      return result.map((r: Fact) => ({ ...r, intention: 'confirmation' }));
+      return {
+        facts,
+        vars: resolvedVars,
+      };
+    } catch (error) {
+      this.logger.error('Error interpreting query table', error);
+      throw error;
     }
   }
 
-  private resolveValue(
-    value: number,
-    variableStates: Map<number, VariableState>,
-  ): number[] | null {
-    if (!this.isTempUID(value)) {
-      return [value];
-    }
+  private processCypherResults(cypherResults: Record[]): {
+    facts: Fact[];
+    variables: Map<string, any>;
+  } {
+    const uniqueFacts = new Map<string, Fact>();
+    const variables = new Map<string, any>();
 
-    const state = variableStates.get(value);
-    // this.logger.verbose('resolveValue -------------------------', state);
-    // this.logger.verbose('variableStates', variableStates.keys());
-
-    if (state?.possibleValues?.length > 0) {
-      return state.possibleValues;
-    }
-
-    if (!state || !state.isResolved || state.possibleValues.length === 0) {
-      return null; // Unresolved variable
-    }
-
-    return null;
-  }
-
-  private updateVariableStates(
-    row: Fact,
-    results: Fact[],
-    variableStates: Map<number, VariableState>,
-  ) {
-    // this.logger.verbose('updateVariableStates', { row, results });
-
-    this.updateVariableState(
-      row.lh_object_uid,
-      row.lh_object_name,
-      results.map((r) => r.lh_object_uid),
-      variableStates,
-    );
-    this.updateVariableState(
-      row.rel_type_uid,
-      row.rel_type_name,
-      results.map((r) => r.rel_type_uid),
-      variableStates,
-    );
-    this.updateVariableState(
-      row.rh_object_uid,
-      row.rh_object_name,
-      results.map((r) => r.rh_object_uid),
-      variableStates,
-    );
-  }
-
-  private updateVariableState(
-    value: number,
-    name: string,
-    newValues: number[],
-    variableStates: Map<number, VariableState>,
-  ) {
-    if (!this.isTempUID(value)) {
-      return;
-    }
-
-    // this.logger.verbose('updateVariableState', { value, newValues });
-    const currentState = variableStates.get(value) || {
-      name,
-      possibleValues: [],
-      isResolved: false,
-    };
-    const updatedValues =
-      currentState.possibleValues.length === 0
-        ? newValues
-        : currentState.possibleValues.filter((v) => newValues.includes(v));
-
-    variableStates.set(
-      value,
-      Object.assign({}, currentState, {
-        possibleValues: [...new Set(updatedValues)], // Ensure uniqueness
-        isResolved: updatedValues.length === 1,
-      }),
-    );
-    // this.logger.verbose('updateVariableState end', variableStates.get(value));
-  }
-
-  private async finalizeResults(
-    results: Fact[],
-    variableStates: Map<number, VariableState>,
-  ): Promise<Fact[]> {
-    //interate through entries of variableStates
-    //use gellishBaseService.getClassificationFact to get the classification fact
-    //append that to results
-    let resPreamble = [];
-    for (const [key, value] of variableStates) {
-      for (const v of value.possibleValues) {
-        const classificationFact = (
-          await this.gellishBaseService.getClassificationFact(v)
-        )[0];
-        if (classificationFact) {
-          resPreamble.push({
-            ...classificationFact,
-            intention: 'confirmation',
-          });
+    cypherResults.forEach((record) => {
+      record.keys.forEach((key: string) => {
+        if (key.startsWith('f')) {
+          const factNode = record.get(key);
+          if (factNode && factNode.properties) {
+            const fact = this.graphService.convertNeo4jInts(factNode)
+              .properties as Fact;
+            const factKey = JSON.stringify(fact);
+            if (!uniqueFacts.has(factKey)) {
+              uniqueFacts.set(factKey, fact);
+            }
+          }
+        } else {
+          const varNode = record.get(key);
+          console.log('varNode', key, varNode);
+          if (varNode) {
+            const s: Set<number> = variables.get(key) || new Set<number>();
+            console.log('varNode.uid', varNode.uid);
+            s.add(varNode.uid);
+            variables.set(key, s);
+          }
         }
-      }
-    }
+      });
+    });
 
-    let res = results.map((fact) => ({
-      ...fact,
-      intention: 'confirmation',
-      //     lh_object_uid: this.finalizeValue(fact.lh_object_uid, variableStates),
-      //     rel_type_uid: this.finalizeValue(fact.rel_type_uid, variableStates),
-      //     rh_object_uid: this.finalizeValue(fact.rh_object_uid, variableStates),
-    }));
-
-    return [...resPreamble, ...res];
+    return {
+      facts: Array.from(uniqueFacts.values()),
+      variables,
+    };
   }
 
-  // private finalizeValue(
-  //   value: number,
-  //   variableStates: Map<number, VariableState>,
-  // ): number | number[] {
-  //   if (!this.isTempUID(value)) {
-  //     return value;
-  //   }
-  //   const state = variableStates.get(value);
-  //   if (!state) {
-  //     return value; // Return original value if no state found (shouldn't happen)
-  //   }
-  //   return state.isResolved ? state.possibleValues[0] : state.possibleValues;
+  private resolveVariables(
+    variables: Map<string, any>,
+    originalQuery: Fact[],
+  ): any[] {
+    const result = {};
+    originalQuery.forEach((queryFact, index) => {
+      return ['lh_object_uid', 'rel_type_uid', 'rh_object_uid'].forEach(
+        (key, position) => {
+          const uid = queryFact[key];
+          if (this.isTempUID(uid)) {
+            const varName = `var_${uid}`;
+            const name =
+              queryFact[
+                ['lh_object_name', 'rel_type_name', 'rh_object_name'][position]
+              ];
+            const matchingVar: Set<number> = variables.get(varName);
+            if (!result[name]) {
+              result[name] = {
+                uid,
+                name,
+                possibleValues: matchingVar ? Array.from(matchingVar) : [],
+                isResolved: !!matchingVar,
+              };
+            }
+            console.log('matchingVar', name, matchingVar);
+          }
+        },
+      );
+    });
+    return Object.values(result);
+  }
+
+  // private extractVariables(cypherResults: any[], originalQuery: Fact[]): any[] {
+  //   const variables: any[] = [];
+  //   originalQuery.forEach((queryFact, index) => {
+  //     [
+  //       { key: 'lh_object_uid', name: 'lh_object' },
+  //       { key: 'rel_type_uid', name: 'rel_type' },
+  //       { key: 'rh_object_uid', name: 'rh_object' },
+  //     ].forEach(({ key, name }) => {
+  //       const uid = queryFact[key];
+  //       if (this.isTempUID(uid)) {
+  //         let matchingResults;
+  //         if (key === 'rel_type_uid') {
+  //           matchingResults = cypherResults
+  //             .map((result) => result[`f${index}`]?.rel_type_uid)
+  //             .filter(Boolean);
+  //         } else {
+  //           matchingResults = cypherResults
+  //             .map((result) => result[`var_${uid}`]?.uid)
+  //             .filter(Boolean);
+  //         }
+  //         variables.push({
+  //           uid,
+  //           name,
+  //           possibleValues: [...new Set(matchingResults)], // Remove duplicates
+  //           isResolved: matchingResults.length === 1,
+  //         });
+  //       }
+  //     });
+  //   });
+  //   return variables;
   // }
 
   private isTempUID(uid: number): boolean {

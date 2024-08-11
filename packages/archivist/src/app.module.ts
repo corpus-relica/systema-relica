@@ -47,6 +47,7 @@ import { AspectService } from './aspect/aspect.service';
 import { LinearizationService } from './linearization/linearization.service';
 import { QueryController } from './query/query.controller';
 import { QueryService } from './query/query.service';
+import { GellishToCypherConverter } from './query/GellishToCypherConverter';
 
 @Module({
   imports: [
@@ -113,6 +114,7 @@ import { QueryService } from './query/query.service';
     AspectService,
     LinearizationService,
     QueryService,
+    GellishToCypherConverter,
   ],
 })
 export class AppModule {}
