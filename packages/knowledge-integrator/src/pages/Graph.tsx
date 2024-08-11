@@ -163,6 +163,7 @@ const Graph = observer(() => {
             bgcolor: "#515151",
             border: "2px solid #000",
             p: 2,
+            height: "90%",
           }}
         >
           <XXX

@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Button, DropButton, List, Text, TextInput } from "grommet";
 import { getCollections, performSearch } from "./axiosInstance";
-import { Search, Next, Previous } from "grommet-icons";
 import { useStores } from "./context/RootStoreContext";
 import { RootStore } from "./stores/RootStore";
 import { observer } from "mobx-react-lite";
-import { KIND, INDIVIDUAL, ALL } from "@relica/constants";
+import { ALL } from "@relica/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "./utils";
+
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import SearchIcon from "@mui/icons-material/Search";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import Typography from "@mui/material/Typography";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import TextField from "@mui/material/TextField";
 
 type CollectionsMenuData = {
   name: string;
@@ -18,8 +27,6 @@ type CollectionsMenuData = {
 const Header = observer(() => {
   const rootStore: RootStore = useStores();
   const pageSize = 50;
-  const [collDropIsOpen, setCollDropIsOpen] = useState(false);
-  const [typeDropIsOpen, setTypeDropIsOpen] = useState(false);
   const [collections, setCollections] = useState<CollectionsMenuData[]>([]);
   const [selectedColl, setSelectedColl] = useState({ name: ALL, uid: "" });
   const [selectedType, setSelectedType] = useState({ name: ALL });
@@ -30,12 +37,11 @@ const Header = observer(() => {
   const queryClient = useQueryClient();
   queryClient.cancelQueries({ queryKey: ["search"], exact: true });
 
-  const { data } = useQuery({
+  const { data: collectionsData } = useQuery({
     queryKey: ["collections"],
     queryFn: getCollections,
   });
 
-  // const count = 0;
   const { data: { facts, count } = { facts: [], count: 0 } } = useQuery({
     queryKey: ["search", debouncedSearchTerm, page],
     queryFn: () => {
@@ -53,161 +59,120 @@ const Header = observer(() => {
   });
 
   useEffect(() => {
-    if (data) {
-      setCollections(data);
+    if (collectionsData) {
+      setCollections(collectionsData);
     }
-  }, [data]);
+  }, [collectionsData]);
 
-  // useEffect(() => {
-  //   if (facts) {
-  rootStore.facts = facts;
-  //     // setTotalFacts(count);
-  //   }
-  // }, [facts]);
+  useEffect(() => {
+    rootStore.facts = facts;
+  }, [facts]);
 
-  const onSearchClick = function () {
-    // performSearch();
-  };
-
-  const onCollectionItemClick = (event: {
-    item?: { uid: string; name: string };
-  }) => {
-    if (event.item) {
-      setSelectedColl(event.item);
-      setCollDropIsOpen(false);
-    }
+  const handleCollectionChange = (event: SelectChangeEvent<string>) => {
+    const selectedUid = event.target.value;
+    const selected = collections.find((c) => c.uid === selectedUid) || {
+      name: ALL,
+      uid: "",
+    };
+    setSelectedColl(selected);
   };
 
-  const onTypeItemClick = (event: { item?: { name: string } }) => {
-    if (event.item) {
-      setSelectedType(event.item);
-      setTypeDropIsOpen(false);
-    }
+  const handleTypeChange = (event: SelectChangeEvent<string>) => {
+    setSelectedType({ name: event.target.value });
   };
 
-  const finalCollections = collections
-    ? collections.concat([{ uid: "", name: ALL }])
-    : [];
-  const onCollDropOpen = () => {
-    setCollDropIsOpen(true);
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
   };
-  const onCollDropClose = () => {
-    setCollDropIsOpen(false);
-  };
-  const onTypeDropOpen = () => {
-    setTypeDropIsOpen(true);
-  };
-  const onTypeDropClose = () => {
-    setTypeDropIsOpen(false);
-  };
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      // performSearch();
+
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      // Trigger search if needed
     }
   };
 
   const incPage = () => {
-    if (page * pageSize <= count) {
+    if (page * pageSize < count) {
       setPage(page + 1);
-      // performSearch();
     }
   };
 
   const decPage = () => {
     if (page > 1) {
       setPage(page - 1);
-      // performSearch();
     }
   };
+
   return (
-    <Box
-      align="center"
-      justify="center"
-      direction="row"
-      fill="horizontal"
-      gap="medium"
-      basis="small"
-    >
-      {rootStore.filter ? (
-        <Box>
-          X {rootStore.filter.type} : {rootStore.filter.uid}{" "}
-        </Box>
-      ) : null}
-      <Box>
-        {count === 0 ? null : (
-          <Box direction="row" align="center">
-            <Box pad="xsmall">
-              <Button
-                icon={<Previous />}
-                onClick={decPage}
-                disabled={page === 1}
-              />
-            </Box>
-            <Box pad="xsmall">
-              <Text>
-                {page * pageSize - (pageSize - 1)}
-                {" - "}
-                {Math.min(page * pageSize, count)} of {count}
-              </Text>
-            </Box>
-            <Box pad="xsmall">
-              <Button
-                icon={<Next />}
-                onClick={incPage}
-                disabled={page * pageSize >= count}
-              />
-            </Box>
-          </Box>
+    <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+      <Grid container spacing={2} alignItems="center">
+        {rootStore.filter && (
+          <Grid item xs={12}>
+            <Typography>
+              Filter: {rootStore.filter.type} : {rootStore.filter.uid}
+            </Typography>
+          </Grid>
         )}
-      </Box>
-      <Box pad="large">
-        <TextInput
-          value={searchTerm}
-          onChange={handleChange}
-          onKeyPress={handleKeyPress}
-        />
-      </Box>
-      <Box direction="column">
-        <Text size="small">Entity Type</Text>
-        <DropButton
-          label={selectedType ? selectedType.name : "select kind or individual"}
-          open={typeDropIsOpen}
-          onOpen={onTypeDropOpen}
-          onClose={onTypeDropClose}
-          dropContent={
-            <Box>
-              <List
-                data={[{ name: ALL }, { name: KIND }, { name: INDIVIDUAL }]}
-                onClickItem={onTypeItemClick}
-              ></List>
+        <Grid item xs={12} sm={3}>
+          {count > 0 && (
+            <Box display="flex" alignItems="center">
+              <IconButton onClick={decPage} disabled={page === 1}>
+                <ArrowBackIcon />
+              </IconButton>
+              <Typography variant="body2" sx={{ mx: 1 }}>
+                {page * pageSize - (pageSize - 1)} -{" "}
+                {Math.min(page * pageSize, count)} of {count}
+              </Typography>
+              <IconButton onClick={incPage} disabled={page * pageSize >= count}>
+                <ArrowForwardIcon />
+              </IconButton>
             </Box>
-          }
-        />
-      </Box>
-      <Box direction="column">
-        <Text size="small">Collection of Facts</Text>
-        <DropButton
-          label={selectedColl ? selectedColl.name : "select collection"}
-          open={collDropIsOpen}
-          onOpen={onCollDropOpen}
-          onClose={onCollDropClose}
-          dropContent={
-            <Box>
-              <List
-                data={finalCollections}
-                primaryKey="uid"
-                secondaryKey="name"
-                onClickItem={onCollectionItemClick}
-              ></List>
-            </Box>
-          }
-          dropProps={{ align: { top: "bottom" } }}
-        />
-      </Box>
-      <Button label="" icon={<Search />} onClick={onSearchClick} />
+          )}
+        </Grid>
+        <Grid item xs={12} sm={3}>
+          <TextField
+            fullWidth
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onKeyPress={handleKeyPress}
+            placeholder="Search..."
+            InputProps={{
+              endAdornment: (
+                <IconButton>
+                  <SearchIcon />
+                </IconButton>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={3}>
+          <Typography variant="caption">Entity Type</Typography>
+          <Select
+            fullWidth
+            value={selectedType.name}
+            onChange={handleTypeChange}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="kind">Kind</MenuItem>
+            <MenuItem value="individual">Individual</MenuItem>
+          </Select>
+        </Grid>
+        <Grid item xs={12} sm={3}>
+          <Typography variant="caption">Collection of Facts</Typography>
+          <Select
+            fullWidth
+            value={selectedColl.uid}
+            onChange={handleCollectionChange}
+          >
+            <MenuItem value="">All</MenuItem>
+            {collections.map((item) => (
+              <MenuItem key={item.uid} value={item.uid}>
+                {item.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </Grid>
+      </Grid>
     </Box>
   );
 });

@@ -1,15 +1,19 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-//@ts-ignore
+import FactTable from "./App.tsx";
 import { Fact } from "@relica/types";
+import Box from "@mui/material/Box";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App
-      callback={(f: Fact) => {
-        console.log("callback", f);
-      }}
-    />
+    <Box sx={{ height: "100vh", width: "100vw" }}>
+      <FactTable
+        callback={(f: Fact) => {
+          console.log("callback", f);
+        }}
+        showModeToggle={true}
+        height="100%"
+      />
+    </Box>
   </React.StrictMode>
 );
