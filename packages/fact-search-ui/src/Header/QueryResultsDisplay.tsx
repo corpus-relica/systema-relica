@@ -43,40 +43,31 @@ const QueryResultsDisplay: React.FC = observer(() => {
 
   return (
     <Box sx={{ height: "100%", overflow: "auto", position: "relative" }}>
-      <Typography
-        variant="h6"
-        sx={{
-          position: "sticky",
-          top: 0,
-          bgcolor: "background.paper",
-          zIndex: 2,
-          py: 1,
-        }}
-      >
-        Query Results
-      </Typography>
       {queryResults.vars.map((variable) => (
-        <Box key={variable.uid} sx={{ mb: 2 }}>
+        <Box key={variable.uid} sx={{ mb: 1 }}>
           <Typography
-            variant="subtitle1"
+            variant="subtitle2"
             sx={{
               position: "sticky",
-              top: "40px", // Adjust based on the height of the "Query Results" header
+              top: 0,
               bgcolor: "background.paper",
               zIndex: 1,
-              py: 1,
+              py: 0.5,
+              fontWeight: "bold",
             }}
           >
             {variable.name} (UID: {variable.uid})
           </Typography>
-          <List dense>
+          <List dense disablePadding>
             {variable.possibleValues.map((value, index) => (
               <React.Fragment key={value}>
                 {index > 0 && <Divider />}
-                <ListItem>
+                <ListItem sx={{ py: 0.25 }}>
                   <ListItemText
                     primary={getResolvedName(value)}
                     secondary={`UID: ${value}`}
+                    primaryTypographyProps={{ variant: "body2" }}
+                    secondaryTypographyProps={{ variant: "caption" }}
                   />
                 </ListItem>
               </React.Fragment>
