@@ -19,7 +19,7 @@ export class QueryService {
     private readonly gellishBaseService: GellishBaseService,
   ) {}
 
-  async interpretTable(table: Fact[]): Promise<Fact[]> {
+  async interpretTable(table: Fact[]): Promise<{ facts: Fact[]; vars: any[] }> {
     this.logger.verbose('handleGellishQuery', table);
     const variableStates = new Map<number, VariableState>();
     const results: Fact[] = [];
@@ -30,16 +30,28 @@ export class QueryService {
 
       if (rowResults.length === 0) {
         this.logger.warn('Query failed: no results for row', row);
-        return []; // Query fails if any row produces no results
+        return { facts: [], vars: [] }; // Query fails if any row produces no results
       }
 
       this.updateVariableStates(row, rowResults, variableStates);
+
+      // if (variableStates.size === 0) {
+      //   this.logger.warn('Query failed: no variable states');
+      //   return []; // Query fails if no variable states found
+      // }
     }
 
     // this.logger.verbose('Query results', results);
 
-    return this.finalizeResults(results, variableStates);
+    // return this.finalizeResults(results, variableStates);
     // return results;
+    return {
+      facts: results,
+      vars: Array.from(variableStates.entries()).map(([key, value]) => ({
+        key,
+        value,
+      })),
+    };
   }
 
   private async executeQuery(
@@ -65,7 +77,7 @@ export class QueryService {
       rel,
       rh,
     );
-    this.logger.verbose('result', result);
+    // this.logger.verbose('result', result);
 
     if (result.length === 0) {
       return [{ ...row, intention: 'denial' }];

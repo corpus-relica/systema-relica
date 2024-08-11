@@ -10,7 +10,7 @@ import { QueryStringDto } from './queryString.dto';
 import { GellishParser } from './GellishParser2';
 
 @ApiTags('Query')
-@Controller('qeury')
+@Controller('query')
 export class QueryController {
   private readonly logger = new Logger(QueryController.name);
   private readonly parser = new GellishParser();
@@ -52,5 +52,6 @@ export class QueryController {
 
     const result = await this.queryService.interpretTable(queryTable);
     return result;
+    // return queryTable;
   }
 }

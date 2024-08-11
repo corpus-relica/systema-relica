@@ -1,19 +1,27 @@
 import React, { useState } from "react";
+import { performQuery } from "../axiosInstance";
+import { useStores } from "../context/RootStoreContext";
 import { observer } from "mobx-react-lite";
 import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
 
 const QueryMode: React.FC = observer(() => {
+  const rootStore = useStores();
   const [queryTerm, setQueryTerm] = useState("");
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQueryTerm(event.target.value);
   };
 
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = async (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       // Execute query
+      console.log("Executing query:", queryTerm);
+      const res = await performQuery(queryTerm);
+      rootStore.facts = res;
     }
   };
 
@@ -25,7 +33,7 @@ const QueryMode: React.FC = observer(() => {
         rows={4}
         value={queryTerm}
         onChange={handleQueryChange}
-        onKeyPress={handleKeyPress}
+        onKeyDown={handleKeyDown}
         placeholder="Enter your query here..."
       />
     </Grid>

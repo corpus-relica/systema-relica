@@ -15,13 +15,13 @@ Gellish {
 
   MetadataLine = "@" key "=" value
 
-  Statement = Query? Entity ">" Entity ">" Entity
+  Statement = (Entity | EntityCone) ">" (Entity | EntityCone) ">" (Entity | EntityCone)
 
-  Query = "?"
+  EntityCone = "["Entity"]"
 
   Entity = PlaceholderEntity | RegularEntity
 
-  PlaceholderEntity = number "." "?"
+  PlaceholderEntity = "?" number? ("." (identifier | stringLiteral))? Role?
 
   RegularEntity = number ("." (identifier | stringLiteral))? Role?
 
@@ -30,7 +30,7 @@ Gellish {
   key = identifier
   value = stringLiteral
   number = digit+
-  identifier = letter (alnum | "_" | space)*
+  identifier = alnum (alnum | "_" | space)*
   stringLiteral = "\"" (~"\"" any)* "\""
 
   // Lexical rules
@@ -56,29 +56,34 @@ s.addOperation('interpret', {
     };
   },
 
-  Statement(query, left, _gt1, relation, _gt2, right) {
-    console.log('STATEMENT:', query.interpret()[0]);
+  Statement(left, _gt1, relation, _gt2, right) {
+    // console.log('STATEMENT:', query.interpret()[0]);
     return {
       type: 'statement',
-      isQuery: !!query.interpret()[0],
+      // isQuery: !!query.interpret()[0],
       left: left.interpret(),
       relation: relation.interpret(),
       right: right.interpret(),
     };
   },
 
-  Query(_) {
-    return true;
-  },
+  // Query(_) {
+  //   return true;
+  // },
 
   Entity(e) {
     return e.interpret();
   },
 
-  PlaceholderEntity(num, _dot, _qmark) {
+  PlaceholderEntity(_qmark, optNum, _dot, optName, optRole) {
+    console.log('PlaceholderEntityNum:', optNum.sourceString);
+    console.log('PlaceholderEntityName:', optName.sourceString);
+    console.log('someshit');
+
     return {
       type: 'placeholder',
-      number: parseInt(num.sourceString, 10),
+      number: !!optNum ? parseInt(optNum.sourceString, 10) : null,
+      name: optName.interpret()[0].trim(),
     };
   },
 
@@ -213,7 +218,7 @@ export class GellishParser {
     };
 
     result.forEach((item) => {
-      console.log('Item:', item);
+      // console.log('Item:', item);
       if (item.type === 'statement') {
         fact['lh_object_uid'] = itemUID(item.left);
         fact['lh_object_name'] = itemString(item.left);

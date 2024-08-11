@@ -391,8 +391,8 @@ RETURN r
 
     query += ` RETURN r`;
 
-    this.logger.verbose('Query:', query);
-    this.logger.verbose('Params:', params);
+    // this.logger.verbose('Query:', query);
+    // this.logger.verbose('Params:', params);
 
     try {
       const results = await this.graphService.execQuery(query, params);

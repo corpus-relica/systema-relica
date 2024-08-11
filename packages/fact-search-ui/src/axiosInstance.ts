@@ -20,14 +20,14 @@ const axiosInstance = axios.create({
 
 console.log(
   "!!!!!!!!!!!! -- does this update",
-  import.meta.env.VITE_RELICA_DB_API_URL,
+  import.meta.env.VITE_RELICA_DB_API_URL
 );
 
 export default axiosInstance;
 
 export const uidSearch = async (
   searchTerm: string,
-  collectionUID: string = "",
+  collectionUID: string = ""
 ) => {
   try {
     const response = await axiosInstance.get(UID_SEARCH_ENDPOINT, {
@@ -65,7 +65,7 @@ export const performSearch = async (
   page: number,
   pageSize: number,
   // config: any
-  filter: { type: string; uid: number } | undefined,
+  filter: { type: string; uid: number } | undefined
 ) => {
   const searchType: string = ""; //KIND;
   const selectedCollName = ALL;
@@ -118,6 +118,22 @@ export const performSearch = async (
       facts: [],
       count: 0,
     };
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+};
+
+export const performQuery = async (query: string) => {
+  try {
+    // const response = await axiosInstance.get("/query/queryString", {
+    //   params: { queryString: query },
+    // });
+    // POST
+    const response = await axiosInstance.post("/query/queryString", {
+      queryString: query,
+    });
+    return response.data;
   } catch (error) {
     console.error("Error:", error);
     throw error;
