@@ -163,7 +163,6 @@ const Graph = observer(() => {
             bgcolor: "#515151",
             border: "2px solid #000",
             p: 2,
-            height: "90%",
           }}
         >
           <XXX
@@ -171,6 +170,7 @@ const Graph = observer(() => {
             callback={(res: any) => {
               handleSearchUIClose(res);
             }}
+            height="90vh"
           />
           <Button
             onClick={() => {

@@ -25,7 +25,7 @@ const FactTable: React.FC<FactTableProps> = ({
   filter,
   initialQuery = "",
   showModeToggle = false,
-  height = "100%", // Default to 100% height, but allow it to be overridden
+  height = "100%",
 }) => {
   rootStore.filter = filter;
   rootStore.initialQuery = initialQuery;
@@ -42,7 +42,7 @@ const FactTable: React.FC<FactTableProps> = ({
             overflow: "hidden",
           }}
         >
-          <Header />
+          <Header showModeToggle={showModeToggle} />
           <Box sx={{ flexGrow: 1, overflow: "auto", minHeight: 0 }}>
             <Body callback={callback} />
           </Box>
