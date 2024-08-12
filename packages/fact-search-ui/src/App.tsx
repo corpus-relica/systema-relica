@@ -19,6 +19,8 @@ interface FactTableProps {
   showModeToggle?: boolean;
   mode?: "search" | "query";
   height?: string | number;
+  autoload?: boolean;
+  readonly?: boolean;
 }
 
 const FactTable: React.FC<FactTableProps> = ({
@@ -28,6 +30,8 @@ const FactTable: React.FC<FactTableProps> = ({
   showModeToggle = false,
   mode = "search",
   height = "100%",
+  autoload = false,
+  readonly = false,
 }) => {
   rootStore.filter = filter;
   rootStore.initialQuery = initialQuery;
@@ -45,7 +49,11 @@ const FactTable: React.FC<FactTableProps> = ({
             overflow: "hidden",
           }}
         >
-          <Header showModeToggle={showModeToggle} />
+          <Header
+            showModeToggle={showModeToggle}
+            readonly={readonly}
+            autoload={autoload}
+          />
           <Box sx={{ flexGrow: 1, overflow: "auto", minHeight: 0 }}>
             <Body callback={callback} />
           </Box>

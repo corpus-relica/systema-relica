@@ -12,6 +12,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           console.log("callback", f);
         }}
         showModeToggle={true}
+        readonly={true}
+        autoload={true}
         height="100%"
         mode="query"
       />
