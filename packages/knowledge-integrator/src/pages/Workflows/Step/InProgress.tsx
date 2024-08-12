@@ -21,6 +21,11 @@ import Stack from "@mui/material/Stack";
 
 import XXX from "@relica/fact-search-ui";
 
+interface ContextItem {
+  uid: number;
+  value: string;
+}
+
 const KGInput = (props: any) => {
   const { field, value, onChange, handleOpen } = props;
   return (
@@ -173,6 +178,29 @@ const InProgressStep = (props: any) => {
     }
   });
 
+  const resolvePatternVars = (pattern: string[]) => {
+    return pattern.map((fact) => {
+      console.log("fact", fact);
+      console.log("context", context);
+      return fact.replace(/\?(\d+)\.([^>]+?)(?:\s*>|$)/g, (match, p1, p2) => {
+        const key = p2.trim();
+        const contextItem = context[key];
+        console.log("contextItem ", contextItem);
+        console.log("match", match);
+        console.log("p1", p1);
+        console.log("p2", p2);
+        console.log("context", context);
+        console.log("key", key);
+        if (contextItem && contextItem.uid && contextItem.value) {
+          return `${contextItem.uid}.${contextItem.value}${
+            match.endsWith(">") ? " >" : ""
+          }`;
+        }
+        return match;
+      });
+    });
+  };
+
   return (
     <>
       <Modal
@@ -191,12 +219,14 @@ const InProgressStep = (props: any) => {
           }}
         >
           <XXX
-            filter={{ type: "should't matter", uid: filter }}
+            filter={{ type: "should't matter, sucker", uid: filter }}
             callback={(res: any) => {
               handleClose(res);
             }}
             mode="query"
-            initialQuery={pattern.join("\n")}
+            readonly={true}
+            autoload={true}
+            initialQuery={resolvePatternVars(pattern).join("\n")}
             height="400px"
           />
           <Button

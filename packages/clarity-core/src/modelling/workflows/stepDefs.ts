@@ -26,11 +26,11 @@ const defineSupertypePhysicalObject: Step = {
   description:
     'Choose or define a new physical objecct as a supertype of the new concept, and define the new concept',
   match: [
-    '?.Supertype Concept > 1146.is a specialization of > [730044.Physical Object]',
+    '?1.Supertype Concept > 1146.is a specialization of > 730044.Physical Object',
   ],
   create: [
     '@full_definition:?definition',
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept+',
+    '?2.New Concept > 1146.is a specialization of > ?1.Supertype Concept',
   ],
   fieldSources: [
     {
@@ -51,11 +51,11 @@ const defineSupertypePhysicalObject: Step = {
 const defineSynonymsCodesAndAbbreviations: Step = {
   id: 'define-synonyms-codes-and-abbreviations',
   description: 'define synonyms, codes, and abbreviations for the new concept',
-  match: ['?.New Concept > 1146.is a specialization of > [730000.Anything]'],
+  match: ['?1.New Concept > 1146.is a specialization of > 730000.Anything'],
   create: [
-    '?.Syn* > 1981.is a synonym of > ?.New Concept',
-    '?.Abbrv* > 1982.is an abbreviation of > ?.New Concept',
-    '?.Code* > 1983.is a code for > ?.New Concept',
+    '?2.Syn > 1981.is a synonym of > ?1.New Concept',
+    '?3.Abbrv > 1982.is an abbreviation of > ?1.New Concept',
+    '?4.Code > 1983.is a code for > ?1.New Concept',
   ],
   fieldSources: [
     {
@@ -82,13 +82,13 @@ const specifyDistignuishingQualitativeAspect: Step = {
   description:
     'Specify the distinguishing qualitative aspects of the new concept',
   match: [
-    '?.Supertype Concept > 1146.is a specialization of > [730000.anything]',
-    '?.Conceptual Aspect > 1146.is a specialization of > [790229.aspect]',
-    '?.Supertype Concept > 5652.has subtypes that have as distinguishing aspect a > ?.Conceptual Aspect',
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.qualitative aspect > 1726.is a qualitative subtype of > ?.Conceptual Aspect',
+    '?1.Supertype Concept > 1146.is a specialization of > 730000.anything',
+    '?2.Conceptual Aspect > 1146.is a specialization of > 790229.aspect',
+    '?1.Supertype Concept > 5652.has subtypes that have as distinguishing aspect a > ?2.Conceptual Aspect',
+    '?3.New Concept > 1146.is a specialization of > ?1.Supertype Concept',
+    '?4.qualitative aspect > 1726.is a qualitative subtype of > ?2.Conceptual Aspect',
   ],
-  create: ['?.New Concept > 5283.is by definition > ?.qualitative aspect'],
+  create: ['?3.New Concept > 5283.is by definition > ?4.qualitative aspect'],
   fieldSources: [
     {
       field: 'New Concept',
@@ -107,12 +107,12 @@ const defineQualitativeAspect: Step = {
   id: 'define-qualitative-aspect',
   description: 'Define the qualitative subtype of the conceptual aspect',
   match: [
-    '?.Supertype Concept > 1146.is a specialization of > [730000.anything]',
-    '?.Conceptual Aspect > 1146.is a specialization of > [790229.aspect]',
-    '?.Supertype Concept > 5652.has subtypes that have as distinguishing aspect a > ?.Conceptual Aspect',
+    '?1.Supertype Concept > 1146.is a specialization of > 730000.anything',
+    '?2.Conceptual Aspect > 1146.is a specialization of > 790229.aspect',
+    '?1.Supertype Concept > 5652.has subtypes that have as distinguishing aspect a > ?2.Conceptual Aspect',
   ],
   create: [
-    '?.qualitative aspect > 1726.is a qualitative subtype of > ?.Conceptual Aspect',
+    '?3.qualitative aspect > 1726.is a qualitative subtype of > ?2.Conceptual Aspect',
   ],
   fieldSources: [
     {
@@ -131,11 +131,9 @@ const defineQualitativeAspect: Step = {
 const defineConceptualAspect: Step = {
   id: 'define-conceptual-aspect',
   description: 'Define the conceptual aspect',
-  match: [
-    '?.Supertype Concept > 1146.is a specialization of > [790229.aspect]',
-  ],
+  match: ['?1.Supertype Concept > 1146.is a specialization of > 790229.aspect'],
   create: [
-    '?.Conceptual Aspect > 1146.is a specialization of > ?.Supertype Concept',
+    '?2.Conceptual Aspect > 1146.is a specialization of > ?1.Supertype Concept',
   ],
   fieldSources: [
     {
@@ -156,9 +154,9 @@ const specifyDefiningNatureOfIntrinsicAspect: Step = {
   id: 'specify-defining-nature-of-intrinsic-aspect',
   description: 'Specify the defining nature of the intrinsic aspect',
   match: [
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
-    '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
+    '?1.New Concept > 1146.is a specialization of > ?2.Supertype Concept',
+    '?3.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?3.Intrinsic Aspect > 1146.is a specialization of > ?4.Supertype Concept',
   ],
   create: [],
   fieldSources: [
@@ -183,14 +181,14 @@ const specifyDefiningValuesOfIntrinsicAspect: Step = {
   id: 'specify-defining-values-of-intrinsic-aspect',
   description: 'Specify the defining values of the intrinsic aspect',
   match: [
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
-    '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
+    '?1.New Concept > 1146.is a specialization of > ?2.Supertype Concept',
+    '?3.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?3.Intrinsic Aspect > 1146.is a specialization of > ?4.Supertype Concept',
   ],
   create: [
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
-    '?.Intrinsic Aspect > 1146.is a specialization of > ?.Supertype Concept',
+    '?1.New Concept > 1146.is a specialization of > ?2.Supertype Concept',
+    '?3.Intrinsic Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?3.Intrinsic Aspect > 1146.is a specialization of > ?4.Supertype Concept',
   ],
   fieldSources: [
     {
@@ -214,9 +212,9 @@ const defineQuantitativeAspect: Step = {
   id: 'define-quantitative-aspect',
   description: 'Define the quantitative aspect of the new concept',
   match: [
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.Quantitative Aspect > 1146.is a specialization of > 730044.Physical Object',
-    '?.Quantitative Aspect > 1146.is a specialization of > ?.Supertype Concept',
+    '?1.New Concept > 1146.is a specialization of > ?2.Supertype Concept',
+    '?3.Quantitative Aspect > 1146.is a specialization of > 730044.Physical Object',
+    '?3.Quantitative Aspect > 1146.is a specialization of > ?2.Supertype Concept',
   ],
   create: [],
   fieldSources: [
@@ -240,12 +238,12 @@ const specifyIntendedFunction: Step = {
   id: 'specify-intended-function',
   description: 'Specify the intended function of the new concept',
   match: [
-    '?.Supertype Concept > 1146.is a specialization of > [730000.anything]',
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.Function > 1146.is a specialization of > [193671.occurrence]',
+    '?1.Supertype Concept > 1146.is a specialization of > 730000.anything',
+    '?2.New Concept > 1146.is a specialization of > ?1.Supertype Concept',
+    '?3.Function > 1146.is a specialization of > 193671.occurrence',
   ],
   create: [
-    '?.New Concept > 5536.has by definition as intended function > ?.Function',
+    '?2.New Concept > 5536.has by definition as intended function > ?3.Function',
   ],
   fieldSources: [
     {
@@ -264,11 +262,11 @@ const specifyDefiningComponentsOfPhysicalObject: Step = {
   description:
     'Specify the defining component(s) of the new concept physical object',
   match: [
-    '?.Supertype Concept > 1146.is a specialization of > [730044.Physical Object]',
-    '?.New Concept > 1146.is a specialization of > ?.Supertype Concept',
-    '?.Part Object > 1146.is a specialization of > [730044.Physical Object]',
+    '?1.Supertype Concept > 1146.is a specialization of > 730044.Physical Object',
+    '?2.New Concept > 1146.is a specialization of > ?1.Supertype Concept',
+    '?3.Part Object > 1146.is a specialization of > 730044.Physical Object',
   ],
-  create: ['?.Part Object > 1190.is a part of > ?.New Concept'],
+  create: ['?3.Part Object > 1190.is a part of > ?2.New Concept'],
   fieldSources: [
     {
       field: 'Part Object',
@@ -287,8 +285,10 @@ const specifyDefiningComponentsOfPhysicalObject: Step = {
 const denotationByGraphicalObject: Step = {
   id: 'denotation-by-graphical-object',
   description: 'Denote the new concept by a graphical object',
-  match: ['?.New Concept > 1146.is a specialization of > ?.Supertype Concept'],
-  create: ['?.New Concept > 1146.is denoted by > ?.Graphical Object'],
+  match: [
+    '?1.New Concept > 1146.is a specialization of > ?2.Supertype Concept',
+  ],
+  create: ['?1.New Concept > 1146.is denoted by > ?3.Graphical Object'],
   fieldSources: [
     {
       field: 'New Concept',
@@ -305,8 +305,10 @@ const denotationByGraphicalObject: Step = {
 const denotationByTextObject: Step = {
   id: 'denotation-by-text-object',
   description: 'Denote the new concept by a text object',
-  match: ['?.New Concept > 1146.is a specialization of > ?.Supertype Concept'],
-  create: ['?.New Concept > 1146.is denoted by > ?.Text Object'],
+  match: [
+    '?1.New Concept > 1146.is a specialization of > ?2.Supertype Concept',
+  ],
+  create: ['?1.New Concept > 1146.is denoted by > ?3.Text Object'],
   fieldSources: [
     {
       field: 'New Concept',
@@ -324,7 +326,7 @@ const inclusionOfTextInModel: Step = {
   id: 'inclusion-of-text-in-model',
   description: 'Inclusion of text in the model',
   match: [
-    '?.Text Object > 1146.is a specialization of > 730044.Physical Object',
+    '?1.Text Object > 1146.is a specialization of > 730044.Physical Object',
   ],
   create: [],
   fieldSources: [

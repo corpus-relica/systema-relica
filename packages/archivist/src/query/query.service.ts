@@ -39,7 +39,7 @@ export class QueryService {
       const classFacts: Fact[] =
         await this.gellishBaseService.getClassificationFacts(resolvedUIDs);
 
-      this.logger.debug('Interpreted table:', specFacts, classFacts);
+      // this.logger.debug('Interpreted table:', specFacts, classFacts);
 
       return {
         facts: [...specFacts, ...classFacts, ...facts],
@@ -72,11 +72,9 @@ export class QueryService {
           }
         } else {
           const varNode = record.get(key);
-          console.log('varNode', key, varNode);
           if (varNode) {
             const s: Set<number> = variables.get(key) || new Set<number>();
-            console.log('varNode.uid', varNode.uid);
-            s.add(varNode.uid);
+            s.add(this.graphService.resolveNeo4jInt(varNode.uid));
             variables.set(key, s);
           }
         }
@@ -113,45 +111,12 @@ export class QueryService {
                 isResolved: !!matchingVar,
               };
             }
-            console.log('matchingVar', name, matchingVar);
           }
         },
       );
     });
     return Object.values(result);
   }
-
-  // private extractVariables(cypherResults: any[], originalQuery: Fact[]): any[] {
-  //   const variables: any[] = [];
-  //   originalQuery.forEach((queryFact, index) => {
-  //     [
-  //       { key: 'lh_object_uid', name: 'lh_object' },
-  //       { key: 'rel_type_uid', name: 'rel_type' },
-  //       { key: 'rh_object_uid', name: 'rh_object' },
-  //     ].forEach(({ key, name }) => {
-  //       const uid = queryFact[key];
-  //       if (this.isTempUID(uid)) {
-  //         let matchingResults;
-  //         if (key === 'rel_type_uid') {
-  //           matchingResults = cypherResults
-  //             .map((result) => result[`f${index}`]?.rel_type_uid)
-  //             .filter(Boolean);
-  //         } else {
-  //           matchingResults = cypherResults
-  //             .map((result) => result[`var_${uid}`]?.uid)
-  //             .filter(Boolean);
-  //         }
-  //         variables.push({
-  //           uid,
-  //           name,
-  //           possibleValues: [...new Set(matchingResults)], // Remove duplicates
-  //           isResolved: matchingResults.length === 1,
-  //         });
-  //       }
-  //     });
-  //   });
-  //   return variables;
-  // }
 
   private isTempUID(uid: number): boolean {
     return uid >= 1 && uid <= 99;
