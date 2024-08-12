@@ -27,18 +27,22 @@ export class QueryService {
       // this.logger.debug('Cypher query results:', result);
 
       const { facts, variables } = this.processCypherResults(result);
-      this.logger.debug('Interpreted facts:', facts);
-      this.logger.debug(
-        'Variables:',
-        Array.from(variables.entries()).map(([key, value]) => ({
-          key,
-          value: Array.from(value),
-        })),
-      );
       const resolvedVars = this.resolveVariables(variables, table);
 
+      const resolvedUIDs: number[] = resolvedVars.reduce((acc, curr) => {
+        acc.push(...curr.possibleValues);
+        return acc;
+      }, []);
+
+      const specFacts: Fact[] =
+        await this.gellishBaseService.getSpecializationFacts(resolvedUIDs);
+      const classFacts: Fact[] =
+        await this.gellishBaseService.getClassificationFacts(resolvedUIDs);
+
+      this.logger.debug('Interpreted table:', specFacts, classFacts);
+
       return {
-        facts,
+        facts: [...specFacts, ...classFacts, ...facts],
         vars: resolvedVars,
       };
     } catch (error) {

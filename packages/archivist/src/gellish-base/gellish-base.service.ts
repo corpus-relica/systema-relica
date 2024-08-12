@@ -234,12 +234,18 @@ RETURN path`;
     } else if (!Array.isArray(uids)) {
       uids = [uids];
     }
-    return await Promise.all(
-      uids.map(async (uid) => {
-        const result = await this.getSpecializationFact(parseInt(uid));
-        return result;
-      }),
-    );
+    const result = (
+      await Promise.all(
+        uids.map(async (uid) => {
+          const result = await this.getSpecializationFact(parseInt(uid));
+          return result;
+        }),
+      )
+    ).filter((x) => x.length > 0);
+
+    return result.reduce((acc, curr) => {
+      return acc.concat(curr);
+    }, []);
   };
 
   getQualificationFact = async (uid) => {
@@ -262,12 +268,16 @@ RETURN path`;
   };
 
   getClassificationFacts = async (uids) => {
-    return await Promise.all(
+    const preres = await Promise.all(
       uids.map(async (uid) => {
         const result = await this.getClassificationFact(uid);
         return result;
       }),
     );
+    const res = preres.reduce((acc, curr) => {
+      return acc.concat(curr);
+    }, []);
+    return res;
   };
 
   getCategory = async (uid) => {
