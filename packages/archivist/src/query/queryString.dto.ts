@@ -6,4 +6,6 @@ export class QueryStringDto {
     example: 'line 1\nline 2\nline 3',
   })
   queryString: string;
+  page: number;
+  pageSize: number;
 }

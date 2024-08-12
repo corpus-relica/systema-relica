@@ -25,15 +25,16 @@ export class QueryController {
     @Body() queryTable: Fact[], //GellishTable,
   ): Promise<any> {
     // Process the query and return results
-    return this.queryService.interpretTable(queryTable);
+    return this.queryService.interpretTable(queryTable, 1, 10);
   }
 
   @Post('queryString')
   @ApiOperation({ summary: 'Process a Gellish query string' })
   @ApiBody({ type: QueryStringDto })
   async handleGellishQueryString(@Body() body: QueryStringDto): Promise<any> {
+    const { queryString, page, pageSize } = body;
     // Process the query and return results
-    const queryStringArray: string[] = body.queryString.split('\n');
+    const queryStringArray: string[] = queryString.split('\n');
 
     let qStr = '';
     let finalArray = [];
@@ -50,7 +51,11 @@ export class QueryController {
       [],
     );
 
-    const result = await this.queryService.interpretTable(queryTable);
+    const result = await this.queryService.interpretTable(
+      queryTable,
+      page,
+      pageSize,
+    );
     return result;
     // return queryTable;
   }

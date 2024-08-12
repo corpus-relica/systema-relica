@@ -227,7 +227,7 @@ const InProgressStep = (props: any) => {
             readonly={true}
             autoload={true}
             initialQuery={resolvePatternVars(pattern).join("\n")}
-            height="400px"
+            height="80vh"
           />
           <Button
             onClick={() => {

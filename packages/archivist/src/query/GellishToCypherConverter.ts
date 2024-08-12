@@ -16,6 +16,8 @@ export class GellishToCypherConverter {
 
   async processGellishQuery(
     gellishStatements: Fact[],
+    page: number,
+    pageSize: number,
   ): Promise<{ query: string; params: any }> {
     this.tempEntities.clear();
     const cypherPatterns: string[] = [];
@@ -32,10 +34,15 @@ export class GellishToCypherConverter {
 
     this.logger.debug('Cypher Patterns:\n' + cypherPatterns.join('\n'));
 
+    const skip = (page - 1) * pageSize;
+    const limit = pageSize;
+
     const query = this.generateCypherQuery(
       cypherPatterns,
       whereClauses,
       gellishStatements.length,
+      skip,
+      limit,
     );
 
     this.logger.debug('Generated Cypher Query:\n' + query);
@@ -108,6 +115,8 @@ export class GellishToCypherConverter {
     patterns: string[],
     whereClauses: string[],
     statementCount: number,
+    skip: number,
+    limit: number,
   ): string {
     const matchClauses = patterns.join('\n');
     const whereClause =
@@ -115,10 +124,12 @@ export class GellishToCypherConverter {
     const returnClause = this.generateReturnClause(statementCount);
 
     return `
-      ${matchClauses}
-      ${whereClause}
-      ${returnClause}
-    `;
+    ${matchClauses}
+    ${whereClause}
+    ${returnClause}
+    SKIP ${skip}
+    LIMIT ${limit}
+  `;
   }
 
   private generateReturnClause(statementCount: number): string {

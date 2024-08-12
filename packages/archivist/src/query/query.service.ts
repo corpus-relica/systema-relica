@@ -18,13 +18,19 @@ export class QueryService {
     private readonly gellishToCypherConverter: GellishToCypherConverter,
   ) {}
 
-  async interpretTable(table: Fact[]): Promise<{ facts: Fact[]; vars: any[] }> {
+  async interpretTable(
+    table: Fact[],
+    page: number,
+    pageSize: number,
+  ): Promise<{ facts: Fact[]; vars: any[]; totalCount: number }> {
     try {
       const { query, params } =
-        await this.gellishToCypherConverter.processGellishQuery(table);
+        await this.gellishToCypherConverter.processGellishQuery(
+          table,
+          page,
+          pageSize,
+        );
       const result = await this.graphService.execQuery(query, params);
-
-      // this.logger.debug('Cypher query results:', result);
 
       const { facts, variables } = this.processCypherResults(result);
       const resolvedVars = this.resolveVariables(variables, table);
@@ -39,16 +45,26 @@ export class QueryService {
       const classFacts: Fact[] =
         await this.gellishBaseService.getClassificationFacts(resolvedUIDs);
 
-      // this.logger.debug('Interpreted table:', specFacts, classFacts);
+      // Get total count
+      const totalCount = await this.getTotalCount(table);
 
       return {
         facts: [...specFacts, ...classFacts, ...facts],
         vars: resolvedVars,
+        totalCount,
       };
     } catch (error) {
       this.logger.error('Error interpreting query table', error);
       throw error;
     }
+  }
+
+  private async getTotalCount(table: Fact[]): Promise<number> {
+    const { query, params } =
+      await this.gellishToCypherConverter.processGellishQuery(table, 1, 1);
+    const countQuery = `${query.split('RETURN')[0]} RETURN count(*) as total`;
+    const result = await this.graphService.execQuery(countQuery, params);
+    return result[0].get('total').toNumber();
   }
 
   private processCypherResults(cypherResults: Record[]): {

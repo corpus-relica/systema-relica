@@ -14,6 +14,8 @@ const Body = observer((props: { callback: (fact: Fact) => void }) => {
   const rootStore: RootStore = useStores();
   const { facts } = rootStore;
 
+  console.log("BODY BODY BODY Body", facts.length);
+
   const [expandedUID, setExpandedUID] = useState<string | null>(null);
 
   const handleSelectClick = (row: Fact) => {
@@ -50,7 +52,7 @@ const Body = observer((props: { callback: (fact: Fact) => void }) => {
           rh_object_name
         </Grid>
       </Grid>
-      {facts.map((fact) => (
+      {facts.map((fact, idx) => (
         <Grid key={fact.fact_uid} container direction="row" spacing={1}>
           <Grid item xs={0.25}>
             <Button onClick={() => toggleExpand(fact.fact_uid)}>

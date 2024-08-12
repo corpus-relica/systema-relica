@@ -124,7 +124,11 @@ export const performSearch = async (
   }
 };
 
-export const performQuery = async (query: string) => {
+export const performQuery = async (
+  query: string,
+  page: number = 1,
+  pageSize: number = 50
+) => {
   try {
     // const response = await axiosInstance.get("/query/queryString", {
     //   params: { queryString: query },
@@ -132,6 +136,8 @@ export const performQuery = async (query: string) => {
     // POST
     const response = await axiosInstance.post("/query/queryString", {
       queryString: query,
+      page,
+      pageSize,
     });
     return response.data;
   } catch (error) {
