@@ -74,6 +74,7 @@ const Workflows = () => {
   };
 
   const processState = (res: any) => {
+    console.log("res", res);
     setState(res);
     res.context && setContext(res.context);
 

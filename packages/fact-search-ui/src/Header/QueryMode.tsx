@@ -30,7 +30,8 @@ const QueryMode: React.FC<QueryModeProps> = observer(
     const [page, setPage] = useState(1);
 
     const {
-      data: { facts, vars, totalCount } = {
+      data: { facts, groundingFacts, vars, totalCount } = {
+        groundingFacts: [],
         facts: [],
         vars: [],
         totalCount: 0,
@@ -51,7 +52,7 @@ const QueryMode: React.FC<QueryModeProps> = observer(
     }, [facts]);
 
     useEffect(() => {
-      rootStore.queryResult = { facts, vars };
+      rootStore.queryResult = { facts, groundingFacts, vars };
     }, [facts, vars]);
 
     const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {

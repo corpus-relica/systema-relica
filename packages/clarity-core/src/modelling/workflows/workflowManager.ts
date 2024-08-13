@@ -2,6 +2,12 @@ import { Fact } from '@relica/types';
 import { stepDefs } from './stepDefs';
 import TempUIDManager from './UIDManager';
 
+import * as _ from 'lodash';
+
+const omitEmptyValues = (obj) => {
+  return _.omitBy(obj, (value) => _.isNil(value) || value === '');
+};
+
 export enum WorkflowStatus {
   NOT_STARTED = 'not-started',
   IN_PROGRESS = 'in-progress',
@@ -118,9 +124,42 @@ class WorkflowManager {
   }
 
   get context() {
+    const thisCtx = this._context;
+    console.log('GETTING CONTEXT', this.id, thisCtx);
     if (this._parent) {
-      return Object.assign({}, this._parent.context, this._context);
+      const parentCtx = this._parent.context;
+      console.log('PARENT CONTEXT', this.id, parentCtx);
+      // const ctx = Object.assign({}, parentCtx, thisCtx);
+      const keys = Array.from(
+        new Set([...Object.keys(thisCtx), ...Object.keys(parentCtx)]),
+      );
+      const ctx = keys.reduce((acc, key: string) => {
+        const thisEnt: { uid: number; value: string } = thisCtx[key];
+        const parentEnt: { uid: number; value: string } = parentCtx[key];
+
+        if (thisEnt && parentEnt) {
+          if (thisEnt.value !== '') {
+            acc[key] = thisEnt;
+          } else if (parentEnt.value !== '') {
+            acc[key] = parentEnt;
+          } else {
+            acc[key] = thisEnt;
+          }
+        } else if (thisEnt) {
+          acc[key] = thisEnt;
+        } else if (parentEnt) {
+          acc[key] = parentEnt;
+        }
+
+        return acc;
+      }, {});
+
+      console.log('KEYS', keys);
+      // const ctx = Object.assign({}, parentCtx, thisCtx);
+      console.log('RETURNING CONTEXT', this.id, ctx);
+      return ctx;
     }
+    console.log('RETURNING CONTEXT BASE', this.id, this._context);
     return this._context;
   }
 
@@ -153,13 +192,14 @@ class WorkflowManager {
           // console.log('NEW NAME -- ', newName);
           return [id, newName];
         });
+      console.log('PARS', parts);
 
       let lh_object_uid = parts[0][0];
       let lh_object_name = parts[0][1];
       let rh_object_uid = parts[2][0];
       let rh_object_name = parts[2][1];
 
-      if (lh_object_uid === '?') {
+      if (lh_object_uid.startsWith('?')) {
         // console.log('THIS ID', this.id);
         const lh_object = this.getContext(lh_object_name);
         // console.log('THIS LH OBJ', lh_object);
@@ -167,7 +207,7 @@ class WorkflowManager {
         lh_object_name = lh_object?.value;
       }
 
-      if (rh_object_uid === '?') {
+      if (rh_object_uid.startsWith('?')) {
         // console.log('THIS ID', this.id);
         const rh_object = this.getContext(rh_object_name);
         // console.log('THIS RH OBJ', rh_object);

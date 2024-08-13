@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import { Button } from "@mui/material";
 import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
-import createMutation from "../validateAndSubmitDateFactMutation";
+import createMutation from "../validateAndSubmitBinaryFactMutation";
 import {
   SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
   SUBMIT_BINARY_FACTS_ENDPOINT,

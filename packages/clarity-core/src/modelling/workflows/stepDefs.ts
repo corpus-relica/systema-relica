@@ -85,10 +85,9 @@ const specifyDistignuishingQualitativeAspect: Step = {
     '?1.Supertype Concept > 1146.is a specialization of > 730000.anything',
     '?2.Conceptual Aspect > 1146.is a specialization of > 790229.aspect',
     '?1.Supertype Concept > 5652.has subtypes that have as distinguishing aspect a > ?2.Conceptual Aspect',
-    '?3.New Concept > 1146.is a specialization of > ?1.Supertype Concept',
-    '?4.qualitative aspect > 1726.is a qualitative subtype of > ?2.Conceptual Aspect',
+    '?3.qualitative aspect > 1726.is a qualitative subtype of > ?2.Conceptual Aspect',
   ],
-  create: ['?3.New Concept > 5283.is by definition > ?4.qualitative aspect'],
+  create: ['?4.New Concept > 5283.is by definition > ?3.qualitative aspect'],
   fieldSources: [
     {
       field: 'New Concept',
@@ -239,11 +238,10 @@ const specifyIntendedFunction: Step = {
   description: 'Specify the intended function of the new concept',
   match: [
     '?1.Supertype Concept > 1146.is a specialization of > 730000.anything',
-    '?2.New Concept > 1146.is a specialization of > ?1.Supertype Concept',
-    '?3.Function > 1146.is a specialization of > 193671.occurrence',
+    '?2.Function > 1146.is a specialization of > 193671.occurrence',
   ],
   create: [
-    '?2.New Concept > 5536.has by definition as intended function > ?3.Function',
+    '?3.New Concept > 5536.has by definition as intended function > ?2.Function',
   ],
   fieldSources: [
     {
@@ -263,7 +261,6 @@ const specifyDefiningComponentsOfPhysicalObject: Step = {
     'Specify the defining component(s) of the new concept physical object',
   match: [
     '?1.Supertype Concept > 1146.is a specialization of > 730044.Physical Object',
-    '?2.New Concept > 1146.is a specialization of > ?1.Supertype Concept',
     '?3.Part Object > 1146.is a specialization of > 730044.Physical Object',
   ],
   create: ['?3.Part Object > 1190.is a part of > ?2.New Concept'],

@@ -22,7 +22,12 @@ export class QueryService {
     table: Fact[],
     page: number,
     pageSize: number,
-  ): Promise<{ facts: Fact[]; vars: any[]; totalCount: number }> {
+  ): Promise<{
+    facts: Fact[];
+    groundingFacts: Fact[];
+    vars: any[];
+    totalCount: number;
+  }> {
     try {
       const { query, params } =
         await this.gellishToCypherConverter.processGellishQuery(
@@ -31,25 +36,31 @@ export class QueryService {
           pageSize,
         );
       const result = await this.graphService.execQuery(query, params);
-
       const { facts, variables } = this.processCypherResults(result);
       const resolvedVars = this.resolveVariables(variables, table);
-
       const resolvedUIDs: number[] = resolvedVars.reduce((acc, curr) => {
         acc.push(...curr.possibleValues);
         return acc;
       }, []);
-
+      const unanchoredUIDs = resolvedUIDs.filter((uid) => {
+        return !facts.some((fact) => {
+          return (
+            (fact.lh_object_uid === uid && fact.rel_type_uid === 1146) ||
+            fact.rel_type_uid === 1225 ||
+            fact.rel_type_uid === 1726
+          );
+        });
+      });
+      console.log('XXX', unanchoredUIDs);
       const specFacts: Fact[] =
-        await this.gellishBaseService.getSpecializationFacts(resolvedUIDs);
+        await this.gellishBaseService.getSpecializationFacts(unanchoredUIDs);
       const classFacts: Fact[] =
-        await this.gellishBaseService.getClassificationFacts(resolvedUIDs);
-
+        await this.gellishBaseService.getClassificationFacts(unanchoredUIDs);
       // Get total count
       const totalCount = await this.getTotalCount(table);
-
       return {
-        facts: [...specFacts, ...classFacts, ...facts],
+        facts: facts,
+        groundingFacts: [...specFacts, ...classFacts],
         vars: resolvedVars,
         totalCount,
       };

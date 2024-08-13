@@ -8,6 +8,7 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
+import { Fact } from "@relica/types";
 
 interface Var {
   uid: number;
@@ -17,6 +18,7 @@ interface Var {
 }
 
 interface QueryResults {
+  groundingFacts: any[]; // You might want to define a more specific type for groundFacts
   facts: any[]; // You might want to define a more specific type for facts
   vars: Var[];
 }
@@ -24,14 +26,18 @@ interface QueryResults {
 const QueryResultsDisplay: React.FC = observer(() => {
   const rootStore = useStores();
   const queryResults: QueryResults = rootStore.queryResult || {
+    groundingFacts: [],
     facts: [],
     vars: [],
   };
 
   const getResolvedName = (uid: number): string => {
-    const fact = toJS(queryResults.facts).find(
+    const allFacts = [...queryResults.groundingFacts, ...queryResults.facts];
+    const fact = toJS(allFacts).find(
       (f) =>
-        (f.rel_type_uid === 1146 || f.rel_type_uid === 1225) &&
+        (f.rel_type_uid === 1146 ||
+          f.rel_type_uid === 1726 ||
+          f.rel_type_uid === 1225) &&
         f.lh_object_uid === uid
     );
     return fact
@@ -39,6 +45,18 @@ const QueryResultsDisplay: React.FC = observer(() => {
         ? fact.lh_object_name
         : fact.rh_object_name
       : `Unknown (${uid})`;
+  };
+
+  const findGroundingFact = (uid: number): Fact => {
+    const allFacts = [...queryResults.groundingFacts, ...queryResults.facts];
+    const fact = toJS(allFacts).find(
+      (f) =>
+        (f.rel_type_uid === 1146 ||
+          f.rel_type_uid === 1726 ||
+          f.rel_type_uid === 1225) &&
+        f.lh_object_uid === uid
+    );
+    return fact;
   };
 
   return (
@@ -59,19 +77,41 @@ const QueryResultsDisplay: React.FC = observer(() => {
             {variable.name} (UID: {variable.uid})
           </Typography>
           <List dense disablePadding>
-            {variable.possibleValues.map((value, index) => (
-              <React.Fragment key={value}>
-                {index > 0 && <Divider />}
-                <ListItem sx={{ py: 0.25 }}>
-                  <ListItemText
-                    primary={getResolvedName(value)}
-                    secondary={`UID: ${value}`}
-                    primaryTypographyProps={{ variant: "body2" }}
-                    secondaryTypographyProps={{ variant: "caption" }}
-                  />
-                </ListItem>
-              </React.Fragment>
-            ))}
+            {variable.possibleValues.map((value, index) => {
+              const groundingFact = findGroundingFact(value);
+              const name = groundingFact.lh_object_name;
+              return (
+                <React.Fragment key={value}>
+                  {index > 0 && <Divider />}
+                  <ListItem sx={{ py: 0.25 }}>
+                    <ListItemText
+                      primary={name}
+                      secondary={
+                        <React.Fragment>
+                          <Typography variant="caption" color="textSecondary">
+                            UID: {value}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="textSecondary"
+                            component={"div"}
+                          >
+                            <Typography variant="caption" color="textSecondary">
+                              {groundingFact.rel_type_name}
+                            </Typography>{" "}
+                            <Typography variant="caption" color="textSecondary">
+                              {groundingFact.rh_object_name}
+                            </Typography>
+                          </Typography>
+                        </React.Fragment>
+                      }
+                      primaryTypographyProps={{ variant: "body2" }}
+                      secondaryTypographyProps={{ variant: "caption" }}
+                    />
+                  </ListItem>
+                </React.Fragment>
+              );
+            })}
           </List>
         </Box>
       ))}
