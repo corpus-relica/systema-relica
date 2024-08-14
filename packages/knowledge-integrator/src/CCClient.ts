@@ -99,9 +99,9 @@ export const branchWorkflow = async (fieldId: string, workflowId: string) => {
   return response.data;
 };
 
-export const incrementWorkflowStep = async (workflowId: string) => {
+export const incrementWorkflowStep = async (event: string) => {
   const response = await CCAxiosInstance.get(
-    "/modelling/workflow/increment/" + workflowId
+    "/modelling/workflow/increment/" + event
   );
   return response.data;
 };

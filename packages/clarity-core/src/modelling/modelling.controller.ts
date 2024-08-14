@@ -86,12 +86,12 @@ export class ModellingController {
     }
   }
 
-  @Get('workflow/increment/:workflowId')
-  async incrementWorkflowStep(@Param('workflowId') workflowId: string) {
+  @Get('workflow/increment/:event')
+  async incrementWorkflowStep(@Param('event') event: string) {
     this.logger.log('~~~~~~~~~~~~INCREMENT WORKFLOW STEP~~~~~~~~~~~~');
 
     try {
-      return this.modelling.incrementWorkflowStep();
+      return this.modelling.incrementWorkflowStep(event);
     } catch (e) {
       this.logger.error('Error incrementing workflow step:', e);
       throw new HttpException(
@@ -101,20 +101,20 @@ export class ModellingController {
     }
   }
 
-  @Get('workflow/decrement/:workflowId')
-  async decrementWorkflowStep(@Param('workflowId') workflowId: string) {
-    this.logger.log('~~~~~~~~~~~~DECREMENT WORKFLOW STEP~~~~~~~~~~~~');
+  // @Get('workflow/decrement/:workflowId')
+  // async decrementWorkflowStep(@Param('workflowId') workflowId: string) {
+  //   this.logger.log('~~~~~~~~~~~~DECREMENT WORKFLOW STEP~~~~~~~~~~~~');
 
-    try {
-      return this.modelling.decrementWorkflowStep();
-    } catch (e) {
-      this.logger.error('Error decrementing workflow step:', e);
-      throw new HttpException(
-        'Error decrementing workflow step',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
+  //   try {
+  //     return this.modelling.decrementWorkflowStep();
+  //   } catch (e) {
+  //     this.logger.error('Error decrementing workflow step:', e);
+  //     throw new HttpException(
+  //       'Error decrementing workflow step',
+  //       HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
 
   @Get('workflow/validate')
   async validateWorkflow() {

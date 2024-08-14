@@ -8876,6 +8876,11 @@ xstate@^5.13.0:
   resolved "https://registry.yarnpkg.com/xstate/-/xstate-5.13.0.tgz#7f7092d813a89d94024b083fe23a86b6cf4a323a"
   integrity sha512-Z0om784N5u8sAzUvQJBa32jiTCIGGF/2ZsmKkerQEqeeUktAeOMK20FIHFUMywC4GcAkNksSvaeX7lwoRNXPEQ==
 
+xstate@^5.17.3:
+  version "5.17.3"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-5.17.3.tgz#7f7e1642f3714fd1b8f41b46101d8cb7fa70acc6"
+  integrity sha512-HIBmnvqoOBxY1dEOo/ewwTDfCfDPn7fbjbvL/YrAaNPqnUd+LehkbaofwHt4xKnv15fZ9xhbyHAxm3FvLMA8PA==
+
 xtend@^4.0.0:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.2.tgz#bb72779f5fa465186b1f438f674fa347fdb5db54"

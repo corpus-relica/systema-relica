@@ -38,11 +38,11 @@ const Workflows = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [context, setContext] = useState(null);
   const [tree, setTree] = useState([]);
-
   const [currentId, setCurrentId] = useState(null);
   const [facts, setFacts] = useState([]);
-
   const [state, setState] = useState({});
+
+  const [nextEvents, setNextEvents] = useState([]);
 
   useEffect(() => {
     const init = async () => {
@@ -57,33 +57,34 @@ const Workflows = () => {
   }, []);
 
   const processStack = (res: any) => {
-    let stacksAreEqual = true;
-    if (stack.length !== res.length) {
-      stacksAreEqual = false;
-    } else {
-      for (let i = 0; i < stack.length; i++) {
-        if (stack[i] !== res[i]) {
-          stacksAreEqual = false;
-          break;
-        }
-      }
-    }
-    if (!stacksAreEqual) {
-      setStack(res);
-    }
+    // let stacksAreEqual = true;
+    // if (stack.length !== res.length) {
+    //   stacksAreEqual = false;
+    // } else {
+    //   for (let i = 0; i < stack.length; i++) {
+    //     if (stack[i] !== res[i]) {
+    //       stacksAreEqual = false;
+    //       break;
+    //     }
+    //   }
+    // }
+    // if (!stacksAreEqual) {
+    //   setStack(res);
+    // }
   };
 
   const processState = (res: any) => {
-    console.log("res", res);
-    setState(res);
-    res.context && setContext(res.context);
+    // console.log("res", res);
+    // setState(res);
+    // res.context && setContext(res.context);
 
-    res.stack && processStack(res.stack);
+    // res.stack && processStack(res.stack);
 
-    res.isComplete !== undefined && setIsComplete(res.isComplete);
-    res.workflow?.id && setCurrentId(res.workflow.id);
-    res.tree && setTree(res.tree);
-    res.facts && setFacts(res.facts);
+    // res.isComplete !== undefined && setIsComplete(res.isComplete);
+    // res.workflow?.id && setCurrentId(res.workflow.id);
+    // res.tree && setTree(res.tree);
+    // res.facts && setFacts(res.facts);
+    setNextEvents(res.nextEvents);
   };
 
   const handleWorkflowClick = async (workflowId: any) => {
@@ -115,28 +116,19 @@ const Workflows = () => {
           </Grid>
         ) : (
           <>
-            <Grid xs={3}>
-              <Stack divider={<Divider orientation="horizontal" flexItem />}>
-                <Stack
-                  direction={"row"}
-                  spacing={2}
-                  divider={<Divider orientation="vertical" flexItem />}
+            <Grid xs={7}>
+              {nextEvents.map((event) => (
+                <Button
+                  onClick={async () => {
+                    console.log("event", event);
+                    await incrementWorkflowStep(event);
+                    const state = await getWorkflowState();
+                    processState(state);
+                  }}
                 >
-                  <Box>
-                    <WorkflowStackVisualizer stack={stack} />
-                  </Box>
-                  <Box>
-                    <ContextVisualizer context={context} />
-                  </Box>
-                </Stack>
-                <Box>TreeVisualization</Box>
-                <Box>
-                  <WorkflowTreeVisualizer tree={tree} currentId={currentId} />
-                </Box>
-              </Stack>
-            </Grid>
-            <Grid xs={4}>
-              <Step state={state} processState={processState} />
+                  {event}
+                </Button>
+              ))}
             </Grid>
           </>
         )}
