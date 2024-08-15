@@ -31,6 +31,7 @@ import WorkflowTreeVisualizer from "./WorkflowTreeVisualizer";
 import WorkflowStackVisualizer from "./WorkflowStackVisualizer";
 import WorkflowFactsVisualizer from "./WorkflowFactsVisualizer";
 import ContextVisualizer from "./ContextVisualizer";
+import Typography from "@mui/material/Typography";
 
 const Workflows = () => {
   const [workflows, setWorkflows] = useState([]);
@@ -43,6 +44,9 @@ const Workflows = () => {
   const [state, setState] = useState({});
 
   const [nextEvents, setNextEvents] = useState([]);
+  const [description, setDescription] = useState("");
+  const [match, setMatch] = useState([]);
+  const [create, setCreate] = useState([]);
 
   useEffect(() => {
     const init = async () => {
@@ -85,6 +89,10 @@ const Workflows = () => {
     // res.tree && setTree(res.tree);
     // res.facts && setFacts(res.facts);
     setNextEvents(res.nextEvents);
+    res.spec && setDescription(res.spec.description);
+    res.spec && setMatch(res.spec.match);
+    res.spec && setCreate(res.spec.create);
+    console.log("res", res);
   };
 
   const handleWorkflowClick = async (workflowId: any) => {
@@ -117,6 +125,19 @@ const Workflows = () => {
         ) : (
           <>
             <Grid xs={7}>
+              <Box>{description}</Box>
+              <Typography variant="h6">Match</Typography>
+              <Box style={{ fontSize: 12 }}>
+                {match.map((p) => (
+                  <Box>{p}</Box>
+                ))}
+              </Box>
+              <Typography variant="h6">Create</Typography>
+              <Box style={{ fontSize: 12 }}>
+                {create.map((p) => (
+                  <Box>{p}</Box>
+                ))}
+              </Box>
               {nextEvents.map((event) => (
                 <Button
                   onClick={async () => {

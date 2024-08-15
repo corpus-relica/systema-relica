@@ -1,282 +1,102 @@
 export const machine: any = {
-  id: 'DM',
+  context: {},
+  id: 'DNKPO',
   initial: 'BD',
   states: {
     BD: {
-      //@ts-ignore
-      entry: [{ type: 'populateContext', data: 'BD' }],
       on: {
-        IA: {
-          target: 'IA',
+        NEXT: {
+          target: 'SpecSynAbbrvCodes',
         },
-        R: {
-          target: 'R',
+      },
+      description:
+        'Base Definition\n\n- (allocate unique id for the concept)\n- specify preferred name of the concept\n- specify direct supertype of the concept\n- provide a textual definition of the concept\n- specify synonyms, codes, abbreviations and translations for the concept',
+      meta: {
+        category: 'PhysicalObject',
+      },
+    },
+    SpecSynAbbrvCodes: {
+      on: {
+        NEXT: {
+          target: 'SpecDistQualAsp',
         },
-        PO: {
-          target: 'PO',
+      },
+    },
+    SpecDistQualAsp: {
+      on: {
+        DEF_QualAsp: {
+          target: 'DNQualAsp',
         },
-        FINALIZE: {
+        NEXT: {
+          target: 'SpecIntendFunc',
+        },
+      },
+      description:
+        'Specify Distinguising Qualitative Aspect\n- Select an Aspect\n  - Optionally create one first',
+      meta: {
+        category: 'PhysicalObject',
+      },
+    },
+    DNQualAsp: {
+      on: {
+        BACK: {
+          target: 'SpecDistQualAsp',
+        },
+        DEF_ConcAsp: {
+          target: 'DNConcAsp',
+        },
+      },
+    },
+    SpecIntendFunc: {
+      on: {
+        NEXT: {
+          target: 'SpecComp',
+        },
+        DEF_O: {
+          target: 'DNKO',
+        },
+      },
+    },
+    DNConcAsp: {
+      on: {
+        BACK: {
+          target: 'DNQualAsp',
+        },
+      },
+    },
+    SpecComp: {
+      on: {
+        DEF_PO: {
+          target: 'DefPartPhysObj',
+        },
+        NEXT: {
           target: 'END',
-        },
-      },
-    },
-    IA: {
-      initial: 'SRPA',
-      states: {
-        SRPA: {
-          //@ts-ignore
-          entry: [{ type: 'populateContext', data: 'SRPA' }],
-          on: {
-            NEXT: {
-              target: 'SPPO',
-            },
-            X: {
-              target: '#DM.DNKA',
-            },
-          },
-        },
-        SPPO: {
-          on: {
-            FINALIZE: {
-              target: '#DM.END',
-            },
-            Y: {
-              target: '#DM.IA_DNKPO',
-            },
-          },
-        },
-        HIST: {
-          type: 'history',
-        },
-      },
-    },
-    R: {
-      initial: 'SRP',
-      states: {
-        SRP: {
-          on: {
-            FINALIZE: {
-              target: '#DM.END',
-            },
-            X: {
-              target: '#DM.R_DNKPO',
-            },
-          },
-        },
-        HIST: {
-          type: 'history',
-        },
-      },
-    },
-    PO: {
-      initial: 'SDQA',
-      states: {
-        SDQA: {
-          on: {
-            NEXT: {
-              target: 'SDNIA',
-            },
-            X: {
-              target: '#DM.DNQualA',
-            },
-          },
-        },
-        SDNIA: {
-          on: {
-            NEXT: {
-              target: 'SDVIA',
-            },
-            X: {
-              target: '#DM.DNIA',
-            },
-          },
-        },
-        SDVIA: {
-          on: {
-            NEXT: {
-              target: 'SIF',
-            },
-            X: {
-              target: '#DM.DNQuantA',
-            },
-          },
-        },
-        SIF: {
-          on: {
-            NEXT: {
-              target: 'SC',
-            },
-            X: {
-              target: '#DM.DNKO',
-            },
-          },
-        },
-        SC: {
-          on: {
-            NEXT: {
-              target: 'DGO',
-            },
-            CREATE_CONTAINER: {
-              target: '#DM.CCRPO',
-            },
-            CREATE_CONTAINED: {
-              target: '#DM.CCDPO',
-            },
-          },
-        },
-        DGO: {
-          on: {
-            NEXT: {
-              target: 'DTO',
-            },
-            UPLOAD: {
-              target: '#DM.DGO_UCIF',
-            },
-            DEF_PICTURE: {
-              target: '#DM.DGO_DPS',
-            },
-          },
-        },
-        DTO: {
-          on: {
-            NEXT: {
-              target: 'ITM',
-            },
-            UPLOAD: {
-              target: '#DM.DTO_UCTF',
-            },
-            DEF_INFO: {
-              target: '#DM.DTO_DIS',
-            },
-          },
-        },
-        ITM: {
-          on: {
-            FINALIZE: {
-              target: '#DM.END',
-            },
-            DEF_INFO: {
-              target: '#DM.DTO_DIS',
-            },
-          },
-        },
-        Hist: {
-          entry: ({ context, event }) => {
-            console.log('ACTION, context:', context, 'event:', event);
-          },
-          type: 'history',
-        },
-      },
-    },
-    END: {
-      type: 'final',
-    },
-    DNQualA: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
-        },
-      },
-    },
-    DNIA: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
-        },
-      },
-    },
-    DNQuantA: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
         },
       },
     },
     DNKO: {
       on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
+        BACK: {
+          target: 'SpecIntendFunc',
         },
       },
+      entry: {
+        type: 'invokeDNKO',
+      },
     },
-    CCRPO: {
+    DefPartPhysObj: {
       on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
+        BACK: {
+          target: 'SpecComp',
         },
       },
-    },
-    CCDPO: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
-        },
+      entry: {
+        type: 'invokeDNKPO',
       },
+      description: 'create part phys obj',
     },
-    DGO_UCIF: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
-        },
-      },
+    END: {
+      type: 'final',
     },
-    DGO_DPS: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
-        },
-      },
-    },
-    DTO_DIS: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
-        },
-      },
-    },
-    DTO_UCTF: {
-      on: {
-        RETURN: {
-          target: '#DM.PO.Hist',
-        },
-      },
-    },
-    R_DNKPO: {
-      on: {
-        RETURN: {
-          target: '#DM.R.HIST',
-        },
-      },
-    },
-    IA_DNKPO: {
-      on: {
-        RETURN: {
-          target: '#DM.IA.HIST',
-        },
-      },
-    },
-    DNKA: {
-      on: {
-        RETURN: {
-          target: '#DM.IA.HIST',
-        },
-      },
-    },
-  },
-  types: {
-    events: {} as
-      | { type: 'R' }
-      | { type: 'X' }
-      | { type: 'IA' }
-      | { type: 'PO' }
-      | { type: 'NEXT' }
-      | { type: 'UPLOAD' }
-      | { type: 'RETURN' }
-      | { type: 'CREATE_CONTAINER' }
-      | { type: 'CREATE_CONTAINED' }
-      | { type: 'DEF_PICTURE' }
-      | { type: 'DEF_INFO' }
-      | { type: 'Y' }
-      | { type: 'FINALIZE' },
   },
 };

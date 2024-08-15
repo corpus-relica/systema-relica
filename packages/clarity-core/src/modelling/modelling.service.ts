@@ -9,6 +9,7 @@ import { ModellingSession } from './modellingSession.entity';
 import { workflowDefs } from './workflows/workflowDefs';
 import WorkflowManager from './workflows/workflowManager';
 import { createActor, createMachine, assign } from 'xstate';
+import { states } from './states';
 
 @Injectable()
 export class ModellingService {
@@ -43,10 +44,23 @@ export class ModellingService {
     return stack;
   }
 
+  getValue(value) {
+    if (typeof value === 'string') {
+      return value;
+    }
+    const key = Object.keys(value)[0];
+    return this.getValue(value[key]);
+  }
+
   getState() {
     const snapshot = this.actor.getSnapshot();
     const state = this.getStateDef(snapshot.value, this.workflow);
     console.log('State:', state);
+    const value = this.getValue(snapshot.value);
+    console.log('value', value);
+    const s = states[value];
+    console.log('Woems issues:', s);
+
     let nextEvents = [];
     if (state.on) {
       nextEvents = Object.keys(state.on);
@@ -54,6 +68,7 @@ export class ModellingService {
     }
     return {
       nextEvents,
+      spec: s,
       // environment: [],
       // stack: this.stack,
       // tree: this.root?.tree,
