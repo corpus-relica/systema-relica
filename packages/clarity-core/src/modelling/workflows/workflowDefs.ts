@@ -7,10 +7,10 @@ import OccurrenceMachine from './OccurrenceMachine';
 import ConceptualInvolvementMachine from './ConceptualInvolvementMachine';
 
 export const workflowDefs = {
-  'new-physical-object': PhysObjMachine,
-  'new-aspect': AspectMachine,
-  'new-role': RoleMachine,
-  'new-relation': RelationMachine,
-  'new-occurrence': OccurrenceMachine,
+  DNKPO: PhysObjMachine,
+  DNKA: AspectMachine,
+  DNKRol: RoleMachine,
+  DNKRel: RelationMachine,
+  DNKO: OccurrenceMachine,
   'new-cncpt-nvmnt': ConceptualInvolvementMachine,
 };

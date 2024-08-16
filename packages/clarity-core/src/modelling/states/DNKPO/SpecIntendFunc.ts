@@ -1,4 +1,5 @@
 export const SpecIntendFunc = {
+  id: 'SpecIntendFunc',
   description:
     'Specify Intended Function\n\n- Select a Function\n- Optionally create one first',
   match: [

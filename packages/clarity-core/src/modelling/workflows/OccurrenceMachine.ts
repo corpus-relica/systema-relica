@@ -2,7 +2,7 @@
 //
 const machine: any = {
   context: {},
-  id: 'O',
+  id: 'DNKO',
   initial: 'BD',
   states: {
     BD: {
@@ -15,14 +15,14 @@ const machine: any = {
     SpecCncpInv: {
       on: {
         NEXT: {
-          target: 'End',
+          target: 'END',
         },
         DEF_CncptNvmnt: {
           target: 'DNCncptNvmnt',
         },
       },
     },
-    End: {
+    END: {
       type: 'final',
     },
     DNCncptNvmnt: {

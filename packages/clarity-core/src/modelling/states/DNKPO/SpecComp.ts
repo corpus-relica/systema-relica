@@ -1,4 +1,5 @@
 export const SpecComp = {
+  id: 'SpecComp',
   description: 'Spec Composition',
   match: [
     // '1.New Concept > 1146.is a specialization of > 2.Supertype Concept',

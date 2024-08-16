@@ -76,7 +76,8 @@ export class ModellingController {
     this.logger.log('~~~~~~~~~~~~BRANCH WORKFLOW~~~~~~~~~~~~');
 
     try {
-      return this.modelling.branchWorkflow(fieldId, workflowId);
+      // return this.modelling.branchWorkflow(fieldId, workflowId);
+      return null;
     } catch (e) {
       this.logger.error('Error branching workflow:', e);
       throw new HttpException(

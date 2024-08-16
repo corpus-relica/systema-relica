@@ -1,4 +1,5 @@
 export const DNConcAsp = {
+  id: 'DNConcAsp',
   description: 'Define new Conceptual Aspect',
   match: [
     '1.Supertype Conceptual Aspect? > 1146.is a specialization of > 790229.aspect',

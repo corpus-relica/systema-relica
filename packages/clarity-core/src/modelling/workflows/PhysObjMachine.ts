@@ -9,8 +9,6 @@ const machine: any = {
           target: 'SpecSynAbbrvCodes',
         },
       },
-      description:
-        'Base Definition\n\n- (allocate unique id for the concept)\n- specify preferred name of the concept\n- specify direct supertype of the concept\n- provide a textual definition of the concept\n- specify synonyms, codes, abbreviations and translations for the concept',
       meta: {
         category: 'PhysicalObject',
       },
@@ -31,8 +29,6 @@ const machine: any = {
           target: 'SpecIntendFunc',
         },
       },
-      description:
-        'Specify Distinguising Qualitative Aspect\n- Select an Aspect\n  - Optionally create one first',
       meta: {
         category: 'PhysicalObject',
       },
@@ -93,8 +89,8 @@ const machine: any = {
       entry: {
         type: 'invokeDNKO',
         params: {
-          fieldId: 'Part Object',
-          workflowId: 'new-physical-object',
+          fieldMap: 'Function:New Concept',
+          workflowId: 'DNKO',
         },
       },
     },
@@ -106,6 +102,10 @@ const machine: any = {
       },
       entry: {
         type: 'invokeDNKPO',
+        params: {
+          fieldMap: 'Part Object:New Concept',
+          workflowId: 'DNKPO',
+        },
       },
       description: 'create part phys obj',
     },
