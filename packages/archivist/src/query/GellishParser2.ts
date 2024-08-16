@@ -15,13 +15,11 @@ Gellish {
 
   MetadataLine = "@" key "=" value
 
-  Statement = (Entity | EntityCone) ">" (Entity | EntityCone) ">" (Entity | EntityCone)
-
-  EntityCone = "["Entity"]"
+  Statement = Entity ">" Entity ">" Entity
 
   Entity = PlaceholderEntity | RegularEntity
 
-  PlaceholderEntity = "?" number? ("." (identifier | stringLiteral))? Role?
+  PlaceholderEntity = number "." (identifier | stringLiteral)? Role?
 
   RegularEntity = number ("." (identifier | stringLiteral))? Role?
 
@@ -30,7 +28,7 @@ Gellish {
   key = identifier
   value = stringLiteral
   number = digit+
-  identifier = alnum (alnum | "_" | space)*
+  identifier = letter (alnum | "_" | space)* "?"?
   stringLiteral = "\"" (~"\"" any)* "\""
 
   // Lexical rules
@@ -75,7 +73,7 @@ s.addOperation('interpret', {
     return e.interpret();
   },
 
-  PlaceholderEntity(_qmark, optNum, _dot, optName, optRole) {
+  PlaceholderEntity(optNum, _dot, optName, optRole) {
     console.log('PlaceholderEntityNum:', optNum.sourceString);
     console.log('PlaceholderEntityName:', optName.sourceString);
     console.log('someshit');
@@ -120,7 +118,7 @@ s.addOperation('interpret', {
     return this.sourceString;
   },
 
-  identifier(_first, _rest) {
+  identifier(_first, _rest, _optQ) {
     return this.sourceString;
   },
 

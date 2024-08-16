@@ -3,6 +3,7 @@ import { BD } from './BD';
 import { SpecSynAbbrvCodes } from './SpecSynAbbrvCodes';
 import { DefPartPhysObj } from './DefPartPhysObj';
 import { DNConcAsp } from './DNConcAsp';
+import { AssocExConcAsp } from './AssocExConcAsp';
 import { DNKO } from './DNKO';
 import { DNQualAsp } from './DNQualAsp';
 import { SpecComp } from './SpecComp';
@@ -14,6 +15,7 @@ export const states = {
   SpecSynAbbrvCodes,
   DefPartPhysObj,
   DNConcAsp,
+  AssocExConcAsp,
   DNKO,
   DNQualAsp,
   SpecComp,
