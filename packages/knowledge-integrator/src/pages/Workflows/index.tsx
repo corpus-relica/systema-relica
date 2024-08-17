@@ -310,7 +310,7 @@ const Workflows = () => {
               <Grid xs={2}>
                 <ContextVisualizer context={context} />
               </Grid>
-              <Grid xs={5}>
+              <Grid xs={4}>
                 <Box>{description}</Box>
                 <Typography variant="h6">Match</Typography>
                 <Box style={{ fontSize: 12 }}>
@@ -341,7 +341,7 @@ const Workflows = () => {
             </>
           )}
 
-          <Grid xs={5}>
+          <Grid xs={6}>
             <WorkflowFactsVisualizer facts={facts} />
           </Grid>
         </Grid>

@@ -49,6 +49,11 @@ const PixelText = styled(Box)({
   // wordBreak: "break-word",
 });
 
+const trimUID = (uid: number) => {
+  const uidStr = "" + uid;
+  if (uidStr.length <= 6) return uidStr;
+  return ".." + uidStr.substring(uidStr.length - 6, uidStr.length);
+};
 const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
   const { facts } = props;
 
@@ -78,25 +83,31 @@ const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
                     color: "#cce",
                   }}
                 >
-                  <Grid xs={0.5}>
+                  <Grid xs={0.25}>
                     <PixelText key={index}>{item.fact_uid}</PixelText>
                   </Grid>
-                  <Grid xs={0.5}>
-                    <PixelText key={index}>{item.lh_object_uid}</PixelText>
+                  <Grid xs={1}>
+                    <PixelText key={index}>
+                      {trimUID(item.lh_object_uid)}
+                    </PixelText>
                   </Grid>
-                  <Grid xs={3}>
+                  <Grid xs={2.9}>
                     <PixelText key={index}>{item.lh_object_name}</PixelText>
                   </Grid>
                   <Grid xs={1}>
-                    <PixelText key={index}>{item.rel_type_uid}</PixelText>
+                    <PixelText key={index}>
+                      {trimUID(item.rel_type_uid)}
+                    </PixelText>
                   </Grid>
-                  <Grid xs={3}>
+                  <Grid xs={2.9}>
                     <PixelText key={index}>{item.rel_type_name}</PixelText>
                   </Grid>
                   <Grid xs={1}>
-                    <PixelText key={index}>{item.rh_object_uid}</PixelText>
+                    <PixelText key={index}>
+                      {trimUID(item.rh_object_uid)}
+                    </PixelText>
                   </Grid>
-                  <Grid xs={3}>
+                  <Grid xs={2.9}>
                     <PixelText key={index}>{item.rh_object_name}</PixelText>
                   </Grid>
                 </Grid>
