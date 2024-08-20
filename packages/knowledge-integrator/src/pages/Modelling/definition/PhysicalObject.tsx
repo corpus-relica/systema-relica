@@ -14,7 +14,6 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { IconButton } from "@mui/material";
-import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";
 import { baseFact } from "../baseFact";
 import createMutation from "../validateAndSubmitBinaryFactMutation";
@@ -358,7 +357,8 @@ const Modelling = (props: any) => {
     null
   );
 
-  const { handleOpen, handleClose, collection } = props;
+  const { handleOpen, handleClose, collection, setFacts } = props;
+
   const initialValues = {
     uid: 1,
     languageUid: 910036,
@@ -396,14 +396,14 @@ const Modelling = (props: any) => {
     collection: collection,
   };
 
-  const [facts, setFacts] = React.useState([]);
+  // const [facts, setFacts] = React.useState([]);
   const [submissionStatus, setSubmissionStatus] = React.useState("none");
 
   const updateFacts = (facts: any) => {
     setFacts(facts);
   };
 
-  const mutation = useMutation(createMutation(facts, setSubmissionStatus));
+  // const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
   const conjureDef = async (
     values: any,
@@ -437,7 +437,8 @@ const Modelling = (props: any) => {
           <Formik
             initialValues={initialValues}
             onSubmit={
-              (values) => mutation.mutate(facts)
+              (values) => {}
+              // (values) => mutation.mutate(facts)
               // setTimeout(() => {
               //   alert(JSON.stringify(facts, null, 2));
               // }, 500)
@@ -656,9 +657,6 @@ const Modelling = (props: any) => {
               </div>
             )}
           </Formik>
-        </Grid>
-        <Grid item xs={7}>
-          <Table rows={facts} />
         </Grid>
       </Grid>
       <div style={{ marginTop: 16 }}>
