@@ -2,34 +2,64 @@
 //
 const machine: any = {
   context: {},
-  id: 'R',
-  initial: 'R',
+  id: 'DNKR',
+  initial: 'BD',
   states: {
-    R: {
-      initial: 'SRP',
-      states: {
-        SRP: {
-          on: {
-            FINALIZE: {
-              target: '#R.END',
-            },
-            X: {
-              target: '#R.R_DNKPO',
-            },
-          },
+    BD: {
+      on: {
+        NEXT: {
+          target: 'SRP',
         },
-        HIST: {
-          type: 'history',
+      },
+    },
+    SRP: {
+      on: {
+        DEF_PO: {
+          target: 'DNKPO',
+        },
+        NEXT: {
+          target: 'SRR',
+        },
+      },
+    },
+    DNKPO: {
+      on: {
+        NEXT: {
+          target: 'SRP',
+        },
+      },
+      entry: {
+        type: 'invokeDNKPO',
+        params: {
+          fieldMap: 'Role Player:New Concept',
+          workflowId: 'DNKPO',
+        },
+      },
+    },
+    SRR: {
+      on: {
+        NEXT: {
+          target: 'END',
+        },
+        DEF_Rel: {
+          target: 'DNKRel',
         },
       },
     },
     END: {
       type: 'final',
     },
-    R_DNKPO: {
+    DNKRel: {
       on: {
-        RETURN: {
-          target: '#R.R.HIST',
+        NEXT: {
+          target: 'SRR',
+        },
+      },
+      entry: {
+        type: 'invokeDNKRel',
+        params: {
+          fieldMap: 'Requiring Relation:New Concept',
+          workflowId: 'DNKRel',
         },
       },
     },

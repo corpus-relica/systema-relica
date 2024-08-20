@@ -3,14 +3,15 @@ import AspectMachine from './AspectMachine';
 import RoleMachine from './RoleMachine';
 import RelationMachine from './RelationMachine';
 import OccurrenceMachine from './OccurrenceMachine';
-
-import ConceptualInvolvementMachine from './ConceptualInvolvementMachine';
+import InvolvementMachine from './InvolvementMachine';
+import AspectQualificationMachine from './AspectQualificationMachine';
 
 export const workflowDefs = {
   DNKPO: PhysObjMachine,
   DNKA: AspectMachine,
-  DNKRol: RoleMachine,
+  DNKR: RoleMachine,
   DNKRel: RelationMachine,
   DNKO: OccurrenceMachine,
-  'new-cncpt-nvmnt': ConceptualInvolvementMachine,
+  DNKI: InvolvementMachine,
+  QA: AspectQualificationMachine,
 };

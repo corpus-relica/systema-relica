@@ -1,28 +1,28 @@
-// RELATION MACHINE
+// INVOLVEMENT MACHINE
 //
 const machine: any = {
   context: {},
-  id: 'DNKRel',
+  id: 'DNKI',
   initial: 'BD',
   states: {
     BD: {
       on: {
         NEXT: {
-          target: 'SRR1',
+          target: 'SRIT',
         },
       },
     },
-    SRR1: {
+    SRIT: {
       on: {
         NEXT: {
-          target: 'SRR2',
+          target: 'SRO',
         },
         DEF_R: {
           target: 'DNKR1',
         },
       },
     },
-    SRR2: {
+    SRO: {
       on: {
         NEXT: {
           target: 'END',
@@ -35,13 +35,13 @@ const machine: any = {
     DNKR1: {
       on: {
         NEXT: {
-          target: 'SRR1',
+          target: 'SRIT',
         },
       },
       entry: {
         type: 'invokeDNKR',
         params: {
-          fieldMap: 'Required Role 1:New Concept',
+          fieldMap: 'Role of Involved Thing:New Concept',
           workflowId: 'DNKR',
         },
       },
@@ -52,13 +52,13 @@ const machine: any = {
     DNKR2: {
       on: {
         NEXT: {
-          target: 'SRR2',
+          target: 'SRO',
         },
       },
       entry: {
         type: 'invokeDNKR',
         params: {
-          fieldMap: 'Required Role 2:New Concept',
+          fieldMap: 'Role of Occurrence:New Concept',
           workflowId: 'DNKR',
         },
       },

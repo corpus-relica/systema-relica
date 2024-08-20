@@ -4,6 +4,7 @@ import { DefPartPhysObj } from './DefPartPhysObj';
 import { DNConcAsp } from './DNConcAsp';
 import { AssocExConcAsp } from './AssocExConcAsp';
 import { DNKO } from './DNKO';
+import { DNKPO } from './DNKPO';
 import { DNQualAsp } from './DNQualAsp';
 import { SpecComp } from './SpecComp';
 import { SpecDistQualAsp } from './SpecDistQualAsp';
@@ -16,6 +17,7 @@ export const DNKPOstates = {
   DNConcAsp,
   AssocExConcAsp,
   DNKO,
+  DNKPO,
   DNQualAsp,
   SpecComp,
   SpecDistQualAsp,

@@ -2,17 +2,43 @@
 //
 const machine: any = {
   context: {},
-  id: 'A',
+  id: 'DNKA',
   initial: 'BD',
   states: {
     BD: {
       on: {
         NEXT: {
-          target: 'END',
+          target: 'SPA',
         },
       },
     },
-    END: {},
+    SPA: {
+      on: {
+        NEXT: {
+          target: 'SQCA',
+        },
+      },
+    },
+    SQCA: {
+      on: {
+        NEXT: {
+          target: 'END',
+        },
+        QuantQualAsp: {
+          target: 'QQA',
+        },
+      },
+    },
+    END: {
+      type: 'final',
+    },
+    QQA: {
+      on: {
+        NEXT: {
+          target: 'SQCA',
+        },
+      },
+    },
   },
 };
 

@@ -130,7 +130,7 @@ class WorkflowManager {
       }
       console.log('Value:', snapshot.value);
       const state = getStateDef(snapshot.value, this._smdef);
-      console.log('STATE:', state);
+      console.log('STATE:', state.id);
 
       if (state.entry) {
         branchWorkflow(
@@ -163,7 +163,7 @@ class WorkflowManager {
     const value = getValue(snapshot.value);
     console.log('SNAPSHOT VALUE', value);
     console.log('SNAPSHOT ID', this._smdef.id);
-    console.log('SNAPSHOT STATES', states);
+    // console.log('SNAPSHOT STATES', states.length);
     const spec = states[this._smdef.id][value];
     // console.log('SNAPSHOT SPEC', spec);
 
