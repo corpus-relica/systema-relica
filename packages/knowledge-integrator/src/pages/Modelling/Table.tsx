@@ -55,7 +55,7 @@ export default function DenseTable({ rows, height = 500 }) {
     // wrapping container with theme & size
     <div
       className="ag-theme-balham" // applying the grid theme
-      style={{ height: height }} // the grid will fill the size of the parent container
+      style={{ height: height, fontSize: "0.55em" }} // the grid will fill the size of the parent container
     >
       <AgGridReact
         rowData={rows}
