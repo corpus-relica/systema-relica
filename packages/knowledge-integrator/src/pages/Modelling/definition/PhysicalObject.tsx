@@ -54,6 +54,7 @@ const Modelling = (props: any) => {
       lh_object_name: "concept",
     },
     aspects: [],
+    intrinsicAspects: [],
     aspectQualifications: {},
     // aspect: {
     //   lh_object_uid: 1,
@@ -96,7 +97,7 @@ const Modelling = (props: any) => {
         supertype.lh_object_uid,
         preferredName
       );
-      setFieldValue("definition", completion.data);
+      setFieldValue("definition", completion);
     }
   };
 
