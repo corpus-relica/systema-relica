@@ -8,7 +8,6 @@ import {
   FieldArray,
 } from "formik";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
-import axios from "axios";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
@@ -16,32 +15,11 @@ import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import ExistingQualifiedAspectField from "./ExistingQualifiedAspectField";
 import NewQualificationOfAspectField from "./NewQualificationOfAspectField";
-// import NewIntrinsicAspectField from "./NewIntrinsicAspectField";
 
 const QualifiedAspectField = (props: any) => {
-  const {
-    //     values: { textA, textB },
-    touched,
-    setFieldValue,
-  } = useFormikContext();
+  const { index } = props;
 
-  const { handleOpen, remove, index } = props;
-  const [field, meta] = useField(props);
-
-  const [qualificationsUI, setQualificationsUI] = useState([]);
-  const [selectedQual, setSelectedQual] = useState("");
-  const [qux, setQux] = useState("");
   const [qualifiedAspectSource, setQualifiedAspectSource] = useState("");
-
-  const handleChange = (event: SelectChangeEvent) => {
-    // console.log("val-->", event.target.value);
-    // console.log("QUX!!", qux);
-    // setFieldValue(
-    //   `aspectQualifications.${field.value.lh_object_uid}`,
-    //   qux[event.target.value]
-    // );
-    // setSelectedQual(event.target.value);
-  };
 
   return (
     <Box

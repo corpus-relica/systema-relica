@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useStore } from "react-admin";
-import {
-  Formik,
-  Field,
-  Form,
-  useField,
-  useFormikContext,
-  FieldArray,
-} from "formik";
-import axios from "axios";
+import { Field, useFormikContext } from "formik";
 
 import Grid from "@mui/material/Grid";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -30,9 +22,6 @@ const NewQualificationOfAspectField = (props: any) => {
   const [conceptualAspectUID, setConceptualAspectUID] = useState(undefined);
 
   useEffect(() => {
-    console.log("values", values, index);
-    console.log(values.intrinsicAspects[index]?.conceptualAspect);
-
     setConceptualAspectName(
       values.intrinsicAspects[index]?.conceptualAspect.lh_object_name
     );
@@ -54,7 +43,6 @@ const NewQualificationOfAspectField = (props: any) => {
         conceptualAspectUID,
         preferredName
       );
-      console.log("completion", completion);
       setFieldValue(
         `intrinsicAspects.${index}.newQualificationOfConceptualAspect.definition`,
         completion

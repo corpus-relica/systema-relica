@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Formik,
   Field,
@@ -10,7 +10,8 @@ import {
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
-import MyField from "./MyField";
+
+import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
@@ -18,61 +19,9 @@ import NewIntrinsicAspectField from "./NewIntrinsicAspectField";
 import ExistingIntrinsicAspectField from "./ExistingIntrinsicAspectField";
 
 const MyAspectField = (props: any) => {
-  const {
-    //     values: { textA, textB },
-    touched,
-    setFieldValue,
-  } = useFormikContext();
-  const { handleOpen, remove, index } = props;
-  const [field, meta] = useField(props);
+  const { remove, index } = props;
 
-  const [selectedQual, setSelectedQual] = useState("");
-  const [qux, setQux] = useState("");
   const [intrinsicAspectSource, setIntrinsicAspectSource] = useState("");
-
-  const handleChange = (event: SelectChangeEvent) => {
-    console.log("val-->", event.target.value);
-    console.log("QUX!!", qux);
-    setFieldValue(
-      `aspectQualifications.${field.value.lh_object_uid}`,
-      qux[event.target.value]
-    );
-    setSelectedQual(event.target.value);
-  };
-
-  // useEffect(() => {
-  //   const fonk = async () => {
-  //     if (field.value) {
-  //       const foo = await axios.get(
-  //         `http://localhost:3000/aspect/qualifications?uid=${field.value.lh_object_uid}`
-  //       );
-  //       console.log(foo);
-  //       if (foo.data && foo.data.length > 0) {
-  //         const quux = {};
-  //         const qualifications = foo.data.map((f: any) => {
-  //           quux[f.lh_object_uid] = f;
-  //           return (
-  //             <MenuItem value={f.lh_object_uid}>{f.lh_object_name}</MenuItem>
-  //           );
-  //         });
-  //         setQux(quux);
-  //         setQualificationsUI(
-  //           <Select
-  //             labelId="demo-simple-select-label"
-  //             id="demo-simple-select"
-  //             value={selectedQual}
-  //             label="Workflow"
-  //             onChange={handleChange}
-  //           >
-  //             {...qualifications}
-  //           </Select>
-  //         );
-  //       }
-  //     }
-  //   };
-  //   console.log("FOOBARBAZ!!!");
-  //   fonk();
-  // }, [field.value, selectedQual]);
 
   return (
     <Box
@@ -115,6 +64,15 @@ const MyAspectField = (props: any) => {
               name={"intrinsicAspects." + index}
             />
           )}
+        </Grid>
+        <Grid container sx={12} gap={1}>
+          <Button
+            onClick={() => {
+              remove();
+            }}
+          >
+            Remove
+          </Button>
         </Grid>
       </Grid>
     </Box>

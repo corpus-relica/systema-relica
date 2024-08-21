@@ -7,7 +7,7 @@ import MyField from "./MyField";
 
 const ExistingIntrinsicAspectField = (props: any) => {
   const { setFieldValue } = useFormikContext();
-  const { handleOpen, remove, index } = props;
+  const { handleOpen, index } = props;
 
   return (
     <Grid xs={12}>

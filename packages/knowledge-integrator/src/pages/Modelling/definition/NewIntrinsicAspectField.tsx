@@ -16,29 +16,21 @@ const ANTHROPIC_API_KEY = "anthropic_api_key";
 const NewIntrinsicAspectField = (props: any) => {
   const [openAIAPIKey, setOpenAIAPIKey] = useStore(OPEN_AI_API_KEY, null);
 
-  const {
-    //     values: { textA, textB },
-    values,
-    touched,
-    setFieldValue,
-  } = useFormikContext();
-  const { handleOpen, remove, index } = props;
+  const { values, setFieldValue } = useFormikContext();
+  const { handleOpen, index } = props;
 
   const conjureDef = async (
     values: any,
     setFieldValue: (field: string, value: any) => void
   ) => {
-    console.log("values", values, index);
     const preferredName = values.intrinsicAspects[index].preferredName;
     const supertype = values.intrinsicAspects[index].supertypeIntrinsicAspect;
-    console.log("conjureDef", supertype, preferredName, openAIAPIKey);
     if (openAIAPIKey !== null) {
       const completion = await conjureDefinition(
         openAIAPIKey,
         supertype.lh_object_uid,
         preferredName
       );
-      console.log("completion", completion);
       setFieldValue(`intrinsicAspects.${index}.definition`, completion);
     }
   };
