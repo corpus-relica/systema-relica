@@ -5,6 +5,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 
 const ExistingQualifiedAspectField = (props: any) => {
+  const { index } = props;
   const { setFieldValue } = useFormikContext();
   const [qux, setQux] = useState("");
   const [field, meta] = useField(props);
@@ -15,9 +16,13 @@ const ExistingQualifiedAspectField = (props: any) => {
     console.log("val-->", event.target.value);
     console.log("QUX!!", qux);
     setFieldValue(
-      `aspectQualifications.${field.value.lh_object_uid}`,
+      `intrinsicAspects.${index}.existingQualificationOfConceptualAspect`,
       qux[event.target.value]
     );
+    // setFieldValue(
+    //   `aspectQualifications.${field.value.lh_object_uid}`,
+    //   qux[event.target.value]
+    // );
     setSelectedQual(event.target.value);
   };
 
