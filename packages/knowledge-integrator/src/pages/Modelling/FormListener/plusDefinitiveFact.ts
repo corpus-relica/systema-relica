@@ -1,4 +1,4 @@
-import { baseFact } from "../../baseFact";
+import { baseFact } from "../baseFact";
 
 export const plusDefinitiveFact = (props: any) => {
   const { facts, uid, preferredName, supertype, definition, collection } =

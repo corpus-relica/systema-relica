@@ -9,7 +9,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Foo from "./definition/PhysicalObject";
 import CreateAspect from "./misc/CreateAspect";
 import CreateRole from "./misc/CreateRole";
-import CreateRelation from "./misc/CreateRelation";
+import CreateRelation from "./CreateRelation";
 import CreateOccurrence from "./misc/CreateOccurrence";
 import ReviewAspect from "./misc/ReviewAspect";
 import CreateBinaryFact from "./misc/CreateBinaryFact";

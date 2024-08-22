@@ -33,7 +33,7 @@ const MyAspectField = (props: any) => {
       sx={{ border: "2px solid grey", fontSize: "0.75rem" }}
     >
       <Grid container direction={"column"}>
-        <Grid sx={12}>
+        <Grid xs={12}>
           <FormControl fullWidth>
             <InputLabel id="simple-select-label">
               Intrinsic Aspect Source
@@ -52,7 +52,7 @@ const MyAspectField = (props: any) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid container sx={12} gap={1}>
+        <Grid container xs={12} gap={1}>
           {intrinsicAspectSource === "new" ? (
             <NewIntrinsicAspectField
               {...props}
@@ -65,7 +65,7 @@ const MyAspectField = (props: any) => {
             />
           )}
         </Grid>
-        <Grid container sx={12} gap={1}>
+        <Grid container xs={12} gap={1}>
           <Button
             onClick={() => {
               remove();

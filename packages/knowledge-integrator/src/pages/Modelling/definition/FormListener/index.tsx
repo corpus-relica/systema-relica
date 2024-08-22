@@ -1,7 +1,8 @@
 import React from "react";
 import { useFormikContext } from "formik";
 
-import { plusDefinitiveFact } from "./plusDefinitiveFact";
+import { plusDefinitiveFact } from "../../FormListener/plusDefinitiveFact";
+
 import { plusSynonymFacts } from "./plusSynonymFacts";
 import { plusAbbreviationFacts } from "./plusAbbreviationFacts";
 import { plusCodeFacts } from "./plusCodeFacts";

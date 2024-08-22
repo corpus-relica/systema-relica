@@ -23,7 +23,7 @@ const BaseDef = (props: any) => {
     values: any,
     setFieldValue: (field: string, value: any) => void
   ) => {
-    const supertype = values["supertype"];
+    const supertype = values[`${subject}Supertype`];
     const preferredName = values[`${subject}Name`];
 
     if (openAIAPIKey !== null) {
@@ -40,13 +40,13 @@ const BaseDef = (props: any) => {
     <>
       <label>
         supertype
-        <Field name="supertype.lh_object_uid" type="text" />
-        <Field name="supertype.lh_object_name" type="text" />
+        <Field name={`${subject}Supertype.lh_object_uid`} type="text" />
+        <Field name={`${subject}Supertype.lh_object_name`} type="text" />
         <IconButton
           aria-label="search"
           size="small"
           onClick={() => {
-            handleOpen("supertype", setFieldValue, supertypeConeUID); // "790229 - Role"
+            handleOpen(`${subject}Supertype`, setFieldValue, supertypeConeUID); // "790229 - Role"
           }}
         >
           <SearchIcon fontSize="inherit" />
