@@ -7,14 +7,14 @@ export const plusCompositionFacts = (props: any) => {
 
   if (part && part.lh_object_uid && part.lh_object_name) {
     // codes.forEach((term: string) => {
-    facts.push({
+    newFacts.push({
       ...baseFact,
-      lh_object_uid: uid.toString(),
-      lh_object_name: preferredName,
+      lh_object_uid: part.lh_object_uid.toString(),
+      lh_object_name: part.lh_object_name,
       rel_type_uid: "5519",
       rel_type_name: "is by definition a possible part of a",
-      rh_object_uid: part.lh_object_uid.toString(),
-      rh_object_name: part.lh_object_name,
+      rh_object_uid: uid.toString(),
+      rh_object_name: preferredName,
       collection_uid: collection.uid,
       collection_name: collection.name,
     });

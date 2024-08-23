@@ -9,6 +9,8 @@ import { conjureDefinition } from "../../../CCClient";
 
 import MyField from "./MyField";
 import QualifiedAspectField from "./QualifiedAspectField";
+import KGEntityField from "../ui/KGEntityField";
+import DefinitionField from "../ui/DefinitionField";
 
 const OPEN_AI_API_KEY = "openai_api_key";
 const ANTHROPIC_API_KEY = "anthropic_api_key";
@@ -39,36 +41,12 @@ const NewIntrinsicAspectField = (props: any) => {
     <div>
       <Grid container xs={12} gap={1} direction={"row"}>
         <Grid xs={12}>
-          <Grid xs={6}>
-            <label>
-              supertype intrinsic aspect uid
-              <MyField
-                name={`intrinsicAspects.${index}.supertypeIntrinsicAspect.lh_object_uid`}
-                onClick={() => {
-                  handleOpen(
-                    `intrinsicAspects.${index}.supertypeIntrinsicAspect`,
-                    setFieldValue,
-                    4289 // intrinsic aspect
-                  );
-                }}
-              />
-            </label>
-          </Grid>
-          <Grid xs={6}>
-            <label>
-              supertype intrinsic aspect name
-              <MyField
-                name={`intrinsicAspects.${index}.supertypeIntrinsicAspect.lh_object_name`}
-                onClick={() => {
-                  handleOpen(
-                    `intrinsicAspects.${index}.supertypeIntrinsicAspect`,
-                    setFieldValue,
-                    4289 // intrinsic aspect
-                  );
-                }}
-              />
-            </label>
-          </Grid>
+          <KGEntityField
+            name={`intrinsicAspects.${index}.supertypeIntrinsicAspect`}
+            label="supertype intrinsic aspect"
+            handleOpen={handleOpen}
+            searchConeUID={4289}
+          />
         </Grid>
         <Grid xs={12}>
           <Grid xs={6}>
@@ -78,21 +56,10 @@ const NewIntrinsicAspectField = (props: any) => {
             </label>
           </Grid>
           <Grid xs={6}>
-            <label>
-              new intrinsic aspect textual definition
-              {/*<MyField name="definition" multiline rows={4} />*/}
-              <MyField
-                name={`intrinsicAspects.${index}.definition`}
-                as="textarea"
-                placeholder="Enter definition here"
-                multiLine
-                rows={4}
-                fullWidth
-              />
-              <IconButton onClick={() => conjureDef(values, setFieldValue)}>
-                <AutoAwesomeIcon />
-              </IconButton>
-            </label>
+            <DefinitionField
+              name={`intrinsicAspects.${index}.definition`}
+              label="definition"
+            />
           </Grid>
         </Grid>
 

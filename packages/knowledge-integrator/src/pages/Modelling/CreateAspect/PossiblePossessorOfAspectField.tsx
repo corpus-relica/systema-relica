@@ -1,7 +1,6 @@
 import React from "react";
 import Grid from "@mui/material/Grid";
-import SearchIcon from "@mui/icons-material/Search";
-import IconButton from "@mui/material/IconButton";
+import KGEntityField from "../ui/KGEntityField";
 
 import {
   Formik,
@@ -19,27 +18,12 @@ const PossiblePossessorOfAspectField = (props: any) => {
 
   return (
     <Grid key={index} container xs={12}>
-      <Grid xs={11}>
-        <Grid key={index} container xs={12}>
-          <label>Possessor</label>
-          <Field name={`possessors.${index}.lh_object_uid`} />
-          <Field name={`possessors.${index}.lh_object_name`} />
-          <IconButton
-            aria-label="search"
-            size="small"
-            onClick={() => {
-              handleOpen(`possessors.${index}`, setFieldValue, 740000);
-            }}
-          >
-            <SearchIcon fontSize="inherit" />
-          </IconButton>
-        </Grid>
-      </Grid>
-      <Grid xs={1}>
-        <button type="button" onClick={() => remove(index)}>
-          -
-        </button>
-      </Grid>
+      <KGEntityField
+        name={`possessors.${index}`}
+        label="Possessor"
+        handleOpen={handleOpen}
+        searchConeUID={740000}
+      />
     </Grid>
   );
 };

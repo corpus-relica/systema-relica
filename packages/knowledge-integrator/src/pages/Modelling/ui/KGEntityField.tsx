@@ -1,13 +1,14 @@
 import Grid from "@mui/material/Grid";
 import SearchIcon from "@mui/icons-material/Search";
 import IconButton from "@mui/material/IconButton";
-import { Field } from "formik";
+import { Field, useFormikContext } from "formik";
 
-const KGEntityField = (props) => {
-  const { name, label, handleOpen, setFieldValue, searchConeUID } = props;
+const KGEntityField = (props: any) => {
+  const { name, label, handleOpen, searchConeUID } = props;
+  const { setFieldValue } = useFormikContext();
 
   return (
-    <Grid xs={12}>
+    <>
       <Grid xs={12}>{label}</Grid>
       <Grid xs={12}>
         <Field
@@ -28,7 +29,7 @@ const KGEntityField = (props) => {
           <SearchIcon fontSize="inherit" />
         </IconButton>
       </Grid>
-    </Grid>
+    </>
   );
 };
 

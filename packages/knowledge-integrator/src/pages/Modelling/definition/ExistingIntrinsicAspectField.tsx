@@ -1,46 +1,20 @@
 import React from "react";
-import { useFormikContext } from "formik";
 
 import Grid from "@mui/material/Grid";
 
-import MyField from "./MyField";
+import KGEntityField from "../ui/KGEntityField";
 
 const ExistingIntrinsicAspectField = (props: any) => {
-  const { setFieldValue } = useFormikContext();
   const { handleOpen, index } = props;
 
   return (
     <Grid xs={12}>
-      <Grid xs={6}>
-        <label>
-          existing intrinsic aspect uid
-          <MyField
-            name={`intrinsicAspects.${index}.existingIntrinsicAspect.lh_object_uid`}
-            onClick={() => {
-              handleOpen(
-                `intrinsicAspects.${index}.existingIntrinsicAspect`,
-                setFieldValue,
-                4289 // intrinsic aspect
-              );
-            }}
-          />
-        </label>
-      </Grid>
-      <Grid xs={6}>
-        <label>
-          existing intrinsic aspect name
-          <MyField
-            name={`intrinsicAspects.${index}.existingIntrinsicAspect.lh_object_name`}
-            onClick={() => {
-              handleOpen(
-                `intrinsicAspects.${index}.existingIntrinsicAspect`,
-                setFieldValue,
-                4289 // intrinsic aspect
-              );
-            }}
-          />
-        </label>
-      </Grid>
+      <KGEntityField
+        name={`intrinsicAspects.${index}.existingIntrinsicAspect`}
+        label="Existing Intrinsic Aspect"
+        handleOpen={handleOpen}
+        searchConeUID={4289}
+      />
     </Grid>
   );
 };

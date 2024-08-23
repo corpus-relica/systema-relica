@@ -32,7 +32,7 @@ const MyAspectField = (props: any) => {
       p={2}
       sx={{ border: "2px solid grey", fontSize: "0.75rem" }}
     >
-      <Grid container direction={"column"}>
+      <Grid container direction={"column"} xs={12}>
         <Grid xs={12}>
           <FormControl fullWidth>
             <InputLabel id="simple-select-label">
@@ -53,12 +53,13 @@ const MyAspectField = (props: any) => {
           </FormControl>
         </Grid>
         <Grid container xs={12} gap={1}>
-          {intrinsicAspectSource === "new" ? (
+          {intrinsicAspectSource === "new" && (
             <NewIntrinsicAspectField
               {...props}
               name={"intrinsicAspects." + index}
             />
-          ) : (
+          )}
+          {intrinsicAspectSource === "existing" && (
             <ExistingIntrinsicAspectField
               {...props}
               name={"intrinsicAspects." + index}

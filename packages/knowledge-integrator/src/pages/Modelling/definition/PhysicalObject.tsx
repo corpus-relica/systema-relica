@@ -27,17 +27,10 @@ import SynonymAbbrvCode from "./SynonymAbbrvCode";
 import MyAspectField from "./MyAspectField";
 import FormListener from "./FormListener";
 import MyField from "./MyField";
-
-const OPEN_AI_API_KEY = "openai_api_key";
-const ANTHROPIC_API_KEY = "anthropic_api_key";
+import KGEntityField from "../ui/KGEntityField";
+import DefinitionField from "../ui/DefinitionField";
 
 const Modelling = (props: any) => {
-  const [openAIAPIKey, setOpenAIAPIKey] = useStore(OPEN_AI_API_KEY, null);
-  const [anthropicAPIKey, setAnthropicAPIKey] = useStore(
-    ANTHROPIC_API_KEY,
-    null
-  );
-
   const { handleOpen, handleClose, collection } = props;
   const initialValues = {
     uid: 1,
@@ -86,21 +79,6 @@ const Modelling = (props: any) => {
 
   const mutation = useMutation(createMutation(facts, setSubmissionStatus));
 
-  const conjureDef = async (
-    values: any,
-    setFieldValue: (field: string, value: any) => void
-  ) => {
-    const { preferredName, supertype } = values;
-    if (openAIAPIKey !== null) {
-      const completion = await conjureDefinition(
-        openAIAPIKey,
-        supertype.lh_object_uid,
-        preferredName
-      );
-      setFieldValue("definition", completion);
-    }
-  };
-
   return (
     <div className="App">
       <h3>Physical Object Definition Model</h3>
@@ -142,48 +120,24 @@ const Modelling = (props: any) => {
                     <MyField name="languageCommunity" />
                   </label>
                   <br />
-                  <label>
-                    supertype concept uid
-                    <MyField
-                      name="supertype.lh_object_uid"
-                      onClick={() => {
-                        handleOpen("supertype", setFieldValue, 730044);
-                      }}
-                    />
-                  </label>
-                  <br />
-                  <label>
-                    supertype concept name
-                    <MyField
-                      name="supertype.lh_object_name"
-                      onClick={() => {
-                        handleOpen("supertype", setFieldValue, 730044);
-                      }}
-                    />
-                  </label>
+                  <KGEntityField
+                    name="supertype"
+                    label="supertype"
+                    handleOpen={handleOpen}
+                    searchConeUID={730044}
+                  />
                   <br />
                   <label>
                     preferred name
                     <MyField name="preferredName" />
                   </label>
                   <br />
-                  <label>
-                    textual definition
-                    {/*<MyField name="definition" multiline rows={4} />*/}
-                    <MyField
-                      name="definition"
-                      as="textarea"
-                      placeholder="Enter definition here"
-                      multiLine
-                      rows={4}
-                      fullWidth
-                    />
-                    <IconButton
-                      onClick={() => conjureDef(values, setFieldValue)}
-                    >
-                      <AutoAwesomeIcon />
-                    </IconButton>
-                  </label>
+                  <DefinitionField
+                    name="definition"
+                    label="textual definition"
+                    termName="preferredName"
+                    supertype="supertype"
+                  />
                   <br />
                   <SynonymAbbrvCode
                     synonyms={values.synonyms}
@@ -209,49 +163,18 @@ const Modelling = (props: any) => {
                     )}
                   </FieldArray>
                   <br />
-                  <label>
-                    discriminating function uid
-                    <MyField
-                      name="func.lh_object_uid"
-                      onClick={() => {
-                        handleOpen("func", setFieldValue, 193671);
-                      }}
-                    />
-                  </label>
-                  <br />
-                  <label>
-                    discriminating function name
-                    <MyField
-                      name="func.lh_object_name"
-                      onClick={() => {
-                        handleOpen("func", setFieldValue, 193671);
-                      }}
-                    />
-                  </label>
-                  <br />
-                  <br />
-                  <label>
-                    obligatory part uid
-                    <MyField
-                      name="part.lh_object_uid"
-                      onClick={() => {
-                        handleOpen("part", setFieldValue, 730044);
-                      }}
-                    />
-                  </label>
-                  <br />
-                  <label>
-                    obligatory part name
-                    <MyField
-                      name="part.lh_object_name"
-                      onClick={() => {
-                        handleOpen("part", setFieldValue, 730044);
-                      }}
-                    />
-                    <br />
-                    ...
-                  </label>
-                  <br />
+                  <KGEntityField
+                    name="func"
+                    label="discriminating function"
+                    handleOpen={handleOpen}
+                    searchConeUID={193671}
+                  />
+                  <KGEntityField
+                    name="part"
+                    label="obligatory part"
+                    handleOpen={handleOpen}
+                    searchConeUID={730044}
+                  />
                   <button type="submit">Submit</button>
                   {submissionStatus === "pending" && <div>Submitting...</div>}
                   {submissionStatus === "success" && <div>Success!</div>}
