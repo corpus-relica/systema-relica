@@ -36,16 +36,15 @@ const CreateRelation = (props: any) => {
   };
 
   const initialValues = {
-    realizedRelationName: "",
-    realizedRelationDefinition: "",
-    realizedRelationParent: {
-      rh_object_uid: 0,
-      rh_object_name: "",
-    },
-    realizedRequiredRole1: {},
-    realizedRequiredRole2: {},
-
-    collection: collection,
+    // realizedRelationName: "",
+    // realizedRelationDefinition: "",
+    // realizedRelationParent: {
+    //   rh_object_uid: 0,
+    //   rh_object_name: "",
+    // },
+    // realizedRequiredRole1: {},
+    // realizedRequiredRole2: {},
+    // collection: collection,
   };
 
   return (

@@ -12,6 +12,10 @@ import axios from "axios";
 import { baseFact } from "../baseFact";
 import BaseDef from "../BaseDef";
 
+import FormListener from "./FormListener";
+import QualificationOfConceptualAspectField from "./QualificationOfConceptualAspectField";
+import PossiblePossessorOfAspectField from "./PossiblePossessorOfAspectField";
+
 import {
   Formik,
   Field,
@@ -20,67 +24,6 @@ import {
   useFormikContext,
   FieldArray,
 } from "formik";
-
-const FormListener = ({ updateFacts }: { updateFacts: any }) => {
-  const { values }: { values: any } = useFormikContext();
-
-  React.useEffect(() => {
-    // console.log("Form values changed:", values);
-    // Perform any desired action when form values change
-    const {
-      supertype,
-      aspectName,
-      aspectDefinition,
-      qualifications,
-      collection,
-    } = values;
-
-    const facts = [];
-    let definitiveFact = null;
-
-    let definitiveUid = 1;
-    let uid = definitiveUid;
-
-    if (supertype && aspectName && aspectDefinition) {
-      definitiveFact = facts.push({
-        ...baseFact,
-        lh_object_uid: uid.toString(),
-        lh_object_name: aspectName,
-        rel_type_uid: "1146",
-        rel_type_name: "is a specialization of",
-        rh_object_uid: supertype.lh_object_uid.toString(),
-        rh_object_name: supertype.lh_object_name,
-        full_definition: aspectDefinition,
-        partial_definition: aspectDefinition,
-        collection_uid: collection.uid,
-        collection_name: collection.name,
-      });
-      uid++;
-
-      if (qualifications && qualifications.length > 0) {
-        qualifications.forEach((qual: string) => {
-          if (!qual) return;
-          facts.push({
-            ...baseFact,
-            lh_object_uid: uid.toString(),
-            lh_object_name: qual,
-            rel_type_uid: "1726",
-            rel_type_name: "is a qualification of",
-            rh_object_uid: definitiveUid,
-            rh_object_name: aspectName,
-            collection_uid: collection.uid,
-            collection_name: collection.name,
-          });
-          uid++;
-        });
-      }
-    }
-
-    updateFacts(facts);
-  }, [values]);
-
-  return null;
-};
 
 const CreateAspect = (props: any) => {
   const { handleOpen, handleClose, collection } = props;
@@ -92,6 +35,7 @@ const CreateAspect = (props: any) => {
       rh_object_name: "",
     },
     qualifications: [],
+    possessors: [],
     collection: collection,
   };
 
@@ -129,15 +73,36 @@ const CreateAspect = (props: any) => {
             {({ setFieldValue, values }) => (
               <div className="section">
                 <Form>
-                  <BaseDef
-                    subject="aspect"
-                    handleOpen={handleOpen}
-                    setFieldValue={setFieldValue}
-                    supertypeConeUID={790229}
-                    values={values}
-                  />
-                  <br />
-                  <Grid container spacing={2}>
+                  <Grid container xs={12}>
+                    <Grid container xs={6}>
+                      <BaseDef
+                        subject="aspect"
+                        handleOpen={handleOpen}
+                        setFieldValue={setFieldValue}
+                        supertypeConeUID={790229}
+                        values={values}
+                      />
+                    </Grid>
+                    <Grid container xs={6}>
+                      <FieldArray name="possessors">
+                        {({ push, remove }) => (
+                          <div>
+                            <h5>Possessors</h5>
+                            {values.possessors.map((_: any, index: number) => (
+                              <PossiblePossessorOfAspectField
+                                {...props}
+                                index={index}
+                              />
+                            ))}
+                            <button type="button" onClick={() => push("")}>
+                              +
+                            </button>
+                          </div>
+                        )}
+                      </FieldArray>
+                    </Grid>
+                  </Grid>
+                  <Grid container xs={12}>
                     <Grid item xs={12}>
                       <FieldArray name="qualifications">
                         {({ push, remove }) => (
@@ -145,17 +110,10 @@ const CreateAspect = (props: any) => {
                             <h5>Qualifications</h5>
                             {values.qualifications.map(
                               (_: any, index: number) => (
-                                <div key={index}>
-                                  <label>
-                                    <Field name={`qualifications.${index}`} />
-                                  </label>
-                                  <button
-                                    type="button"
-                                    onClick={() => remove(index)}
-                                  >
-                                    -
-                                  </button>
-                                </div>
+                                <QualificationOfConceptualAspectField
+                                  {...props}
+                                  index={index}
+                                />
                               )
                             )}
                             <button type="button" onClick={() => push("")}>

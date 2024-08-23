@@ -7,7 +7,7 @@ import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 // ------------------------------------------------------------
 import Foo from "./definition/PhysicalObject";
-import CreateAspect from "./misc/CreateAspect";
+import CreateAspect from "./CreateAspect";
 import CreateRole from "./misc/CreateRole";
 import CreateRelation from "./CreateRelation";
 import CreateOccurrence from "./misc/CreateOccurrence";
