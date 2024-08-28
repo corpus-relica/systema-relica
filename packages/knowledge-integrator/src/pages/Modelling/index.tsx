@@ -10,7 +10,7 @@ import Foo from "./definition/PhysicalObject";
 import CreateAspect from "./CreateAspect";
 import CreateRole from "./CreateRole";
 import CreateRelation from "./CreateRelation";
-import CreateOccurrence from "./misc/CreateOccurrence";
+import CreateOccurrence from "./CreateOccurrence";
 import ReviewAspect from "./misc/ReviewAspect";
 import CreateBinaryFact from "./misc/CreateBinaryFact";
 import ClassifyIndividual from "./misc/ClassifyIndividual";

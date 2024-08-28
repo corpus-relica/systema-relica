@@ -310,6 +310,7 @@ export class EnvironmentService {
   }
 
   async listSubtypes(uid: number) {
+    console.log('LIST SUBTYPES');
     const result = await this.archivistService.getSubtypes(uid);
     const models = await this.modelsFromFacts(result);
     const payload = { facts: result, models };

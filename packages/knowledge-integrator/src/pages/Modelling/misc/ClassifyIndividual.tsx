@@ -9,6 +9,8 @@ import axios from "axios";
 import { baseFact } from "../baseFact";
 import createMutation from "../validateAndSubmitBinaryFactMutation";
 
+import DefinitionField from "../ui/DefinitionField";
+
 import {
   Formik,
   Field,
@@ -43,7 +45,7 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rel_type_name: "is classified as",
         rh_object_uid: kind.lh_object_uid.toString(),
         rh_object_name: kind.lh_object_name,
-        full_definition: definition,
+        full_definition: `is a ${kind.lh_object_name} ${definition}`,
         partial_definition: definition,
         collection_uid: collection.uid,
         collection_name: collection.name,
@@ -117,10 +119,13 @@ const ClassifyIndividual = (props: any) => {
                     <Field name="name" type="" />
                   </label>
                   <br />
-                  <label>
-                    individual definition
-                    <Field name="definition" type="text" />
-                  </label>
+                  <DefinitionField
+                    name="definition"
+                    label="individual definition"
+                    termName="name"
+                    supertype="kind"
+                  />
+
                   <br />
                   <Grid container spacing={2}>
                     <Grid item xs={12}>

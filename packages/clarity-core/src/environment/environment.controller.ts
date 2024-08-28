@@ -112,7 +112,7 @@ export class EnvironmentController {
     }
   }
 
-  @Get('loadSpecialization')
+  @Get('loadSpecialization/:uid')
   async loadSpecialization(@Param('uid') uid: string) {
     if (typeof uid === 'string') {
       const result = await this.environmentService.getSpecializationFactByUID(
@@ -156,9 +156,10 @@ export class EnvironmentController {
     // }
   }
 
-  @Get('listSubtypes')
+  @Get('listSubtypes/:uid') // Add :uid to the route
   async listSubtypes(@Param('uid') uid: string) {
-    if (typeof uid === 'string') {
+    console.log('listSubtypes', uid);
+    if (!isNaN(Number(uid))) {
       const result = await this.environmentService.listSubtypes(parseInt(uid));
       return result;
     } else {

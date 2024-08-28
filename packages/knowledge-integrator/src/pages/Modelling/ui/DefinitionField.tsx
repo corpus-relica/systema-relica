@@ -8,6 +8,8 @@ import { conjureDefinition } from "../../../CCClient";
 
 import { useStore } from "react-admin";
 
+import _ from "lodash";
+
 const OPEN_AI_API_KEY = "openai_api_key";
 
 const DefinitionField = (props: any) => {
@@ -19,8 +21,11 @@ const DefinitionField = (props: any) => {
     values: any,
     setFieldValue: (field: string, value: any) => void
   ) => {
-    const preferredName = values[termName];
-    const st = values[supertype];
+    const preferredName = _.get(values, termName);
+    const st = _.get(values, supertype);
+
+    console.log("PN", preferredName);
+    console.log("ST", st);
 
     if (openAIAPIKey !== null) {
       const completion = await conjureDefinition(

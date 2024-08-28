@@ -43,7 +43,8 @@ const FormListener = ({ updateFacts }: { updateFacts: any }) => {
         rel_type_name: "is a specialization of",
         rh_object_uid: aspectSupertype.lh_object_uid.toString(),
         rh_object_name: aspectSupertype.lh_object_name,
-        full_definition: aspectDefinition,
+        full_definition:
+          "is a " + aspectSupertype.lh_object_name + " " + aspectDefinition,
         partial_definition: aspectDefinition,
         collection_uid: collection.uid,
         collection_name: collection.name,
