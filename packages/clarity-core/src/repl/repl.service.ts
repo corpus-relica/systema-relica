@@ -197,9 +197,9 @@ export class REPLService {
 
   // REP
   async rep(str: string, replEnv: any): Promise<string> {
-    this.logger.log('REP START -> ', str);
+    // this.logger.log('REP START -> ', str);
     const result = await this.EVAL(this.READ(str), replEnv);
-    this.logger.log('REP END -> ', this.PRINT(result));
+    // this.logger.log('REP END -> ', this.PRINT(result));
     return this.PRINT(result);
   }
 
@@ -385,7 +385,8 @@ models (modelsFromFacts facts)
 payload {:facts facts :models models}]
 (do
   (insertFacts facts)
-  (insertModels models)))
+  (insertModels models)
+  (selectEntity uid)))
 ))`;
     await this.rep(loadSpecializationHierarchyDef, replEnv);
 

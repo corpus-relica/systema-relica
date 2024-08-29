@@ -131,7 +131,7 @@ export class EnvironmentService {
 
       ret = uid;
     } else if (type === 'fact') {
-      // only if uid exists as lh_object_uid or rh_object_uid in env_fact
+      // only if uid exists as fact_uid in env_fact
       const res = await this.envFactRepository
         .createQueryBuilder('fact')
         .where("fact.fact->>'fact_uid' = :uid", { uid })
