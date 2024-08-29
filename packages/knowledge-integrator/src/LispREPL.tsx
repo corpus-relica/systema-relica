@@ -26,8 +26,8 @@ const highlightSyntax = (code: any) => {
 const LispREPL = () => {
   const terminalRef = useRef(null);
   const terminal: any = useRef(null);
-  const inputBuffer = useRef("");
-  const commandHistory = useRef([]);
+  const inputBuffer: any = useRef("");
+  const commandHistory: any = useRef([]);
   const historyIndex = useRef(-1);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const LispREPL = () => {
     terminal.current.writeln("Lisp REPL");
     terminal.current.write("lisp> ");
 
-    terminal.current.onKey(({ key, domEvent }) => {
+    terminal.current.onKey(({ key, domEvent }: { key: any; domEvent: any }) => {
       const printable =
         !domEvent.altKey && !domEvent.ctrlKey && !domEvent.metaKey;
 
@@ -93,14 +93,14 @@ const LispREPL = () => {
       terminal.current.writeln(`Evaluating: ${inputBuffer.current}`);
       commandHistory.current.push(inputBuffer.current);
       historyIndex.current = commandHistory.current.length;
-      console.log(inputBuffer.current);
       ccSocket.emit(
         "repl:eval",
         {
           command: inputBuffer.current,
         },
         (res: string) => {
-          console.log("ERM....", res);
+          terminal.current.writeln(highlightSyntax(res));
+          terminal.current.write("lisp> ");
         }
       );
       inputBuffer.current = "";
@@ -113,7 +113,7 @@ const LispREPL = () => {
     }
   };
 
-  const navigateHistory = (direction) => {
+  const navigateHistory = (direction: number) => {
     historyIndex.current += direction;
     if (historyIndex.current < 0) historyIndex.current = 0;
     if (historyIndex.current >= commandHistory.current.length) {
@@ -125,7 +125,7 @@ const LispREPL = () => {
     terminal.current.write("\r\x1B[K" + "lisp> " + inputBuffer.current);
   };
 
-  const isBalancedParentheses = (code) => {
+  const isBalancedParentheses = (code: string) => {
     let count = 0;
     for (let char of code) {
       if (char === "(") count++;

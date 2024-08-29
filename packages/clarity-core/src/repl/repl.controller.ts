@@ -33,7 +33,9 @@ export class REPLController {
     }
 
     try {
-      const result = await this.repl.exec(execCommandDto.command);
+      const result = await new Promise<any>((resolve, reject) => {
+        this.repl.exec(execCommandDto.command, resolve);
+      });
       return result;
     } catch (e) {
       this.logger.error('Error in chat:', e);

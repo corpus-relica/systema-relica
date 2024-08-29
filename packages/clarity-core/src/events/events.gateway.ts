@@ -100,7 +100,12 @@ export class EventsGateway {
   async replEval(@MessageBody('command') command: string): Promise<string> {
     this.logger.log('REPL:EVAL');
     this.logger.log(command);
-    const result = await this.repl.exec(command);
+
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(command, resolve);
+    });
+
+    console.log('REPL:EVAL RESULT', result);
     return result;
   }
 
@@ -108,25 +113,37 @@ export class EventsGateway {
 
   @SubscribeMessage('user:selectEntity')
   async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await this.repl.exec(`(selectEntity ${uid})`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(selectEntity ${uid})`, resolve);
+    });
+
     return result;
   }
 
   @SubscribeMessage('user:selectFact')
   async userSelectFact(@MessageBody('uid') uid: any): Promise<number> {
-    const result = await this.repl.exec(`(selectFact ${uid})`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(selectFact ${uid})`, resolve);
+    });
+
     return result;
   }
 
   @SubscribeMessage('user:selectNone')
   async userSelectNone(): Promise<number> {
-    const result = await this.repl.exec(`(selectNone)`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(selectNone)`, resolve);
+    });
+
     return result;
   }
 
   @SubscribeMessage('user:loadSubtypesCone')
   async userGetSubtypesCone(@MessageBody('uid') uid: any): Promise<number> {
-    const result = await this.repl.exec(`(loadSubtypesCone ${uid})`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(loadSubtypesCone ${uid})`, resolve);
+    });
+
     return result;
   }
 
@@ -134,26 +151,35 @@ export class EventsGateway {
   async userLoadSpecializationHierarchy(
     @MessageBody('uid') uid: number,
   ): Promise<any> {
-    const result = await this.repl.exec(`(loadSpecializationHierarchy ${uid})`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(loadSpecializationHierarchy ${uid})`, resolve);
+    });
+
     return result;
   }
 
   @SubscribeMessage('user:loadEntity')
   async userLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await this.repl.exec(`(loadEntity ${uid})`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(loadEntity ${uid})`, resolve);
+    });
     return result;
   }
 
   @SubscribeMessage('user:loadEntities')
   async userLoadEntities(@MessageBody('uids') uids: number[]): Promise<any> {
     const loadUidsStr = uids.join(' ');
-    const result = await this.repl.exec(`(loadEntities [${loadUidsStr}])`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(loadEntities [${loadUidsStr}])`, resolve);
+    });
     return result;
   }
 
   @SubscribeMessage('user:unloadEntity')
   async userUnloadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await this.repl.exec(`(unloadEntity ${uid})`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(unloadEntity ${uid})`, resolve);
+    });
     return result;
   }
 
@@ -162,13 +188,17 @@ export class EventsGateway {
     @MessageBody('uids') uids: number[],
   ): Promise<number[]> {
     const loadUidsStr = uids.join(' ');
-    const result = await this.repl.exec(`(unloadEntities [${loadUidsStr}])`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(unloadEntities [${loadUidsStr}])`, resolve);
+    });
     return result;
   }
 
   @SubscribeMessage('user:clearEntities')
   async userClearEntities(): Promise<void> {
-    const result = await this.repl.exec(`(clearEntities)`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(clearEntities)`, resolve);
+    });
     return;
   }
 
@@ -177,7 +207,7 @@ export class EventsGateway {
     console.log('DELETE ENTITY');
     console.log(uid);
     const result = await this.archivistService.deleteEntity(uid);
-    //if result is success
+    // if result is success
     console.log('DELETE ENTITY RESULT', result);
     const removedFactUids = await this.environmentService.unloadEntity(uid);
     // console.log("Entity deleted");
@@ -253,7 +283,9 @@ export class EventsGateway {
 
   @SubscribeMessage('user:loadAllRelatedFacts')
   async userGetAllRelatedFacts(@MessageBody('uid') uid: number): Promise<any> {
-    const result = await this.repl.exec(`(loadAllRelatedFacts ${uid})`);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(loadAllRelatedFacts ${uid})`, resolve);
+    });
     return result;
   }
 }

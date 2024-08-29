@@ -395,7 +395,7 @@ payload {:facts facts :models models}]
     return this.PRINT(result);
   }
 
-  private _expressionQueue: string[] = [];
+  private _expressionQueue: any[] = [];
   private _queueProcessing = false;
 
   private async _processQueue(): Promise<void> {
@@ -405,10 +405,11 @@ payload {:facts facts :models models}]
     this._queueProcessing = true;
 
     while (this._expressionQueue.length > 0) {
-      const str = this._expressionQueue.shift();
+      const [str, resolve] = this._expressionQueue.shift();
       try {
         if (str) {
-          await this.rep(str, this.replEnv);
+          const res = await this.rep(str, this.replEnv);
+          resolve(res);
         }
       } catch (e) {
         const err: Error = e;
@@ -421,8 +422,8 @@ payload {:facts facts :models models}]
     this._queueProcessing = false;
   }
 
-  async exec(str: string): Promise<any> {
-    this._expressionQueue.push(str);
+  async exec(str: string, resolve: any): Promise<any> {
+    this._expressionQueue.push([str, resolve]);
     return await this._processQueue();
   }
 }
