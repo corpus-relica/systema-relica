@@ -54,10 +54,15 @@ export class REPLService {
         }
         return f;
       case Node.List:
-        const foo = await Promise.all(
-          ast.list.map((ast) => this.EVAL(ast, env)),
-        );
-        return new MalList(foo);
+        // do it sequentially, not in parallel ... the dumb way
+        let results = [];
+        const l = ast.list.length;
+        for (let i = 0; i < l; i++) {
+          const a = ast.list[i];
+          results.push(await this.EVAL(a, env));
+        }
+
+        return new MalList(results);
       case Node.Vector:
         const bar = await Promise.all(
           ast.list.map((ast) => this.EVAL(ast, env)),
