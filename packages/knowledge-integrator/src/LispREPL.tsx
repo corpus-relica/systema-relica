@@ -4,13 +4,13 @@ import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ccSocket } from "./socket";
 
-const highlightSyntax = (code) => {
-  const keywords = ["defun", "lambda", "if", "cond", "let"];
+const highlightSyntax = (code: any) => {
+  const keywords = ["def!", "defun", "lambda", "if", "cond", "let"];
   const specialChars = ["(", ")", "[", "]"];
 
   return code
     .split(" ")
-    .map((token) => {
+    .map((token: any) => {
       if (keywords.includes(token)) {
         return `\x1b[33m${token}\x1b[0m`; // Yellow for keywords
       } else if (specialChars.includes(token)) {
@@ -25,12 +25,13 @@ const highlightSyntax = (code) => {
 
 const LispREPL = () => {
   const terminalRef = useRef(null);
-  const terminal = useRef(null);
+  const terminal: any = useRef(null);
   const inputBuffer = useRef("");
   const commandHistory = useRef([]);
   const historyIndex = useRef(-1);
 
   useEffect(() => {
+    if (!terminal === null) return;
     terminal.current = new Terminal({
       fontFamily: '"Fira Code", Menlo, monospace',
       cursorBlink: true,
@@ -78,9 +79,9 @@ const LispREPL = () => {
     return () => {
       terminal.current.dispose();
     };
-  }, []);
+  }, [terminal]);
 
-  const handleEnter = () => {
+  const handleEnter = async () => {
     terminal.current.writeln("");
     console.log(inputBuffer.current);
     console.log(inputBuffer.current.startsWith("("));
@@ -93,7 +94,15 @@ const LispREPL = () => {
       commandHistory.current.push(inputBuffer.current);
       historyIndex.current = commandHistory.current.length;
       console.log(inputBuffer.current);
-      ccSocket.emit("repl:eval", { command: inputBuffer.current });
+      ccSocket.emit(
+        "repl:eval",
+        {
+          command: inputBuffer.current,
+        },
+        (res: string) => {
+          console.log("ERM....", res);
+        }
+      );
       inputBuffer.current = "";
     } else {
       // Continue input on a new line
