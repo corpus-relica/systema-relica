@@ -21,6 +21,7 @@ import Paper from "@mui/material/Paper";
 import Specialization from "./display/Specialization";
 import Definition from "./display/Definition";
 import PossibleRole from "./display/PossibleRole";
+import WorkflowFactsVisualizer from "../../pages/Workflows/WorkflowFactsVisualizer";
 
 const KindDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");
@@ -161,11 +162,12 @@ const KindDetails: React.FC = () => {
             <Typography size="12px" style={{ fontWeight: 600 }}>
               AllRelatedFacts:
             </Typography>
-            <TableContainer component={Paper}>
+            {/*<TableContainer component={Paper}>
               <Table>
                 <TableBody>{factTableRows}</TableBody>
               </Table>
-            </TableContainer>
+            </TableContainer>*/}
+            <WorkflowFactsVisualizer facts={facts} sparse={true} />
           </Box>
         )}
       </Box>

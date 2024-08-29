@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { updateModelCollection } from "../../../CCClient";
 import Typography from "@mui/material/Typography";
 
+import Grid from "@mui/material/Grid";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
@@ -44,9 +45,6 @@ const Collection: React.FC<CollectionProps> = ({ uid, collection }) => {
   const submitColl = async () => {
     const result = await updateModelCollection(uid, newCollUID, newCollName);
 
-    console.log("RESULT !!! ------");
-    console.log(result);
-
     // TODO: this is a hack, in reality we need to complete the round trip on the update; show the actual updated definition state
     // definitions[currDefIdx].partial_definition = newPartialDef;
     // definitions[currDefIdx].full_definition = newFullDef;
@@ -58,7 +56,7 @@ const Collection: React.FC<CollectionProps> = ({ uid, collection }) => {
   };
 
   const editionComp = (
-    <Box>
+    <>
       <FormControl fullWidth>
         <InputLabel id="select-label">Age</InputLabel>
         <Select
@@ -105,29 +103,33 @@ const Collection: React.FC<CollectionProps> = ({ uid, collection }) => {
           <CloseIcon />
         </IconButton>
       </Stack>
-    </Box>
+    </>
   );
 
   const displayComp = (
-    <Box gap="xsmall">
+    <>
       <Typography size="12px" style={{ fontWeight: 500 }}>
         collection:
       </Typography>
       <Typography size="10px">{displayName}</Typography>
-    </Box>
+    </>
   );
 
   const comp = isEditing ? editionComp : displayComp;
 
   return (
-    <Box margin={{ vertical: "xsmall" }}>
+    <Grid container xs={12} border={1} padding={1}>
       {!isEditing && (
-        <IconButton onClick={() => setIsEditing(true)}>
-          <EditIcon />
-        </IconButton>
+        <Grid item xs={1.3} border={1}>
+          <IconButton onClick={() => setIsEditing(true)}>
+            <EditIcon />
+          </IconButton>
+        </Grid>
       )}
-      {comp}
-    </Box>
+      <Grid item xs={isEditing ? 12 : 10.7} border={1}>
+        {comp}
+      </Grid>
+    </Grid>
   );
 };
 

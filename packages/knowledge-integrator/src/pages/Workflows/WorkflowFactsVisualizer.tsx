@@ -49,14 +49,18 @@ const PixelText = styled(Box)({
   // wordBreak: "break-word",
 });
 
-const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
-  const { facts } = props;
+const WorkflowFactsVisualizer = (props: {
+  facts: string[];
+  sparse: boolean;
+}) => {
+  const { facts, sparse } = props;
+
+  const renderSparse = sparse || false;
 
   return (
     <>
       <FontStyle />
       <Stack spacing={1}>
-        <Typography variant="h6">FactsVisualization</Typography>
         <Box
           sx={{
             bgcolor: "background.paper",
@@ -78,27 +82,43 @@ const WorkflowFactsVisualizer = (props: { facts: string[] }) => {
                     color: "#cce",
                   }}
                 >
-                  <Grid xs={0.5}>
-                    <PixelText key={index}>{item.fact_uid}</PixelText>
-                  </Grid>
-                  <Grid xs={0.5}>
-                    <PixelText key={index}>{item.lh_object_uid}</PixelText>
-                  </Grid>
-                  <Grid xs={3}>
-                    <PixelText key={index}>{item.lh_object_name}</PixelText>
-                  </Grid>
-                  <Grid xs={1}>
-                    <PixelText key={index}>{item.rel_type_uid}</PixelText>
-                  </Grid>
-                  <Grid xs={3}>
-                    <PixelText key={index}>{item.rel_type_name}</PixelText>
-                  </Grid>
-                  <Grid xs={1}>
-                    <PixelText key={index}>{item.rh_object_uid}</PixelText>
-                  </Grid>
-                  <Grid xs={3}>
-                    <PixelText key={index}>{item.rh_object_name}</PixelText>
-                  </Grid>
+                  {renderSparse ? (
+                    <>
+                      <Grid xs={4}>
+                        <PixelText key={index}>{item.lh_object_name}</PixelText>
+                      </Grid>
+                      <Grid xs={4}>
+                        <PixelText key={index}>{item.rel_type_name}</PixelText>
+                      </Grid>
+                      <Grid xs={4}>
+                        <PixelText key={index}>{item.rh_object_name}</PixelText>
+                      </Grid>
+                    </>
+                  ) : (
+                    <>
+                      <Grid xs={0.5}>
+                        <PixelText key={index}>{item.fact_uid}</PixelText>
+                      </Grid>
+                      <Grid xs={0.5}>
+                        <PixelText key={index}>{item.lh_object_uid}</PixelText>
+                      </Grid>
+                      <Grid xs={3}>
+                        <PixelText key={index}>{item.lh_object_name}</PixelText>
+                      </Grid>
+                      <Grid xs={1}>
+                        <PixelText key={index}>{item.rel_type_uid}</PixelText>
+                      </Grid>
+                      <Grid xs={3}>
+                        <PixelText key={index}>{item.rel_type_name}</PixelText>
+                      </Grid>
+                      <Grid xs={1}>
+                        <PixelText key={index}>{item.rh_object_uid}</PixelText>
+                      </Grid>
+                      <Grid xs={3}>
+                        <PixelText key={index}>{item.rh_object_name}</PixelText>
+                      </Grid>
+                    </>
+                  )}
                 </Grid>
               ))}
           </Grid>

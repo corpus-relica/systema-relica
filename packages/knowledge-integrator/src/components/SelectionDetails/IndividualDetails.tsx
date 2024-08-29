@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
 
+import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -47,31 +48,38 @@ const IndividualDetails: React.FC = () => {
   const text = `${uid} (${type}) :: ${name}`;
 
   return (
-    <Box>
-      <Stack direction="row" align="left" justify="between">
-        <Box>
-          <Collection uid={definition[0].fact_uid} collection={collection} />
-          <Typography size="18px" style={{ fontWeight: 800 }}>
-            {text}
-          </Typography>
-          <Typography size="12px" style={{ fontWeight: 500 }}>
-            {classification && classification.length > 0
-              ? `Classification:`
-              : "error, concept seemingly not classified"}
-          </Typography>
-          {classification && classification.length > 0 ? (
-            <Classification uids={classification} individualUID={uid} />
-          ) : (
-            "error, concept seemingly not classified"
-          )}
-          {value && <Value value={value} />}
-          {definition && <Definition definitions={definition} />}
-        </Box>
+    <Grid container xs={12} direction="row">
+      <Grid boxShadow={2} item xs={12}>
+        <Collection uid={definition[0].fact_uid} collection={collection} />
+        <Typography size="18px" style={{ fontWeight: 800 }}>
+          {text}
+        </Typography>
+        <Typography size="12px" style={{ fontWeight: 500 }}>
+          {classification && classification.length > 0
+            ? `Classification:`
+            : "error, concept seemingly not classified"}
+        </Typography>
+        {classification && classification.length > 0 ? (
+          <Classification uids={classification} individualUID={uid} />
+        ) : (
+          "error, concept seemingly not classified"
+        )}
+        {value && <Value value={value} />}
+        {definition && <Definition definitions={definition} />}
+      </Grid>
+      <Grid
+        item
+        xs={12}
+        border={1}
+        borderRadius={2}
+        borderColor={"orange"}
+        margin={1}
+      >
         <IconButton onClick={pushDataToClipboard}>
           <CopyAllIcon />
         </IconButton>
-      </Stack>
-    </Box>
+      </Grid>
+    </Grid>
   );
 };
 

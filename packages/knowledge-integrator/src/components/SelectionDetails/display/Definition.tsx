@@ -10,6 +10,11 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 
+import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import ArrowLeftIcon from "@mui/icons-material/ArrowLeft";
+
+import Grid from "@mui/material/Grid";
+
 interface Def {
   fact_uid: number;
   partial_definition: string;
@@ -98,58 +103,54 @@ const Definition: React.FC<DefinitionProps> = ({ definitions }) => {
   );
 
   const displayUI = (
-    <Box>
-      {partialDefTitle}
-      <Typography size="10px">
-        {definitions[currDefIdx].partial_definition}
-      </Typography>
-      {fullDefTitle}
-      <Typography size="10px">
+    <Grid container xs={12} border={1}>
+      <Typography fontSize="12px">
         {definitions[currDefIdx].full_definition}
       </Typography>
-    </Box>
+    </Grid>
   );
 
   const comp = isEditing ? editionUI : displayUI;
 
   const paginationStr = currDefIdx + 1 + "/" + definitions.length;
   return (
-    <Box>
-      <Stack direction="row" spacing={2}>
-        <Typography size="12px" style={{ fontWeight: 600 }}>
+    <Grid contaienr xs={12} border={1} borderRadius={1} margin={1} padding={1}>
+      <Grid container direction={"row"} xs={12}>
+        <Typography variant="h7" fontSize={".9em"}>
           Definition {paginationStr} ({definitions[currDefIdx].fact_uid}):
         </Typography>
-        <Stack direction="row" spacing={2}>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              if (currDefIdx > 0) setCurrDefIdx(currDefIdx - 1);
-            }}
-          >
-            <Typography style={{ height: "5px" }} size="10px">
-              {"<<"}
-            </Typography>
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              if (currDefIdx < definitions.length - 1)
-                setCurrDefIdx(currDefIdx + 1);
-            }}
-          >
-            <Typography style={{ height: "5px" }} size="10px">
-              {">>"}
-            </Typography>
-          </Button>
-        </Stack>
-        {!isEditing && (
-          <IconButton onClick={() => setIsEditing(true)}>
-            <EditIcon />
-          </IconButton>
-        )}
-      </Stack>
+        <Grid container direction="row" xs={12}>
+          {!isEditing && (
+            <Grid xs={9}>
+              <IconButton onClick={() => setIsEditing(true)}>
+                <EditIcon />
+              </IconButton>
+            </Grid>
+          )}
+          <Grid xs={isEditing ? 12 : 3}>
+            <IconButton
+              variant="outlined"
+              onClick={() => {
+                if (currDefIdx > 0) setCurrDefIdx(currDefIdx - 1);
+              }}
+            >
+              <ArrowLeftIcon />
+            </IconButton>
+
+            <IconButton
+              variant="outlined"
+              onClick={() => {
+                if (currDefIdx < definitions.length - 1)
+                  setCurrDefIdx(currDefIdx + 1);
+              }}
+            >
+              <ArrowRightIcon />
+            </IconButton>
+          </Grid>
+        </Grid>
+      </Grid>
       {comp}
-    </Box>
+    </Grid>
   );
 };
 
