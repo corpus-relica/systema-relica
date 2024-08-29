@@ -65,14 +65,6 @@ const Graph = observer(() => {
     sockSendCC("user", "selectEntity", { uid: id });
   };
 
-  const handleNodeHover = (node: nodeData | null) => {
-    // this.hoveredNode = node?.id || null;
-  };
-
-  const handleLinkHover = (link: edgeData | null) => {
-    // this.hoveredLink = link?.id || null;
-  };
-
   // START MENU
   const [open, setOpen] = useState(false);
   const [x, setX] = useState(0);
@@ -106,6 +98,7 @@ const Graph = observer(() => {
     // const fact = factDataStore.facts.find((fact) => fact.fact_uid === uid);
     // const uid2 = fact?.rel_type_uid;
     // graphViewStore.hoveredLinkType = uid2;
+    console.log("EDGE ROLLOVER:", uid);
   };
 
   const handleEdgeRollOut = useCallback((uid: number) => {
@@ -138,9 +131,6 @@ const Graph = observer(() => {
     }
     selectNode(lh_object_uid);
   };
-
-  console.log("GRAPH RENDER");
-  console.log("categories", categories);
 
   return (
     <Box
