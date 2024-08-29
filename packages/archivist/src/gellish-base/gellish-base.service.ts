@@ -153,11 +153,15 @@ RETURN path`;
   ////////////////////////////////////////////////////////////////////////////////
 
   getSpecializationHierarchy = async (uid: number) => {
+    const classFact = await this.getClassificationFact(uid);
+    if (classFact.length > 0) {
+      uid = classFact[0].rh_object_uid;
+    }
+
     const conceptsSet = new Set();
     const concepts = [];
 
     const lineage = await this.getLineage(uid);
-    // lineage.pop();
 
     const facts = await lineage.reduce(async (accPromise, uid) => {
       const acc = await accPromise;
@@ -165,9 +169,11 @@ RETURN path`;
       return acc.concat(specFacts); // Using concat to avoid nested arrays
     }, Promise.resolve([]));
 
-    const allFacts = await Promise.all(facts);
+    if (classFact.length > 0) {
+      facts.push(classFact[0]);
+    }
 
-    allFacts.forEach((fact) => {
+    facts.forEach((fact) => {
       const lh_uid = fact.lh_object_uid;
       const rh_uid = fact.rh_object_uid;
       if (lh_uid && !conceptsSet.has(lh_uid)) {

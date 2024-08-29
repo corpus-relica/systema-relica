@@ -120,15 +120,9 @@ const Graph = observer(() => {
     if (!res) return;
 
     const { lh_object_uid, rel_type_uid, rh_object_uid } = res;
-    if (rel_type_uid === 1225) {
-      sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
-        uid: rh_object_uid,
-      });
-    } else {
-      sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
-        uid: lh_object_uid,
-      });
-    }
+    sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
+      uid: lh_object_uid,
+    });
     selectNode(lh_object_uid);
   };
 
