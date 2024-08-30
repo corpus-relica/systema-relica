@@ -147,6 +147,7 @@ export class ArchivistService {
     const { data } = await firstValueFrom(
       this.httpService.get(url, { params: { searchTerm, exactMatch: true } }),
     );
+    console.log('TEXT SEARCH EXACT: ', data);
     return data;
   }
 

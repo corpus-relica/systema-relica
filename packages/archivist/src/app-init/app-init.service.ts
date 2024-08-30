@@ -3,7 +3,7 @@ import { GraphService } from 'src/graph/graph.service';
 import { CacheService } from 'src/cache/cache.service';
 import { RawFactIngestionService } from 'src/raw-fact-ingestion/raw-fact-ingestion.service';
 import { XLSService } from 'src/xls/xls.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { LinearizationService } from 'src/linearization/linearization.service';
 import { UIDService } from 'src/uid/uid.service';
 import { readdirSync } from 'fs';
 
@@ -18,7 +18,7 @@ export class AppInitService implements OnApplicationBootstrap {
     private readonly rawFactIngestionService: RawFactIngestionService,
     private readonly xlsService: XLSService,
     private readonly cacheService: CacheService,
-    private readonly gellishBaseService: GellishBaseService,
+    private readonly linService: LinearizationService,
     private readonly uidService: UIDService,
   ) {}
 
@@ -204,7 +204,7 @@ export class AppInitService implements OnApplicationBootstrap {
           const lh_object_uid =
             this.graphService.resolveNeo4jInt(raw_lh_object_uid);
           const lineage: number[] =
-            await this.gellishBaseService.calculateLineage(lh_object_uid);
+            await this.linService.calculateLineage(lh_object_uid);
           this.logger.verbose('**** Lineage!!!!');
           this.logger.verbose(lineage);
           await this.cacheService.addToEntityLineageCache(

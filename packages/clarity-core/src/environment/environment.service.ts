@@ -318,11 +318,12 @@ export class EnvironmentService {
   }
 
   // THIS PROBABLY DOESN"T BELONG HERE!!
-  // like, weigh the meritts of routing all such calls through CC vs. giving NOUS and Integrator direct access to the DB layer
+  // TODO: weigh the meritts of routing all such calls through CC vs. giving NOUS and Integrator direct access to the DB layer
   async textSearch(searchTerm: string) {
     const selectedEntity = await this.getSelectedEntity();
     const searchResult: any =
       await this.archivistService.textSearchExact(searchTerm);
+    console.log('TEXT SEARCH', searchResult);
     if (searchResult.facts.length === 0) return { facts: [], models: [] };
     const relResult = await this.archivistService.getFactsRelatingEntities(
       searchResult.facts[0].lh_object_uid,

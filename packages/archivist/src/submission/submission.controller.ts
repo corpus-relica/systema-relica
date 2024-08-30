@@ -15,8 +15,7 @@ export class SubmissionController {
   ) {}
 
   async updateLineage(descendantUID) {
-    const lineage = await this.gellishBaseService.getLineage(descendantUID);
-    console.log('lineage', lineage);
+    const lineage = await this.cacheService.lineageOf(descendantUID);
 
     await Promise.all(
       lineage.map(async (ancestorUID) => {

@@ -47,8 +47,9 @@ export class EnvironmentController {
     }
   }
 
-  @Get('/textSearch')
+  @Get('textSearch/:searchTerm') // Add :uid to the route
   async textSearch(@Param('searchTerm') searchTerm: string) {
+    console.log('textSearch', searchTerm);
     // Extract 'searchTerm' from the request parameters and ensure it's a string
     if (typeof searchTerm === 'string') {
       // Now 'searchTerm' is guaranteed to be a string, so we can safely use parseInt

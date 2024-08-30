@@ -21,7 +21,7 @@ export class SubmissionService {
   //the graph
   submitBinaryFact = async (fact) => {
     try {
-      const [lh_object_uid, fact_uid, rh_object_uid] =
+      const [lh_object_uid, rh_object_uid, fact_uid] =
         this.uidService.reserveUID(3);
 
       let finalFact = Object.assign({}, fact, { fact_uid });
@@ -209,12 +209,6 @@ RETURN r
       // );
       await Promise.all(
         resolvedFacts.map(async (fact) => {
-          console.log(
-            'APEND MUTHERFUCKING FACT:',
-            fact.lh_object_name,
-            fact.rel_type_name,
-            fact.rh_object_name,
-          );
           await this.cacheService.appendFact(fact);
         }),
       );

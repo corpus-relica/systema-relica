@@ -185,16 +185,6 @@ WHERE r.rel_type_uid = 1986
 RETURN r
 `;
 
-// export const createFact = `
-// MATCH (lh:Entity {uid: $lh_object_uid})
-// MATCH (rh:Entity {uid: $rh_object_uid})
-// CREATE (lh)-[r:$rel_type_uid]->(rh)
-// FOREACH (key IN keys($properties) |
-//     SET r[key] = $properties[key]
-// )
-// RETURN r
-// `;
-
 export const createFact = `
 MERGE (lh:Entity {uid: $lh_object_uid})
 MERGE (rh:Entity {uid: $rh_object_uid})
@@ -203,15 +193,6 @@ SET r += $properties
 WITH lh, rh, r
 CALL apoc.create.relationship(lh, 'role', {}, r) YIELD rel AS rel1
 CALL apoc.create.relationship(r, 'role', {}, rh) YIELD rel AS rel2
-RETURN r
-`;
-
-export const createKind = `
-CREATE (n:Entity {uid: $uid})
-CREATE (r:Fact {fact_uid: $fact_uid, rel_type_uid: 1146, lh_object_uid: $uid, rh_object_uid: $parentUID, full_definition: $definition})
-MATCH (parent:Entity {uid: $parentUID})
-CALL apoc.create.relationship(n, 'role', {}, r)
-CALL apoc.create.relationship(r, 'role', {}, parent)
 RETURN r
 `;
 
@@ -340,4 +321,10 @@ SET r.full_definition = $fullDefinition
 SET r.latest_update = $latestUpdate
 DELETE ra2
 CREATE (r)-[:role]->(p)
+RETURN r`;
+
+export const removeSupertypeQuery = `
+MATCH (n:Entity {uid: $uid})-[r1]->(r)-[r2]->(p:Entity {uid: $supertypeUid})
+WHERE r.rel_type_uid = 1146
+DELETE r1, r2, r
 RETURN r`;

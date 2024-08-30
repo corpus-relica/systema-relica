@@ -126,8 +126,23 @@ export class CacheService {
     if (this.descendantsCache[uid + '']) {
       console.log('Adding descendant to cache');
       this.descendantsCache[uid + ''] = [
-        ...this.descendantsCache[uid],
+        ...this.descendantsCache[uid + ''],
         descendant,
+      ];
+    }
+  }
+
+  async addDescendantsTo(uid, descendants: number[]) {
+    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    await this.redisClient.sadd(
+      descendantsKey,
+      ...descendants.map((d) => d + ''),
+    );
+    if (this.descendantsCache[uid + '']) {
+      console.log('Adding descendants to cache', uid);
+      this.descendantsCache[uid + ''] = [
+        ...this.descendantsCache[uid + ''],
+        ...descendants,
       ];
     }
   }
@@ -139,6 +154,20 @@ export class CacheService {
       console.log('Removing descendant from cache');
       this.descendantsCache[uid + ''] = this.descendantsCache[uid + ''].filter(
         (d) => d !== descendant,
+      );
+    }
+  }
+
+  async removeDescendantsFrom(uid, descendants: number[]) {
+    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    await this.redisClient.srem(
+      descendantsKey,
+      ...descendants.map((d) => d + ''),
+    );
+    if (this.descendantsCache[uid + '']) {
+      console.log('Removing descendants from cache');
+      this.descendantsCache[uid + ''] = this.descendantsCache[uid + ''].filter(
+        (d) => !descendants.includes(d),
       );
     }
   }
@@ -178,6 +207,11 @@ export class CacheService {
     //   return prompt;
   }
 
+  async clearEntityLineageCache(uid) {
+    const lineageKey = `rlc:db:YYYY:entity:${uid}:lineage`;
+    await this.redisClient.del(lineageKey);
+  }
+
   async clearEntityLineageCacheComplete() {
     let cursor = 0;
 
@@ -215,6 +249,13 @@ export class CacheService {
       const ns = 'rlc:db:YYYY:entity:' + entityUid + ':lineage';
       const lineageStrArray = lineage.map((uid) => uid.toString());
       console.log('lineageStrArray', lineageStrArray);
+      if (lineageStrArray.length === 0) {
+        throw new Error(
+          'Lineage is empty for entity ' +
+            entityUid +
+            '. Does it have a supertype?',
+        );
+      }
       await this.redisClient.lpush(ns, ...lineageStrArray);
       return;
     } catch (error) {
@@ -299,33 +340,58 @@ export class CacheService {
     }
   };
 
-  //---------------------------------------------------------------------
+  removeEntityFromLineageDescendants = async (euid: number, luid: number) => {
+    console.log('REMLD');
+    const lineage = await this.lineageOf(luid);
+    const descendants = await this.allDescendantsOf(euid);
+    await Promise.all(
+      lineage.map(async (ancestorUID, idx) => {
+        if (idx < lineage.length - 1) {
+          await this.removeDescendantsFrom(ancestorUID, [...descendants, euid]);
+        }
+      }),
+    );
+    console.log('REMLD COMPLETE');
+  };
 
   appendFact = async (fact: Fact) => {
     if (fact.rel_type_uid === 1146 || fact.rel_type_uid === 1726) {
       const lineage = await this.linearizationService.calculateLineage(
         fact.lh_object_uid,
       );
+      const descendants = await this.allDescendantsOf(fact.lh_object_uid);
       // add lh_object_uid to each subtypes-cache on the lineage
       // not including the fact itself
-      for (let i = 0; i < lineage.length - 1; i++) {
-        await this.addDescendantTo(lineage[i], fact.lh_object_uid);
+      for (let i = 1; i < lineage.length; i++) {
+        console.log('ADDING DESCENDANTS TO', i, lineage.length, lineage[i]);
+        await this.addDescendantsTo(lineage[i], [
+          ...descendants,
+          fact.lh_object_uid,
+        ]);
       }
       await this.addToEntityLineageCache(fact.lh_object_uid, lineage);
+      await Promise.all(
+        descendants.map(async (descendant) => {
+          const lineage =
+            await this.linearizationService.calculateLineage(descendant);
+          await this.addToEntityLineageCache(descendant, lineage);
+        }),
+      );
     }
     // add to facts cache regardless
     await this.addToEntityFactsCache(fact.lh_object_uid, fact.fact_uid);
+    await this.addToEntityFactsCache(fact.rh_object_uid, fact.fact_uid);
   };
 
   //TODO: figure out if this should be recursive
   // i.e. from a UX perspective, should deleting an entity delete all of its descendants?
   removeEntity = async (uid: number) => {
+    // get lineage
+    const lineage = await this.lineageOf(uid);
+    const supertype = lineage[1];
     // iterate the lineage of the entity and remove the entity from each
     // of the descendants caches
-    const lineage = await this.lineageOf(uid);
-    for (let i = 0; i < lineage.length; i++) {
-      await this.removeDescendantFrom(lineage[i], uid);
-    }
+    this.removeEntityFromLineageDescendants(uid, supertype);
 
     // remove from descendants cache
     const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;

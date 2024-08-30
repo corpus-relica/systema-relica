@@ -63,24 +63,24 @@ export class EventsGateway {
   // NOUS //
 
   @SubscribeMessage('nous:selectEntity')
-  nouseSelectEntity(@MessageBody('uid') uid: number): number {
+  async nouseSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
     console.log('NOUS:SELECT ENTITY', uid);
-    this.environmentService.setSelectedEntity(uid);
-    this.server.emit('system:selectEntity', { uid: uid });
-    return uid;
+
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(selectEntity ${uid})`, resolve);
+    });
+    // this.server.emit('system:selectEntity', { uid: uid });
+
+    return result;
   }
 
   @SubscribeMessage('nous:loadEntity')
   async nouseLoadEntity(@MessageBody('uid') uid: number): Promise<any> {
-    // socket.on("nous:loadEntity", async (d: { uid: number }, cbk: any) => {
-    console.log('NOUS:LOAD ENTITY');
-    console.log(uid);
-    const res = await this.environmentService.loadEntity(uid);
-    console.log(res);
-    // if (cbk) {
-    //   cbk(res);
-    // }
-    return res;
+    console.log('NOUS:LOAD ENTITY', uid);
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(loadEntity ${uid})`, resolve);
+    });
+    return result;
   }
 
   // COMMAND //
