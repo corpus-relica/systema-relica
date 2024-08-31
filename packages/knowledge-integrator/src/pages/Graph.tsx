@@ -131,7 +131,7 @@ const Graph = observer(() => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        flex: 1,
+        height: "calc(100vh - 64px)",
       }}
     >
       <Modal
@@ -165,25 +165,12 @@ const Graph = observer(() => {
           </Button>
         </Box>
       </Modal>
-      <Stack direction="row">
-        <Box>
-          <h1>Graph</h1>
-        </Box>
-        <Box>
-          <IconButton>
-            <SearchIcon
-              onClick={() => {
-                setSearchUIOpen(true);
-              }}
-            />
-          </IconButton>
-        </Box>
-      </Stack>
       <Box
         sx={{
           display: "flex",
           flexDirection: "row",
           flex: 1,
+          overflow: "hidden",
         }}
       >
         <GraphAndSelectionLayout
@@ -205,6 +192,7 @@ const Graph = observer(() => {
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
           paletteMap={paletteMap}
+          setSearchUIOpen={setSearchUIOpen}
         />
       </Box>
     </Box>

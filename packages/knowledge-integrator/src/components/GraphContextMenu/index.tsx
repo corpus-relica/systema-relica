@@ -17,13 +17,15 @@ interface GraphContextMenuProps {
   uid: number;
   type: string;
   relType?: number;
+  setSearchUIOpen: (isOpen: boolean) => void;
 }
 
 import { useStore, useDataProvider } from "react-admin";
 
 const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const dataProvider = useDataProvider();
-  const { open, handleClose, x, y, uid, type, relType } = props;
+  const { open, handleClose, x, y, uid, type, relType, setSearchUIOpen } =
+    props;
   const [menu, setMenu] = useState<JSX.Element | null>(null);
 
   const [subtypesDialogueIsOpen, setSubtypesDialogueIsOpen] = useState(false);
@@ -49,7 +51,6 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             uid: uid,
           });
           const model = result.data;
-          console.log("model: ", model);
           if (model.type === "kind") {
             setMenu(
               <KindContextMenu
@@ -103,18 +104,19 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
         }
       } else if (x !== null && y !== null) {
         setMenu(
-          <StageContextMenu x={x} y={y} open={open} handleClose={handleClose} />
+          <StageContextMenu
+            x={x}
+            y={y}
+            open={open}
+            handleClose={handleClose}
+            setSearchUIOpen={setSearchUIOpen}
+          />
         );
       }
     };
 
     foo();
   }, [uid, open]);
-
-  console.log("WARNING: ", warnIsOpen, uidToDelete);
-  console.log("FACT WARNING: ", factWarnIsOpen, factUidToDelete);
-  console.log("SUBTYPES: ", subtypesDialogueIsOpen, possibleSubtypes);
-  console.log("CLASSIFIED: ", classifiedDialogueIsOpen, possibleClassified);
 
   return (
     <>
@@ -156,7 +158,6 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setSubtypesDialogueIsOpen(false);
-            console.log(selected, notSelected);
             sockSendCC("user", "loadEntities", { uids: selected });
             sockSendCC("user", "unloadEntities", { uids: notSelected });
           }}
@@ -173,8 +174,6 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setClassifiedDialogueIsOpen(false);
-            console.log("selected: ", selected);
-            console.log("notSelected: ", notSelected);
             sockSendCC("user", "loadEntities", { uids: selected });
             sockSendCC("user", "unloadEntities", { uids: notSelected });
           }}

@@ -8,10 +8,15 @@ import React, {
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import SearchIcon from "@mui/icons-material/Search";
 
 import { sockSendCC } from "../../socket";
 
 const CLEAR_ALL = "Clear all";
+const SEARCH = "Search";
 
 interface IndividualContextMenuProps {
   // uid: number;
@@ -21,6 +26,7 @@ interface IndividualContextMenuProps {
   y: number;
   // setUidToDelete: (uid: number) => void;
   // setWarnIsOpen: (isOpen: boolean) => void;
+  setSearchUIOpen: (isOpen: boolean) => void;
 }
 
 const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
@@ -31,14 +37,18 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     x,
     y,
     // setUidToDelete, setWarnIsOpen
+    setSearchUIOpen,
   } = props;
 
   const handleItemClick = (e) => {
     const value = e.currentTarget.getAttribute("value");
     switch (value) {
       case CLEAR_ALL:
-        console.log("CLEAR ALL");
         sockSendCC("user", "clearEntities", {});
+        handleClose();
+        break;
+      case SEARCH:
+        setSearchUIOpen(true);
         handleClose();
         break;
       default:
@@ -66,6 +76,13 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       }}
       style={{ pointerEvents: "none" }}
     >
+      <MenuItem value={SEARCH} onClick={handleItemClick}>
+        <ListItemIcon>
+          <SearchIcon />
+        </ListItemIcon>
+        <ListItemText>Search</ListItemText>
+      </MenuItem>
+      <Divider />
       <MenuItem value={CLEAR_ALL} onClick={handleItemClick}>
         Clear all
       </MenuItem>

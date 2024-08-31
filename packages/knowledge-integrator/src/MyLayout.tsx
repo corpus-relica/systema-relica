@@ -163,7 +163,12 @@ export const MyLayout = (props) => {
 
   return (
     <Layout {...props} appBar={MyAppBar} menu={MyMenu}>
-      <div style={{ position: "relative", minHeight: "100vh" }}>
+      <div
+        style={{
+          position: "relative",
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
         {props.children}
         <Slide direction="up" in={replOpen} mountOnEnter unmountOnExit>
           <div
