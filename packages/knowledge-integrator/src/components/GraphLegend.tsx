@@ -13,7 +13,6 @@ const GraphLegend: React.FC = observer(() => {
   const { paletteMap } = colorPaletteStore;
 
   const entries = Array.from(paletteMap.entries()).map(([key, value]) => {
-    console.log("VAAAAAAAAAALUE", value);
     const name = getRelTypeName(key);
     const backgroundColor = "white";
     // graphViewStore.hoveredLinkType === key ? "light-4" : "white";
@@ -25,8 +24,16 @@ const GraphLegend: React.FC = observer(() => {
         key={key}
         background={backgroundColor}
       >
-        <Box sx={{ width: "20px", height: "20px", backgroundColor: value }} />
-        <Typography size="xsmall">
+        <Box
+          sx={{
+            width: "20px",
+            height: "10px",
+            backgroundColor: value,
+            marginTop: "5px",
+            marginRight: "5px",
+          }}
+        />
+        <Typography fontSize={"0.75em"}>
           {key}
           {" : "}
           {name}
@@ -37,16 +44,21 @@ const GraphLegend: React.FC = observer(() => {
 
   return (
     <Paper
-      elevation={3}
+      elevation={0}
+      borderRadius={1}
       sx={{
         position: "absolute",
-        bottom: 50,
+        bottom: 20,
         left: 20,
-        padding: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        padding: 1,
+        backgroundColor: "#121212",
       }}
     >
-      <Box pad={"xsmall"} margin={"xsmall"} style={{ backgroundColor: "grey" }}>
+      <Box
+        pad={"xsmall"}
+        margin={"xsmall"}
+        style={{ backgroundColor: "rgba(0, 12, 26)" }}
+      >
         <Typography>GraphLegend</Typography>
         {entries}
       </Box>
