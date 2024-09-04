@@ -214,7 +214,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       style={{ pointerEvents: "none" }}
     >
       {submenu}
-      <MenuItem value="SH" onClick={handleItemClick}>
+      <MenuItem value={LOAD_SH} onClick={handleItemClick}>
         SH
       </MenuItem>
       <MenuItem value={LOAD_CLASSIFIED} onClick={handleItemClick}>
