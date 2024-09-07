@@ -45,9 +45,6 @@ const IndividualDetails: React.FC = () => {
   const reqRole2 = data[4733];
   const possRoles = data[4714];
 
-  console.log("IndividualDetails data:");
-  console.log(data);
-
   const pushDataToClipboard = async () => {
     await window.navigator.clipboard.writeText(JSON.stringify(data));
   };

@@ -27,6 +27,11 @@ const IndividualName: React.FC<IndividualNameProps> = ({ uid, name }) => {
 
   const [displayName, setDisplayName] = useState(name);
 
+  useEffect(() => {
+    setNewName(name);
+    setDisplayName(name);
+  }, [name]);
+
   const submitName = async () => {
     const result = await updateModelName(uid, newName);
 
@@ -42,18 +47,15 @@ const IndividualName: React.FC<IndividualNameProps> = ({ uid, name }) => {
 
   const editionComp = (
     <>
-      <FormControl fullWidth>
-        <InputLabel id="textfield-label">Age</InputLabel>
-        <TextField
-          id="outlined-basic"
-          label="name"
-          variant="outlined"
-          value={newName}
-          onChange={(e) => {
-            setNewName(e.target.value);
-          }}
-        />
-      </FormControl>
+      <TextField
+        id="outlined-basic"
+        label="name"
+        variant="outlined"
+        value={newName}
+        onChange={(e) => {
+          setNewName(e.target.value);
+        }}
+      />
       <Stack
         direction="row-reverse"
         gap="small"
