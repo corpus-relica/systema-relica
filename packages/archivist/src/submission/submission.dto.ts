@@ -15,6 +15,16 @@ export class UpdateCollectionDto {
   collection_name: string;
 }
 
+export class UpdateNameDto {
+  @ApiProperty({ description: 'Fact UID' })
+  // @IsInt()
+  fact_uid: number;
+
+  @ApiProperty({ description: 'Entity Name' })
+  // @IsString()
+  name: string;
+}
+
 export class CreateDateDto {
   @ApiProperty({ description: 'Date UID' })
   // @IsInt()

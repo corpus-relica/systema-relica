@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   SUBMIT_DEFINITION_ENDPOINT,
   SUBMIT_COLLECTION_ENDPOINT,
+  SUBMIT_NAME_ENDPOINT,
   DELETE_ENTITY_ENDPOINT,
   DELETE_FACT_ENDPOINT,
   SPECIALIZATION_HIERARCHY_ENDPOINT,
@@ -252,6 +253,17 @@ export class ArchivistService {
         fact_uid,
         collection_uid,
         collection_name,
+      }),
+    );
+    return data;
+  }
+
+  async submitName(fact_uid: number, name: string) {
+    const url = `${URL}${SUBMIT_NAME_ENDPOINT}`;
+    const { data } = await firstValueFrom(
+      this.httpService.put(url, {
+        fact_uid,
+        name,
       }),
     );
     return data;

@@ -262,4 +262,9 @@ export class ModelService {
     );
     return response;
   }
+
+  async updateName(uid, name) {
+    const response = await this.archivistService.submitName(uid, name);
+    return response;
+  }
 }

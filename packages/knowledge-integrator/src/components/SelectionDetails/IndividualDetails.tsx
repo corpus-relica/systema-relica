@@ -10,6 +10,7 @@ import IconButton from "@mui/material/IconButton";
 import CopyAllIcon from "@mui/icons-material/FileCopy";
 
 import Collection from "./display/Collection";
+import IndividualName from "./display/IndividualName";
 import Classification from "./display/Classification";
 import Value from "./display/Value";
 import Definition from "./display/Definition";
@@ -33,6 +34,9 @@ const IndividualDetails: React.FC = () => {
 
   const { uid, type, category, name, definition, facts, value, collection } =
     data;
+
+  const classFact = facts.find((fact) => fact.rel_type_uid === 1225);
+
   const specialization = data[1146];
   const classification = data[1225];
   const synonyms = data[1981];
@@ -41,19 +45,21 @@ const IndividualDetails: React.FC = () => {
   const reqRole2 = data[4733];
   const possRoles = data[4714];
 
+  console.log("IndividualDetails data:");
+  console.log(data);
+
   const pushDataToClipboard = async () => {
     await window.navigator.clipboard.writeText(JSON.stringify(data));
   };
 
-  const text = `${uid} (${type}) :: ${name}`;
-
   return (
     <Grid container xs={12} direction="row">
-      <Grid boxShadow={2} item xs={12}>
-        <Collection uid={definition[0].fact_uid} collection={collection} />
+      <Grid item xs={12}>
         <Typography size="18px" style={{ fontWeight: 800 }}>
-          {text}
+          {uid}
         </Typography>
+        <IndividualName uid={classFact.fact_uid} name={name} />
+        <Collection uid={definition[0].fact_uid} collection={collection} />
         <Typography size="12px" style={{ fontWeight: 500 }}>
           {classification && classification.length > 0
             ? `Classification:`

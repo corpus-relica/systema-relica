@@ -24,9 +24,6 @@ const DefinitionField = (props: any) => {
     const preferredName = _.get(values, termName);
     const st = _.get(values, supertype);
 
-    console.log("PN", preferredName);
-    console.log("ST", st);
-
     if (openAIAPIKey !== null) {
       const completion = await conjureDefinition(
         openAIAPIKey,

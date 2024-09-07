@@ -113,4 +113,17 @@ export class ModelController {
       return result;
     }
   }
+
+  @Put('/name')
+  async name(@Body('fact_uid') fact_uid: string, @Body('name') name: string) {
+    if (fact_uid === undefined || name === undefined) {
+      throw new HttpException(
+        'fact_uid or collection_uid or collection_name not provided',
+        400,
+      );
+    } else {
+      const result = await this.modelService.updateName(+fact_uid, name);
+      return result;
+    }
+  }
 }

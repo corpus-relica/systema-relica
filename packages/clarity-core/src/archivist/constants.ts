@@ -45,6 +45,7 @@ export const TEXT_SEARCH_ENDPOINT = '/generalSearch/text';
 export const GET_DEFINITION_ENDPOINT = '/definition/get';
 export const SUBMIT_DEFINITION_ENDPOINT = '/submission/definition';
 export const SUBMIT_COLLECTION_ENDPOINT = '/submission/collection';
+export const SUBMIT_NAME_ENDPOINT = '/submission/name';
 
 export const SUBMIT_DATE_ENDPOINT = '/submission/date';
 

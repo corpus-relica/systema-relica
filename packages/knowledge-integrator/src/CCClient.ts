@@ -46,6 +46,14 @@ export const updateModelDefinition = async (
   return response.data;
 };
 
+export const updateModelName = async (fact_uid: number, name: string) => {
+  const response = await CCAxiosInstance.put("/model/name", {
+    fact_uid,
+    name,
+  });
+  return response.data;
+};
+
 export const updateModelCollection = async (
   fact_uid: number,
   collection_uid: number,

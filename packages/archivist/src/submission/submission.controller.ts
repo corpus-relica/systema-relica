@@ -3,7 +3,11 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SubmissionService } from './submission.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { CacheService } from 'src/cache/cache.service';
-import { UpdateCollectionDto, CreateDateDto } from './submission.dto';
+import {
+  UpdateCollectionDto,
+  CreateDateDto,
+  UpdateNameDto,
+} from './submission.dto';
 
 @ApiTags('Submission')
 @Controller('submission')
@@ -75,6 +79,22 @@ export class SubmissionController {
       +fact_uid,
       +collection_uid,
       collection_name,
+    );
+    return result;
+  }
+
+  @Put('/name')
+  @ApiOperation({ summary: 'Update entity name' })
+  @ApiResponse({
+    status: 200,
+    description: 'Entity name updated successfully.',
+  })
+  @ApiResponse({ status: 500, description: 'Something went wrong.' })
+  async updateName(@Body() body: UpdateNameDto) {
+    const { fact_uid, name } = body;
+    const result = await this.gellishBaseService.updateFactName(
+      +fact_uid,
+      name,
     );
     return result;
   }

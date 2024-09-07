@@ -292,6 +292,12 @@ SET r.collection_name = $collection_name
 RETURN r
 `;
 
+export const updateFactNameQuery = `
+MATCH (r:Fact {fact_uid: $fact_uid})
+SET r.lh_object_name = $name
+RETURN r
+`;
+
 /////////////////////////////////////////////////////////////
 
 export const getListOfKindsQuery = `

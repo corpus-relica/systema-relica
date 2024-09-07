@@ -62,7 +62,7 @@ Provide only the definition, starting after the double colon (::).
         { role: 'system', content: sysPrompt },
         { role: 'user', content: userPrompt },
       ],
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
     });
 
     // console.log('GOt chat completion', chatCompletion);

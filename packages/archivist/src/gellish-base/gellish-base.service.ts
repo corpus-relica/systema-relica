@@ -28,6 +28,7 @@ import {
   facts,
   updateFactDefinitionQuery,
   updateFactCollectionQuery,
+  updateFactNameQuery,
   qualificationFact,
 } from 'src/graph/queries';
 
@@ -452,6 +453,19 @@ export class GellishBaseService {
     );
 
     this.logger.verbose('UPDATE FACT COLLECTION', result);
+
+    return this.graphService.transformResult(result[0]);
+  };
+
+  updateFactName = async (fact_uid: number, name: string) => {
+    this.logger.verbose('UPDATE FACT NAME', fact_uid, name);
+
+    const result = await this.graphService.execWriteQuery(updateFactNameQuery, {
+      fact_uid,
+      name,
+    });
+
+    this.logger.verbose('UPDATE FACT NAME', result);
 
     return this.graphService.transformResult(result[0]);
   };
