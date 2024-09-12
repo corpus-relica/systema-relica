@@ -7,6 +7,10 @@ import {
   supertypes,
   classified,
   factsAboutIndividual,
+  allRelatedFactsQuery,
+  allRelatedFactsQueryb,
+  allRelatedFactsQueryc,
+  allRelatedFactsQueryd,
 } from 'src/graph/queries';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { CacheService } from 'src/cache/cache.service';
@@ -49,7 +53,6 @@ export class FactRetrievalService {
   };
 
   getClassified = async (uid: number, recursive: boolean = false) => {
-    console.log('GET CLASSIFIED', uid, recursive);
     if (!recursive) {
       const result = await this.graphService.execQuery(classified, { uid });
       if (result.length === 0) return [];
@@ -64,8 +67,6 @@ export class FactRetrievalService {
           return this.graphService.transformResults(result);
         }),
       );
-
-      console.log('FACTS', facts);
 
       const flattenedFacts = facts.flat();
 
@@ -165,19 +166,7 @@ export class FactRetrievalService {
     }
   };
 
-  getAllRelatedFacts = async (uid) => {
-    const allRelatedFactsQuery = `
-MATCH (start:Entity)--(r)-->(end:Entity)
-WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
-RETURN r
-`;
-
-    const allRelatedFactsQueryb = `
-MATCH (start:Entity)<--(r)--(end:Entity)
-WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
-RETURN r
-`;
-
+  getAllRelatedFacts = async (uid: number) => {
     const subtypes1146 = await this.cacheService.allDescendantsOf(1146); // 'is a specialization of'
     const subtypes2850 = await this.cacheService.allDescendantsOf(2850); // 'relation'
 
@@ -186,7 +175,7 @@ RETURN r
     );
 
     const results2850 = await this.graphService.execQuery(
-      allRelatedFactsQuery,
+      allRelatedFactsQueryc,
       {
         start_uid: uid,
         rel_type_uids,
@@ -195,7 +184,7 @@ RETURN r
     const res2850 = this.graphService.transformResults(results2850);
 
     const results2850b = await this.graphService.execQuery(
-      allRelatedFactsQueryb,
+      allRelatedFactsQueryd,
       {
         start_uid: uid,
         rel_type_uids,
@@ -206,11 +195,14 @@ RETURN r
     return res2850.concat(res2850b);
   };
 
-  getAllRelatedFactsRecursive = (uid, depth = 1) => {
+  getAllRelatedFactsRecursive = async (uid: number, depth = 1) => {
     const maxDepth = 3; // Define the maximum allowed depth
     const actualDepth = Math.min(depth, maxDepth); // Ensure the depth does not exceed the maximum
 
-    const recurse = async (currentUid, currDepth) => {
+    const recurse = async (
+      currentUid: number,
+      currDepth: number,
+    ): Promise<Fact[]> => {
       if (currDepth < actualDepth) {
         let result = await this.getAllRelatedFacts(currentUid);
         let nextUids = result.map((item) => item.lh_object_uid);
@@ -224,7 +216,15 @@ RETURN r
       }
     };
 
-    return recurse(uid, 0);
+    const prelimResult: Fact[] = await recurse(uid, 0);
+    const uniqueResults: Fact[] = prelimResult.filter((item, index) => {
+      const indexOfFirstOccurence = prelimResult.findIndex(
+        (item2: Fact) => item2.fact_uid === item.fact_uid,
+      );
+      return indexOfFirstOccurence === index;
+    });
+
+    return uniqueResults;
   };
 
   getFactsAboutIndividual = async (uid) => {
@@ -240,64 +240,34 @@ RETURN r
     return { factsAboutIndividual: transformedResult };
   };
 
-  getRelatedOnUIDSubtypeCone = async (lh_object_uid, rel_type_uid) => {
-    console.log('GRoUSC', lh_object_uid, rel_type_uid);
+  getRelatedOnUIDSubtypeCone = async (
+    lh_object_uid: number,
+    rel_type_uid: number,
+  ) => {
     const subtypesOfRelType = (
       await this.cacheService.allDescendantsOf(rel_type_uid)
     ).concat([rel_type_uid]);
-    const allRelatedFactsQuery = `
-MATCH (start:Entity)--(r)-->(end:Entity)
-WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
-RETURN r
-`;
 
-    //   const allRelatedFactsQueryb = `
-    // MATCH (start:Entity)<--(r)--(end:Entity)
-    // WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
-    // RETURN r
-    // `;
-
-    const results = await this.graphService.execQuery(allRelatedFactsQuery, {
+    const results = await this.graphService.execQuery(allRelatedFactsQueryc, {
       start_uid: lh_object_uid,
       rel_type_uids: subtypesOfRelType,
     });
     const res = this.graphService.transformResults(results);
 
-    // const resultsb = await this.graphService.execQuery(allRelatedFactsQueryb, {
-    //   start_uid: lh_object_uid,
-    //   rel_type_uids: subtypesOfRelType,
-    // });
-    // const resb = transformResults(resultsb);
-
     const possiblyReduntResults = res; //.concat(resb);
-    const uniqueResults = possiblyReduntResults.filter((item, index) => {
-      const indexOfFirstOccurence = possiblyReduntResults.findIndex(
-        (item2) => item2.fact_uid === item.fact_uid,
-      );
-      return indexOfFirstOccurence === index;
-    });
+    const uniqueResults = possiblyReduntResults.filter(
+      (item: Fact, index: number) => {
+        const indexOfFirstOccurence = possiblyReduntResults.findIndex(
+          (item2: Fact) => item2.fact_uid === item.fact_uid,
+        );
+        return indexOfFirstOccurence === index;
+      },
+    );
 
     return uniqueResults;
   };
 
-  getFactsRelatingEntities = async (uid1, uid2) => {
-    console.log(
-      'GET FACTS RELATIONG ENTITIES ------------------------------------------!',
-      uid1,
-      uid2,
-    );
-    const allRelatedFactsQuery = `
-MATCH (start:Entity)--(r)-->(end:Entity)
-WHERE start.uid = $start_uid AND end.uid = $end_uid
-RETURN r
-`;
-
-    const allRelatedFactsQueryb = `
-MATCH (start:Entity)<--(r)--(end:Entity)
-WHERE start.uid = $start_uid AND end.uid = $end_uid
-RETURN r
-`;
-
+  getFactsRelatingEntities = async (uid1: number, uid2: number) => {
     const results = await this.graphService.execQuery(allRelatedFactsQuery, {
       start_uid: uid1,
       end_uid: uid2,
@@ -324,8 +294,7 @@ RETURN r
   async confirmFact(fact: Fact): Promise<Fact | null> {
     try {
       const result = await this.graphService.execQuery(
-        `
-MATCH (r:Fact {lh_object_uid: $lh_object_uid, rh_object_uid: $rh_object_uid, rel_type_uid: $rel_type_uid})
+        `MATCH (r:Fact {lh_object_uid: $lh_object_uid, rh_object_uid: $rh_object_uid, rel_type_uid: $rel_type_uid})
 RETURN r
 `,
         {
@@ -390,9 +359,6 @@ RETURN r
     }
 
     query += ` RETURN r`;
-
-    // this.logger.verbose('Query:', query);
-    // this.logger.verbose('Params:', params);
 
     try {
       const results = await this.graphService.execQuery(query, params);

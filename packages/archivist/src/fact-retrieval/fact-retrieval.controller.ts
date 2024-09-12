@@ -90,7 +90,7 @@ export class FactRetrievalController {
     @Query('uid') uid: string,
     @Query('depth') depth: string = '1',
   ) {
-    return this.factRetrievalService.getAllRelatedFactsRecursive(
+    return await this.factRetrievalService.getAllRelatedFactsRecursive(
       parseInt(uid),
       parseInt(depth),
     );

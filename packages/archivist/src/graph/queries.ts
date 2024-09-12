@@ -334,3 +334,27 @@ MATCH (n:Entity {uid: $uid})-[r1]->(r)-[r2]->(p:Entity {uid: $supertypeUid})
 WHERE r.rel_type_uid = 1146
 DELETE r1, r2, r
 RETURN r`;
+
+export const allRelatedFactsQuery = `
+MATCH (start:Entity)--(r)-->(end:Entity)
+WHERE start.uid = $start_uid AND end.uid = $end_uid
+RETURN r
+`;
+
+export const allRelatedFactsQueryb = `
+MATCH (start:Entity)<--(r)--(end:Entity)
+WHERE start.uid = $start_uid AND end.uid = $end_uid
+RETURN r
+`;
+
+export const allRelatedFactsQueryc = `
+MATCH (start:Entity)--(r)-->(end:Entity)
+WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
+RETURN r
+`;
+
+export const allRelatedFactsQueryd = `
+MATCH (start:Entity)<--(r)--(end:Entity)
+WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
+RETURN r
+`;
