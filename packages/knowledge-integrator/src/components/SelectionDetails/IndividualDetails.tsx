@@ -14,6 +14,8 @@ import IndividualName from "./display/IndividualName";
 import Classification from "./display/Classification";
 import Value from "./display/Value";
 import Definition from "./display/Definition";
+import WorkflowFactsVisualizer from "../../pages/Workflows/WorkflowFactsVisualizer";
+import Synonyms from "./display/Synonyms";
 
 import { retrieveIndividualModel } from "../../CCClient";
 
@@ -36,6 +38,7 @@ const IndividualDetails: React.FC = () => {
     data;
 
   const classFact = facts.find((fact) => fact.rel_type_uid === 1225);
+  const synFacts = facts.filter((fact) => fact.rel_type_uid === 1981);
 
   const specialization = data[1146];
   const classification = data[1225];
@@ -56,6 +59,7 @@ const IndividualDetails: React.FC = () => {
           {uid}
         </Typography>
         <IndividualName uid={classFact.fact_uid} name={name} />
+        <Synonyms synonymFacts={synFacts} />
         <Collection uid={definition[0].fact_uid} collection={collection} />
         <Typography size="12px" style={{ fontWeight: 500 }}>
           {classification && classification.length > 0
@@ -82,6 +86,20 @@ const IndividualDetails: React.FC = () => {
           <CopyAllIcon />
         </IconButton>
       </Grid>
+
+      {facts && facts.length > 0 && (
+        <Box>
+          <Typography size="12px" style={{ fontWeight: 600 }}>
+            AllRelatedFacts:
+          </Typography>
+          {/*<TableContainer component={Paper}>
+              <Table>
+                <TableBody>{factTableRows}</TableBody>
+              </Table>
+            </TableContainer>*/}
+          <WorkflowFactsVisualizer facts={facts} sparse={true} />
+        </Box>
+      )}
     </Grid>
   );
 };

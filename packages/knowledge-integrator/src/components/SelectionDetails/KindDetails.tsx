@@ -22,6 +22,7 @@ import Specialization from "./display/Specialization";
 import Definition from "./display/Definition";
 import PossibleRole from "./display/PossibleRole";
 import WorkflowFactsVisualizer from "../../pages/Workflows/WorkflowFactsVisualizer";
+import Synonyms from "./display/Synonyms";
 
 const KindDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");
@@ -40,6 +41,9 @@ const KindDetails: React.FC = () => {
   if (error) return <div>Error: {error.message}</div>;
 
   const { uid, type, category, name, definition, facts, collection } = data;
+
+  const synFacts = facts.filter((fact) => fact.rel_type_uid === 1981);
+
   const specialization = data[1146];
   const synonyms = data[1981];
   const inverses = data[1986];
@@ -90,6 +94,7 @@ const KindDetails: React.FC = () => {
             {specialization && specialization.length > 0 && (
               <Specialization uids={specialization} childUID={uid} />
             )}
+            <Synonyms synonymFacts={synFacts} />
           </Box>
           <IconButton aria-label="copy to clipboard">
             <CopyAllIcon onClick={pushDataToClipboard} />
@@ -104,15 +109,6 @@ const KindDetails: React.FC = () => {
           </Stack>
         )}
         {definition && <Definition definitions={definition} />}
-
-        {synonyms && synonyms.length > 0 && (
-          <Box>
-            <Typography size="12px" style={{ fontWeight: 600 }}>
-              Synonyms:
-            </Typography>
-            <Typography size="12px">{synonyms.join(", ")}</Typography>
-          </Box>
-        )}
 
         {inverses && inverses.length > 0 && (
           <Box>
