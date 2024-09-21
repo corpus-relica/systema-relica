@@ -126,6 +126,22 @@ export class KindService {
     );
   }
 
+  async addParentToKind(
+    uid: number,
+    name: string,
+    newParentUID: number,
+    partialDefinition: string,
+    fullDefinition: string,
+  ) {
+    await this.addSupertype(
+      uid,
+      name,
+      newParentUID,
+      partialDefinition,
+      fullDefinition,
+    );
+  }
+
   async reparentKind(
     uid: number,
     name: string,

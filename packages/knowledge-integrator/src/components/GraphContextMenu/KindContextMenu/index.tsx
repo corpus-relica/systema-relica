@@ -28,6 +28,8 @@ import {
 import { useStores } from "../../../context/RootStoreContext";
 import { Fact } from "../../../types";
 
+const ADD_PARENT = "add parent";
+const RE_PARENT = "reparent";
 const LOAD_SH = "load SH";
 const LOAD_CLASSIFIED = "load classified";
 const LOAD_ALL_RELATED = "load all related";
@@ -138,6 +140,12 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           setWarnIsOpen(true);
           handleClose();
           break;
+        case ADD_PARENT:
+          console.log("ADD_PARENT");
+          break;
+        case RE_PARENT:
+          console.log("RE_PARENT");
+          break;
 
         default:
           console.log("DEFAULT");
@@ -229,8 +237,12 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       <MenuItem value={LOAD_SUBTYPES_CONE} onClick={handleItemClick}>
         load subtypes cone
       </MenuItem>
-      <MenuItem value={"undefined"} disabled>
-        reparent this
+      <Divider />
+      <MenuItem value={ADD_PARENT} disabled>
+        add parent
+      </MenuItem>
+      <MenuItem value={RE_PARENT} disabled>
+        reparent
       </MenuItem>
       <Divider />
       <MenuItem value={UNLOAD_THIS} onClick={handleItemClick}>

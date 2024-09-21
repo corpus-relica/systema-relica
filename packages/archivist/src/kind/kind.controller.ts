@@ -67,6 +67,28 @@ export class KindController {
     return result;
   }
 
+  @Patch('/addParent')
+  async addParentToKind(
+    @Query('uid') uid: string,
+    @Query('name') name: string,
+    @Query('newParentUid') newParentUid: string,
+    @Query('partialDefinition') partialDefinition: string,
+    @Query('fullDefinition') fullDefinition: string,
+    // @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.kindService.addParentToKind(
+      +uid,
+      name,
+      +newParentUid,
+      partialDefinition,
+      fullDefinition,
+    );
+
+    // res.header('Content-Range', `posts ${minRange}-${maxRange}/319`);
+
+    return result;
+  }
+
   @Patch('/reparent')
   async reparentKind(
     @Query('uid') uid: string,
