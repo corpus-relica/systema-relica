@@ -38,3 +38,13 @@ export class CreateDateDto {
   // @IsString()
   collection_name: string;
 }
+
+export class AddSynonymDto {
+  @ApiProperty({ description: 'Entity UID' })
+  // @IsInt()
+  uid: number;
+
+  @ApiProperty({ description: 'Synonym' })
+  // @IsString()
+  synonym: string;
+}

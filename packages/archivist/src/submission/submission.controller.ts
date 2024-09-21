@@ -7,6 +7,7 @@ import {
   UpdateCollectionDto,
   CreateDateDto,
   UpdateNameDto,
+  AddSynonymDto,
 } from './submission.dto';
 
 @ApiTags('Submission')
@@ -97,6 +98,20 @@ export class SubmissionController {
       name,
     );
     return result;
+  }
+
+  @Post('/synonym')
+  @ApiOperation({ summary: 'Add entity synonym' })
+  @ApiResponse({
+    status: 200,
+    description: 'Entity synony added successfully.',
+  })
+  @ApiResponse({ status: 500, description: 'Something went wrong.' })
+  async addSynonym(@Body() body: AddSynonymDto) {
+    const { uid, synonym } = body;
+    // const result = await this.gellishBaseService.addSynonym(+uid, synonym);
+    // return result;
+    return { uid, synonym };
   }
 
   @Post('/date')
