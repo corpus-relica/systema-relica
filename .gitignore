@@ -19,3 +19,4 @@ seed_csv/
 seed_xls/
 
 temp.*
+/postgres_backup/
