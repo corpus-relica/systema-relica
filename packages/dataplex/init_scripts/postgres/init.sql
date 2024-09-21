@@ -96,8 +96,22 @@ INSERT INTO public.env_selected_entity DEFAULT VALUES;
 ALTER TABLE public.env_selected_entity OWNER TO postgres;
 GRANT ALL ON TABLE public.env_selected_entity TO postgres;
 
+-- Create the vector store table
 
+CREATE TABLE public.vector_store (
+    uid bigint PRIMARY KEY,
+    embedding vector(4096)  -- Adjust the dimension (4096) based on your embedding model
+);
 
+-- Create an index on the embedding column for faster similarity search
+-- CREATE INDEX ON public.vector_store USING hnsw (embedding vector_cosine_ops);
+-- NEED TO CHOOSE A DIFFERENT EMBEDDING MODEL TO USE THIS INDEX, NEED FEWER THAN 2000 DIMENSIONS
+-- CURRENTLY USING 4096 DIMENSIONS; https://huggingface.co/nvidia/NV-Embed-v2
+
+-- Permissions
+
+ALTER TABLE public.vector_store OWNER TO postgres;
+GRANT ALL ON TABLE public.vector_store TO postgres;
 
 -- Permissions
 
