@@ -1,56 +1,29 @@
-import React, {
-  useEffect,
-  useState,
-  memo,
-  useCallback,
-  useRef,
-  useReducer,
-} from "react";
+import React, { useState, useCallback } from "react";
 
-import GraphView from "@relica/3d-graph-ui";
 import { useStores } from "../context/RootStoreContext";
 
 import { observer } from "mobx-react";
-import { toJS } from "mobx";
 
-import { useStore, useDataProvider, localStorageStore } from "react-admin";
-import { nodeData, edgeData } from "../types";
-
-import GraphContextMenu from "../components/GraphContextMenu";
-import SelectionDetails from "../components/SelectionDetails";
+import { useStore } from "react-admin";
 
 import { sockSendCC } from "../socket";
 
-import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import SearchIcon from "@mui/icons-material/Search";
-import Stack from "@mui/material/Stack";
-import { useTheme } from "@mui/material/styles";
+
+import Fab from "@mui/material/Fab";
+import CopyAllIcon from "@mui/icons-material/CopyAll";
 
 import XXX from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
-import GraphLegend from "../components/GraphLegend";
 
 import GraphAndSelectionLayout from "./GraphToo";
+import { Fact } from "../types";
 
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 
-const cats = {
-  730044: "Physical Object",
-  193671: "Occurrence",
-  160170: "Role",
-  790229: "Aspect",
-  //970002: "Information",
-  2850: "Relation",
-};
-
-const memStore = localStorageStore();
-
 const Graph = observer(() => {
-  const theme = useTheme();
   const { factDataStore, colorPaletteStore } = useStores();
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
@@ -119,11 +92,20 @@ const Graph = observer(() => {
 
     if (!res) return;
 
-    const { lh_object_uid, rel_type_uid, rh_object_uid } = res;
+    const { lh_object_uid } = res;
     sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
       uid: lh_object_uid,
     });
     selectNode(lh_object_uid);
+  };
+
+  const copyAll = () => {
+    const factStrs = facts.map((fact: Fact) => {
+      return `- ${fact.lh_object_name} -> ${fact.rel_type_name} -> ${
+        fact.rh_object_name
+      }${fact.full_definition ? " : " + fact.full_definition : ""}`;
+    });
+    navigator.clipboard.writeText(factStrs.join("\n"));
   };
 
   return (
@@ -173,6 +155,18 @@ const Graph = observer(() => {
           overflow: "hidden",
         }}
       >
+        <Fab
+          color="primary"
+          aria-label="add"
+          sx={{
+            position: "absolute",
+            top: 10,
+            right: 395,
+          }}
+          onClick={copyAll}
+        >
+          <CopyAllIcon />
+        </Fab>
         <GraphAndSelectionLayout
           open={open}
           handleClose={handleClose}
