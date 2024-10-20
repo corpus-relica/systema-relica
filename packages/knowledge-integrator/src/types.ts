@@ -18,7 +18,7 @@ export type Fact = {
   approval_status: string;
   reference: string;
   sequence: string;
-  partial_definiton: string;
+  partial_definition: string;
   full_definition: string;
   valid_ctx_uid?: number;
   valid_ctx_name?: string;
