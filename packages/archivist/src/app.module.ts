@@ -32,6 +32,7 @@ import { ValidationController } from './validation/validation.controller';
 import { ValidationService } from './validation/validation.service';
 import { SubmissionController } from './submission/submission.controller';
 import { SubmissionService } from './submission/submission.service';
+import { UIDController } from './uid/uid.controller';
 import { UIDService } from './uid/uid.service';
 import { DeletionController } from './deletion/deletion.controller';
 import { DeletionService } from './deletion/deletion.service';
@@ -82,6 +83,7 @@ import { GellishToCypherConverter } from './query/GellishToCypherConverter';
     CompletionController,
     ValidationController,
     SubmissionController,
+    UIDController,
     DeletionController,
     KindController,
     KindsController,
