@@ -51,6 +51,8 @@ export class QueryController {
       [],
     );
 
+    this.logger.log('Query Table:', queryTable);
+
     const result = await this.queryService.interpretTable(
       queryTable,
       page,

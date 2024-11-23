@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from 'src/cache/cache.service';
 import { UIDService } from 'src/uid/uid.service';
 import { GraphService } from 'src/graph/graph.service';
@@ -6,6 +6,8 @@ import { createFact } from 'src/graph/queries';
 
 @Injectable()
 export class SubmissionService {
+  private readonly logger = new Logger(SubmissionService.name);
+
   constructor(
     private readonly cacheService: CacheService,
     private readonly graphService: GraphService,
@@ -106,7 +108,8 @@ export class SubmissionService {
   };
 
   submitBinaryFacts = async (facts) => {
-    console.log('/////  submitBinaryFacts  /////');
+    this.logger.log(`/////  submitBinaryFacts  /////`);
+    this.logger.log(facts);
 
     const tempUIDs = Array.from(
       facts

@@ -7,8 +7,10 @@ import {
   Logger,
   Res,
   HttpException,
+  forwardRef,
 } from '@nestjs/common';
 import { EnvironmentService } from './environment.service';
+import { REPLService } from 'src/repl/repl.service';
 
 @Controller('environment')
 export class EnvironmentController {
@@ -31,6 +33,20 @@ export class EnvironmentController {
     } catch (e) {
       console.log(e);
       throw new HttpException('Error retrieving environment', 500);
+    }
+  }
+
+  @Get('/setSelectedEntity/:uid')
+  async setSelectedEntity(@Param('uid') uid: string) {
+    if (typeof uid === 'string') {
+      const result = await this.environmentService.setSelectedEntity(
+        +uid,
+        'entity',
+      );
+      return result;
+    } else {
+      // Handle the case where 'uid' is not a string
+      throw new HttpException('Invalid UID', 400);
     }
   }
 
@@ -143,12 +159,12 @@ export class EnvironmentController {
 
   @Get('loadAllRelatedFacts/:uid')
   async loadAllRelatedFacts(@Param('uid') uid: string) {
-    // if (typeof uid === 'string') {
-    //   const result = await this.environmentService.getAllRelatedFacts(+uid);
-    //   res.json(result);
-    // } else {
-    //   res.status(400).send('Invalid UID');
-    // }
+    if (typeof uid === 'string') {
+      const result = await this.environmentService.loadAllRelatedFacts(+uid);
+      return result;
+    } else {
+      throw new HttpException('Invalid UID', 400);
+    }
   }
 
   @Get('listSubtypes/:uid')

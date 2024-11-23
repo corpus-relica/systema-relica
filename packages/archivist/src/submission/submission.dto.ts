@@ -25,6 +25,16 @@ export class UpdateNameDto {
   name: string;
 }
 
+export class BlanketRenameDto {
+  @ApiProperty({ description: 'Entity UID' })
+  // @IsInt()
+  entity_uid: number;
+
+  @ApiProperty({ description: 'Entity Name' })
+  // @IsString()
+  name: string;
+}
+
 export class CreateDateDto {
   @ApiProperty({ description: 'Date UID' })
   // @IsInt()

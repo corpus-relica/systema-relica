@@ -16,8 +16,8 @@ export class GellishToCypherConverter {
 
   async processGellishQuery(
     gellishStatements: Fact[],
-    page: number,
-    pageSize: number,
+    page: number = 1,
+    pageSize: number = 10,
   ): Promise<{ query: string; params: any }> {
     this.tempEntities.clear();
     const cypherPatterns: string[] = [];

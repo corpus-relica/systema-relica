@@ -231,54 +231,129 @@ export class EventsGateway {
     return uid;
   }
 
+  // @SubscribeMessage('user:unloadSubtypesCone')
+  // async userRemoveEntitySubtypesRecursive(
+  //   @MessageBody('uid') uid: number,
+  // ): Promise<number> {
+  //   console.log('REMOVE ENTITY SUBTYPES RECURSIVE');
+  //   console.log(uid);
+  //   console.log('>// REMOVE ENTITY DESCENDANTS');
+  //   const env = await this.environmentService.retrieveEnvironment();
+  //   const facts = env.facts;
+  //   let factsToRemove: Fact[] = [];
+  //   let remainingFacts: Fact[] = [];
+  //   facts.forEach((fact: Fact) => {
+  //     if (/* fact.lh_object_uid === uid || */ fact.rh_object_uid === uid) {
+  //       factsToRemove.push(fact);
+  //     } else {
+  //       remainingFacts.push(fact);
+  //     }
+  //   });
+  //   let factUIDsToRemove: number[] = [];
+  //   let candidateModelUIDsToRemove: Set<number> = new Set();
+  //   factsToRemove.forEach((fact: Fact) => {
+  //     factUIDsToRemove.push(fact.fact_uid);
+  //     candidateModelUIDsToRemove.add(fact.lh_object_uid);
+  //     candidateModelUIDsToRemove.add(fact.rh_object_uid);
+  //   });
+  //   remainingFacts.forEach((fact: Fact) => {
+  //     if (candidateModelUIDsToRemove.has(fact.lh_object_uid)) {
+  //       candidateModelUIDsToRemove.delete(fact.lh_object_uid);
+  //     }
+  //     if (candidateModelUIDsToRemove.has(fact.rh_object_uid)) {
+  //       candidateModelUIDsToRemove.delete(fact.rh_object_uid);
+  //     }
+  //   });
+  //   this.environmentService.removeFacts(factUIDsToRemove);
+  //   // TODO: i don't think all the models needing to be removed are being removed
+  //   this.environmentService.removeModels(
+  //     Array.from(candidateModelUIDsToRemove),
+  //   );
+  //   // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
+  //   const subtypingFacts = factsToRemove.filter(
+  //     (fact: Fact) => fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
+  //   );
+  //   console.log('SUBTYPING FACTS: ', subtypingFacts);
+  //   subtypingFacts.forEach((fact: Fact) => {
+  //     console.log('>>> RECURSE ON: ', fact.lh_object_uid);
+  //     this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
+  //   });
+
+  //   return uid;
+  // }
+
   @SubscribeMessage('user:unloadSubtypesCone')
   async userRemoveEntitySubtypesRecursive(
     @MessageBody('uid') uid: number,
   ): Promise<number> {
     console.log('REMOVE ENTITY SUBTYPES RECURSIVE');
-    console.log(uid);
+    console.log('UID:', uid);
     console.log('>// REMOVE ENTITY DESCENDANTS');
-    const env = await this.environmentService.retrieveEnvironment();
-    const facts = env.facts;
-    let factsToRemove: Fact[] = [];
-    let remainingFacts: Fact[] = [];
-    facts.forEach((fact: Fact) => {
-      if (/* fact.lh_object_uid === uid || */ fact.rh_object_uid === uid) {
-        factsToRemove.push(fact);
-      } else {
-        remainingFacts.push(fact);
-      }
-    });
-    let factUIDsToRemove: number[] = [];
-    let candidateModelUIDsToRemove: Set<number> = new Set();
-    factsToRemove.forEach((fact: Fact) => {
-      factUIDsToRemove.push(fact.fact_uid);
-      candidateModelUIDsToRemove.add(fact.lh_object_uid);
-      candidateModelUIDsToRemove.add(fact.rh_object_uid);
-    });
-    remainingFacts.forEach((fact: Fact) => {
-      if (candidateModelUIDsToRemove.has(fact.lh_object_uid)) {
-        candidateModelUIDsToRemove.delete(fact.lh_object_uid);
-      }
-      if (candidateModelUIDsToRemove.has(fact.rh_object_uid)) {
-        candidateModelUIDsToRemove.delete(fact.rh_object_uid);
-      }
-    });
-    this.environmentService.removeFacts(factUIDsToRemove);
-    this.environmentService.removeModels(
-      Array.from(candidateModelUIDsToRemove),
-    );
-    this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
-    const subtypingFacts = factsToRemove.filter(
-      (fact: Fact) => fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
-    );
-    console.log('SUBTYPING FACTS: ', subtypingFacts);
-    subtypingFacts.forEach((fact: Fact) => {
-      console.log('>>> RECURSE ON: ', fact.lh_object_uid);
-      this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
-    });
 
-    return uid;
+    try {
+      const env = await this.environmentService.retrieveEnvironment();
+      const facts = env.facts;
+      let factsToRemove: Fact[] = [];
+      let remainingFacts: Fact[] = [];
+
+      facts.forEach((fact: Fact) => {
+        if (/*fact.lh_object_uid === uid ||*/ fact.rh_object_uid === uid) {
+          factsToRemove.push(fact);
+        } else {
+          remainingFacts.push(fact);
+        }
+      });
+
+      console.log('Facts to remove:', factsToRemove.length);
+      console.log('Remaining facts:', remainingFacts.length);
+
+      let factUIDsToRemove: number[] = [];
+      let lhModelUIDsToRemove: Set<number> = new Set();
+      let rhModelUIDsToRemove: Set<number> = new Set();
+
+      factsToRemove.forEach((fact: Fact) => {
+        factUIDsToRemove.push(fact.fact_uid);
+        lhModelUIDsToRemove.add(fact.lh_object_uid);
+        rhModelUIDsToRemove.add(fact.rh_object_uid);
+      });
+
+      remainingFacts.forEach((fact: Fact) => {
+        lhModelUIDsToRemove.delete(fact.lh_object_uid);
+        lhModelUIDsToRemove.delete(fact.rh_object_uid);
+        rhModelUIDsToRemove.delete(fact.lh_object_uid);
+        rhModelUIDsToRemove.delete(fact.rh_object_uid);
+      });
+
+      const modelsToRemove = new Set([
+        ...lhModelUIDsToRemove,
+        ...rhModelUIDsToRemove,
+      ]);
+      console.log('Models to remove:', modelsToRemove.size);
+
+      await this.environmentService.removeFacts(factUIDsToRemove);
+      await this.environmentService.removeModels(Array.from(modelsToRemove));
+
+      // Uncomment if needed:
+      // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
+
+      const subtypingFacts = factsToRemove.filter(
+        (fact: Fact) =>
+          fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
+      );
+      console.log('SUBTYPING FACTS: ', subtypingFacts.length);
+
+      await Promise.all(
+        subtypingFacts.map(async (fact: Fact) => {
+          console.log('>>> RECURSE ON: ', fact.lh_object_uid);
+          await this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
+        }),
+      );
+
+      return uid;
+    } catch (error) {
+      console.error('Error in userRemoveEntitySubtypesRecursive:', error);
+      throw error;
+    }
   }
 
   @SubscribeMessage('user:loadAllRelatedFacts')

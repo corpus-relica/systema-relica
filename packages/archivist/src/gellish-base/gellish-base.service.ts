@@ -29,7 +29,9 @@ import {
   updateFactDefinitionQuery,
   updateFactCollectionQuery,
   updateFactNameQuery,
+  updateFactNamesQuery,
   qualificationFact,
+  allFactsInvolvingEntity,
 } from 'src/graph/queries';
 
 import { linearize } from 'c3-linearization';
@@ -468,5 +470,46 @@ export class GellishBaseService {
     this.logger.verbose('UPDATE FACT NAME', result);
 
     return this.graphService.transformResult(result[0]);
+  };
+
+  // renameFactName = async (uid: number, oldName: string, newName: string) => {
+  // renameFactInContext = async (uid: number, context_uid: number, newName: string) => {
+
+  blanketUpdateFactName = async (uid: Number, newName: string) => {
+    // const facts = await this.getDefinitiveFacts(uid);
+    // const result = await Promise.all(
+    //   facts.map(async (fact) => {
+    //     return await this.updateFactName(fact.fact_uid, newName);
+    //   }),
+    // );
+    // return result;
+
+    const foo = await this.graphService.execQuery(allFactsInvolvingEntity, {
+      uid: uid,
+    });
+    const bar = foo.map((x) => x.get('r').properties);
+    const baz = bar.map((x) => {
+      if (x.rh_object_uid === uid) x.rh_object_name = newName;
+      if (x.lh_object_uid === uid) x.lh_object_name = newName;
+      return x;
+    });
+
+    //for each in baz run updateFactNamesQuery
+    const result = await Promise.all(
+      baz.map(async (fact) => {
+        return await this.graphService.execWriteQuery(updateFactNamesQuery, {
+          fact_uid: fact.fact_uid,
+          lh_name: fact.lh_object_name,
+          rh_name: fact.rh_object_name,
+        });
+      }),
+    );
+
+    const barResult = result.map((x) => x.get('n').properties);
+
+    console.log('RESULT', barResult);
+
+    this.logger.verbose('BLANKET UPDATE FACT NAME', uid, newName);
+    return [];
   };
 }

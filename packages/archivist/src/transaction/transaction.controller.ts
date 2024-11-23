@@ -5,36 +5,36 @@ import { SendEventDto, startTransactionDto } from './transaction.dto';
 
 @Controller('transaction')
 export class TransactionController {
-    private readonly logger = new Logger(TransactionController.name);
+  private readonly logger = new Logger(TransactionController.name);
 
-    constructor(private readonly transactionService: TransactionService) {}
+  constructor(private readonly transactionService: TransactionService) {}
 
-    @Post('start')
-    @ApiBody({ type: startTransactionDto })
-    startTransaction(@Body('machineName') machineName: string) {
-        this.logger.log(`Starting transaction for machine: ${machineName}`);
+  @Post('start')
+  @ApiBody({ type: startTransactionDto })
+  startTransaction(@Body('machineName') machineName: string) {
+    this.logger.log(`Starting transaction for machine: ${machineName}`);
 
-        return this.transactionService.startMachine(machineName);
-    }
+    return this.transactionService.startMachine(machineName);
+  }
 
-    @Post('event')
-    @ApiBody({ type: SendEventDto })
-    sendEvent(@Body('event') event: any) {
-        return this.transactionService.sendEvent(event);
-    }
+  @Post('event')
+  @ApiBody({ type: SendEventDto })
+  sendEvent(@Body('event') event: any) {
+    this.transactionService.sendEvent(event);
+  }
 
-    @Get('pending-states')
-    getPendingStates() {
-        return this.transactionService.getPendingStates();
-    }
+  @Get('pending-states')
+  getPendingStates() {
+    return this.transactionService.getPendingStates();
+  }
 
-    @Get('snapshot')
-    getSnapshot() {
-        return this.transactionService.getSnapshot();
-    }
+  @Get('snapshot')
+  getSnapshot() {
+    return this.transactionService.getSnapshot();
+  }
 
-    @Post('resume')
-    resumeLastTransaction() {
-        return this.transactionService.resumeLastMachine();
-    }
+  @Post('resume')
+  resumeLastTransaction() {
+    return this.transactionService.resumeLastMachine();
+  }
 }

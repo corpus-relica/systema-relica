@@ -264,6 +264,8 @@ export class ModelService {
   }
 
   async updateName(uid, name) {
+    // fact_uid, (the definitive fact uid)
+    // new_name
     const response = await this.archivistService.submitName(uid, name);
     return response;
   }

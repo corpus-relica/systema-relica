@@ -1,4 +1,4 @@
-import { Controller, Put, Post, Body } from '@nestjs/common';
+import { Controller, Put, Post, Body, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SubmissionService } from './submission.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
@@ -8,11 +8,14 @@ import {
   CreateDateDto,
   UpdateNameDto,
   AddSynonymDto,
+  BlanketRenameDto,
 } from './submission.dto';
 
 @ApiTags('Submission')
 @Controller('submission')
 export class SubmissionController {
+  private readonly logger = new Logger(SubmissionController.name);
+
   constructor(
     private readonly submissionService: SubmissionService,
     private readonly gellishBaseService: GellishBaseService,
@@ -43,6 +46,7 @@ export class SubmissionController {
 
   @Post('/binaryFacts')
   async binaryFacts(@Body() body) {
+    this.logger.log('submitBinaryFacts', body);
     const result = await this.submissionService.submitBinaryFacts(body);
 
     // update the lineage cache
@@ -85,7 +89,7 @@ export class SubmissionController {
   }
 
   @Put('/name')
-  @ApiOperation({ summary: 'Update entity name' })
+  @ApiOperation({ summary: 'Update entity name on the fact with fact_uid' })
   @ApiResponse({
     status: 200,
     description: 'Entity name updated successfully.',
@@ -95,6 +99,24 @@ export class SubmissionController {
     const { fact_uid, name } = body;
     const result = await this.gellishBaseService.updateFactName(
       +fact_uid,
+      name,
+    );
+    return result;
+  }
+
+  @Put('/blanketRename')
+  @ApiOperation({
+    summary: 'Update entity name at every instance of entity_uid',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Entity name updated successfully.',
+  })
+  @ApiResponse({ status: 500, description: 'Something went wrong.' })
+  async blanketRename(@Body() body: BlanketRenameDto) {
+    const { entity_uid, name } = body;
+    const result = await this.gellishBaseService.blanketUpdateFactName(
+      +entity_uid,
       name,
     );
     return result;

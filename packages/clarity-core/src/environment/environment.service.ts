@@ -80,6 +80,10 @@ export class EnvironmentService {
   }
 
   async removeModels(uids: number[]) {
+    console.log(
+      '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! REMOVE MODELS',
+      uids,
+    );
     if (uids.length === 0) return;
     await this.envModelRepository.delete(uids);
 
@@ -103,6 +107,11 @@ export class EnvironmentService {
     uid: number | null,
     type: string | null = null,
   ): Promise<number | null> {
+    console.log(
+      '///////////////////////////////////////////SET SELECTED ENTITY',
+      uid,
+      type,
+    );
     let ret: number | null = null;
     if (uid === null) {
       await this.envSelectedEntityRepository.update(1, {
@@ -232,6 +241,7 @@ export class EnvironmentService {
     });
     if (factUIDsToRemove.length > 0) this.removeFacts(factUIDsToRemove);
     if (candidateModelUIDsToRemove.size > 0)
+      // TODO: i don't this all the models needing to be removed are being removed
       this.removeModels(Array.from(candidateModelUIDsToRemove));
 
     return factUIDsToRemove;
@@ -257,10 +267,15 @@ export class EnvironmentService {
     });
     await this.removeFacts([uid]);
     if (candidateModelUIDsToRemove.size > 0)
+      // TODO: i don't this all the models needing to be removed are being removed
       this.removeModels(Array.from(candidateModelUIDsToRemove));
   }
 
   async removeFacts(uids: number[]) {
+    console.log(
+      '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! REMOVE FACTS',
+      uids,
+    );
     if (uids.length === 0) return;
     await this.envFactRepository.delete(uids);
 
@@ -389,6 +404,15 @@ export class EnvironmentService {
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
+    return payload;
+  }
+
+  async loadAllRelatedFacts(uid: number) {
+    const results = await this.archivistService.retrieveAllFacts(uid);
+    const models = await this.modelsFromFacts(results);
+    this.insertFacts(results);
+    this.insertModels(models);
+    const payload = { facts: results, models };
     return payload;
   }
 }

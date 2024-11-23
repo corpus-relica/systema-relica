@@ -298,6 +298,12 @@ SET r.lh_object_name = $name
 RETURN r
 `;
 
+export const updateFactNamesQuery = `
+MATCH (r:Fact {fact_uid: $fact_uid})
+SET r.lh_object_name = $lh_name
+SET r.rh_object_name = $rh_name
+RETURN r
+`;
 /////////////////////////////////////////////////////////////
 
 export const getListOfKindsQuery = `
