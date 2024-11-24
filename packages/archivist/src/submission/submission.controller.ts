@@ -22,47 +22,6 @@ export class SubmissionController {
     private readonly cacheService: CacheService,
   ) {}
 
-  async updateLineage(descendantUID) {
-    const lineage = await this.cacheService.lineageOf(descendantUID);
-
-    await Promise.all(
-      lineage.map(async (ancestorUID) => {
-        await this.cacheService.addDescendantTo(ancestorUID, descendantUID);
-      }),
-    );
-  }
-
-  @Post('/binaryFact')
-  async binaryFact(@Body() body) {
-    const result = await this.submissionService.submitBinaryFact(body);
-
-    // update the lineage cache
-    await this.updateLineage(result.fact.lh_object_uid);
-
-    this.cacheService.clearDescendants();
-
-    return result;
-  }
-
-  @Post('/binaryFacts')
-  async binaryFacts(@Body() body) {
-    this.logger.log('submitBinaryFacts', body);
-    const result = await this.submissionService.submitBinaryFacts(body);
-
-    // update the lineage cache
-    await Promise.all(
-      result.facts.map(async (fact) => {
-        await this.updateLineage(fact.lh_object_uid);
-      }),
-    );
-
-    // TODO: could probably be optimized by only
-    // updating the lineage of the unique lh_object_uids
-    this.cacheService.clearDescendants();
-
-    return result;
-  }
-
   @Put('/definition')
   async updateDefinition(@Body() body) {
     const { fact_uid, partial_definition, full_definition } = body;

@@ -1,13 +1,25 @@
-import { Controller, Delete, Get, Query } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Query, Body } from '@nestjs/common';
 import { FactService } from './fact.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { CacheService } from 'src/cache/cache.service';
 
 @Controller('fact')
 export class FactController {
   constructor(
     private readonly factService: FactService,
     private readonly gellishBaseService: GellishBaseService,
+    private readonly cacheService: CacheService,
   ) {}
+
+  async updateLineage(descendantUID) {
+    const lineage = await this.cacheService.lineageOf(descendantUID);
+
+    await Promise.all(
+      lineage.map(async (ancestorUID) => {
+        await this.cacheService.addDescendantTo(ancestorUID, descendantUID);
+      }),
+    );
+  }
 
   @Get('subtypes')
   async getSubtypes(@Query('uid') uid: string) {
@@ -97,6 +109,18 @@ export class FactController {
   // BEGIN FACT //
   ////////////////
 
+  @Post('/fact')
+  async postFact(@Body() body: any) {
+    const result = await this.factService.submitBinaryFact(body);
+
+    // update the lineage cache
+    await this.updateLineage(result.fact.lh_object_uid);
+
+    this.cacheService.clearDescendants();
+
+    return result;
+  }
+
   @Get('fact')
   async getFact(@Query('uid') uid: string) {
     return this.gellishBaseService.getFact(parseInt(uid));
@@ -115,6 +139,25 @@ export class FactController {
   //////////////
   // END FACT //
   //////////////
+
+  @Post('/facts')
+  async postFacts(@Body() body) {
+    // this.logger.log('submitBinaryFacts', body);
+    const result = await this.factService.submitBinaryFacts(body);
+
+    // update the lineage cache
+    await Promise.all(
+      result.facts.map(async (fact) => {
+        await this.updateLineage(fact.lh_object_uid);
+      }),
+    );
+
+    // TODO: could probably be optimized by only
+    // updating the lineage of the unique lh_object_uids
+    this.cacheService.clearDescendants();
+
+    return result;
+  }
 
   @Get('facts')
   async getFacts(@Query('uids') uids: number[]) {

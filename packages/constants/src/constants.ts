@@ -20,8 +20,9 @@ export const FACTS_RELATING_ENTITIES_ENDPOINT = "/fact/factsRelatingEntities";
 
 export const SIMPLE_VALIDATE_BINARY_FACT_ENDPOINT = "/validate/binaryFact";
 export const SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT = "/validate/binaryFacts";
-export const SUBMIT_BINARY_FACT_ENDPOINT = "/submission/binaryFact";
-export const SUBMIT_BINARY_FACTS_ENDPOINT = "/submission/binaryFacts";
+
+export const SUBMIT_BINARY_FACT_ENDPOINT = "/fact/fact";
+export const SUBMIT_BINARY_FACTS_ENDPOINT = "/fact/facts";
 
 export const ENTITY_ENDPOINT = "/retrieveEntity/entity";
 export const ENTITY_TYPE_ENDPOINT = "/retrieveEntity/type";
