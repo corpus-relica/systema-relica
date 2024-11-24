@@ -476,14 +476,6 @@ export class GellishBaseService {
   // renameFactInContext = async (uid: number, context_uid: number, newName: string) => {
 
   blanketUpdateFactName = async (uid: Number, newName: string) => {
-    // const facts = await this.getDefinitiveFacts(uid);
-    // const result = await Promise.all(
-    //   facts.map(async (fact) => {
-    //     return await this.updateFactName(fact.fact_uid, newName);
-    //   }),
-    // );
-    // return result;
-
     const foo = await this.graphService.execQuery(allFactsInvolvingEntity, {
       uid: uid,
     });
@@ -505,11 +497,15 @@ export class GellishBaseService {
       }),
     );
 
-    const barResult = result.map((x) => x.get('n').properties);
+    // for (let i = 0; i < result.length; i++) {
+    //   console.log('RESULT', result[i][0].get('r').properties);
+    // }
 
-    console.log('RESULT', barResult);
+    const barResult = result.map((x) => x[0].get('r').properties);
 
-    this.logger.verbose('BLANKET UPDATE FACT NAME', uid, newName);
-    return [];
+    // console.log('RESULT', barResult);
+
+    this.logger.verbose('BLANKET UPDATE FACT NAME', barResult);
+    return barResult;
   };
 }

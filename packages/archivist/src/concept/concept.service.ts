@@ -1,15 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {
-  allFactsInvolvingEntity,
-  deleteFactQuery,
-  deleteEntityQuery,
-} from 'src/graph/queries';
+import { deleteFactQuery, deleteEntityQuery } from 'src/graph/queries';
 import { GraphService } from 'src/graph/graph.service';
 import { CacheService } from 'src/cache/cache.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 
 @Injectable()
-export class DeletionService {
+export class ConceptService {
   constructor(
     private readonly graphService: GraphService,
     private readonly cacheService: CacheService,
@@ -48,39 +44,5 @@ export class DeletionService {
     await this.graphService.execWriteQuery(deleteEntityQuery, { uid });
 
     return { result: 'success', uid: uid, deletedFacts: facts };
-  }
-
-  async deleteFact(uid) {
-    const fact = await this.gellishBaseService.getFact(uid);
-    const { fact_uid, lh_object_uid, rh_object_uid } = fact;
-
-    const lhFactUIDs =
-      await this.cacheService.allFactsInvolvingEntity(lh_object_uid);
-    const rhFactUIDs =
-      await this.cacheService.allFactsInvolvingEntity(rh_object_uid);
-
-    await this.cacheService.removeFromFactsInvolvingEntity(
-      lh_object_uid,
-      fact_uid,
-    );
-    await this.cacheService.removeFromFactsInvolvingEntity(
-      rh_object_uid,
-      fact_uid,
-    );
-    await this.graphService.execWriteQuery(deleteFactQuery, {
-      uid: fact_uid,
-    });
-
-    // remove orphans
-    if (lhFactUIDs.length === 1 && lhFactUIDs[0] === uid) {
-      await this.cacheService.removeEntity(lh_object_uid);
-      await this.deleteEntity(lh_object_uid);
-    }
-    if (rhFactUIDs.length === 1 && rhFactUIDs[0] === uid) {
-      await this.cacheService.removeEntity(rh_object_uid);
-      await this.deleteEntity(rh_object_uid);
-    }
-
-    return { result: 'success', uid: uid, deletedFact: fact };
   }
 }

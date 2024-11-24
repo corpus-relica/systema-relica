@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConceptController } from './concept/concept.controller';
+import { ConceptService } from './concept/concept.service';
 
 import { Neo4jModule } from 'nest-neo4j';
 import { RedisModule } from '@nestjs-modules/ioredis';
@@ -22,8 +23,8 @@ import { IndividualSearchController } from './individual-search/individual-searc
 import { IndividualSearchService } from './individual-search/individual-search.service';
 import { GeneralSearchController } from './general-search/general-search.controller';
 import { GeneralSearchService } from './general-search/general-search.service';
-import { FactRetrievalController } from './fact-retrieval/fact-retrieval.controller';
-import { FactRetrievalService } from './fact-retrieval/fact-retrieval.service';
+import { FactController } from './fact/fact.controller';
+import { FactService } from './fact/fact.service';
 import { EntityRetrievalController } from './entity-retrieval/entity-retrieval.controller';
 import { EntityRetrievalService } from './entity-retrieval/entity-retrieval.service';
 import { CompletionService } from './completion/completion.service';
@@ -34,8 +35,6 @@ import { SubmissionController } from './submission/submission.controller';
 import { SubmissionService } from './submission/submission.service';
 import { UIDController } from './uid/uid.controller';
 import { UIDService } from './uid/uid.service';
-import { DeletionController } from './deletion/deletion.controller';
-import { DeletionService } from './deletion/deletion.service';
 import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion.service';
 import { XLSService } from './xls/xls.service';
 import { FileService } from './file/file.service';
@@ -78,13 +77,12 @@ import { GellishToCypherConverter } from './query/GellishToCypherConverter';
     KindSearchController,
     IndividualSearchController,
     GeneralSearchController,
-    FactRetrievalController,
+    FactController,
     EntityRetrievalController,
     CompletionController,
     ValidationController,
     SubmissionController,
     UIDController,
-    DeletionController,
     KindController,
     KindsController,
     AspectController,
@@ -92,6 +90,7 @@ import { GellishToCypherConverter } from './query/GellishToCypherConverter';
   ],
   providers: [
     AppInitService,
+    ConceptService,
     AppService,
     CacheService,
     GraphService,
@@ -101,13 +100,12 @@ import { GellishToCypherConverter } from './query/GellishToCypherConverter';
     ExecuteSearchQueryService,
     IndividualSearchService,
     GeneralSearchService,
-    FactRetrievalService,
+    FactService,
     EntityRetrievalService,
     CompletionService,
     ValidationService,
     SubmissionService,
     UIDService,
-    DeletionService,
     RawFactIngestionService,
     XLSService,
     FileService,

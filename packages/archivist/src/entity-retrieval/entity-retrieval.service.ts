@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { CacheService } from 'src/cache/cache.service';
 import { GraphService } from 'src/graph/graph.service';
-import { FactRetrievalService } from 'src/fact-retrieval/fact-retrieval.service';
+import { FactService } from 'src/fact/fact.service';
 
 @Injectable()
 export class EntityRetrievalService {
@@ -11,7 +11,7 @@ export class EntityRetrievalService {
   constructor(
     private readonly cacheService: CacheService,
     private readonly graphService: GraphService,
-    private readonly factRetrievalService: FactRetrievalService,
+    private readonly factService: FactService,
   ) {}
 
   async getCollections() {
@@ -22,7 +22,7 @@ export class EntityRetrievalService {
 
     const result = [];
     for (const uid of foo) {
-      const individuals = await this.factRetrievalService.getClassified(uid);
+      const individuals = await this.factService.getClassified(uid);
       if (individuals.length > 0) {
         for (const f of individuals) {
           result.push({ name: f.lh_object_name, uid: f.lh_object_uid });

@@ -1,22 +1,22 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { FactRetrievalService } from './fact-retrieval.service';
+import { Controller, Delete, Get, Query } from '@nestjs/common';
+import { FactService } from './fact.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 
-@Controller('factRetrieval')
-export class FactRetrievalController {
+@Controller('fact')
+export class FactController {
   constructor(
-    private readonly factRetrievalService: FactRetrievalService,
+    private readonly factService: FactService,
     private readonly gellishBaseService: GellishBaseService,
   ) {}
 
   @Get('subtypes')
   async getSubtypes(@Query('uid') uid: string) {
-    return this.factRetrievalService.getSubtypes(parseInt(uid));
+    return this.factService.getSubtypes(parseInt(uid));
   }
 
   @Get('subtypesCone')
   async getSubtypesCone(@Query('uid') uid: string) {
-    return this.factRetrievalService.getSubtypesCone(parseInt(uid));
+    return this.factService.getSubtypesCone(parseInt(uid));
   }
 
   @Get('classified')
@@ -24,10 +24,7 @@ export class FactRetrievalController {
     @Query('uid') uid: string,
     @Query('recursive') recursive: string = 'false',
   ) {
-    return this.factRetrievalService.getClassified(
-      parseInt(uid),
-      recursive === 'true',
-    );
+    return this.factService.getClassified(parseInt(uid), recursive === 'true');
   }
 
   @Get('classificationFact')
@@ -72,17 +69,17 @@ export class FactRetrievalController {
 
   @Get('factsAboutKind')
   async getFactsAboutKind(@Query('uid') uid: string) {
-    return this.factRetrievalService.getFactsAboutKind(parseInt(uid));
+    return this.factService.getFactsAboutKind(parseInt(uid));
   }
 
   @Get('factsAboutIndividual')
   async getFactsAboutIndividual(@Query('uid') uid: string) {
-    return this.factRetrievalService.getFactsAboutIndividual(parseInt(uid));
+    return this.factService.getFactsAboutIndividual(parseInt(uid));
   }
 
   @Get('factsAboutRelation')
   async getFactsAboutRelation(@Query('uid') uid: string) {
-    return this.factRetrievalService.getFactsAboutRelation(parseInt(uid));
+    return this.factService.getFactsAboutRelation(parseInt(uid));
   }
 
   @Get('allRelatedFacts')
@@ -90,16 +87,34 @@ export class FactRetrievalController {
     @Query('uid') uid: string,
     @Query('depth') depth: string = '1',
   ) {
-    return await this.factRetrievalService.getAllRelatedFactsRecursive(
+    return await this.factService.getAllRelatedFactsRecursive(
       parseInt(uid),
       parseInt(depth),
     );
   }
 
+  ////////////////
+  // BEGIN FACT //
+  ////////////////
+
   @Get('fact')
   async getFact(@Query('uid') uid: string) {
     return this.gellishBaseService.getFact(parseInt(uid));
   }
+
+  @Delete('/fact')
+  async deleteFact(@Query('uid') uid: string) {
+    if (!uid) {
+      //res.status(400).send('UID is required');
+    }
+    console.log('DELETE FACT', uid);
+    const result = await this.factService.deleteFact(parseInt(uid));
+    return result;
+  }
+
+  //////////////
+  // END FACT //
+  //////////////
 
   @Get('facts')
   async getFacts(@Query('uids') uids: number[]) {
@@ -111,7 +126,7 @@ export class FactRetrievalController {
     @Query('lh_object_uid') lh_object_uid: string,
     @Query('rel_type_uid') rel_type_uid: string,
   ) {
-    return this.factRetrievalService.getRelatedOnUIDSubtypeCone(
+    return this.factService.getRelatedOnUIDSubtypeCone(
       parseInt(lh_object_uid),
       parseInt(rel_type_uid),
     );
@@ -127,7 +142,7 @@ export class FactRetrievalController {
     @Query('uid1') uid1: string,
     @Query('uid2') uid2: string,
   ) {
-    return this.factRetrievalService.getFactsRelatingEntities(
+    return this.factService.getFactsRelatingEntities(
       parseInt(uid1),
       parseInt(uid2),
     );

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GraphService } from 'src/graph/graph.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
-import { FactRetrievalService } from 'src/fact-retrieval/fact-retrieval.service';
+// import { FactService } from 'src/fact/fact.service';
 import { Fact } from '@relica/types';
 import { GellishToCypherConverter } from './GellishToCypherConverter';
 
@@ -13,7 +13,7 @@ export class QueryService {
 
   constructor(
     private readonly graphService: GraphService,
-    private readonly factRetrieval: FactRetrievalService,
+    // private readonly factService: FactService,
     private readonly gellishBaseService: GellishBaseService,
     private readonly gellishToCypherConverter: GellishToCypherConverter,
   ) {}

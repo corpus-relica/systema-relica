@@ -133,6 +133,7 @@ export class EnvironmentService {
         return;
       }
 
+      console.log('\\\\\\\\\\\\\\\\\\\\\\ SELECTED ENTITY', uid);
       await this.envSelectedEntityRepository.update(1, {
         uid: uid + '',
         type: EntityFactEnum.ENTITY,

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
 import { GraphService } from 'src/graph/graph.service';
+import { ConceptService } from 'src/concept/concept.service';
 
 import {
   subtypes,
@@ -11,18 +12,21 @@ import {
   allRelatedFactsQueryb,
   allRelatedFactsQueryc,
   allRelatedFactsQueryd,
+  deleteFactQuery,
+  deleteEntityQuery,
 } from 'src/graph/queries';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { CacheService } from 'src/cache/cache.service';
 
 @Injectable()
-export class FactRetrievalService {
-  private readonly logger = new Logger(FactRetrievalService.name);
+export class FactService {
+  private readonly logger = new Logger(FactService.name);
 
   constructor(
     private readonly graphService: GraphService,
     private readonly gellishBaseService: GellishBaseService,
     private readonly cacheService: CacheService,
+    private readonly conceptService: ConceptService,
   ) {}
 
   getSubtypes = async (uid) => {
@@ -291,7 +295,7 @@ export class FactRetrievalService {
     return uniqueResults;
   };
 
-  async confirmFact(fact: Fact): Promise<Fact | null> {
+  confirmFact = async (fact: Fact): Promise<Fact | null> => {
     try {
       const result = await this.graphService.execQuery(
         `MATCH (r:Fact {lh_object_uid: $lh_object_uid, rh_object_uid: $rh_object_uid, rel_type_uid: $rel_type_uid})
@@ -312,7 +316,7 @@ RETURN r
     } finally {
     }
     return null;
-  }
+  };
 
   async confirmFactInRelationCone(
     lh_object_uids: number[] | null,
@@ -373,4 +377,38 @@ RETURN r
       return null;
     }
   }
+
+  deleteFact = async (uid) => {
+    const fact = await this.gellishBaseService.getFact(uid);
+    const { fact_uid, lh_object_uid, rh_object_uid } = fact;
+
+    const lhFactUIDs =
+      await this.cacheService.allFactsInvolvingEntity(lh_object_uid);
+    const rhFactUIDs =
+      await this.cacheService.allFactsInvolvingEntity(rh_object_uid);
+
+    await this.cacheService.removeFromFactsInvolvingEntity(
+      lh_object_uid,
+      fact_uid,
+    );
+    await this.cacheService.removeFromFactsInvolvingEntity(
+      rh_object_uid,
+      fact_uid,
+    );
+    await this.graphService.execWriteQuery(deleteFactQuery, {
+      uid: fact_uid,
+    });
+
+    // remove orphans
+    if (lhFactUIDs.length === 1 && lhFactUIDs[0] === uid) {
+      await this.cacheService.removeEntity(lh_object_uid);
+      await this.conceptService.deleteEntity(lh_object_uid);
+    }
+    if (rhFactUIDs.length === 1 && rhFactUIDs[0] === uid) {
+      await this.cacheService.removeEntity(rh_object_uid);
+      await this.conceptService.deleteEntity(rh_object_uid);
+    }
+
+    return { result: 'success', uid: uid, deletedFact: fact };
+  };
 }
