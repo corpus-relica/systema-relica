@@ -419,6 +419,16 @@ RETURN r
     return { result: 'success', uid: uid, deletedFact: fact };
   };
 
+  deleteFacts = async (uids) => {
+    const results = await Promise.all(
+      uids.map(async (uid) => {
+        return await this.deleteFact(uid);
+      }),
+    );
+
+    return results;
+  };
+
   //TODO: if essential fields are partially complete (e.g. only rh_object_uid is
   //provided), then the function should resolve the missing fields by querying
   //the graph

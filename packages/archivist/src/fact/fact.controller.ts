@@ -1,4 +1,12 @@
-import { Controller, Delete, Get, Post, Query, Body } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  Param,
+  Body,
+} from '@nestjs/common';
 import { FactService } from './fact.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { CacheService } from 'src/cache/cache.service';
@@ -121,7 +129,7 @@ export class FactController {
     return result;
   }
 
-  @Get('fact')
+  @Get('/fact')
   async getFact(@Query('uid') uid: string) {
     return this.gellishBaseService.getFact(parseInt(uid));
   }
@@ -159,9 +167,18 @@ export class FactController {
     return result;
   }
 
-  @Get('facts')
+  @Get('/facts')
   async getFacts(@Query('uids') uids: number[]) {
     return this.gellishBaseService.getFacts(uids);
+  }
+
+  @Delete('/facts')
+  async deleteFacts(@Body() body) {
+    console.log('DELETE FACTS A', body);
+    let uids = body.map((uid) => parseInt(uid.toString()));
+    console.log('DELETE FACTS', uids);
+    const result = await this.factService.deleteFacts(uids);
+    return result;
   }
 
   @Get('relatedOnUIDSubtypeCone')
