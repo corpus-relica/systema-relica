@@ -1,4 +1,6 @@
-import { fetchJson } from 'ra-core';
+import { fetchUtils } from 'react-admin';
+
+const { fetchJson } = fetchUtils;
 
 const apiUrl = import.meta.env.VITE_RELICA_CC_API_URL;
 

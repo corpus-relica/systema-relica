@@ -1,4 +1,6 @@
-import { fetchJson } from 'ra-core';
+import { fetchUtils } from 'react-admin';
+
+const { fetchJson } = fetchUtils;
 
 // Add a function to get the token from localStorage
 const getAuthToken = () => {
@@ -11,12 +13,12 @@ console.log('Creating axios instance...');
 const apiUrl = import.meta.env.VITE_RELICA_ARCHIVIST_API_URL || 'http://localhost:3000';
 
 const httpClient = (url: string, options: any = {}) => {
+  if (!options.headers) {
+    options.headers = new Headers({ Accept: 'application/json' });
+  }
   const token = getAuthToken();
   if (token) {
-    options.headers = {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    };
+    options.headers.set('Authorization', `Bearer ${token}`);
   }
   return fetchJson(url, options);
 };
@@ -46,7 +48,7 @@ const dataProvider = {
           .then(({ json }) => ({
             data: json.data.map((e: any) => ({ ...e, id: e.uid })),
             total: json.total,
-          }));
+          }))
       default:
         //return rejected promise
         return Promise.reject("Unknown resource");
