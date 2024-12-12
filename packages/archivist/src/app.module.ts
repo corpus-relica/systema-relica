@@ -48,6 +48,9 @@ import { LinearizationService } from './linearization/linearization.service';
 import { QueryController } from './query/query.controller';
 import { QueryService } from './query/query.service';
 import { GellishToCypherConverter } from './query/GellishToCypherConverter';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
@@ -68,7 +71,19 @@ import { GellishToCypherConverter } from './query/GellishToCypherConverter';
       username: process.env.NEO4J_USER, //'neo4j',
       password: process.env.NEO4J_PASSWORD, //'password',
     }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.POSTGRES_HOST,
+      port: parseInt(process.env.POSTGRES_PORT, 10),
+      username: process.env.POSTGRES_USER,
+      password: process.env.POSTGRES_PASSWORD,
+      database: process.env.POSTGRES_DB,
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,
+    }),
     TransactionModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [
     AppController,

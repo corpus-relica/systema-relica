@@ -116,3 +116,49 @@ GRANT ALL ON TABLE public.vector_store TO postgres;
 -- Permissions
 
 GRANT ALL ON SCHEMA public TO postgres;
+
+-- Users table for authentication
+CREATE TABLE public.users (
+    id serial PRIMARY KEY,
+    username varchar(50) UNIQUE NOT NULL,
+    email varchar(255) UNIQUE NOT NULL,
+    password_hash varchar(255) NOT NULL,
+    first_name varchar(255) NOT NULL,
+    last_name varchar(255) NOT NULL,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    last_login timestamp,
+    is_active boolean DEFAULT true,
+    is_admin boolean DEFAULT false
+);
+
+-- Add indexes for faster lookups
+CREATE INDEX idx_users_email ON public.users(email);
+CREATE INDEX idx_users_username ON public.users(username);
+
+-- Table to store refresh tokens
+CREATE TABLE public.refresh_tokens (
+    id serial PRIMARY KEY,
+    user_id integer REFERENCES users(id) ON DELETE CASCADE,
+    token varchar(255) UNIQUE NOT NULL,
+    expires_at timestamp NOT NULL,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    revoked boolean DEFAULT false,
+    revoked_at timestamp,
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id)
+        REFERENCES users(id)
+);
+
+-- Add indexes for faster token lookups
+CREATE INDEX idx_refresh_tokens_token ON public.refresh_tokens(token);
+CREATE INDEX idx_refresh_tokens_user_id ON public.refresh_tokens(user_id);
+
+-- Permissions
+ALTER TABLE public.users OWNER TO postgres;
+GRANT ALL ON TABLE public.users TO postgres;
+ALTER TABLE public.refresh_tokens OWNER TO postgres;
+GRANT ALL ON TABLE public.refresh_tokens TO postgres;
+
+-- Sequences
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO postgres;
