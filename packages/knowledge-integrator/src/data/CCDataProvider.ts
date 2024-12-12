@@ -1,79 +1,46 @@
-import axios from "axios";
+import { fetchJson } from 'ra-core';
 
-const CCAxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_RELICA_CC_API_URL,
-});
+const apiUrl = import.meta.env.VITE_RELICA_CC_API_URL;
 
-// interface GetListParams {
-//   pagination: { page: number; perPage: number };
-//   sort: { field: string; order: "ASC" | "DESC" };
-//   filter: any;
-//   meta?: any;
-// }
-
-// interface GetListResult {
-//   data: Record[];
-//   total?: number;
-//   // if using partial pagination
-//   pageInfo?: {
-//     hasNextPage?: boolean;
-//     hasPreviousPage?: boolean;
-//   };
-// }
-
-// interface GetOneParams {
-//   id: Identifier;
-//   meta?: any;
-// }
-
-// interface GetOneResult {
-//   data: Record;
-// }
+const httpClient = (url: string, options: any = {}) => {
+  return fetchJson(url, options);
+};
 
 const dataProvider = {
-  // get a list of records based on sort, filter, and pagination
   getList: (resource: string, params: any): Promise<any> => {
     console.log("GETTING LIST", resource, params);
     switch (resource) {
       case "facts":
-        return CCAxiosInstance.get("environment/retrieve").then((response) => {
-          response.data.facts.forEach((fact: any) => {
-            fact.id = fact.fact_uid;
-          });
-          return {
-            data: response.data.facts,
-            total: response.data.facts.length,
-          };
-        });
+        return httpClient(`${apiUrl}/environment/retrieve`)
+          .then(({ json }) => ({
+            data: json.facts.map((fact: any) => ({ ...fact, id: fact.fact_uid })),
+            total: json.facts.length,
+          }));
+          
       case "models":
-        return CCAxiosInstance.get("environment/retrieve").then((response) => {
-          response.data.models.forEach((model: any) => {
-            model.id = model.model_uid;
-          });
-          return {
-            data: response.data.models,
-            total: response.data.models.length,
-          };
-        });
+        return httpClient(`${apiUrl}/environment/retrieve`)
+          .then(({ json }) => ({
+            data: json.models.map((model: any) => ({ ...model, id: model.model_uid })),
+            total: json.models.length,
+          }));
+
       default:
-        //return rejected promise
         return Promise.reject("Unknown resource");
     }
   },
 
-  // get a single record by id
   getOne: (resource: string, params: any): Promise<any> => {
-    return CCAxiosInstance.get(`model?uid=${params.uid}`).then((response) => {
-      response.data.id = response.data.uid;
-      return { data: response.data };
-    });
-    return Promise.resolve({ data: { id: 123, name: "hello" } });
+    return httpClient(`${apiUrl}/model?uid=${params.uid}`)
+      .then(({ json }) => ({
+        data: { ...json, id: json.uid }
+      }));
   },
 
   // get a list of records based on an array of ids
   getMany: (resource: string, params: any): Promise<any> => {
     return Promise.resolve({ data: { id: 123, name: "hello" } });
   },
+  
   // get the records referenced to another record, e.g. comments for a post
   getManyReference: (resource: string, params: any): Promise<any> => {
     return Promise.resolve({ data: { id: 123, name: "hello" } });

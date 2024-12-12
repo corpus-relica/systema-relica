@@ -5,39 +5,51 @@ import data from "./users.json";
  * This authProvider is only for test purposes. Don't use it in production.
  */
 export const authProvider: AuthProvider = {
-  login: ({ username, password }) => {
-    const user = data.users.find(
-      (u) => u.username === username && u.password === password,
-    );
+  login: async ({ username, password }) => {
+    const response = await fetch('http://localhost:3000/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
 
-    if (user) {
-      // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-      let { password, ...userToPersist } = user;
-      localStorage.setItem("user", JSON.stringify(userToPersist));
-      return Promise.resolve();
+    if (!response.ok) {
+      throw new HttpError("Unauthorized", 401, {
+        message: "Invalid username or password",
+      });
     }
 
-    return Promise.reject(
-      new HttpError("Unauthorized", 401, {
-        message: "Invalid username or password",
-      }),
-    );
+    const user = await response.json();
+    const { access_token } = user;
+    localStorage.setItem("access_token", access_token);
+    return Promise.resolve(user);
   },
   logout: () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("access_token");
     return Promise.resolve();
   },
   checkError: () => Promise.resolve(),
-  checkAuth: () =>
-    localStorage.getItem("user") ? Promise.resolve() : Promise.reject(),
+  checkAuth: () => {
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+      return Promise.reject();
+    }
+    return Promise.resolve();
+  },
   getPermissions: () => {
     return Promise.resolve(undefined);
   },
   getIdentity: () => {
-    const persistedUser = localStorage.getItem("user");
-    const user = persistedUser ? JSON.parse(persistedUser) : null;
-
-    return Promise.resolve(user);
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+      return Promise.reject();
+    }
+    // TODO: get user from backend
+    return Promise.resolve({
+      id: 'user',
+      fullName: 'User',
+    });
   },
 };
 

@@ -45,11 +45,12 @@ const dataProvider = new Proxy(defaultDataProvider, {
   get: (target, name) => {
     return (resource: any, params: any) => {
       console.log("GETTING", resource, name);
+      // TODO: why the fuck would name === "then"?
       if (typeof name === "symbol" || name === "then") {
         return;
       }
       if (resource.startsWith("db/")) {
-        return ArchivistDataProvider[name](resource.substring(3), params);
+        return (ArchivistDataProvider as any)[name](resource.substring(3), params);
       }
       if (resource.startsWith("env/")) {
         if (name === "getList") {
