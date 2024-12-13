@@ -20,6 +20,8 @@ import Modal from "@mui/material/Modal";
 import GraphAndSelectionLayout from "./GraphToo";
 import { Fact } from "../types";
 
+import { getAuthToken } from "../authProvider";
+
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 
@@ -37,6 +39,8 @@ const Graph = observer(() => {
   const selectNode = (id: number) => {
     sockSendCC("user", "selectEntity", { uid: id });
   };
+
+  const token = getAuthToken();
 
   // START MENU
   const [open, setOpen] = useState(false);
@@ -132,6 +136,7 @@ const Graph = observer(() => {
           }}
         >
           <XXX
+            token={token}
             filter={{ type: "should't matter", uid: filter }}
             callback={(res: any) => {
               handleSearchUIClose(res);

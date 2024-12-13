@@ -10,6 +10,7 @@ export class RootStore {
   constructor() {
     makeAutoObservable(this);
   }
+  token?: string;
 }
 
 const rootStore = new RootStore();

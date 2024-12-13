@@ -6,6 +6,7 @@ import Body from "./Body";
 import RootStoreContext from "./context/RootStoreContext";
 import rootStore from "./stores/RootStore";
 import Box from "@mui/material/Box";
+import { updateAxiosInstance } from "./axiosInstance";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ interface FactTableProps {
   height?: string | number;
   autoload?: boolean;
   readonly?: boolean;
+  token?: string;
 }
 
 const FactTable: React.FC<FactTableProps> = ({
@@ -32,10 +34,16 @@ const FactTable: React.FC<FactTableProps> = ({
   height = "100%",
   autoload = false,
   readonly = false,
+  token,
 }) => {
+  React.useEffect(() => {
+    updateAxiosInstance(token);
+  }, [token]);
+
   rootStore.filter = filter;
   rootStore.initialQuery = initialQuery;
   rootStore.mode = mode;
+  rootStore.token = token;
 
   return (
     <RootStoreContext.Provider value={rootStore}>

@@ -14,14 +14,29 @@ import {
 } from "@relica/constants";
 import qs from "qs"; // You may need to install the 'qs' library
 
-const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_RELICA_DB_API_URL,
-});
+// Create a function to initialize the axios instance with a token
+export const createAxiosInstance = (token?: string) => {
+  const instance = axios.create({
+    baseURL: import.meta.env.VITE_RELICA_DB_API_URL,
+  });
 
-console.log(
-  "!!!!!!!!!!!! -- does this update",
-  import.meta.env.VITE_RELICA_DB_API_URL
-);
+  instance.interceptors.request.use((config) => {
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  return instance;
+};
+
+// Export a default instance for cases where no token is needed
+let axiosInstance = createAxiosInstance();
+
+// Export a function to update the instance when token changes
+export const updateAxiosInstance = (token?: string) => {
+  axiosInstance = createAxiosInstance(token);
+};
 
 export default axiosInstance;
 

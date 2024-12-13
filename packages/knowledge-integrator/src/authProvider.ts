@@ -1,6 +1,12 @@
 import { AuthProvider, HttpError } from "react-admin";
 import data from "./users.json";
 
+export const getAuthToken = () => {
+  const token = localStorage.getItem('access_token');
+  console.log('getAuthToken called, token:', token ? 'exists' : 'missing');
+  return token;
+};
+
 /**
  * This authProvider is only for test purposes. Don't use it in production.
  */

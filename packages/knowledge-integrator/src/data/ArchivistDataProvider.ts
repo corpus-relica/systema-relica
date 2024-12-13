@@ -1,13 +1,10 @@
 import { fetchUtils } from 'react-admin';
+import { getAuthToken } from '../authProvider';
 
 const { fetchJson } = fetchUtils;
 
 // Add a function to get the token from localStorage
-const getAuthToken = () => {
-  const token = localStorage.getItem('access_token');
-  console.log('getAuthToken called, token:', token ? 'exists' : 'missing');
-  return token;
-};
+
 
 console.log('Creating axios instance...');
 const apiUrl = import.meta.env.VITE_RELICA_ARCHIVIST_API_URL || 'http://localhost:3000';
