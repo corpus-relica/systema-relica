@@ -5,5 +5,5 @@
   "main": "index.js",
   "license": "GNU",
   "private": true,
-  "workspaces": ["packages/*"]
+  "workspaces": ["packages_ts/*"]
 }
