@@ -89,3 +89,460 @@ clj꞉rlc.clarity.core꞉> 
 clj꞉rlc.clarity.core꞉> get-definition
 #function[rlc.clarity.core/get-definition]
 clj꞉rlc.clarity.core꞉> 
+; nREPL Connection was closed
+; Connecting using "Leiningen + shadow-cljs" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+; Syntax error compiling at (/home/marc/Relica/dev/systema-relica/packages_clj/clarity/src/hello.clj:0:0).
+; Unable to resolve symbol: route in this context
+clj꞉hello꞉> 
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+nil
+clj꞉hello꞉> 
+nil
+clj꞉hello꞉> 
+
+
+
+(+ 2 2)
+
+
+4
+clj꞉hello꞉> (require 'hello)
+clj꞉hello꞉> (hello/respond-hello)
+; Syntax error compiling at (/home/marc/Relica/dev/systema-relica/packages_clj/clarity/.calva/output-window/output.calva-repl:147:13).
+; No such var: hello/respond-hello
+clj꞉hello꞉> (require hello/respond-hello)
+; Syntax error compiling at (/home/marc/Relica/dev/systema-relica/packages_clj/clarity/.calva/output-window/output.calva-repl:150:13).
+; No such var: hello/respond-hello
+clj꞉hello꞉> 
+(require 'hello/respond-hello)
+; Execution error (FileNotFoundException) at hello/eval25868 (REPL:154).
+; Could not locate respond_hello__init.class, respond_hello.clj or respond_hello.cljc on classpath. Please check that namespaces with dashes use underscores in the Clojure file name.
+clj꞉hello꞉> 
+#'hello/reskpond-hello
+clj꞉hello꞉> (require 'hello)
+nil
+clj꞉hello꞉> 
+hello/respond-hello
+#function[hello/respond-hello]
+clj꞉hello꞉> 
+(hello/respond-hello)
+; Execution error (ArityException) at hello/eval25873 (REPL:165).
+; Wrong number of args (0) passed to: hello/respond-hello
+clj꞉hello꞉> 
+(hello/respond-hello {})
+{:status 200, :body "Hello, world!"}
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉>  (require :reload 'hello)
+nil
+clj꞉hello꞉> 
+(require '[io.pedestal.http.route :as route])
+nil
+clj꞉hello꞉> 
+(route/try-routing-for hello/routes :prefix-tree "/greet" :get)
+{:path "/greet",
+ :method :get,
+ :path-re #"/\Qgreet\E",
+ :path-parts ["greet"],
+ :interceptors
+ [{:name nil, :enter #function[io.pedestal.interceptor/eval7967/fn--7968/fn--7969], :leave nil, :error nil}],
+ :route-name :greet,
+ :path-params {},
+ :io.pedestal.http.route.prefix-tree/satisfies-constraints? #function[clojure.core/constantly/fn--5740]}
+clj꞉hello꞉> 
+(route/try-routing-for hello/routes :prefix-tree "/greet" :post)
+nil
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> (require :reload 'hello)
+nil
+clj꞉hello꞉> (require :reload 'hello)
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+(require 'hello)
+nil
+clj꞉user꞉> 
+(hello/start)
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> 
+#'hello/stop
+clj꞉hello꞉> 
+(+ 2 2)
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> hello/routes
+; Syntax error compiling at (/home/marc/Relica/dev/systema-relica/packages_clj/clarity/.calva/output-window/output.calva-repl:0:0).
+; No such namespace: hello
+clj꞉user꞉> 
+(require 'hello)
+nil
+clj꞉user꞉> hello/routes
+({:path "/greet",
+  :method :get,
+  :path-re #"/\Qgreet\E",
+  :path-parts ["greet"],
+  :interceptors
+  [{:name nil, :enter #function[io.pedestal.interceptor/eval10133/fn--10134/fn--10135], :leave nil, :error nil}],
+  :route-name :greet,
+  :path-params []})
+clj꞉user꞉> 
+hello/http
+; Syntax error compiling at (/home/marc/Relica/dev/systema-relica/packages_clj/clarity/.calva/output-window/output.calva-repl:0:0).
+; No such var: hello/http
+clj꞉user꞉> 
+(require '[io.pedestal.http :as http])
+nil
+clj꞉user꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> 
+#'hello/stop
+clj꞉hello꞉> 
+; Starting server
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+; Evaluating file: hello.clj
+nil
+clj꞉hello꞉> 
+; Evaluating file: hello.clj
+nil
+clj꞉hello꞉> 
+; Starting server
+#<Future@67e76a4c: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-3] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+; [clojure-agent-send-off-pool-3] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@731ea4bc{/,null,AVAILABLE}
+; [clojure-agent-send-off-pool-3] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@2accefbd{HTTP/1.1, (http/1.1, h2c)}{localhost:3002}
+; [clojure-agent-send-off-pool-3] INFO org.eclipse.jetty.server.Server - Started Server@709cdb72{STARTING}[11.0.20,sto=0] @41558ms
+; Stopping server
+nil
+clj꞉hello꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> 
+#'hello/stop
+clj꞉hello꞉> 
+; Starting server
+; [clojure-agent-send-off-pool-6] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+#<Future@31e04180: :pending>
+clj꞉hello꞉> 
+; Stopping server
+nil
+clj꞉hello꞉> 
+; Stopping server
+nil
+clj꞉hello꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> 
+#'hello/stop
+clj꞉hello꞉> 
+; Starting server
+#<Future@2245515b: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-10] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+; Stopping server
+nil
+clj꞉hello꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> 
+#'hello/stop
+clj꞉hello꞉> 
+; Starting server on port 3002...
+#<Future@2c4657fd: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-12] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+; Failed to start server: Failed to bind to /0.0.0.0:3002
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> 
+#'hello/stop
+clj꞉hello꞉> 
+; Starting server on port 3002...
+#<Future@136f56e: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-4] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+; [clojure-agent-send-off-pool-4] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@48b19071{/,null,AVAILABLE}
+; [clojure-agent-send-off-pool-4] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@60190b23{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; [clojure-agent-send-off-pool-4] INFO org.eclipse.jetty.server.Server - Started Server@ebb3c05{STARTING}[11.0.20,sto=0] @50786ms
+; [qtp958929939-64] INFO io.pedestal.http - {:msg "GET /greet", :line 83}
+; [qtp958929939-51] INFO io.pedestal.http - {:msg "GET /favicon.ico", :line 83}
+; Stopping server...
+nil
+clj꞉hello꞉> 
+; Starting server on port 3002...
+#<Future@477af029: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-3] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+; Failed to start server: Failed to bind to /0.0.0.0:3002
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; No nrepl port file found.
+; Bad url: localhost:
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+nil
+clj꞉hello꞉> 
+#'hello/respond-hello
+clj꞉hello꞉> 
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+#'hello/server
+clj꞉hello꞉> 
+#'hello/start
+clj꞉hello꞉> 
+#'hello/stop
+clj꞉hello꞉> 
+; Starting server on port 3002...
+#<Future@6ba89a8a: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@7f8c2884{/,null,AVAILABLE}
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@7276efb5{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.Server - Started Server@51e9c3c5{STARTING}[11.0.20,sto=0] @48164ms
+; Server started successfully!
+; Stopping server...
+; Server stopped successfully!
+nil
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.Server - Stopped Server@51e9c3c5{STOPPING}[11.0.20,sto=0]
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.AbstractConnector - Stopped ServerConnector@7276efb5{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.handler.ContextHandler - Stopped o.e.j.s.ServletContextHandler@7f8c2884{/,null,STOPPED}
+clj꞉hello꞉> 
+; Starting server on port 3002...
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+#<Future@4c249b35: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@5ee58750{/,null,AVAILABLE}
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@2c16c27{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.Server - Started Server@d53709b{STARTING}[11.0.20,sto=0] @52320ms
+; Server started successfully!
+; Stopping server...
+; Server stopped successfully!
+nil
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.Server - Stopped Server@d53709b{STOPPING}[11.0.20,sto=0]
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.AbstractConnector - Stopped ServerConnector@2c16c27{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.handler.ContextHandler - Stopped o.e.j.s.ServletContextHandler@5ee58750{/,null,STOPPED}
+clj꞉hello꞉> 
+; Starting server on port 3002...
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+#<Future@779d5c18: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@43ebaea{/,null,AVAILABLE}
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@61a84d80{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; [clojure-agent-send-off-pool-5] INFO org.eclipse.jetty.server.Server - Started Server@256e20c4{STARTING}[11.0.20,sto=0] @56951ms
+; Server started successfully!
+; [qtp639391578-95] INFO io.pedestal.http - {:msg "GET /greet", :line 83}
+; [qtp639391578-81] INFO io.pedestal.http - {:msg "GET /favicon.ico", :line 83}
+#'hello/respond-hello
+clj꞉hello꞉> 
+; [qtp639391578-102] INFO io.pedestal.http - {:msg "GET /greet", :line 83}
+; [qtp639391578-82] INFO io.pedestal.http - {:msg "GET /favicon.ico", :line 83}
+#'hello/routes
+clj꞉hello꞉> 
+#'hello/create-server
+clj꞉hello꞉> 
+; Stopping server...
+; Server stopped successfully!
+nil
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.Server - Stopped Server@256e20c4{STOPPING}[11.0.20,sto=0]
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.AbstractConnector - Stopped ServerConnector@61a84d80{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; 
+; [nREPL-session-2dd6c378-4b42-4be1-bbb2-06c3106bbb8f] INFO org.eclipse.jetty.server.handler.ContextHandler - Stopped o.e.j.s.ServletContextHandler@43ebaea{/,null,STOPPED}
+clj꞉hello꞉> 
+#function[hello/start]
+clj꞉hello꞉> 
+; Starting server on port 3002...
+#<Future@13da411f: :pending>
+clj꞉hello꞉> 
+; [clojure-agent-send-off-pool-7] INFO org.eclipse.jetty.server.Server - jetty-11.0.20; built: 2024-01-29T21:04:22.394Z; git: 922f8dc188f7011e60d0361de585fd4ac4d63064; jvm 17.0.13+11
+; [clojure-agent-send-off-pool-7] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@65e2c7fb{/,null,AVAILABLE}
+; [clojure-agent-send-off-pool-7] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@15ec77d4{HTTP/1.1, (http/1.1, h2c)}{0.0.0.0:3002}
+; [clojure-agent-send-off-pool-7] INFO org.eclipse.jetty.server.Server - Started Server@75c3889b{STARTING}[11.0.20,sto=0] @795422ms
+; Server started successfully!
+; [qtp1357837229-123] INFO io.pedestal.http - {:msg "GET /greet", :line 83}
+; [qtp1357837229-109] INFO io.pedestal.http - {:msg "GET /greet", :line 83}
