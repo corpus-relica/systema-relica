@@ -1,0 +1,28 @@
+# System files
+.DS_Store
+.idea/
+*.log
+
+# Build directories
+target/
+classes/
+checkouts/
+tmp/
+node_modules/
+resources/public/js/
+
+# Clojure/ClojureScript tooling
+.lein-*
+.nrepl-port
+.prepl-port
+.cpcache/
+.shadow-cljs/
+.lsp/
+.clj-kondo/
+profiles.clj
+
+# Build artifacts
+pom.xml
+pom.xml.asc
+*.jar
+*.class

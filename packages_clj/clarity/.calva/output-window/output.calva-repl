@@ -1,0 +1,91 @@
+; Jacking in...
+; Connecting using "deps.edn" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Starting Jack-in: (cd /home/marc/Relica/dev/systema-relica/packages_clj/clarity; clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version,"1.1.1"},cider/cider-nrepl {:mvn/version,"0.47.1"}}}' -M:dev:reveal)
+; Jacking in...
+; Connecting using "deps.edn" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Starting Jack-in: (cd /home/marc/Relica/dev/systema-relica/packages_clj/clarity; clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version,"1.1.1"},cider/cider-nrepl {:mvn/version,"0.47.1"}}}' -M:dev -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]")
+; Jacking in...
+; Connecting using "deps.edn" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Starting Jack-in: (cd /home/marc/Relica/dev/systema-relica/packages_clj/clarity; clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version,"1.1.1"},cider/cider-nrepl {:mvn/version,"0.47.1"}}}' -M:dev:reveal)
+; Using host:port localhost:40707 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> 
+"Please see https://calva.io/output/#about-stdout-in-the-repl-window
+about why stdout printed to this file is prepended with `;` to be line comments."
+clj꞉user꞉> 
+; Jack-in done.
+clj꞉user꞉> 
+nil
+clj꞉rlc.clarity.state꞉> 
+:rlc.clarity.state/state-kind
+clj꞉rlc.clarity.state꞉> 
+:rlc.clarity.state/cause
+clj꞉rlc.clarity.state꞉> 
+:rlc.clarity.state/cause-of-begin
+clj꞉rlc.clarity.state꞉> 
+:rlc.clarity.state/cause-of-end
+clj꞉rlc.clarity.state꞉> 
+:rlc.clarity.state/adopter
+clj꞉rlc.clarity.state꞉> 
+:rlc.clarity.state/begin-time
+clj꞉rlc.clarity.state꞉> 
+; Evaluating file: core.clj
+#'rlc.clarity.core/get-definition
+clj꞉rlc.clarity.core꞉> 
+; Evaluating file: occurrence.clj
+nil
+clj꞉rlc.clarity.occurrence꞉> 
+; nREPL Connection was closed
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:40707 ...
+; Hooking up nREPL sessions ...
+; nREPL connection failed: AggregateError
+; Failed connecting.
+; Connecting using "Generic" project type.
+; You can make Calva auto-select this.
+;   - See https://calva.io/connect-sequences/
+; 
+
+; Connecting ...
+; Reading port file: file:///home/marc/Relica/dev/systema-relica/packages_clj/clarity/.nrepl-port ...
+; Using host:port localhost:7888 ...
+; Hooking up nREPL sessions ...
+; Connected session: clj
+; Evaluating code from settings: 'calva.autoEvaluateCode.onConnect.clj'
+nil
+clj꞉user꞉> (in-ns 'rlc.clarity.core)
+#namespace[rlc.clarity.core]
+clj꞉rlc.clarity.core꞉> 
+get-definition
+; Syntax error compiling at (/home/marc/Relica/dev/systema-relica/packages_clj/clarity/.calva/output-window/output.calva-repl:0:0).
+; Unable to resolve symbol: get-definition in this context
+clj꞉rlc.clarity.core꞉> get-definition
+; Syntax error compiling at (/home/marc/Relica/dev/systema-relica/packages_clj/clarity/.calva/output-window/output.calva-repl:0:0).
+; Unable to resolve symbol: get-definition in this context
+clj꞉rlc.clarity.core꞉> 
+; Evaluating file: core.clj
+#'rlc.clarity.core/get-definition
+clj꞉rlc.clarity.core꞉> get-definition
+#function[rlc.clarity.core/get-definition]
+clj꞉rlc.clarity.core꞉> 
