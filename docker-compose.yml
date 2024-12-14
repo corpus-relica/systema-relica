@@ -7,7 +7,7 @@ services:
     restart: always
     command: /bin/sh -c "redis-server --requirepass redis"
     volumes:
-      - ./packages/dataplex/data/redis:/data
+      - ./packages_ts/dataplex/data/redis:/data
     ports:
       - "6379:6379"
     networks:
@@ -25,8 +25,8 @@ services:
       POSTGRES_DB: postgres
     command: ["bash", "/docker-entrypoint-initdb.d/init-postgres.sh"]
     volumes:
-      - ./packages/dataplex/data/postgres:/var/lib/postgresql/data
-      - ./packages/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
+      - ./packages_ts/dataplex/data/postgres:/var/lib/postgresql/data
+      - ./packages_ts/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     networks:
@@ -47,7 +47,7 @@ services:
       - NEO4J_apoc_export_file_enabled="true"
       - NEO4J_ACCEPT_LICENSE_AGREEMENT="yes"
     volumes:
-      - ./packages/dataplex/data/neo4j:/data
+      - ./packages_ts/dataplex/data/neo4j:/data
       - ./seed_csv:/var/lib/neo4j/import
     ports:
       - "7474:7474"
@@ -74,10 +74,10 @@ services:
       - REDIS_URL=redis://redis:6379
     command: ["yarn", "start:dev"]
     volumes:
-      - ./packages/archivist:/usr/src/app/packages/archivist
-      - ./seed_xls:/usr/src/app/packages/archivist/seed_xls
-      - ./seed_csv:/usr/src/app/packages/archivist/seed_csv
-      - /usr/src/app/packages/archivist/node_modules
+      - ./packages_ts/archivist:/usr/src/app/packages_ts/archivist
+      - ./seed_xls:/usr/src/app/packages_ts/archivist/seed_xls
+      - ./seed_csv:/usr/src/app/packages_ts/archivist/seed_csv
+      - /usr/src/app/packages_ts/archivist/node_modules
     ports:
       - "3000:3000"
     depends_on:
@@ -102,8 +102,8 @@ services:
     # command: sh -c "yarn install && yarn dev"
     command: ["yarn", "start:dev"]
     volumes:
-      - ./packages/clarity-core:/usr/src/app/packages/clarity-core
-      - /usr/src/app/packages/clarity-core/node_modules
+      - ./packages_ts/clarity-core:/usr/src/app/packages_ts/clarity-core
+      - /usr/src/app/packages_ts/clarity-core/node_modules
     ports:
       - "3001:3001"
     depends_on:
@@ -121,11 +121,11 @@ services:
     restart: always
     command: yarn dev
     volumes:
-      - ./packages/knowledge-integrator:/usr/src/app/packages/knowledge-integrator
-      - ./packages/constants:/usr/src/app/packages/constants
-      - ./packages/fact-search-ui:/usr/src/app/packages/fact-search-ui
-      - ./packages/3d-graph-ui:/usr/src/app/packages/3d-graph-ui
-      - ./packages/hsm-manager:/usr/src/app/packages/hsm-manager
+      - ./packages_ts/knowledge-integrator:/usr/src/app/packages_ts/knowledge-integrator
+      - ./packages_ts/constants:/usr/src/app/packages_ts/constants
+      - ./packages_ts/fact-search-ui:/usr/src/app/packages_ts/fact-search-ui
+      - ./packages_ts/3d-graph-ui:/usr/src/app/packages_ts/3d-graph-ui
+      - ./packages_ts/hsm-manager:/usr/src/app/packages_ts/hsm-manager
       - /usr/src/app/node_modules
     ports:
       - "5173:5173"
@@ -138,6 +138,28 @@ services:
       rlc-net:
         aliases:
           - knowledge-integrator
+
+  clarity-clj:
+    container_name: clarity-clj
+    build:
+      context: ./
+      dockerfile: Dockerfile.clarity-clj
+    restart: always
+    command: ["clojure", "-M:dev"]
+    # command: ["clojure", "-M:run"]
+    volumes:
+      - ./packages_clj/clarity:/usr/src/app/packages_clj/clarity
+      - /usr/src/app/.m2
+    ports:
+      - "3002:3002"
+      # nREPL port
+      - "7888:7888"
+    depends_on:
+      - archivist
+    networks:
+      rlc-net:
+        aliases:
+          - clarity-clj
 
 networks:
   rlc-net:

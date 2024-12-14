@@ -1,0 +1,42 @@
+FROM node:latest as build
+MAINTAINER Marc <marc@specular-occlusion>
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+COPY yarn.lock .
+COPY packages_ts/types ./packages_ts/types
+COPY packages_ts/constants ./packages_ts/constants
+
+RUN yarn install --pure-lockfile --non-interactive
+
+WORKDIR /usr/src/app/packages_ts/types
+RUN yarn build
+
+WORKDIR /usr/src/app/packages_ts/constants
+RUN yarn build
+
+# --------------------------------------
+
+FROM clojure:temurin-17-tools-deps
+
+WORKDIR /usr/src/app
+
+# Copy the built TypeScript dependencies
+COPY --from=build /usr/src/app/packages_ts/types/package.json /usr/src/app/packages_ts/types/package.json
+COPY --from=build /usr/src/app/packages_ts/types/dist /usr/src/app/packages_ts/types/dist
+COPY --from=build /usr/src/app/packages_ts/constants/package.json /usr/src/app/packages_ts/constants/package.json
+COPY --from=build /usr/src/app/packages_ts/constants/dist /usr/src/app/packages_ts/constants/dist
+
+# Copy Clojure project files
+COPY packages_clj/clarity /usr/src/app/packages_clj/clarity
+
+WORKDIR /usr/src/app/packages_clj/clarity
+
+EXPOSE 3002
+EXPOSE 7888  
+# Expose nREPL port
+
+# CMD ["clojure", "-M:run"]
+# Use dev profile for development
+CMD ["clojure", "-M:dev"]

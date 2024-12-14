@@ -1,45 +1,28 @@
 FROM node:latest as build
-
 WORKDIR /usr/src/app
-
 COPY package.json .
 COPY yarn.lock .
-COPY packages/types ./packages/types
-COPY packages/hsm-manager ./packages/hsm-manager
-COPY packages/archivist ./packages/archivist
-
+COPY packages_ts/types ./packages_ts/types
+COPY packages_ts/hsm-manager ./packages_ts/hsm-manager
+COPY packages_ts/archivist ./packages_ts/archivist
 RUN yarn install --pure-lockfile --non-interactive
-
-WORKDIR /usr/src/app/packages/types
+WORKDIR /usr/src/app/packages_ts/types
 RUN yarn build
-
-WORKDIR /usr/src/app/packages/hsm-manager
+WORKDIR /usr/src/app/packages_ts/hsm-manager
 RUN yarn build
-
-WORKDIR /usr/src/app/packages/archivist
+WORKDIR /usr/src/app/packages_ts/archivist
 RUN yarn build
-
-# --------------------------------------
 
 FROM node:latest
-
 WORKDIR /usr/src/app
-
 COPY package.json .
 COPY yarn.lock .
-
-COPY --from=build /usr/src/app/packages/types/package.json /usr/src/app/packages/types/package.json
-COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/dist
-
-COPY --from=build /usr/src/app/packages/hsm-manager/package.json /usr/src/app/packages/hsm-manager/package.json
-COPY --from=build /usr/src/app/packages/hsm-manager/dist /usr/src/app/packages/hsm-manager/dist
-
-COPY packages/archivist /usr/src/app/packages/archivist
-
+COPY --from=build /usr/src/app/packages_ts/types/package.json /usr/src/app/packages_ts/types/package.json
+COPY --from=build /usr/src/app/packages_ts/types/dist /usr/src/app/packages_ts/types/dist
+COPY --from=build /usr/src/app/packages_ts/hsm-manager/package.json /usr/src/app/packages_ts/hsm-manager/package.json
+COPY --from=build /usr/src/app/packages_ts/hsm-manager/dist /usr/src/app/packages_ts/hsm-manager/dist
+COPY packages_ts/archivist /usr/src/app/packages_ts/archivist
 ENV NODE_ENV development
-
 RUN yarn install --pure-lockfile --non-interactive
-
-WORKDIR /usr/src/app/packages/archivist
-
+WORKDIR /usr/src/app/packages_ts/archivist
 CMD ["yarn", "start:dev"]

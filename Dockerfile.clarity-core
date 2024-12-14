@@ -5,19 +5,19 @@ WORKDIR /usr/src/app
 
 COPY package.json .
 COPY yarn.lock .
-COPY packages/constants ./packages/constants
-COPY packages/types ./packages/types
-COPY packages/clarity-core ./packages/clarity-core
+COPY packages_ts/constants ./packages_ts/constants
+COPY packages_ts/types ./packages_ts/types
+COPY packages_ts/clarity-core ./packages_ts/clarity-core
 
 RUN yarn install --pure-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages/constants
+WORKDIR /usr/src/app/packages_ts/constants
 RUN yarn build
 
-WORKDIR /usr/src/app/packages/types
+WORKDIR /usr/src/app/packages_ts/types
 RUN yarn build
 
-WORKDIR /usr/src/app/packages/clarity-core
+WORKDIR /usr/src/app/packages_ts/clarity-core
 RUN yarn build
 
 # --------------------------------------
@@ -29,18 +29,18 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 
-COPY --from=build /usr/src/app/packages/constants/package.json /usr/src/app/packages/constants/package.json
-COPY --from=build /usr/src/app/packages/constants/dist /usr/src/app/packages/constants/dist
+COPY --from=build /usr/src/app/packages_ts/constants/package.json /usr/src/app/packages_ts/constants/package.json
+COPY --from=build /usr/src/app/packages_ts/constants/dist /usr/src/app/packages_ts/constants/dist
 
-COPY --from=build /usr/src/app/packages/types/package.json /usr/src/app/packages/types/package.json
-COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/dist
+COPY --from=build /usr/src/app/packages_ts/types/package.json /usr/src/app/packages_ts/types/package.json
+COPY --from=build /usr/src/app/packages_ts/types/dist /usr/src/app/packages_ts/types/dist
 
-COPY packages/clarity-core /usr/src/app/packages/clarity-core
+COPY --from=build /usr/src/app/packages_ts/clarity-core/package.json /usr/src/app/packages_ts/clarity-core/package.json
 
 ENV NODE_ENV development
 
 RUN yarn install --pure-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages/clarity-core
+WORKDIR /usr/src/app/packages_ts/clarity-core
 
 CMD ["yarn", "start:dev"]
