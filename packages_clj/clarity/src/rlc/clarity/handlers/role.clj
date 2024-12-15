@@ -1,4 +1,4 @@
-(ns rlc.clarity.role
+(ns rlc.clarity.handlers.role
   (:require [clojure.spec.alpha :as s]
             [rlc.clarity.base :as base]))
 

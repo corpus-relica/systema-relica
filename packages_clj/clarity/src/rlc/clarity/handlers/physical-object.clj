@@ -1,4 +1,4 @@
-(ns rlc.clarity.physical-object
+(ns rlc.clarity.handlers.physical-object
   (:require [clojure.spec.alpha :as s]
             [rlc.clarity.base :as base]))
 

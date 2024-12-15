@@ -1,24 +1,23 @@
 (ns rlc.clarity.core
-  (:require [rlc.clarity.occurrence :as occ]
-            [clj-http.client :as http]))
+  (:require [io.pedestal.http :as http]
+            [io.pedestal.http.route :as route]
+            [clj-http.client :as client]
+            [rlc.clarity.routes :as routes]
+            [rlc.clarity.service :as service]))
 
-(defn -main
-  "Service entry point"
-  [& args]
-  (println "Starting Clarity CLJ service...Bitch!")
-  ;; Keep the service running
-  @(promise)) ;; Block indefinitely using a deref'd promise
+(defonce server (atom nil))
 
-(defn get-definition [uid]
-  (tap> uid)
-  (try
-    (let [response (http/get (str "http://localhost:3000/definition/get?uid=" uid)
-                             {:as :json
-                              :content-type :json
-                              :accept :json})]
-      (:body response))
-    (catch Exception e
-      (println "Error:" (.getMessage e)))))
+(defn start-server [service-map]
+  (http/start (http/create-server service-map)))
 
+(defn stop-server []
+  (when-let [s @server]
+    (http/stop s)))
 
-;; (get-definition 1146)
+(defn restart []
+  (stop-server)
+  (reset! server (start-server service/service-map)))
+
+(defn -main [& args]
+  (println "Starting Clarity CLJ service...")
+  (reset! server (start-server service/service-map)))

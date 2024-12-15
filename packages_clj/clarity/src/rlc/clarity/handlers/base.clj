@@ -1,4 +1,4 @@
-(ns rlc.clarity.base
+(ns rlc.clarity.handlers.base
   (:require [clojure.spec.alpha :as s]))
 
 ;; Core specs

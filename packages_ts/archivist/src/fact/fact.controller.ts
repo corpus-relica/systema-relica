@@ -6,6 +6,7 @@ import {
   Query,
   Param,
   Body,
+  Logger,
 } from '@nestjs/common';
 import { FactService } from './fact.service';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
@@ -13,6 +14,7 @@ import { CacheService } from 'src/cache/cache.service';
 
 @Controller('fact')
 export class FactController {
+  private readonly logger = new Logger(FactController.name);
   constructor(
     private readonly factService: FactService,
     private readonly gellishBaseService: GellishBaseService,
@@ -44,6 +46,7 @@ export class FactController {
     @Query('uid') uid: string,
     @Query('recursive') recursive: string = 'false',
   ) {
+    this.logger.log('getClassified', uid, recursive);
     return this.factService.getClassified(parseInt(uid), recursive === 'true');
   }
 

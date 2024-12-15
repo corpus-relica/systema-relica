@@ -1,4 +1,4 @@
-(ns rlc.clarity.relation
+(ns rlc.clarity.handlers.relation
   (:require [clojure.spec.alpha :as s]
             [rlc.clarity.base :as base]))
 

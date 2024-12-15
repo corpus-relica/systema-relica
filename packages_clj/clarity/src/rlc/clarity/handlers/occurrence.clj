@@ -1,4 +1,4 @@
-(ns rlc.clarity.occurrence
+(ns rlc.clarity.handlers.occurrence
   (:require [clojure.spec.alpha :as s]
             [rlc.clarity.base :as base]
             [rlc.clarity.state :as state]
