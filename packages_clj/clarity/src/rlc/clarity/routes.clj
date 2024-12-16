@@ -38,12 +38,34 @@
      ;; Events
      ["/events/list"
       :get (conj protected-interceptors
-                 `event/get-all-events)
+                 `event/get-all)
       :route-name :all-events]
+
      ["/event/:uid"
       :get (conj protected-interceptors
-                 `event/get-event)
+                 `event/get)
       :route-name :event]
+
+     ["/event/:uid/time"
+      :get (conj protected-interceptors
+                 `event/get-time)
+      :route-name :event-time]
+
+     ["/event/:uid/time-value"
+      :get (conj protected-interceptors
+                 `event/get-time-value)
+      :route-name :event-time-value]
+
+      ["/event/:uid/participants"
+       :get (conj protected-interceptors
+                  `event/get-participants)
+       :route-name :event-participants]
+
+     ;; ["/event/:uid/participation-fact"
+     ;;  :get (conj protected-interceptors
+     ;;             `event/get-participation-fact)
+     ;;  :route-name :event-participation-fact]
+
      ;; ["/event" :post event/create-event :route-name :create-event]
      ;; ["/event/:id" :put event/update-event :route-name :update-event]
      ;; ["/event/:id" :delete event/delete-event :route-name :delete-event"]
