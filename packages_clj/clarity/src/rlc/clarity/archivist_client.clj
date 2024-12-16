@@ -50,7 +50,7 @@
             _ (tap> {:stage "facts" :value facts})
             transformed (transform-fn facts)
             _ (tap> {:stage "after transform" :value transformed})
-            final-response (response/response {:time transformed})
+            final-response (response/response {:value transformed})
             _ (tap> {:stage "final response" :value final-response})]
         final-response))))
 

@@ -51,6 +51,8 @@ import { GellishToCypherConverter } from './query/GellishToCypherConverter';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { IndividualService } from './individual/individual.service';
+import { IndividualController } from './individual/individual.controller';
 
 @Module({
   imports: [
@@ -102,6 +104,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     KindsController,
     AspectController,
     QueryController,
+    IndividualController,
   ],
   providers: [
     AppInitService,
@@ -130,6 +133,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     LinearizationService,
     QueryService,
     GellishToCypherConverter,
+    IndividualService,
   ],
 })
 export class AppModule {}

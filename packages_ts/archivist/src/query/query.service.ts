@@ -4,12 +4,14 @@ import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 // import { FactService } from 'src/fact/fact.service';
 import { Fact } from '@relica/types';
 import { GellishToCypherConverter } from './GellishToCypherConverter';
+import { GellishParser } from './GellishParser2';
 
 import { Record } from 'neo4j-driver';
 
 @Injectable()
 export class QueryService {
   private readonly logger = new Logger(QueryService.name);
+  private readonly parser = new GellishParser();
 
   constructor(
     private readonly graphService: GraphService,
@@ -18,10 +20,10 @@ export class QueryService {
     private readonly gellishToCypherConverter: GellishToCypherConverter,
   ) {}
 
-  async interpretTable(
+  async interpretQueryTable(
     table: Fact[],
-    page: number,
-    pageSize: number,
+    page: number = 1,
+    pageSize: number = 10,
   ): Promise<{
     facts: Fact[];
     groundingFacts: Fact[];
@@ -36,6 +38,7 @@ export class QueryService {
           pageSize,
         );
       const result = await this.graphService.execQuery(query, params);
+      this.logger.error('***************************** Cypher Result:', result);
       const { facts, variables } = this.processCypherResults(result);
       const resolvedVars = this.resolveVariables(variables, table);
       const resolvedUIDs: number[] = resolvedVars.reduce((acc, curr) => {
@@ -51,7 +54,6 @@ export class QueryService {
           );
         });
       });
-      console.log('XXX', unanchoredUIDs);
       const specFacts: Fact[] =
         await this.gellishBaseService.getSpecializationFacts(unanchoredUIDs);
       const classFacts: Fact[] =
@@ -68,6 +70,36 @@ export class QueryService {
       this.logger.error('Error interpreting query table', error);
       throw error;
     }
+  }
+
+  async interpretQueryString(
+    queryString: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ): Promise<any> {
+    // Process the query and return results
+    const queryStringArray: string[] = queryString.split('\n');
+
+    let qStr = '';
+    let finalArray = [];
+    queryStringArray.forEach((queryString) => {
+      qStr += queryString + '\n';
+      if (!queryString.startsWith('@')) {
+        finalArray.push(qStr);
+        qStr = '';
+      }
+    });
+
+    const queryTable = finalArray.reduce(
+      (memo, queryString) => memo.concat(this.parser.parse(queryString)),
+      [],
+    );
+
+    this.logger.log('Query Table:', queryTable);
+
+    const result = await this.interpretQueryTable(queryTable, page, pageSize);
+    return result;
+    // return queryTable;
   }
 
   private async getTotalCount(table: Fact[]): Promise<number> {
