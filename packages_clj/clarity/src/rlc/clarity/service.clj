@@ -1,11 +1,5 @@
 (ns rlc.clarity.service
-  (:require [io.pedestal.http :as http]
-            [io.pedestal.http.body-params :as body-params]
-            [rlc.clarity.routes :as routes]))
-
-(def common-interceptors
-  [(body-params/body-params)
-   http/json-body])
+  (:require [rlc.clarity.routes :as routes]))
 
 (def service-map
   {::http/routes routes/routes

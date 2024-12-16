@@ -1,23 +1,24 @@
 (ns rlc.clarity.handlers.entity
-  (:require [clj-http.client :as http]))
+ (:require [rlc.clarity.archivist-client :as archivist]))
 
 (defn get-classification
-  [request]
-  (let [id (get-in request [:path-params :id])
-        definition (try
-                    (http/get (str "http://localhost:3000/definition/get?uid=" id)
-                             {:as :json
-                              :content-type :json
-                              :accept :json})
-                    (catch Exception e
-                      (println "Error:" (.getMessage e))))]
-    {:status 200
-     :body (:body definition)}))
+ [request]
+ (let [id (get-in request [:path-params :id])
+       token (get request :auth-token)
+       definition (archivist/get-definition id token)]
+   {:status 200
+    :body definition}))
 
-(defn get-relations [request]
-  {:status 200
-   :body {:message "Not implemented yet"}})
+(defn get-relations
+ [request]
+ (let [id (get-in request [:path-params :id])
+       token (get request :auth-token)]
+   {:status 200
+    :body {:message "Not implemented yet"}}))
 
-(defn get-context [request]
-  {:status 200
-   :body {:message "Not implemented yet"}})
+(defn get-context
+ [request]
+ (let [id (get-in request [:path-params :id])
+       token (get request :auth-token)]
+   {:status 200
+    :body {:message "Not implemented yet"}}))
