@@ -1,33 +1,33 @@
 (ns rlc.clarity.handlers.state
   (:require [clojure.spec.alpha :as s]
-            [rlc.clarity.base :as base]
-            [rlc.clarity.aspect :as aspect]))
+            [rlc.clarity.handlers.base :as base]
+            [rlc.clarity.handlers.aspect :as aspect]))
 
-(s/def :rlc.clarity.state/state-kind
-  (s/merge :rlc.clarity.base/entity-kind))
+(s/def :rlc.clarity.handlers.state/state-kind
+  (s/merge :rlc.clarity.handlers.base/entity-kind))
 
-(s/def :rlc.clarity.state/cause
-  (s/or :uid :rlc.clarity.base/uid
+(s/def :rlc.clarity.handlers.state/cause
+  (s/or :uid :rlc.clarity.handlers.base/uid
         :entity #(do (require '[rlc.clarity.occurrence :as o])
-                     (s/valid? :rlc.clarity.occurrence/occurrence %))))
+                     (s/valid? :rlc.clarity.handlers.occurrence/occurrence %))))
 
-(s/def :rlc.clarity.state/cause-of-begin ::cause)
+(s/def :rlc.clarity.handlers.state/cause-of-begin ::cause)
 
-(s/def :rlc.clarity.state/cause-of-end ::cause)
+(s/def :rlc.clarity.handlers.state/cause-of-end ::cause)
 
-(s/def :rlc.clarity.state/adopter
-  (s/or :uid :rlc.clarity.base/uid
+(s/def :rlc.clarity.handlers.state/adopter
+  (s/or :uid :rlc.clarity.handlers.base/uid
         :entity #(do (require '[rlc.clarity.physical-object :as po])
-                     (s/valid? :rlc.clarity.physical-object/physical-object %))))
+                     (s/valid? :rlc.clarity.handlers.physical-object/physical-object %))))
 
-(s/def :rlc.clarity.state/begin-time ::aspect/point-in-time)
+(s/def :rlc.clarity.handlers.state/begin-time ::aspect/point-in-time)
 
-(s/def :rlc.clarity.state/end-time ::aspect/point-in-time)
+(s/def :rlc.clarity.handlers.state/end-time ::aspect/point-in-time)
 
-(s/def :rlc.clarity.state/is-the-case-at ::aspect/point-in-time)
+(s/def :rlc.clarity.handlers.state/is-the-case-at ::aspect/point-in-time)
 
-(s/def :rlc.clarity.state/state
-  (s/merge :rlc.clarity.base/entity
+(s/def :rlc.clarity.handlers.state/state
+  (s/merge :rlc.clarity.handlers.base/entity
            (s/keys :opt-un [::cause-of-begin
                             ::cause-of-end
                             ::begin-time
@@ -38,11 +38,11 @@
                             ::poststate
                             ::is-the-case-at])))
 
-(s/def :rlc.clarity.state/prestate
+(s/def :rlc.clarity.handlers.state/prestate
   (s/or :uid :rlc.clarity.base/uid
         :entity ::state))
 
-(s/def :rlc.clarity.state/poststate
+(s/def :rlc.clarity.handlers.state/poststate
   (s/or :uid :rlc.clarity.base/uid
         :entity ::state))
 

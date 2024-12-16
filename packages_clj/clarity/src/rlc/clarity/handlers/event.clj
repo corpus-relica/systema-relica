@@ -1,8 +1,8 @@
 (ns rlc.clarity.handlers.event
   (:require [clojure.spec.alpha :as s]
-            [rlc.clarity.occurrence :as occurrence]
-            [rlc.clarity.state :as state]
-            [rlc.clarity.base :as base]))
+            [rlc.clarity.handlers.occurrence :as occurrence]
+            [rlc.clarity.handlers.state :as state]
+            [rlc.clarity.handlers.base :as base]))
 
 ;; Event-specific specs
 (s/def ::event

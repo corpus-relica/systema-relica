@@ -1,24 +1,24 @@
 (ns rlc.clarity.handlers.role
   (:require [clojure.spec.alpha :as s]
-            [rlc.clarity.base :as base]))
+            [rlc.clarity.handlers.base :as base]))
 
 (s/def ::requiring-relation
-  (s/or :uid :rlc.clarity.base/uid
-        :entity #(do (require '[rlc.clarity.relation])
-                     (s/valid? :rlc.clarity.relation/relation-kind %))))
+  (s/or :uid :rlc.clarity.handlers.base/uid
+        :entity #(do (require '[rlc.clarity.handlers.relation])
+                     (s/valid? :rlc.clarity.handlers.relation/relation-kind %))))
 
-(s/def :rlc.clarity.role/requiring-relations
+(s/def :rlc.clarity.handlers.role/requiring-relations
   (s/coll-of ::requiring-relation :kind vector? :min-count 1))
 
 (s/def ::role-player
-  (s/or :uid :rlc.clarity.base/uid
-        :entity :rlc.clarity.base/entity-kind))
+  (s/or :uid :rlc.clarity.handlers.base/uid
+        :entity :rlc.clarity.handlers.base/entity-kind))
 
-(s/def :rlc.clarity.role/role-players
+(s/def :rlc.clarity.handlers.role/role-players
   (s/coll-of ::role-player :kind vector? :min-count 1))
 
-(s/def :rlc.clarity.role/role-kind
-  (s/merge :rlc.clarity.base/entity-kind
+(s/def :rlc.clarity.handlers.role/role-kind
+  (s/merge :rlc.clarity.handlers.base/entity-kind
            (s/keys :req-un [::requiring-relations
                             ::role-players])))
 
@@ -40,4 +40,4 @@
                            12345]
      :role-players [67890]})
 
-  (s/explain :rlc.clarity.role/role-kind some-role-kind))
+  (s/explain :rlc.clarity.handlers.role/role-kind some-role-kind))

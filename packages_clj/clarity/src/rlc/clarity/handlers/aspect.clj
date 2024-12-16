@@ -1,23 +1,23 @@
 (ns rlc.clarity.handlers.aspect
   (:require [clojure.spec.alpha :as s]
-            [rlc.clarity.base :as base]))
+            [rlc.clarity.handlers.base :as base]))
 
-(s/def :rlc.clarity.aspect/aspect-nature #{:qualitative :quantitative})
-(s/def :rlc.clarity.aspect/possessor
+(s/def :rlc.clarity.handlers.aspect/aspect-nature #{:qualitative :quantitative})
+(s/def :rlc.clarity.handlers.aspect/possessor
   (s/or :uid :rlc.clarity.base/uid
         :physical-object-obj #(do (require '[rlc.clarity.physical-object])
-                             (s/valid? :rlc.clarity.physical-object/physical-object %))
+                             (s/valid? :rlc.clarity.handlers.physical-object/physical-object %))
         :occurrence-obj #(do (require '[rlc.clarity.occurrence :as o])
-                             (s/valid? :rlc.clarity.occurrence/occurrence %))))
+                             (s/valid? :rlc.clarity.handlesr.occurrence/occurrence %))))
 
-;; (s/def :rlc.clarity.aspect/intrinsic boolean?)
+;; (s/def :rlc.clarity.handlers.aspect/intrinsic boolean?)
 
-(s/def :rlc.clarity.aspect/aspect-kind
+(s/def :rlc.clarity.handlers.aspect/aspect-kind
   (s/merge
     :rlc.clarity.base/entity-kind
     ))
 
-(s/def :rlc.clarity.aspect/aspect
+(s/def :rlc.clarity.handlers.aspect/aspect
   (s/and :rlc.clarity.base/entity
          (s/keys :req-un [::aspect-nature
                          ::possessor])
@@ -26,10 +26,10 @@
             :quantitative (s/valid? (s/keys :req-un [::value ::uom]) %)
             false)))
 
-(s/def :rlc.clarity.aspect/point-in-time
+(s/def :rlc.clarity.handlers.aspect/point-in-time
   (s/or
    :uid :rlc.clarity.base/uid
-   :entity (s/and :rlc.clarity.aspect/aspect
+   :entity (s/and :rlc.clarity.handlers.aspect/aspect
               #(= (:aspect-nature %) :quantitative)
               #(inst? (:value %))
               #(contains? #{:iso8601 :unix-epoch :julian-date} (:uom %)))))
@@ -41,11 +41,11 @@
       (assoc :name (str "Time at " new-time))
       (assoc :value new-time)))
 
-(s/def :rlc.clarity.aspect/begin-time ::point-in-time)
+(s/def :rlc.clarity.handlers.aspect/begin-time ::point-in-time)
 
-(s/def :rlc.clarity.aspect/end-time ::point-in-time)
+(s/def :rlc.clarity.handlers.aspect/end-time ::point-in-time)
 
-(s/def :rlc.clarity.aspect/period-in-time
+(s/def :rlc.clarity.handlers.aspect/period-in-time
   (s/merge :rlc.clarity.base/entity
            (s/keys :req-un [::begin-time
                             ::end-time])))

@@ -2,43 +2,43 @@
   (:require [clojure.spec.alpha :as s]))
 
 ;; Core specs
-(s/def :rlc.clarity.base/uid int?)
-(s/def :rlc.clarity.base/name string?)
-(s/def :rlc.clarity.base/definition string?)
-(s/def :rlc.clarity.base/nature #{:kind :individual})
-(s/def :rlc.clarity.base/kind-ref :rlc.clarity.base/uid)
+(s/def :rlc.clarity.handlers.base/uid int?)
+(s/def :rlc.clarity.handlers.base/name string?)
+(s/def :rlc.clarity.handlers.base/definition string?)
+(s/def :rlc.clarity.handlers.base/nature #{:kind :individual})
+(s/def :rlc.clarity.handlers.base/kind-ref :rlc.clarity.handlers.base/uid)
 
-(s/def :rlc.clarity.base/entity-base
-  (s/keys :req-un [:rlc.clarity.base/uid
-                   :rlc.clarity.base/name
-                   :rlc.clarity.base/nature]))
+(s/def :rlc.clarity.handlers.base/entity-base
+  (s/keys :req-un [:rlc.clarity.handlers.base/uid
+                   :rlc.clarity.handlers.base/name
+                   :rlc.clarity.handlers.base/nature]))
 
-(s/def :rlc.clarity.base/entity-kind
-  (s/and :rlc.clarity.base/entity-base
-         (s/keys :req-un [:rlc.clarity.base/definition])
+(s/def :rlc.clarity.handlers.base/entity-kind
+  (s/and :rlc.clarity.handlers.base/entity-base
+         (s/keys :req-un [:rlc.clarity.handlers.base/definition])
          #(= (:nature %) :kind)))
 
-(s/def :rlc.clarity.base/involver-occurrence
-  (s/or :uid :rlc.clarity.base/uid
+(s/def :rlc.clarity.handlers.base/involver-occurrence
+  (s/or :uid :rlc.clarity.handlers.base/uid
         :entity #(do (require '[rlc.clarity.occurrence])
-                     (s/valid? :rlc.clarity.occurrence/occurrence %))))
+                     (s/valid? :rlc.clarity.handlers.occurrence/occurrence %))))
 
-(s/def :rlc.clarity.base/involving-relation
-  (s/or :uid :rlc.clarity.base/uid
+(s/def :rlc.clarity.handlers.base/involving-relation
+  (s/or :uid :rlc.clarity.handlers.base/uid
         :entity #(do (require '[rlc.clarity.relation])
-                     (s/valid? :rlc.clarity.relation/relation-kind %))))
+                     (s/valid? :rlc.clarity.handlers.relation/relation-kind %))))
 
-(s/def :rlc.clarity.base/involvement-tuple
-  (s/tuple :rlc.clarity.base/involving-relation
-           :rlc.clarity.base/involver-occurrence))
+(s/def :rlc.clarity.handlers.base/involvement-tuple
+  (s/tuple :rlc.clarity.handlers.base/involving-relation
+           :rlc.clarity.handlers.base/involver-occurrence))
 
-(s/def :rlc.clarity.base/involvers
-  (s/coll-of :rlc.clarity.base/involvement-tuple :kind vector? :min-count 1))
+(s/def :rlc.clarity.handlers.base/involvers
+  (s/coll-of :rlc.clarity.handlers.base/involvement-tuple :kind vector? :min-count 1))
 
-(s/def :rlc.clarity.base/entity
-  (s/and :rlc.clarity.base/entity-base
-         (s/keys :req-un [:rlc.clarity.base/kind-ref]
-                 :opt-un [:rlc.clarity.base/involvers])
+(s/def :rlc.clarity.handlers.base/entity
+  (s/and :rlc.clarity.handlers.base/entity-base
+         (s/keys :req-un [:rlc.clarity.handlers.base/kind-ref]
+                 :opt-un [:rlc.clarity.handlers.base/involvers])
          #(= (:nature %) :individual)))
 
 (comment
@@ -69,6 +69,6 @@
                    :involvements [[1234 1]]}
                   ]]})
 
-  (s/explain :rlc.clarity.base/entity some-entity)
+  (s/explain :rlc.clarity.handlers.base/entity some-entity)
 
   )

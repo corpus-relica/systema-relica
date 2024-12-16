@@ -1,8 +1,8 @@
 (ns rlc.clarity.handlers.occurrence
   (:require [clojure.spec.alpha :as s]
-            [rlc.clarity.base :as base]
-            [rlc.clarity.state :as state]
-            [rlc.clarity.aspect :as aspect]))
+            [rlc.clarity.handlers.base :as base]
+            [rlc.clarity.handlers.state :as state]
+            [rlc.clarity.handlers.aspect :as aspect]))
 
 (s/def ::occurrence-type #{:activity :process :event :deed})
 (s/def ::state #{:new :in-progress :completed :terminated})
@@ -11,13 +11,13 @@
 (s/def ::place-of-end ::base/kind-ref)
 
 (s/def ::involvement-type
-  (s/or :uid :rlc.clarity.base/uid
-        :entity #(do (require '[rlc.clarity.relation])
-                     (s/valid? :rlc.clarity.relation/relation-kind %))))
+  (s/or :uid :rlc.clarity.handlers.base/uid
+        :entity #(do (require '[rlc.clarity.handlers.relation])
+                     (s/valid? :rlc.clarity.handlers.relation/relation-kind %))))
 
 (s/def ::involved-individual
   (s/or :uid int?
-        :entity :rlc.clarity.base/entity))
+        :entity :rlc.clarity.handlers.base/entity))
 
 (s/def ::involvement-tuple
   (s/tuple ::involvement-type ::involved-individual))
@@ -25,17 +25,17 @@
 (s/def ::involved
   (s/coll-of ::involvement-tuple :kind vector? :min-count 1))
 
-(s/def :rlc.clarity.occurrence/occurrence-kind
+(s/def :rlc.clarity.handlers.occurrence/occurrence-kind
   (s/merge
-    :rlc.clarity.base/entity-kind))
+    :rlc.clarity.handlers.base/entity-kind))
 
-(s/def :rlc.clarity.occurrence/happens-during ::aspect/period-in-time)
+(s/def :rlc.clarity.handlers.occurrence/happens-during ::aspect/period-in-time)
 
-(s/def :rlc.clarity.occurrence/happens-within ::aspect/period-in-time)
+(s/def :rlc.clarity.handlers.occurrence/happens-within ::aspect/period-in-time)
 
 
-(s/def :rlc.clarity.occurrence/occurrence
-  (s/merge :rlc.clarity.state/state
+(s/def :rlc.clarity.handlers.occurrence/occurrence
+  (s/merge :rlc.clarity.handlers.state/state
            (s/keys :req-un [::occurrence-type]
                    :opt-un [::happens-during
                             ::happens-within

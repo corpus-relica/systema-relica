@@ -1,35 +1,35 @@
 (ns rlc.clarity.handlers.physical-object
   (:require [clojure.spec.alpha :as s]
-            [rlc.clarity.base :as base]))
+            [rlc.clarity.handlers.base :as base]))
 
-(s/def :rlc.clarity.physical-object/physical-object-kind
+(s/def :rlc.clarity.handlers.physical-object/physical-object-kind
   (s/merge
-   :rlc.clarity.base/entity-kind))
+   :rlc.clarity.handlers.base/entity-kind))
 
-(s/def :rlc.clarity.physical-object/aspects
-  (s/coll-of (s/or :uid :rlc.clarity.base/uid
-                   :entity #(do (require '[rlc.clarity.aspect])
-                               (s/valid? :rlc.clarity.aspect/aspect %)))))
+(s/def :rlc.clarity.handlers.physical-object/aspects
+  (s/coll-of (s/or :uid :rlc.clarity.handlers.base/uid
+                   :entity #(do (require '[rlc.clarity.handlers.aspect])
+                               (s/valid? :rlc.clarity.handlers.aspect/aspect %)))))
 
 (def physical-object-delayed
   (delay
-    (s/spec :rlc.clarity.physical-object/physical-object)))
+    (s/spec :rlc.clarity.handlers.physical-object/physical-object)))
 
-(s/def :rlc.clarity.physical-object/parts
-  (s/coll-of (s/or :uid :rlc.clarity.base/uid
+(s/def :rlc.clarity.handlers.physical-object/parts
+  (s/coll-of (s/or :uid :rlc.clarity.handlers.base/uid
                    :entity (fn [x] (s/valid? @physical-object-delayed x)))))
 
-(s/def :rlc.clarity.physical-object/totalities
-  (s/coll-of (s/or :uid :rlc.clarity.base/uid
+(s/def :rlc.clarity.handlers.physical-object/totalities
+  (s/coll-of (s/or :uid :rlc.clarity.handlers.base/uid
                    :entity (fn [x] (s/valid? @physical-object-delayed x)))))
 
-(s/def :rlc.clarity.physical-object/adopted-state
-  (s/or :uid :rlc.clarity.base/uid
-        :entity #(do (require '[rlc.clarity.state])
-                     (s/valid? :rlc.clarity.state/state %))))
+(s/def :rlc.clarity.handlers.physical-object/adopted-state
+  (s/or :uid :rlc.clarity.handlers.base/uid
+        :entity #(do (require '[rlc.clarity.handlers.state])
+                     (s/valid? :rlc.clarity.handlers.state/state %))))
 
-(s/def :rlc.clarity.physical-object/physical-object
-  (s/and :rlc.clarity.base/entity
+(s/def :rlc.clarity.handlers.physical-object/physical-object
+  (s/and :rlc.clarity.handlers.base/entity
          (s/keys :opt-un [::aspects
                          ::parts
                          ::totalities
