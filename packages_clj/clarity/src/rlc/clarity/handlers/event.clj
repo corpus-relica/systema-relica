@@ -17,9 +17,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DATA RETRIEVAL
 
-(defn get-all-events [request]
-  (tap> "GETTING ALL EVENTS, NIGGA' !!!!!!!")
-  (let [token (get request :auth-token)
+(defn get-all [request]
+  (tap> "GETTING ALL EVENTS, FOO' !!!!!!!")
+  (let [token (clojure.core/get request :auth-token)
         response (archivist/get-classified-facts
                   {:uid "1000000395"
                    :recursive false}
@@ -44,10 +44,10 @@
         (response/response events)))
     ))
 
-(defn get-event [request]
+(defn get [request]
   (tap> "FETCHING EVENT")
   (let [uid (get-in request [:path-params :uid])
-        token (get request :auth-token)
+        token (clojure.core/get request :auth-token)
         _ (tap> uid)
         _ (tap> token)
         response (archivist/get-classification-fact uid token)]
@@ -62,6 +62,80 @@
         (tap> "GOT EVENT ------->")
         (tap> event)
         (response/response event)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn get-time-value [request]
+  (let [uid (get-in request [:path-params :uid])
+        token (clojure.core/get request :auth-token)
+        result (archivist/execute-query
+                (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
+                (fn [facts]
+                  (let [time (:rh_object_name (second facts))]
+                    (tap> "TIME ------->")
+                    (tap> facts)
+                    (tap> time)
+                    time))
+                token)]
+    (tap> "TIME VALUE RESULT ------->")
+    (tap> result)
+    result))
+
+(defn get-time [request]
+  (let [uid (get-in request [:path-params :uid])
+        token (clojure.core/get request :auth-token)]
+    (archivist/execute-query
+     (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
+     (fn [facts]
+       (tap> "TIME FACTS ------->")
+       (tap> facts)
+       (if (empty? facts)
+         nil
+         (first facts)))
+     token)))
+
+(defn get-participants [request]
+  (let [uid (get-in request [:path-params :uid])
+        token (clojure.core/get request :auth-token)]
+    (archivist/execute-query
+     (str uid " > 5644 > ?10.who")
+     (fn [facts]
+       (map :rh_object_uid facts))
+     token)))
+
+;; (defn get-event-note-value [token uid]
+;;   (tap> "GETTING EVENT NOTE")
+;;   (tap> (str uid " > 1727 > ?10.who\n?10.who > 1225 > 1000000035"))
+;;   (query-service
+;;    token
+;;    (str uid " > 1727 > ?10.who\n?10.who > 1225 > 1000000035")
+;;    (fn [facts]
+;;      (tap> "NOTE FACTS")
+;;      (tap> facts)
+;;      (if (empty? facts)
+;;        nil
+;;        (:full_definition (second facts))))))
+
+;; (defn get-event-note [token uid]
+;;   (tap> "GETTING EVENT NOTE")
+;;   (tap> (str uid " > 1727 > ?10.who\n?10.who > 1225 > 1000000035"))
+;;   (query-service
+;;    token
+;;    (str uid " > 1727 > ?10.who\n?10.who > 1225 > 1000000035")
+;;    (fn [facts]
+;;      (tap> "NOTE FACTS, FOR REAL")
+;;      (tap> facts)
+;;      facts)))
+
+;; (defn get-participation-fact [lh-object-uid rh-object-uid token]
+;;   (archivist/execute-query
+;;    (str lh-object-uid " > 5644 > " rh-object-uid)
+;;    (fn [facts]
+;;      (tap> "PARTICIPATION FACT")
+;;      (tap> facts)
+;;      (first facts))
+;;    token))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SCRATCH
 

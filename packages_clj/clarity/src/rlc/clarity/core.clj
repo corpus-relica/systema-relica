@@ -2,7 +2,6 @@
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [clj-http.client :as client]
-            [rlc.clarity.routes :as routes]
             [rlc.clarity.service :as service]))
 
 (defonce server (atom nil))
