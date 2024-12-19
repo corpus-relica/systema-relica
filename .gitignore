@@ -20,3 +20,6 @@ seed_xls/
 
 temp.*
 /postgres_backup/
+
+.clj-kondo/
+.calva/
