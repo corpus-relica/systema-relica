@@ -1,0 +1,43 @@
+name: Deploy to Digital Ocean
+
+on:
+  push:
+    branches:
+      - main  # or your preferred branch
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+
+      - name: Copy project files to server
+        run: |
+          # Create a tarball excluding git files and any other unnecessary files
+          tar --exclude='.git' --exclude='node_modules' --exclude='.env' -czf deploy.tar.gz .
+
+          # Copy the tarball to the server
+          scp deploy.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/root/systema_relica/
+          
+      - name: Deploy to Digital Ocean
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root/systema_relica
+            tar xzf deploy.tar.gz
+            docker compose down
+            docker compose build
+            docker compose up -d
+            rm deploy.tar.gz
