@@ -40,10 +40,10 @@ jobs:
               echo -e "Host github.com\n  IdentityFile ~/.ssh/github\n  StrictHostKeyChecking no" > ~/.ssh/config
             fi
 
-            # Install Docker Compose plugin if not present
-            if ! command -v docker compose &> /dev/null; then
-              sudo apt-get update
-              sudo apt-get install -y docker-compose-plugin
+            # Install Docker Compose using apt
+            if ! command -v docker-compose &> /dev/null; then
+              apt-get update
+              apt-get install -y docker-compose
             fi
 
             # Test GitHub SSH connection
@@ -61,6 +61,6 @@ jobs:
 
             # Start the application
             echo "Starting docker compose..."
-            sudo docker compose down || true
-            sudo docker compose build
-            sudo docker compose up -d
+            docker-compose down || true
+            docker-compose build
+            docker-compose up -d
