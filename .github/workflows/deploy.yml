@@ -3,8 +3,8 @@ name: Deploy to Digital Ocean
 on:
   push:
     branches:
-      - main  # or your preferred branch
-  workflow_dispatch:  # allows manual trigger
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -21,6 +21,11 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
+      - name: Debug directory structure
+        run: |
+          pwd
+          ls -la
+
       - name: Create deployment directory
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -29,14 +34,18 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             mkdir -p /root/systema_relica
+            ls -la /root/systema_relica
 
       - name: Copy project files to server
         run: |
-          # Create tarball with --warning=no-file-changed to ignore file changes
-          tar --warning=no-file-changed --exclude='.git' --exclude='node_modules' --exclude='.env' --exclude='*.log' -czf deploy.tar.gz .
+          echo "Creating tarball..."
+          tar -v --warning=no-file-changed --exclude='.git' --exclude='node_modules' --exclude='.env' --exclude='*.log' -czf deploy.tar.gz .
 
-          # Copy the tarball to the server
-          scp deploy.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/root/systema_relica/
+          echo "Checking tarball..."
+          ls -lh deploy.tar.gz
+
+          echo "Copying to server..."
+          scp -v deploy.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/root/systema_relica/
 
       - name: Deploy to Digital Ocean
         uses: appleboy/ssh-action@v1.0.0
@@ -46,8 +55,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/systema_relica
+            ls -la
+            echo "Extracting tarball..."
             tar xzf deploy.tar.gz
-            docker compose down || true  # Don't fail if services aren't running
+            echo "Running docker compose..."
+            docker compose down || true
             docker compose build
             docker compose up -d
+            echo "Cleaning up..."
             rm deploy.tar.gz
