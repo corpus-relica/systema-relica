@@ -12,64 +12,46 @@ jobs:
     environment: prod
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
-      - name: Create and verify deployment directory
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            mkdir -p /root/systema_relica
-            chown root:root /root/systema_relica
-            chmod 755 /root/systema_relica
-            pwd
-            ls -la /root/systema_relica
-
-      - name: Create and transfer archive
-        shell: bash
-        run: |
-          echo "Creating tarball..."
-          tar -czf deploy.tar.gz --exclude='.git' --exclude='node_modules' --exclude='.env' --exclude='*.log' .
-
-          echo "Checking tarball size..."
-          ls -lh deploy.tar.gz
-
-          echo "Verifying SSH directory..."
-          ls -la ~/.ssh/
-
-          echo "Attempting SCP transfer..."
-          scp -v -o UserKnownHostsFile=/home/runner/.ssh/known_hosts \
-             -o ServerAliveInterval=60 \
-             deploy.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/root/systema_relica/ || {
-            echo "SCP failed with exit code $?"
-            exit 1
-          }
-
       - name: Deploy to Digital Ocean
-        if: success()
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Ensure directory exists
+            mkdir -p /root/systema_relica
             cd /root/systema_relica
-            echo "Current directory contents:"
-            ls -la
-            echo "Extracting archive..."
-            tar xzf deploy.tar.gz
-            echo "Running docker compose..."
+
+            # Setup git config if necessary
+            git config --global credential.helper store
+
+            # Add GitHub SSH key if not already added
+            if [ ! -f ~/.ssh/github ]; then
+              mkdir -p ~/.ssh
+              echo "${{ secrets.GH_SSH_KEY }}" > ~/.ssh/github
+              chmod 600 ~/.ssh/github
+              echo "Host github.com\n  IdentityFile ~/.ssh/github\n  StrictHostKeyChecking no" > ~/.ssh/config
+            fi
+
+            # Clone or pull repository
+            if [ ! -d ".git" ]; then
+              echo "Cloning repository..."
+              git clone git@github.com:corpus-relica/systema-relica.git .
+            else
+              echo "Updating repository..."
+              git fetch origin
+              git reset --hard origin/main
+            fi
+
+            # Start the application
+            echo "Starting docker compose..."
             docker compose down || true
             docker compose build
             docker compose up -d
-            echo "Cleaning up..."
-            rm deploy.tar.gz
