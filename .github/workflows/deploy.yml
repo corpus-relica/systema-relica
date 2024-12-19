@@ -9,6 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: prod  # This is where we specify which environment to use
 
     steps:
       - name: Checkout code
