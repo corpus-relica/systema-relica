@@ -29,15 +29,21 @@ jobs:
             mkdir -p /root/systema_relica
             cd /root/systema_relica
 
-            # Setup git config if necessary
-            git config --global credential.helper store
+            # Add GitHub's host key first
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
 
             # Add GitHub SSH key if not already added
             if [ ! -f ~/.ssh/github ]; then
-              mkdir -p ~/.ssh
               echo "${{ secrets.GH_SSH_KEY }}" > ~/.ssh/github
               chmod 600 ~/.ssh/github
-              echo "Host github.com\n  IdentityFile ~/.ssh/github\n  StrictHostKeyChecking no" > ~/.ssh/config
+              echo -e "Host github.com\n  IdentityFile ~/.ssh/github" > ~/.ssh/config
+            fi
+
+            # Install Docker Compose plugin if not present
+            if ! command -v docker compose &> /dev/null; then
+              apt-get update
+              apt-get install -y docker-compose-plugin
             fi
 
             # Clone or pull repository
