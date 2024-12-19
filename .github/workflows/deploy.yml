@@ -25,11 +25,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Debug info
-            echo "Current directory: $(pwd)"
-            echo "SSH directory contents:"
-            ls -la ~/.ssh/
-
             # Ensure directory exists
             mkdir -p /root/systema_relica
             cd /root/systema_relica
@@ -39,23 +34,21 @@ jobs:
             ssh-keyscan github.com >> ~/.ssh/known_hosts
 
             # Add GitHub SSH key with debug info
-            if [ ! -f ~/.ssh/github ]; then
+            if [ ! -f ~/.ssh/id_ed25519 ]; then
               echo "Setting up GitHub SSH key..."
-              echo "${{ secrets.GH_SSH_KEY }}" > ~/.ssh/github
-              chmod 600 ~/.ssh/github
-              echo -e "Host github.com\n  IdentityFile ~/.ssh/github\n  StrictHostKeyChecking no" > ~/.ssh/config
+              echo "${{ secrets.GH_SSH_KEY }}" > ~/.ssh/id_ed25519
+              chmod 600 ~/.ssh/id_ed25519
               echo "SSH key added. Contents of ~/.ssh:"
               ls -la ~/.ssh/
             fi
 
-            # Test GitHub SSH connection with verbose logging
-            echo "Testing GitHub SSH connection..."
+            # Test GitHub SSH connection
             ssh -vT git@github.com || true
 
             # Clone or pull repository
             if [ ! -d ".git" ]; then
               echo "Cloning repository..."
-              GIT_SSH_COMMAND='ssh -v' git clone git@github.com:corpus-relica/systema-relica.git .
+              git clone git@github.com:corpus-relica/systema-relica.git .
             else
               echo "Updating repository..."
               git fetch origin
