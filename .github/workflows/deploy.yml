@@ -37,14 +37,17 @@ jobs:
             if [ ! -f ~/.ssh/github ]; then
               echo "${{ secrets.GH_SSH_KEY }}" > ~/.ssh/github
               chmod 600 ~/.ssh/github
-              echo -e "Host github.com\n  IdentityFile ~/.ssh/github" > ~/.ssh/config
+              echo -e "Host github.com\n  IdentityFile ~/.ssh/github\n  StrictHostKeyChecking no" > ~/.ssh/config
             fi
 
             # Install Docker Compose plugin if not present
             if ! command -v docker compose &> /dev/null; then
-              apt-get update
-              apt-get install -y docker-compose-plugin
+              sudo apt-get update
+              sudo apt-get install -y docker-compose-plugin
             fi
+
+            # Test GitHub SSH connection
+            ssh -T git@github.com || true
 
             # Clone or pull repository
             if [ ! -d ".git" ]; then
@@ -58,6 +61,6 @@ jobs:
 
             # Start the application
             echo "Starting docker compose..."
-            docker compose down || true
-            docker compose build
-            docker compose up -d
+            sudo docker compose down || true
+            sudo docker compose build
+            sudo docker compose up -d
