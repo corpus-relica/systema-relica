@@ -2,7 +2,8 @@
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [clj-http.client :as client]
-            [rlc.clarity.service :as service]))
+            [rlc.clarity.service :as service]
+            [portal.api :as p]))
 
 (defonce server (atom nil))
 
@@ -11,6 +12,7 @@
 
 (defn start [service-map]
   (println "Starting server on port 3002...")
+  (tap> "Starting server on port 3002...")
   (try
     (let [server-instance (-> service-map
                              http/create-server
@@ -40,6 +42,14 @@
 
 (defn -main [& args]
   (println "Starting Clarity CLJ service...")
+
+  ;; Start portal with web UI
+  (p/open {:port 5555
+           :host "0.0.0.0"  ;; Allow external connections
+           :launcher :web    ;; Ensure web UI is used
+           :window false})   ;; Don't try to open a browser window
+  (add-tap #'p/submit)
+
   (restart))
 
 (comment

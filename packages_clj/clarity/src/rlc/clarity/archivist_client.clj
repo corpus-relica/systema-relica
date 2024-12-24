@@ -3,7 +3,7 @@
             [clojure.data.json :as j]
             [ring.util.response :as response]))
 
-(def base-url "http://localhost:3000")
+(def base-url "http://archivist:3000")
 
 (defn make-request
   ([path opts token]
