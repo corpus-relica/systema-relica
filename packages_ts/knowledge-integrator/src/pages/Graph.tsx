@@ -13,7 +13,8 @@ import Box from "@mui/material/Box";
 import Fab from "@mui/material/Fab";
 import CopyAllIcon from "@mui/icons-material/CopyAll";
 
-import XXX from "@relica/fact-search-ui";
+//TODO: rename "FactTable" to something more descriptive
+import { FactTable } from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 
@@ -135,7 +136,7 @@ const Graph = observer(() => {
             p: 2,
           }}
         >
-          <XXX
+          <FactTable
             token={token}
             filter={{ type: "should't matter", uid: filter }}
             callback={(res: any) => {

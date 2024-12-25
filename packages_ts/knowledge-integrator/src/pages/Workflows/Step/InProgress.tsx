@@ -19,7 +19,7 @@ import Divider from "@mui/material/Divider";
 import Modal from "@mui/material/Modal";
 import Stack from "@mui/material/Stack";
 
-import XXX from "@relica/fact-search-ui";
+import { FactTable } from "@relica/fact-search-ui";
 
 interface ContextItem {
   uid: number;
@@ -218,7 +218,7 @@ const InProgressStep = (props: any) => {
             p: 2,
           }}
         >
-          <XXX
+          <FactTable
             filter={{ type: "should't matter, sucker", uid: filter }}
             callback={(res: any) => {
               handleClose(res);

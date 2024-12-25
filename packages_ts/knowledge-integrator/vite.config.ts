@@ -1,14 +1,27 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import { resolve } from "path";
 
-// https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [react()],
-    define: {
-        'process.env': process.env,
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@relica/fact-search-ui": resolve(
+        __dirname,
+        "../fact-search-ui/dist/index.js"
+      ),
+      "@relica/constants": resolve(__dirname, "../constants/dist/constants.js"),
+      "@relica/types": resolve(__dirname, "../types/dist/index.js"),
     },
-    server: {
-        host: true,
+  },
+  server: {
+    host: "0.0.0.0", // Important for Docker
+    port: 5173,
+    watch: {
+      usePolling: true, // Important for Docker
     },
-    base: './',
+  },
+  optimizeDeps: {
+    include: ["@relica/fact-search-ui", "@relica/constants", "@relica/types"],
+  },
 });

@@ -16,7 +16,7 @@ import CreateBinaryFact from "./misc/CreateBinaryFact";
 import ClassifyIndividual from "./misc/ClassifyIndividual";
 import CreateDate from "./misc/CreateDate";
 
-import XXX from "@relica/fact-search-ui";
+import { FactTable } from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 
