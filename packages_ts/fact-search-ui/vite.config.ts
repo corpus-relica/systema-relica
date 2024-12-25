@@ -7,12 +7,19 @@ export default defineConfig({
   plugins: [react(), VitePluginChecker({ typescript: true })],
   build: {
     lib: {
-      entry: "src/App.tsx",
+      entry: "src/index.tsx",
       name: "FactSearch", // Global name for the component
       formats: ["es", "cjs"], // Output formats
+      fileName: (format) => `index.${format === 'es' ? 'js' : 'cjs'}`
     },
     rollupOptions: {
-      external: ["react", "react-dom"], // Marking peer dependencies as external
+      external: ['react', 'react-dom', 'styled-components', 'grommet', 'mobx'],
+      output: {
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM'
+        }
+      }
     },
   },
 });
