@@ -9,8 +9,20 @@
     "declarationMap": true,
     "noEmit": false,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "baseUrl": ".",
+    "paths": {
+      "@relica/types": ["../types/dist"],
+      "@relica/constants": ["../constants/dist/constants.js"],
+      "@relica/constants/*": ["../constants/dist/*"],
+    }
   },
+  "references": [
+    { "path": "../types" },
+    { "path": "../constants" }
+  ],
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }

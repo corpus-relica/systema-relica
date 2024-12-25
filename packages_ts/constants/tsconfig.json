@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
     "target": "ESNext",
-    "outDir": "./dist",
+    "module": "ESNext",
     "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "declaration": true, // Add this line to generate declaration files
-    "declarationDir": "./dist" // Optionally specify the output directory for declaration files
+    "strict": true,
+    "skipLibCheck": true,
+    "composite": true,
+    "rootDir": "./src"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

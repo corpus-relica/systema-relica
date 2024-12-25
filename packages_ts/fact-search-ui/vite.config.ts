@@ -1,25 +1,39 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import VitePluginChecker from "vite-plugin-checker";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import { resolve } from 'path';
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), VitePluginChecker({ typescript: true })],
+  plugins: [react()],
   build: {
     lib: {
-      entry: "src/index.tsx",
-      name: "FactSearch", // Global name for the component
-      formats: ["es", "cjs"], // Output formats
+      entry: resolve(__dirname, 'src/index.tsx'),
+      name: 'FactSearchUI',
+      formats: ['es', 'cjs'],
       fileName: (format) => `index.${format === 'es' ? 'js' : 'cjs'}`
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'styled-components', 'grommet', 'mobx'],
+      external: [
+        'react',
+        'react-dom',
+        '@mui/material',
+        '@mui/icons-material',
+        '@relica/types',
+        '@relica/constants'
+      ],
       output: {
         globals: {
           react: 'React',
-          'react-dom': 'ReactDOM'
+          'react-dom': 'ReactDOM',
+          '@relica/types': 'RelicaTypes',
+          '@relica/constants': 'RelicaConstants'
         }
       }
-    },
+    }
   },
+  resolve: {
+    alias: {
+      '@relica/constants': resolve(__dirname, '../constants/dist/constants.js'),
+      '@relica/types': resolve(__dirname, '../types/dist/index.js')
+    }
+  }
 });

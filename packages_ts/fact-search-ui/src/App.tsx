@@ -10,7 +10,7 @@ import { updateAxiosInstance } from "./axiosInstance";
 
 const queryClient = new QueryClient();
 
-interface FactTableProps {
+export interface FactTableProps {
   callback: (fact: Fact) => void;
   filter?: {
     type: string;

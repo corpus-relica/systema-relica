@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@relica/types": "0.0.0",
-    "@relica/constants": "0.0.0",
+    "@relica/types": "*",
+    "@relica/constants": "*",
     "@tanstack/react-query": "^5.7.2",
     "lodash.debounce": "^4.0.8",
     "mobx-react-lite": "^4.0.5",
