@@ -14,9 +14,9 @@
     "strict": false,
     "baseUrl": ".",
     "paths": {
-      "@relica/types": ["../types/dist"],
-      "@relica/constants": ["../constants/dist/constants.js"],
-      "@relica/constants/*": ["../constants/dist/*"],
+      "@relica/types": ["../../../libs/types/dist"],
+      "@relica/constants": ["../../../libs/constants/dist/constants.js"],
+      "@relica/constants/*": ["../../../constants/dist/*"],
     },
     "rootDir": "./src",
     "composite": true,
@@ -24,8 +24,8 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
   },
   "references": [
-    { "path": "../types" },
-    { "path": "../constants" }
+    { "path": "../../../libs/types" },
+    { "path": "../../../libs/constants" }
   ],
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

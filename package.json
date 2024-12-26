@@ -5,5 +5,11 @@
   "main": "index.js",
   "license": "GNU",
   "private": true,
-  "workspaces": ["packages_ts/*"]
+  "workspaces": [
+    "packages_ts/libs/*",
+    "packages_ts/core/*",
+    "packages_ts/backend/*",
+    "packages_ts/frontend/components/*",
+    "packages_ts/frontend/apps/*"
+  ]
 }
