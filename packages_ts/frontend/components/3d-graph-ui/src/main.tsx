@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
+import App from "./App.js";
 import "./index.css";
-import { NodeData, EdgeData, Fact } from "./types";
+import { NodeData, EdgeData, Fact } from "./types.js";
 
 const categories = [
   {

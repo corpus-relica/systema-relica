@@ -1,7 +1,7 @@
 import { Controller, Get, Delete, Query, Inject, Param } from '@nestjs/common';
-import { CacheService } from '../cache/cache.service';
-import { ConceptService } from './concept.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { CacheService } from '../cache/cache.service.js';
+import { ConceptService } from './concept.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
 
 @Controller('concept')
 export class ConceptController {

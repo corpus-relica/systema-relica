@@ -4,11 +4,11 @@ import {
   ROLE_UID,
   ASPECT_UID,
   RELATION_UID,
-} from '../bootstrapping';
+} from '../bootstrapping.js';
 
 import { Injectable, Logger } from '@nestjs/common';
-import { GraphService } from 'src/graph/graph.service';
-import { CacheService } from 'src/cache/cache.service';
+import { GraphService } from '../graph/graph.service.js';
+import { CacheService } from '../cache/cache.service.js';
 
 import {
   entity,
@@ -32,7 +32,7 @@ import {
   updateFactNamesQuery,
   qualificationFact,
   allFactsInvolvingEntity,
-} from 'src/graph/queries';
+} from '../graph/queries.js';
 
 import { linearize } from 'c3-linearization';
 
@@ -228,7 +228,7 @@ export class GellishBaseService {
     const facts = specH.facts;
 
     let i = 0;
-    const uniqueResults = new Set(); // Use a Set to store unique entries
+    const uniqueResults: Set<string> = new Set(); // Use a Set to store unique entries
     while (i < facts.length - 1) {
       const fact = facts[i];
       const res = await this.graphService.execQuery(possibleRoles, {

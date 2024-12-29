@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { GraphService } from 'src/graph/graph.service';
-import { supertypes, qualificationsOfAspect } from 'src/graph/queries';
+import { GraphService } from '../graph/graph.service.js';
+import { supertypes, qualificationsOfAspect } from '../graph/queries.js';
 
 @Injectable()
 export class AspectService {

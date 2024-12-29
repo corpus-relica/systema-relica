@@ -8,14 +8,18 @@ const columns = [
     header: "uid",
     size: "xsmall",
     render: (datum: Fact) => (
-      <Text
-        size="14px"
-        onClick={() => {
-          console.log("clicked something??");
-        }}
-      >
-        <Box>{datum["lh_object_uid"]}</Box>
-      </Text>
+      <>
+        {/* @ts-ignore */}
+        <Text
+          size="14px"
+          onClick={() => {
+            console.log("clicked something??");
+          }}
+        >
+          {/* @ts-ignore */}
+          <Box>{datum["lh_object_uid"]}</Box>
+        </Text>
+      </>
     ),
   },
   {
@@ -23,14 +27,18 @@ const columns = [
     header: "lh_object_name",
     size: "medium",
     render: (datum: Fact) => (
-      <Text
-        size="14px"
-        onClick={() => {
-          console.log("clicked something??");
-        }}
-      >
-        <Box>{datum["lh_object_name"]}</Box>
-      </Text>
+      <>
+        {/* @ts-ignore */}
+        <Text
+          size="14px"
+          onClick={() => {
+            console.log("clicked something??");
+          }}
+        >
+          {/* @ts-ignore */}
+          <Box>{datum["lh_object_name"]}</Box>
+        </Text>
+      </>
     ),
   },
   {
@@ -38,14 +46,18 @@ const columns = [
     header: "rel_type",
     size: "small",
     render: (datum: Fact) => (
-      <Text
-        size="14px"
-        onClick={() => {
-          console.log("clicked something??");
-        }}
-      >
-        <Box>{datum["rel_type_name"]}</Box>
-      </Text>
+      <>
+        {/* @ts-ignore */}
+        <Text
+          size="14px"
+          onClick={() => {
+            console.log("clicked something??");
+          }}
+        >
+          {/* @ts-ignore */}
+          <Box>{datum["rel_type_name"]}</Box>
+        </Text>
+      </>
     ),
   },
   {
@@ -53,14 +65,19 @@ const columns = [
     header: "rh_object_name",
     size: "medium",
     render: (datum: Fact) => (
-      <Text
-        size="14px"
-        onClick={() => {
-          console.log("clicked something??");
-        }}
-      >
-        <Box>{datum["rh_object_name"]}</Box>
-      </Text>
+      <>
+        {/* @ts-ignore */}
+        <Text
+          size="14px"
+          onClick={() => {
+            console.log("clicked something??");
+          }}
+        >
+          {/* @ts-ignore */}
+          <Box>{datum["rh_object_name"]}</Box>
+        </Text>
+        {/* @ts-ignore */}
+      </>
     ),
   },
   {
@@ -68,9 +85,13 @@ const columns = [
     header: "collection_name",
     size: "small",
     render: (datum: Fact) => (
-      <Text size="14px">
-        <Box>{datum["collection_name"]}</Box>
-      </Text>
+      <>
+        {/* @ts-ignore */}
+        <Text size="14px">
+          {/* @ts-ignore */}
+          <Box>{datum["collection_name"]}</Box>
+        </Text>
+      </>
     ),
   },
 ];

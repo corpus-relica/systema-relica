@@ -1,16 +1,16 @@
 import React, { useRef, useMemo, useState, useEffect } from "react";
 //@ts-ignore
 import * as THREE from "three";
-import { useThree, useFrame, ThreeEvent } from "@react-three/fiber";
+import { useThree, useFrame } from "@react-three/fiber";
 import { observer } from "mobx-react";
-import { useStores } from "./context/RootStoreContext";
-import { NodeData } from "./types";
+import { useStores } from "./context/RootStoreContext.js";
+import { NodeData } from "./types.js";
 
 const Nodes: React.FC = observer(() => {
   const { nodeData, isRunning, getNodeColor } = useStores();
   const { camera, gl } = useThree();
   const domElement = gl.domElement;
-  const meshRef = useRef<THREE.InstancedMesh>();
+  const meshRef = useRef<THREE.InstancedMesh>(null);
   const hoveredIdRef = useRef<number | null>(null);
   const raycaster = new THREE.Raycaster();
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
@@ -95,7 +95,7 @@ const Nodes: React.FC = observer(() => {
         tempMatrix.setPosition(
           offsets[i * 3],
           offsets[i * 3 + 1],
-          offsets[i * 3 + 2],
+          offsets[i * 3 + 2]
         );
         meshRef.current.setMatrixAt(i, tempMatrix);
         meshRef.current.setColorAt(i, color.set(getNodeColor(uid)));
@@ -107,8 +107,11 @@ const Nodes: React.FC = observer(() => {
   return (
     //@ts-ignore
     <instancedMesh ref={meshRef} args={[null, null, count]}>
+      {/* @ts-ignore */}
       <sphereGeometry args={[1, 8, 8]} />
+      {/* @ts-ignore */}
       <meshBasicMaterial attach="material" />
+      {/* @ts-ignore */}
     </instancedMesh>
   );
 });

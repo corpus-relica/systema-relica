@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
 
-import { ArchivistService } from 'src/archivist/archivist.service';
+import { ArchivistService } from '../archivist/archivist.service.js';
 
 const physObjUID = 730044;
 const aspectUID = 790229;

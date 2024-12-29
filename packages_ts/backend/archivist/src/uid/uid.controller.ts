@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, Query, Logger } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import { UIDService } from './uid.service';
+import { UIDService } from './uid.service.js';
 // import { SendEventDto, startTransactionDto } from './transaction.dto';
 
 @Controller('uid')

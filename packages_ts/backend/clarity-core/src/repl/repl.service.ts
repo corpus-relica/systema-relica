@@ -13,18 +13,18 @@ import {
   MalNumber,
   MalSymbol,
   MalString,
-} from './types';
-import { Env } from './env';
-import * as core from './core';
-import { readStr } from './reader';
-import { prStr } from './printer';
+} from './types.js';
+import { Env } from './env.js';
+import * as core from './core.js';
+import { readStr } from './reader.js';
+import { prStr } from './printer.js';
 import { Logger } from '@nestjs/common';
 
-import { ArchivistService } from '../archivist/archivist.service';
-import { EnvironmentService } from '../environment/environment.service';
-import { State, StateService } from '../state/state.service';
+import { ArchivistService } from '../archivist/archivist.service.js';
+import { EnvironmentService } from '../environment/environment.service.js';
+import { State, StateService } from '../state/state.service.js';
 
-import { jsToMal, malToJs } from './utils';
+import { jsToMal, malToJs } from './utils.js';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Fact } from '@relica/types';
 
@@ -51,74 +51,102 @@ export class REPLService {
 
     replEnv.set(
       MalSymbol.get('delay'),
-      MalFunction.fromBootstrap(async (duration: MalNumber) => {
+      MalFunction.fromBootstrap(async (arg: MalType) => {
+        // Type guard to ensure we have a number
+        if (!(arg instanceof MalNumber)) {
+          throw new Error('delay requires a number argument');
+        }
         return new Promise((resolve) => {
-          setTimeout(() => resolve(MalNil.instance), duration.v);
+          setTimeout(() => resolve(MalNil.instance), arg.v);
         });
       }),
     );
 
     replEnv.set(
       MalSymbol.get('retrieveAllFacts'),
-      MalFunction.fromBootstrap(async (uid: MalNumber): Promise<any> => {
-        const res = await this.archivist.retrieveAllFacts(uid.v);
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalNumber)) {
+          throw new Error('retrieveAllFacts: expected number argument');
+        }
+        const res = await this.archivist.retrieveAllFacts(arg.v);
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('getSpecializationHierarchy'),
-      MalFunction.fromBootstrap(async (uid: MalNumber): Promise<any> => {
-        const res = await this.archivist.getSpecializationHierarchy(uid.v);
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalNumber)) {
+          throw new Error(
+            'getSpecializationHierarchy: expected number argument',
+          );
+        }
+        const res = await this.archivist.getSpecializationHierarchy(arg.v);
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('modelsFromFacts'),
-      MalFunction.fromBootstrap(async (facts: MalVector): Promise<MalType> => {
-        const res = await this.environment.modelsFromFacts(malToJs(facts));
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalVector)) {
+          throw new Error('modelsFromFacts: expected vector argument');
+        }
+        const res = await this.environment.modelsFromFacts(malToJs(arg));
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('insertFacts'),
-      MalFunction.fromBootstrap(async (facts: MalVector): Promise<MalType> => {
-        const res = await this.environment.insertFacts(malToJs(facts));
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalVector)) {
+          throw new Error('insertFacts: expected vector argument');
+        }
+        const res = await this.environment.insertFacts(malToJs(arg));
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('insertModels'),
-      MalFunction.fromBootstrap(async (models: MalVector): Promise<MalType> => {
-        const res = await this.environment.insertModels(malToJs(models));
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalVector)) {
+          throw new Error('insertModels: expected vector argument');
+        }
+        const res = await this.environment.insertModels(malToJs(arg));
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('selectEntity'),
-      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalNumber)) {
+          throw new Error('selectEntity: expected number argument');
+        }
         const entityUID: number | null =
-          await this.environment.setSelectedEntity(uid.v, 'entity');
+          await this.environment.setSelectedEntity(arg.v, 'entity');
         return entityUID ? new MalNumber(entityUID) : MalNil.instance;
       }),
     );
 
     replEnv.set(
       MalSymbol.get('selectFact'),
-      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalNumber)) {
+          throw new Error('selectFact: expected number argument');
+        }
         const entityUID: number | null =
-          await this.environment.setSelectedEntity(uid.v, 'fact');
+          await this.environment.setSelectedEntity(arg.v, 'fact');
         return entityUID ? new MalNumber(entityUID) : MalNil.instance;
       }),
     );
 
     replEnv.set(
       MalSymbol.get('selectNone'),
-      MalFunction.fromBootstrap(async (uid: MalNumber) => {
+      MalFunction.fromBootstrap(async (_arg: MalType): Promise<MalType> => {
+        // Note: This one doesn't actually use its argument
         await this.environment.setSelectedEntity(null);
         return MalNil.instance;
       }),
@@ -126,50 +154,64 @@ export class REPLService {
 
     replEnv.set(
       MalSymbol.get('loadSubtypesCone'),
-      MalFunction.fromBootstrap(async (uid: MalNumber) => {
-        const res = await this.environment.loadSubtypesCone(uid.v);
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalNumber)) {
+          throw new Error('loadSubtypesCone: expected number argument');
+        }
+        const res = await this.environment.loadSubtypesCone(arg.v);
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('unloadEntity'),
-      MalFunction.fromBootstrap(async (uid: MalNumber) => {
-        const removedFacts = await this.environment.unloadEntity(uid.v);
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalNumber)) {
+          throw new Error('unloadEntity: expected number argument');
+        }
+        const removedFacts = await this.environment.unloadEntity(arg.v);
         return jsToMal(removedFacts);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('loadEntity'),
-      MalFunction.fromBootstrap(async (uid: MalNumber) => {
-        const res = await this.environment.loadEntity(uid.v);
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalNumber)) {
+          throw new Error('loadEntity: expected number argument');
+        }
+        const res = await this.environment.loadEntity(arg.v);
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('loadEntities'),
-      MalFunction.fromBootstrap(async (uids: MalVector) => {
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalVector)) {
+          throw new Error('loadEntities: expected vector argument');
+        }
         let facts: Fact[] = [];
         let models: any[] = [];
-        const xxx = malToJs(uids);
-        for (let i = 0; i < xxx.length; i++) {
-          const payload = await this.environment.loadEntity(xxx[i]);
+        const entityIds = malToJs(arg);
+        for (let i = 0; i < entityIds.length; i++) {
+          const payload = await this.environment.loadEntity(entityIds[i]);
           facts = facts.concat(payload.facts);
           models = models.concat(payload.models);
         }
-        const payload = { facts, models };
-        return jsToMal(payload);
+        return jsToMal({ facts, models });
       }),
     );
 
     replEnv.set(
       MalSymbol.get('unloadEntities'),
-      MalFunction.fromBootstrap(async (uids: MalVector) => {
-        console.log('unloadEntities', malToJs(uids));
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalVector)) {
+          throw new Error('unloadEntities: expected vector argument');
+        }
+        console.log('unloadEntities', malToJs(arg));
         const removedFacts = await this.environment.removeEntities(
-          malToJs(uids),
+          malToJs(arg),
         );
         return jsToMal(removedFacts);
       }),
@@ -177,7 +219,8 @@ export class REPLService {
 
     replEnv.set(
       MalSymbol.get('clearEntities'),
-      MalFunction.fromBootstrap(async (event: MalString, payload: MalType) => {
+      MalFunction.fromBootstrap(async (_arg: MalType): Promise<MalType> => {
+        // Note: Original had unused parameters event and payload
         this.environment.clearEntities();
         return MalNil.instance;
       }),
@@ -186,7 +229,13 @@ export class REPLService {
     replEnv.set(
       MalSymbol.get('emit'),
       MalFunction.fromBootstrap(
-        async (event: MalString, payload: MalHashMap) => {
+        async (event: MalType, payload: MalType): Promise<MalType> => {
+          if (!(event instanceof MalString)) {
+            throw new Error('emit: first argument must be a string');
+          }
+          if (!(payload instanceof MalHashMap)) {
+            throw new Error('emit: second argument must be a hash map');
+          }
           this.eventEmitter.emit('emit', {
             type: event.v,
             payload: malToJs(payload),
@@ -198,8 +247,12 @@ export class REPLService {
 
     replEnv.set(
       MalSymbol.get('changeState'),
-      MalFunction.fromBootstrap(async (state: MalString) => {
-        this.stateService.setState(state.v as State);
+      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+        if (!(arg instanceof MalString)) {
+          throw new Error('changeState: expected string argument');
+        }
+        // If State is an enum or specific type, you might want to add validation here
+        this.stateService.setState(arg.v as State);
         return MalNil.instance;
       }),
     );
@@ -403,7 +456,6 @@ payload {:facts facts :models models}]
       return;
     }
     this._queueProcessing = true;
-
     while (this._expressionQueue.length > 0) {
       const [str, resolve] = this._expressionQueue.shift();
       try {
@@ -411,14 +463,15 @@ payload {:facts facts :models models}]
           const res = await this.rep(str, this.replEnv);
           resolve(res);
         }
-      } catch (e) {
-        const err: Error = e;
-        this.logger.error(err.message);
+      } catch (e: unknown) {
+        // Type guard to handle error message safely
+        const errorMessage =
+          e instanceof Error ? e.message : 'An unknown error occurred';
+        this.logger.error(errorMessage);
       } finally {
         this.logger.log('EXEC END');
       }
     }
-
     this._queueProcessing = false;
   }
 

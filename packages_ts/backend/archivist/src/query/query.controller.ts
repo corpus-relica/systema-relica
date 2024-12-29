@@ -2,10 +2,10 @@ import { Controller, Post, Body, Logger } from '@nestjs/common';
 import { ApiOperation, ApiBody } from '@nestjs/swagger';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { QueryService } from './query.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { QueryService } from './query.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
 import { Fact } from '@relica/types';
-import { QueryStringDto } from './queryString.dto';
+import { QueryStringDto } from './queryString.dto.js';
 
 @ApiTags('Query')
 @Controller('query')

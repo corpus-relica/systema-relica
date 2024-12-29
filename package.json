@@ -5,11 +5,40 @@
   "main": "index.js",
   "license": "GNU",
   "private": true,
-  "workspaces": [
-    "packages_ts/libs/*",
-    "packages_ts/core/*",
-    "packages_ts/backend/*",
-    "packages_ts/frontend/components/*",
-    "packages_ts/frontend/apps/*"
-  ]
+  "workspaces": {
+    "packages": [
+      "packages_ts/libs/constants",
+      "packages_ts/libs/types",
+      "packages_ts/core/hsm-manager",
+      "packages_ts/backend/archivist",
+      "packages_ts/backend/clarity-core",
+      "packages_ts/frontend/components/3d-graph-ui",
+      "packages_ts/frontend/components/fact-search-ui",
+      "packages_ts/frontend/knowledge-integrator"
+    ]
+  },
+  "scripts": {
+    "clean": "rm -rf node_modules packages_ts/**/node_modules packages_ts/**/dist packages_ts/frontend/**/node_modules packages_ts/frontend/**/dist packages_ts/frontend/components/**/node_modules packages_ts/frontend/components/**/dist",
+    "build": "yarn workspaces run build",
+    "lint": "yarn workspaces run lint",
+    "test": "yarn workspaces run test",
+    "test:watch": "yarn workspaces foreach -ptv run test:watch",
+    "clean:install": "yarn run clean && yarn install && yarn run build"
+  },
+  "devDependencies": {
+    "mobx-react": "^9.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.0.0",
+    "@emotion/styled": "^11.0.0",
+    "@mui/icons-material": "^5.13.0",
+    "@mui/material": "^5.13.0",
+    "@react-three/fiber": "^8.17.10"
+  },
+  "resolutions": {
+    "three": "0.171.0"
+  }
 }

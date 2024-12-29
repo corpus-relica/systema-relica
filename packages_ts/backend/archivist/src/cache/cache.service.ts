@@ -4,7 +4,7 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Fact } from '@relica/types';
 
 import { linearize } from 'c3-linearization';
-import { LinearizationService } from 'src/linearization/linearization.service';
+import { LinearizationService } from '../linearization/linearization.service.js';
 
 @Injectable()
 export class CacheService {

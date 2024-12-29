@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import FactTable from "./App";
+import FactTable from "./App.js";
 import { Fact } from "@relica/types";
-import Box from "@mui/material/Box";
+import { Box } from "@mui/material";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

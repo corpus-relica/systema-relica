@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 // @ts-ignore
 import * as THREE from "three";
 import { useThree, useFrame } from "@react-three/fiber";
-import { NodeData, Position } from "./types";
+import { NodeData, Position } from "./types.js";
 import { Billboard, Plane, Text, RoundedBox } from "@react-three/drei";
-import { useStores } from "./context/RootStoreContext";
+import { useStores } from "./context/RootStoreContext.js";
 import { observer } from "mobx-react";
 import { autorun } from "mobx";
 
@@ -12,7 +12,7 @@ import {
   TEXT_HIGHLIGHT_COLOR,
   TEXT_DEFAULT_COLOR,
   TEXT_ULTIMATE_HIGHLIGHT_COLOR,
-} from "./colors";
+} from "./colors.js";
 
 export interface NodeProps {
   key: number;
@@ -59,7 +59,7 @@ const Node: React.FC<NodeProps> = observer(
     /*RefObject<
     THREE.Mesh<THREE.BufferGeometry<THREE.NormalBufferAttributes>>
   >*/
-    const textRef: any = useRef();
+    const textRef: any = useRef(null);
     const bounds: Bounds = useGeometryBounds(textRef);
     const [planeDimensions, setPlaneDimensions] = useState<[number, number]>([
       0, 0,
@@ -83,7 +83,7 @@ const Node: React.FC<NodeProps> = observer(
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
       "position",
-      new THREE.Float32BufferAttribute(positions, 3),
+      new THREE.Float32BufferAttribute(positions, 3)
     );
 
     useEffect(() => {
@@ -101,52 +101,57 @@ const Node: React.FC<NodeProps> = observer(
 
     const userData = { uid: id, type: "node" };
     return (
-      <group>
-        <Billboard
-          position={nodePosition}
-          follow
-          // onClick={(e) => (onNodeClick ? onNodeClick(id, e) : null)}
-          // onContextMenu={(e) =>
-          //   onNodeRightClick ? onNodeRightClick(id, e) : null
-          // }
-        >
-          <Plane
-            userData={userData}
-            args={planeDimensions}
-            material-color={color}
-            position={[0, 0.07, -0.01]}
-            visible={selectedNode !== id}
-            // onPointerOver={(e) => {
-            //   e.stopPropagation();
-            //   onNodeRollOver ? onNodeRollOver(id) : null;
-            //   // console.log("HOVER");
-            //   // setHover(true);
-            // }}
-            // onPointerOut={(e) => {
-            //   e.stopPropagation();
-            //   onNodeRollOut ? onNodeRollOut() : null;
-            //   // console.log("HOVER OUT");
-            //   // setHover(false);
-            // }}
-          />
-          <Text
-            userData={userData}
-            ref={textRef}
-            fontSize={selectedNode === id ? 1.5 : 0.55}
-            outlineColor={selectedNode === id ? "#333" : "transparent"}
-            outlineWidth={selectedNode === id ? 0.01 : 0}
-            color={selectedNode === id ? color : "#333"}
-            anchorX="center"
-            anchorY="middle"
-            position={new THREE.Vector3(0, 0, 0)}
-            maxWidth={selectedNode === id ? 20 : 10}
+      <>
+        {/* @ts-ignore */}
+        <group>
+          <Billboard
+            position={nodePosition}
+            follow
+            // onClick={(e) => (onNodeClick ? onNodeClick(id, e) : null)}
+            // onContextMenu={(e) =>
+            //   onNodeRightClick ? onNodeRightClick(id, e) : null
+            // }
           >
-            {hovered || selectedNode === id ? id + " : " + name : name}
-          </Text>
-        </Billboard>
-      </group>
+            <Plane
+              userData={userData}
+              args={planeDimensions}
+              material-color={color}
+              position={[0, 0.07, -0.01]}
+              visible={selectedNode !== id}
+              // onPointerOver={(e) => {
+              //   e.stopPropagation();
+              //   onNodeRollOver ? onNodeRollOver(id) : null;
+              //   // console.log("HOVER");
+              //   // setHover(true);
+              // }}
+              // onPointerOut={(e) => {
+              //   e.stopPropagation();
+              //   onNodeRollOut ? onNodeRollOut() : null;
+              //   // console.log("HOVER OUT");
+              //   // setHover(false);
+              // }}
+            />
+            <Text
+              userData={userData}
+              ref={textRef}
+              fontSize={selectedNode === id ? 1.5 : 0.55}
+              outlineColor={selectedNode === id ? "#333" : "transparent"}
+              outlineWidth={selectedNode === id ? 0.01 : 0}
+              color={selectedNode === id ? color : "#333"}
+              anchorX="center"
+              anchorY="middle"
+              position={new THREE.Vector3(0, 0, 0)}
+              maxWidth={selectedNode === id ? 20 : 10}
+            >
+              {hovered || selectedNode === id ? id + " : " + name : name}
+            </Text>
+          </Billboard>
+
+          {/* @ts-ignore*/}
+        </group>
+      </>
     );
-  },
+  }
 );
 
 export default Node;

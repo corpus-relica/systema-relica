@@ -4,13 +4,13 @@ import * as THREE from "three";
 import { Billboard, Text, Line } from "@react-three/drei";
 import { observer } from "mobx-react";
 import { toJS } from "mobx";
-import { Position } from "./types";
+import { Position } from "./types.js";
 
 import {
   TEXT_HIGHLIGHT_COLOR,
   TEXT_DEFAULT_COLOR,
   TEXT_ULTIMATE_HIGHLIGHT_COLOR,
-} from "./colors";
+} from "./colors.js";
 
 export interface LinkProps {
   id: number;
@@ -137,25 +137,33 @@ const Link: React.FC<LinkProps> = observer(
 
     return (
       <>
+        {/* @ts-ignore */}
         <mesh
           userData={userData}
           position={midPoint}
           quaternion={orientation}
           visible={true}
         >
+          {/* @ts-ignore */}
           <cylinderGeometry
             args={[cylinderWidth, cylinderWidth, lineLength, 3]}
           />
+          {/* @ts-ignore */}
           <meshBasicMaterial color={color} />
+          {/* @ts-ignore */}
         </mesh>
+        {/* @ts-ignore */}
         <mesh
           userData={userData}
           position={midPoint}
           quaternion={orientation}
           visible={false}
         >
+          {/* @ts-ignore */}
           <cylinderGeometry args={[0.5, 0.5, cylinderLength, 5]} />
+          {/* @ts-ignore */}
           <meshBasicMaterial color={color} />
+          {/* @ts-ignore */}
         </mesh>
         {(hovered || selected) && (
           <Billboard position={midPoint} follow>
@@ -171,14 +179,19 @@ const Link: React.FC<LinkProps> = observer(
             </Text>
           </Billboard>
         )}
+        {/* @ts-ignore */}
         <mesh
           userData={userData}
           position={conePosition}
           quaternion={orientation}
         >
+          {/* @ts-ignore */}
           <coneGeometry args={[0.2, 1, 4]} />
+          {/* @ts-ignore */}
           <meshBasicMaterial color={color} />
+          {/* @ts-ignore */}
         </mesh>
+        {/* @ts-ignore */}
       </>
     );
   }

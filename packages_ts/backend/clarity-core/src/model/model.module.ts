@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ModelController } from './model.controller';
-import { ModelService } from './model.service';
-import { ArchivistModule } from 'src/archivist/archivist.module';
+import { ModelController } from './model.controller.js';
+import { ModelService } from './model.service.js';
+import { ArchivistModule } from '../archivist/archivist.module.js';
 
 @Module({
   imports: [ArchivistModule],

@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EnvFact } from './envFact.entity';
-import { EnvModel } from './envModel.entity';
-import { EnvSelectedEntity } from './envSelectedEntity.entity';
+import { EnvFact } from './envFact.entity.js';
+import { EnvModel } from './envModel.entity.js';
+import { EnvSelectedEntity } from './envSelectedEntity.entity.js';
 import { Fact } from '@relica/types';
-import { EntityFactEnum } from './envSelectedEntity.entity';
-import { ModelService } from '../model/model.service';
-import { ArchivistService } from '../archivist/archivist.service';
+import { EntityFactEnum } from './envSelectedEntity.entity.js';
+import { ModelService } from '../model/model.service.js';
+import { ArchivistService } from '../archivist/archivist.service.js';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()

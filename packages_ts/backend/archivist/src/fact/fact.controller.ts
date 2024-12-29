@@ -8,9 +8,9 @@ import {
   Body,
   Logger,
 } from '@nestjs/common';
-import { FactService } from './fact.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
-import { CacheService } from 'src/cache/cache.service';
+import { FactService } from './fact.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
+import { CacheService } from '../cache/cache.service.js';
 
 @Controller('fact')
 export class FactController {

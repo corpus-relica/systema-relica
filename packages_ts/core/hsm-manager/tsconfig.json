@@ -1,38 +1,9 @@
 {
+  "extends": "../../config/tsconfig.lib-react.json",
   "compilerOptions": {
-    "target": "ES2015", // You can also use ES5 if you need broader compatibility
-
-    "module": "CommonJS",
-
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "node",
-
-    "jsx": "react",
-
-    /* Linting */
-
-    "noFallthroughCasesInSwitch": true,
-
-    /*  */
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
-    "incremental": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "*": ["node_modules/*"]
-    }
+    "rootDir": "./src",
+    "outDir": "./dist"
   },
-  "include": ["src"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"],
+  "references": []
 }

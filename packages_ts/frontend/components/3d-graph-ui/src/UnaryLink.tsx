@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import * as THREE from "three";
-import { Fact, Position } from "./types";
+import { Fact, Position } from "./types.js";
 import { Torus, Billboard, Text } from "@react-three/drei";
 
 import {
   TEXT_HIGHLIGHT_COLOR,
   TEXT_DEFAULT_COLOR,
   TEXT_ULTIMATE_HIGHLIGHT_COLOR,
-} from "./colors";
+} from "./colors.js";
 
 export interface UnaryLinkProps {
   hovered: boolean;
@@ -41,7 +41,7 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
     0.08 * (2 * Math.PI),
     0.92 * (2 * Math.PI), // aStartAngle, aEndAngle
     false, // aClockwise
-    0, // aRotation
+    0 // aRotation
   );
   const points = curve.getPoints(16);
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -81,6 +81,7 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
   return (
     //@ts-ignore
     <>
+      {/* @ts-ignore */}
       <group
         userData={userData}
         rotation={[0, 2 * Math.PI * ((idx + 1) / linksLength + offset), 0]}
@@ -119,14 +120,21 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
           // position={pos}
           args={[2, 0.05, 12, 48, Math.PI * 2 * 0.8]}
         />
+
+        {/* @ts-ignore */}
         <mesh
           userData={userData}
           position={[-0.7, 1.65, 0]}
           rotation={[0, 0, 0.61 * (Math.PI * 2)]}
         >
+          {/* @ts-ignore */}
           <coneGeometry args={[0.2, 1, 4]} />
+          {/* @ts-ignore */}
           <meshBasicMaterial color={color} />
+          {/* @ts-ignore */}
         </mesh>
+
+        {/* @ts-ignore */}
       </group>
 
       {hovered && (

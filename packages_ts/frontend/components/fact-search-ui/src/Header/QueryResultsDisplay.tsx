@@ -1,27 +1,24 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
 import { toJS } from "mobx";
-import { useStores } from "../context/RootStoreContext";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Divider from "@mui/material/Divider";
+import { useStores } from "../context/RootStoreContext.js";
+// import Box from "@mui/material/Box";
+// import Typography from "@mui/material/Typography";
+// import List from "@mui/material/List";
+// import ListItem from "@mui/material/ListItem";
+// import ListItemText from "@mui/material/ListItemText";
+// import Divider from "@mui/material/Divider";
 import { Fact } from "@relica/types";
+import { QueryResults } from "../types.js";
 
-interface Var {
-  uid: number;
-  name: string;
-  possibleValues: number[];
-  isResolved: boolean;
-}
-
-interface QueryResults {
-  groundingFacts: any[]; // You might want to define a more specific type for groundFacts
-  facts: any[]; // You might want to define a more specific type for facts
-  vars: Var[];
-}
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+} from "@mui/material";
 
 const QueryResultsDisplay: React.FC = observer(() => {
   const rootStore = useStores();

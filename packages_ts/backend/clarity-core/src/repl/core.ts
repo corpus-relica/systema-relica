@@ -18,9 +18,9 @@ import {
   MalAtom,
   equals,
   isSeq,
-} from './types';
-import { readStr } from './reader';
-import { prStr } from './printer';
+} from './types.js';
+import { readStr } from './reader.js';
+import { prStr } from './printer.js';
 
 export const ns: Map<MalSymbol, MalFunction> = (() => {
   const ns: { [symbol: string]: typeof MalFunction.prototype.func } = {

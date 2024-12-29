@@ -2,9 +2,9 @@ import neo4j from 'neo4j-driver';
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { GraphService } from 'src/graph/graph.service';
+import { GraphService } from '../graph/graph.service.js';
 
-import { getListOfKindsQuery, countKindsQuery } from 'src/graph/queries';
+import { getListOfKindsQuery, countKindsQuery } from '../graph/queries.js';
 
 @Injectable()
 export class KindsService {

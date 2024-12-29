@@ -1,12 +1,14 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Fact } from "@relica/types";
-import Header from "./Header";
-import Body from "./Body";
-import RootStoreContext from "./context/RootStoreContext";
-import rootStore from "./stores/RootStore";
-import Box from "@mui/material/Box";
-import { updateAxiosInstance } from "./axiosInstance";
+import Header from "./Header/index.js";
+import Body from "./Body.js";
+import RootStoreContext from "./context/RootStoreContext.js";
+import rootStore from "./stores/RootStore.js";
+// import Box from "@mui/material/Box";
+import { updateAxiosInstance } from "./axiosInstance.js";
+
+import { Box } from "@mui/material";
 
 const queryClient = new QueryClient();
 

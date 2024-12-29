@@ -5,14 +5,14 @@ import {
   WebSocketServer,
   WsResponse,
 } from '@nestjs/websockets';
-import { from, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+// import { from, Observable } from 'rxjs';
+// import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
-import { EnvironmentService } from '../environment/environment.service';
-import { ArchivistService } from '../archivist/archivist.service';
+import { EnvironmentService } from '../environment/environment.service.js';
+import { ArchivistService } from '../archivist/archivist.service.js';
 import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
-import { REPLService } from 'src/repl/repl.service';
+import { REPLService } from '../repl/repl.service.js';
 
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 

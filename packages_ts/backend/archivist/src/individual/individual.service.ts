@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { QueryService } from 'src/query/query.service';
+import { QueryService } from '../query/query.service.js';
 
 @Injectable()
 export class IndividualService {

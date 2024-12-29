@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import { ANYTHING, APPLICATION_CONTEXT } from 'src/bootstrapping';
-import { EntityRetrievalService } from 'src/entity-retrieval/entity-retrieval.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { ANYTHING, APPLICATION_CONTEXT } from '../bootstrapping.js';
+import { EntityRetrievalService } from '../entity-retrieval/entity-retrieval.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
 
 @Injectable()
 export class ValidationService {

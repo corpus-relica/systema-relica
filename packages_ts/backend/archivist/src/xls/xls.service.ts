@@ -3,8 +3,14 @@ import { promises as fsPromises } from 'node:fs';
 import * as XLSX from 'xlsx';
 import * as path from 'path';
 
-import { CacheService } from 'src/cache/cache.service';
-import { FileService } from 'src/file/file.service';
+import { CacheService } from '../cache/cache.service.js';
+import { FileService } from '../file/file.service.js';
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const dataSourceInputXLSDir = path.join(__dirname, '../../seed_xls');
 const neo4jImportDir = path.join(__dirname, '../../seed_csv');

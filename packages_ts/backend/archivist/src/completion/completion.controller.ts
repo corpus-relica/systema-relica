@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CompletionService } from './completion.service';
+import { CompletionService } from './completion.service.js';
 
 @ApiTags('Completion')
 @Controller('completion')

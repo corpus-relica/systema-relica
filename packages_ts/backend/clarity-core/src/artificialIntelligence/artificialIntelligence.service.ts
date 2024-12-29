@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 
-import { ArchivistService } from '../archivist/archivist.service';
+import { ArchivistService } from '../archivist/archivist.service.js';
 import { Fact } from '@relica/types';
 
 @Injectable()

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '../cache/cache.service.js';
 
 interface TempEntity {
   varName: string;

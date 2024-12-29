@@ -10,9 +10,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { KindService } from './kind.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
-import { CacheService } from 'src/cache/cache.service';
+import { KindService } from './kind.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
+import { CacheService } from '../cache/cache.service.js';
 
 @ApiTags('Kind')
 @Controller('kind')

@@ -3,10 +3,10 @@ import {
   countTextSearchQuery,
   uidSearchQuery,
   countUIDSearchQuery,
-} from 'src/graph/queries';
+} from '../graph/queries.js';
 import { Injectable } from '@nestjs/common';
-import { ExecuteSearchQueryService } from 'src/execute-search-query/execute-search-query.service';
-import { CacheService } from 'src/cache/cache.service';
+import { ExecuteSearchQueryService } from '../execute-search-query/execute-search-query.service.js';
+import { CacheService } from '../cache/cache.service.js';
 
 @Injectable()
 export class GeneralSearchService {

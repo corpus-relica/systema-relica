@@ -1,5 +1,6 @@
 FROM node:latest as build
-MAINTAINER Marc <marc@specular-occlusion>
+MAINTAINER Marc <marc@speculum-obscurum>
+
 
 WORKDIR /usr/src/app
 
@@ -7,69 +8,84 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 
-# Copy all the package sources
-COPY packages_ts/types ./packages_ts/types
-COPY packages_ts/constants ./packages_ts/constants
-COPY packages_ts/fact-search-ui ./packages_ts/fact-search-ui
-COPY packages_ts/3d-graph-ui ./packages_ts/3d-graph-ui
-COPY packages_ts/hsm-manager ./packages_ts/hsm-manager
-COPY packages_ts/knowledge-integrator ./packages_ts/knowledge-integrator
 
-# Install dependencies
+COPY packages_ts/libs/types ./packages_ts/libs/types
+COPY packages_ts/libs/constants ./packages_ts/libs/constants
+
+COPY packages_ts/frontend/components/fact-search-ui ./packages_ts/frontend/components/fact-search-ui
+COPY packages_ts/frontend/components/3d-graph-ui ./packages_ts/frontend/components/3d-graph-ui
+
+COPY packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
+
+COPY packages_ts/frontend/knowledge-integrator ./packages_ts/frontend/knowledge-integrator
+
+
+COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
+COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
+COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
+COPY packages_ts/config/tsconfig.frontend.json ./packages_ts/config/tsconfig.frontend.json
+
+
 RUN yarn install --pure-lockfile --non-interactive --network-timeout 100000
 
-# Build packages in order
-WORKDIR /usr/src/app/packages_ts/types
+
+WORKDIR /usr/src/app/packages_ts/libs/types
 RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/constants
+WORKDIR /usr/src/app/packages_ts/libs/constants
 RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/fact-search-ui
+
+WORKDIR /usr/src/app/packages_ts/core/hsm-manager
 RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/3d-graph-ui
+
+WORKDIR /usr/src/app/packages_ts/frontend/components/fact-search-ui
 RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/hsm-manager
+WORKDIR /usr/src/app/packages_ts/frontend/components/3d-graph-ui
 RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/knowledge-integrator
+WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
 RUN yarn build
 
-# Second stage
+# --------------------------------------
+
 FROM node:latest
 
 WORKDIR /usr/src/app
 
-# Copy root package files
 COPY package.json .
 COPY yarn.lock .
 
-# Copy built packages
-COPY --from=build /usr/src/app/packages_ts/types/package.json ./packages_ts/types/package.json
-COPY --from=build /usr/src/app/packages_ts/types/dist ./packages_ts/types/dist
+COPY --from=build /usr/src/app/packages_ts/config/tsconfig.base.json /usr/src/app/packages_ts/config/tsconfig.base.json
+COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib.json /usr/src/app/packages_ts/config/tsconfig.lib.json
+COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib-react.json /usr/src/app/packages_ts/config/tsconfig.lib-react.json
+COPY --from=build /usr/src/app/packages_ts/config/tsconfig.frontend.json /usr/src/app/packages_ts/config/tsconfig.frontend.json
 
-COPY --from=build /usr/src/app/packages_ts/constants/package.json ./packages_ts/constants/package.json
-COPY --from=build /usr/src/app/packages_ts/constants/dist ./packages_ts/constants/dist
+COPY --from=build /usr/src/app/packages_ts/libs/types/package.json ./packages_ts/libs/types/package.json
+COPY --from=build /usr/src/app/packages_ts/libs/types/dist ./packages_ts/libs/types/dist
 
-COPY --from=build /usr/src/app/packages_ts/fact-search-ui/package.json ./packages_ts/fact-search-ui/package.json
-COPY --from=build /usr/src/app/packages_ts/fact-search-ui/dist ./packages_ts/fact-search-ui/dist
+COPY --from=build /usr/src/app/packages_ts/libs/constants/package.json ./packages_ts/libs/constants/package.json
+COPY --from=build /usr/src/app/packages_ts/libs/constants/dist ./packages_ts/libs/constants/dist
 
-COPY --from=build /usr/src/app/packages_ts/3d-graph-ui/package.json ./packages_ts/3d-graph-ui/package.json
-COPY --from=build /usr/src/app/packages_ts/3d-graph-ui/dist ./packages_ts/3d-graph-ui/dist
+COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/package.json ./packages_ts/frontend/components/fact-search-ui/package.json
+COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/dist ./packages_ts/frontend/components/fact-search-ui/dist
 
-COPY --from=build /usr/src/app/packages_ts/hsm-manager/package.json ./packages_ts/hsm-manager/package.json
-COPY --from=build /usr/src/app/packages_ts/hsm-manager/dist ./packages_ts/hsm-manager/dist
+COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/package.json ./packages_ts/frontend/components/3d-graph-ui/package.json
+COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/dist ./packages_ts/frontend/components/3d-graph-ui/dist
 
-COPY --from=build /usr/src/app/packages_ts/knowledge-integrator/package.json ./packages_ts/knowledge-integrator/package.json
-COPY --from=build /usr/src/app/packages_ts/knowledge-integrator/src ./packages_ts/knowledge-integrator/src
+COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/package.json ./packages_ts/core/hsm-manager/package.json
+COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/dist ./packages_ts/core/hsm-manager/dist
+
+COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/package.json ./packages_ts/frontend/knowledge-integrator/package.json
+COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/src ./packages_ts/frontend/knowledge-integrator/src
 
 ENV NODE_ENV development
 
 RUN yarn install
 
-WORKDIR /usr/src/app/packages_ts/knowledge-integrator
+WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
 
 EXPOSE 5173
 

@@ -1,4 +1,4 @@
-import { Node, MalType } from './types';
+import { Node, MalType } from './types.js';
 
 export function prStr(v: MalType, printReadably = true): string {
   console.log('prStr', v);

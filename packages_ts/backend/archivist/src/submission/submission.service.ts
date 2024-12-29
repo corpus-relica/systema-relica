@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CacheService } from 'src/cache/cache.service';
-import { UIDService } from 'src/uid/uid.service';
-import { GraphService } from 'src/graph/graph.service';
-import { createFact } from 'src/graph/queries';
+import { CacheService } from '../cache/cache.service.js';
+import { UIDService } from '../uid/uid.service.js';
+import { GraphService } from '../graph/graph.service.js';
+import { createFact } from '../graph/queries.js';
 
 @Injectable()
 export class SubmissionService {
@@ -99,11 +99,13 @@ export class SubmissionService {
         success: true,
         fact: returnFact,
       };
-    } catch (error) {
-      console.error(`Error in submitBinaryFact: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error(`Error in submitBinaryFact: ${errorMessage}`);
       // Rethrow the error if you want to handle it in a higher level of your app
       // throw error;
-      return { success: false, message: error.message };
+      return { success: false, message: errorMessage };
     }
   };
 
@@ -111,7 +113,7 @@ export class SubmissionService {
     this.logger.log(`/////  submitBinaryFacts  /////`);
     this.logger.log(facts);
 
-    const tempUIDs = Array.from(
+    const tempUIDs: number[] = Array.from(
       facts
         .reduce((acc, fact) => {
           if (this.isTempUIDP(fact.lh_object_uid)) acc.add(fact.lh_object_uid);
@@ -221,9 +223,13 @@ RETURN r
         success: true,
         facts: returnFacts,
       };
-    } catch (error) {
-      console.error(`Error in submitBinaryFacts: ${error.message}`);
-      return { success: false, message: error.message };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error(`Error in submitBinaryFacts: ${errorMessage}`);
+      // Rethrow the error if you want to handle it in a higher level of your app
+      // throw error;
+      return { success: false, message: errorMessage };
     }
   };
 
@@ -287,11 +293,13 @@ RETURN r
         success: true,
         fact: returnFact,
       };
-    } catch (error) {
-      console.error(`Error in submitBinaryFact: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error(`Error in submitBinaryFacts: ${errorMessage}`);
       // Rethrow the error if you want to handle it in a higher level of your app
       // throw error;
-      return { success: false, message: error.message };
+      return { success: false, message: errorMessage };
     }
   };
 }

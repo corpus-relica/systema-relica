@@ -8,7 +8,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { KindsService } from './kinds.service';
+import { KindsService } from './kinds.service.js';
 
 @Controller('kinds')
 export class KindsController {

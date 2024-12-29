@@ -1,15 +1,15 @@
 import { Controller, Put, Post, Body, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SubmissionService } from './submission.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
-import { CacheService } from 'src/cache/cache.service';
+import { SubmissionService } from './submission.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
+import { CacheService } from '../cache/cache.service.js';
 import {
   UpdateCollectionDto,
   CreateDateDto,
   UpdateNameDto,
   AddSynonymDto,
   BlanketRenameDto,
-} from './submission.dto';
+} from './submission.dto.js';
 
 @ApiTags('Submission')
 @Controller('submission')

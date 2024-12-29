@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Post, Body } from '@nestjs/common';
-import { ValidationService } from './validation.service';
+import { ValidationService } from './validation.service.js';
 
 @Controller('validate')
 export class ValidationController {

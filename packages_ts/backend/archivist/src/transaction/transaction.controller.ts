@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Query, Logger } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import { TransactionService } from './transaction.service';
-import { SendEventDto, startTransactionDto } from './transaction.dto';
+import { TransactionService } from './transaction.service.js';
+import { SendEventDto, startTransactionDto } from './transaction.dto.js';
 
 @Controller('transaction')
 export class TransactionController {

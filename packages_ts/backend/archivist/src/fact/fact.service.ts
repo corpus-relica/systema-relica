@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
-import { UIDService } from 'src/uid/uid.service';
-import { GraphService } from 'src/graph/graph.service';
-import { ConceptService } from 'src/concept/concept.service';
-import { createFact } from 'src/graph/queries';
+import { UIDService } from '../uid/uid.service.js';
+import { GraphService } from '../graph/graph.service.js';
+import { ConceptService } from '../concept/concept.service.js';
+import { createFact } from '../graph/queries.js';
 
 import {
   subtypes,
@@ -16,9 +16,9 @@ import {
   allRelatedFactsQueryd,
   deleteFactQuery,
   deleteEntityQuery,
-} from 'src/graph/queries';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
-import { CacheService } from 'src/cache/cache.service';
+} from '../graph/queries.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
+import { CacheService } from '../cache/cache.service.js';
 
 @Injectable()
 export class FactService {
@@ -510,7 +510,7 @@ RETURN r
         success: true,
         fact: returnFact,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error in submitBinaryFact: ${error.message}`);
       // Rethrow the error if you want to handle it in a higher level of your app
       // throw error;
@@ -522,7 +522,7 @@ RETURN r
     this.logger.log(`/////  submitBinaryFacts  /////`);
     this.logger.log(facts);
 
-    const tempUIDs = Array.from(
+    const tempUIDs: number[] = Array.from(
       facts
         .reduce((acc, fact) => {
           if (this.isTempUIDP(fact.lh_object_uid)) acc.add(fact.lh_object_uid);
@@ -533,7 +533,7 @@ RETURN r
         .values(),
     );
 
-    const newUIDMap = tempUIDs.reduce((acc, tempUID: number) => {
+    const newUIDMap = tempUIDs.reduce((acc, tempUID) => {
       acc[tempUID] = this.uidService.reserveUID()[0];
       return acc;
     }, {});
@@ -632,7 +632,7 @@ RETURN r
         success: true,
         facts: returnFacts,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error in submitBinaryFacts: ${error.message}`);
       return { success: false, message: error.message };
     }

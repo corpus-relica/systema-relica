@@ -10,9 +10,9 @@ import {
   Logger,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from './auth.guard';
-import { AuthService } from './auth.service';
-import { Public } from './auth.decorator';
+import { AuthGuard } from './auth.guard.js';
+import { AuthService } from './auth.service.js';
+import { Public } from './auth.decorator.js';
 
 @Controller('auth')
 export class AuthController {

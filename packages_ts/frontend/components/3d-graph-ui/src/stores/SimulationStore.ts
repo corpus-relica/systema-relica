@@ -1,10 +1,10 @@
 import { makeAutoObservable } from "mobx";
 
-import { Fact, NodeData, EdgeData, Position } from "../types";
+import { Fact, NodeData, EdgeData, Position } from "../types.js";
 
 import createGraph, { Graph, Link } from "ngraph.graph";
 import createLayout, { Layout, Vector } from "ngraph.forcelayout";
-import RootStore from "./RootStore";
+import RootStore from "./RootStore.js";
 
 const physicsSettings = {
   timeStep: 1, //0.5,
@@ -104,7 +104,7 @@ class SimulationStore {
 
       // Calculate distance from the origin
       const distanceFromOrigin = Math.sqrt(
-        nodePosition.x ** 2 + nodePosition.y ** 2 + nodePosition.z ** 2,
+        nodePosition.x ** 2 + nodePosition.y ** 2 + nodePosition.z ** 2
       );
 
       // Check if the node is outside the bounding sphere

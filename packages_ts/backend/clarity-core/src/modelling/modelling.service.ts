@@ -4,10 +4,10 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ModellingSession } from './modellingSession.entity';
+import { ModellingSession } from './modellingSession.entity.js';
 
-import { workflowDefs } from './workflows/workflowDefs';
-import WorkflowManager from './workflows/workflowManager';
+import { workflowDefs } from './workflows/workflowDefs.js';
+import WorkflowManager from './workflows/workflowManager.js';
 
 @Injectable()
 export class ModellingService {

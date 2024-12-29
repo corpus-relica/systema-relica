@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { performQuery } from "../axiosInstance";
-import { useStores } from "../context/RootStoreContext";
+import { performQuery } from "../axiosInstance.js";
+import { useStores } from "../context/RootStoreContext.js";
 import { observer } from "mobx-react-lite";
-import Grid from "@mui/material/Grid";
-import TextField from "@mui/material/TextField";
-import QueryResults from "./QueryResultsDisplay";
-import { useDebounce } from "../utils";
-import IconButton from "@mui/material/IconButton";
+// import QueryResults from "./QueryResultsDisplay.js";
+import { useDebounce } from "../utils.js";
+
+// import Grid from "@mui/material/Grid";
+// import TextField from "@mui/material/TextField";
+// import IconButton from "@mui/material/IconButton";
+// import Typography from "@mui/material/Typography";
+// import Box from "@mui/material/Box";
+import { Box, Grid, Typography, IconButton, TextField } from "@mui/material";
+
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
 
 interface QueryModeProps {
   readonly?: boolean;
@@ -111,6 +114,7 @@ const QueryMode: React.FC<QueryModeProps> = observer(
           {totalCount > 0 && (
             <Box display="flex" alignItems="center">
               <IconButton onClick={decPage} disabled={page === 1}>
+                {/* @ts-ignore */}
                 <ArrowBackIcon />
               </IconButton>
               <Typography variant="body2" sx={{ mx: 1 }}>
@@ -121,6 +125,7 @@ const QueryMode: React.FC<QueryModeProps> = observer(
                 onClick={incPage}
                 disabled={page * pageSize >= totalCount}
               >
+                {/* @ts-ignore */}
                 <ArrowForwardIcon />
               </IconButton>
             </Box>

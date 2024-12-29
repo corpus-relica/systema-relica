@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages_ts/libs/types" },
+    { "path": "packages_ts/libs/constants" },
+    { "path": "packages_ts/core/hsm-manager" },
+    { "path": "packages_ts/backend/archivist" },
+    { "path": "packages_ts/backend/clarity-core" },
+    { "path": "packages_ts/frontend/components/3d-graph-ui" },
+    { "path": "packages_ts/frontend/components/fact-search-ui" },
+    { "path": "packages_ts/frontend/knowledge-integrator" }
+  ]
+}

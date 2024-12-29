@@ -7,7 +7,7 @@ services:
     restart: always
     command: /bin/sh -c "redis-server --requirepass redis"
     volumes:
-      - ./packages_ts/dataplex/data/redis:/data
+      - ./packages_ts/core/dataplex/data/redis:/data
     ports:
       - "6379:6379"
     networks:
@@ -25,8 +25,8 @@ services:
       POSTGRES_DB: postgres
     command: ["bash", "/docker-entrypoint-initdb.d/init-postgres.sh"]
     volumes:
-      - ./packages_ts/dataplex/data/postgres:/var/lib/postgresql/data
-      - ./packages_ts/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
+      - ./packages_ts/core/dataplex/data/postgres:/var/lib/postgresql/data
+      - ./packages_ts/core/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     networks:
@@ -47,7 +47,7 @@ services:
       - NEO4J_apoc_export_file_enabled="true"
       - NEO4J_ACCEPT_LICENSE_AGREEMENT="yes"
     volumes:
-      - ./packages_ts/dataplex/data/neo4j:/data
+      - ./packages_ts/core/dataplex/data/neo4j:/data
       - ./seed_csv:/var/lib/neo4j/import
     ports:
       - "7474:7474"
@@ -74,10 +74,10 @@ services:
       - REDIS_URL=redis://redis:6379
     command: ["yarn", "start:dev"]
     volumes:
-      - ./packages_ts/archivist:/usr/src/app/packages_ts/archivist
-      - ./seed_xls:/usr/src/app/packages_ts/archivist/seed_xls
-      - ./seed_csv:/usr/src/app/packages_ts/archivist/seed_csv
-      - /usr/src/app/packages_ts/archivist/node_modules
+      - ./packages_ts/backend/archivist:/usr/src/app/packages_ts/backend/archivist
+      - ./seed_xls:/usr/src/app/packages_ts/backend/archivist/seed_xls
+      - ./seed_csv:/usr/src/app/packages_ts/backend/archivist/seed_csv
+      - /usr/src/app/packages_ts/backend/archivist/node_modules
     ports:
       - "3000:3000"
     depends_on:
@@ -102,8 +102,8 @@ services:
     # command: sh -c "yarn install && yarn dev"
     command: ["yarn", "start:dev"]
     volumes:
-      - ./packages_ts/clarity-core:/usr/src/app/packages_ts/clarity-core
-      - /usr/src/app/packages_ts/clarity-core/node_modules
+      - ./packages_ts/backend/clarity-core:/usr/src/app/packages_ts/backend/clarity-core
+      - /usr/src/app/packages_ts/backend/clarity-core/node_modules
     ports:
       - "3001:3001"
     depends_on:
@@ -121,11 +121,11 @@ services:
     restart: always
     command: yarn dev
     volumes:
-      - ./packages_ts/knowledge-integrator:/usr/src/app/packages_ts/knowledge-integrator
-      - ./packages_ts/constants:/usr/src/app/packages_ts/constants
-      - ./packages_ts/fact-search-ui:/usr/src/app/packages_ts/fact-search-ui
-      - ./packages_ts/3d-graph-ui:/usr/src/app/packages_ts/3d-graph-ui
-      - ./packages_ts/hsm-manager:/usr/src/app/packages_ts/hsm-manager
+      - ./packages_ts/frontend/knowledge-integrator:/usr/src/app/packages_ts/frontend/knowledge-integrator
+      - ./packages_ts/libs/constants:/usr/src/app/packages_ts/libs/constants
+      - ./packages_ts/frontend/components/fact-search-ui:/usr/src/app/packages_ts/frontend/components/fact-search-ui
+      - ./packages_ts/frontend/components/3d-graph-ui:/usr/src/app/packages_ts/frontend/components/3d-graph-ui
+      - ./packages_ts/core/hsm-manager:/usr/src/app/packages_ts/core/hsm-manager
       - /usr/src/app/node_modules
     ports:
       - "5173:5173"

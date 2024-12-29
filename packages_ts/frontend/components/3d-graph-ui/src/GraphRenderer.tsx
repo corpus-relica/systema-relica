@@ -5,15 +5,15 @@ import { observer } from "mobx-react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 
-import { useStores } from "./context/RootStoreContext";
+import { useStores } from "./context/RootStoreContext.js";
 
-import { NodeData, EdgeData, Position } from "./types";
+import { NodeData, EdgeData, Position } from "./types.js";
 
-import Node from "./Node";
-import Link from "./Link";
-import UnaryLink from "./UnaryLink";
+import Node from "./Node.js";
+import Link from "./Link.js";
+import UnaryLink from "./UnaryLink.js";
 
-import useMouseRaycast from "./useMouseRaycast";
+import useMouseRaycast from "./useMouseRaycast.js";
 
 export interface GraphRendererProps {}
 
@@ -207,6 +207,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
     <>
       <OrbitControls
         ref={controlsRef}
+        // @ts-ignore
         maxDistance={CAMERA_MAX_DISTANCE}
         minDistance={CAMERA_MIN_DISTANCE}
       />

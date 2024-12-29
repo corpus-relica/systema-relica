@@ -1,10 +1,10 @@
 import { Logger, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { GraphService } from 'src/graph/graph.service';
-import { CacheService } from 'src/cache/cache.service';
-import { RawFactIngestionService } from 'src/raw-fact-ingestion/raw-fact-ingestion.service';
-import { XLSService } from 'src/xls/xls.service';
-import { LinearizationService } from 'src/linearization/linearization.service';
-import { UIDService } from 'src/uid/uid.service';
+import { GraphService } from '../graph/graph.service.js';
+import { CacheService } from '../cache/cache.service.js';
+import { RawFactIngestionService } from '../raw-fact-ingestion/raw-fact-ingestion.service.js';
+import { XLSService } from '../xls/xls.service.js';
+import { LinearizationService } from '../linearization/linearization.service.js';
+import { UIDService } from '../uid/uid.service.js';
 import { readdirSync } from 'fs';
 
 const BATCH_SIZE = 100;

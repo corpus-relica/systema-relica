@@ -2,17 +2,17 @@ import neo4j from 'neo4j-driver';
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { GraphService } from 'src/graph/graph.service';
-import { CacheService } from 'src/cache/cache.service';
-import { LinearizationService } from 'src/linearization/linearization.service';
-import { UIDService } from 'src/uid/uid.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { GraphService } from '../graph/graph.service.js';
+import { CacheService } from '../cache/cache.service.js';
+import { LinearizationService } from '../linearization/linearization.service.js';
+import { UIDService } from '../uid/uid.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
 
 import {
   reparentKindQuery,
   createFact,
   removeSupertypeQuery,
-} from 'src/graph/queries';
+} from '../graph/queries.js';
 import { Fact } from '@relica/types';
 
 @Injectable()

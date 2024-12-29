@@ -1,28 +1,56 @@
 FROM node:latest as build
+MAINTAINER Marc <marc@speculum-obscurum>
+
 WORKDIR /usr/src/app
+
 COPY package.json .
 COPY yarn.lock .
-COPY packages_ts/types ./packages_ts/types
-COPY packages_ts/hsm-manager ./packages_ts/hsm-manager
-COPY packages_ts/archivist ./packages_ts/archivist
+
+COPY packages_ts/libs/types ./packages_ts/libs/types
+COPY packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
+COPY packages_ts/backend/archivist ./packages_ts/backend/archivist
+
+COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
+COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
+COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
+
 RUN yarn install --pure-lockfile --non-interactive
-WORKDIR /usr/src/app/packages_ts/types
-RUN yarn build
-WORKDIR /usr/src/app/packages_ts/hsm-manager
-RUN yarn build
-WORKDIR /usr/src/app/packages_ts/archivist
+
+WORKDIR /usr/src/app/packages_ts/libs/types
 RUN yarn build
 
+WORKDIR /usr/src/app/packages_ts/core/hsm-manager
+RUN yarn build
+
+WORKDIR /usr/src/app/packages_ts/backend/archivist
+RUN yarn build
+
+# --------------------------------------
+
 FROM node:latest
+
 WORKDIR /usr/src/app
+
 COPY package.json .
 COPY yarn.lock .
-COPY --from=build /usr/src/app/packages_ts/types/package.json /usr/src/app/packages_ts/types/package.json
-COPY --from=build /usr/src/app/packages_ts/types/dist /usr/src/app/packages_ts/types/dist
-COPY --from=build /usr/src/app/packages_ts/hsm-manager/package.json /usr/src/app/packages_ts/hsm-manager/package.json
-COPY --from=build /usr/src/app/packages_ts/hsm-manager/dist /usr/src/app/packages_ts/hsm-manager/dist
-COPY packages_ts/archivist /usr/src/app/packages_ts/archivist
+
+COPY --from=build /usr/src/app/packages_ts/config/tsconfig.base.json /usr/src/app/packages_ts/config/tsconfig.base.json
+COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib.json /usr/src/app/packages_ts/config/tsconfig.lib.json
+COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib-react.json /usr/src/app/packages_ts/config/tsconfig.lib-react.json
+
+COPY --from=build /usr/src/app/packages_ts/libs/types/package.json /usr/src/app/packages_ts/libs/types/package.json
+COPY --from=build /usr/src/app/packages_ts/libs/types/dist /usr/src/app/packages_ts/libs/types/dist
+
+COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/package.json /usr/src/app/packages_ts/core/hsm-manager/package.json
+COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/dist /usr/src/app/packages_ts/core/hsm-manager/dist
+COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/tsconfig.json /usr/src/app/packages_ts/core/hsm-manager/tsconfig.json
+
+COPY packages_ts/backend/archivist /usr/src/app/packages_ts/backend/archivist
+
 ENV NODE_ENV development
+
 RUN yarn install --pure-lockfile --non-interactive
-WORKDIR /usr/src/app/packages_ts/archivist
+
+WORKDIR /usr/src/app/packages_ts/backend/archivist
+
 CMD ["yarn", "start:dev"]

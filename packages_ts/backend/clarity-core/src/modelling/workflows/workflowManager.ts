@@ -1,6 +1,6 @@
 import { Fact } from '@relica/types';
-import { stepDefs } from './stepDefs';
-import TempUIDManager from './UIDManager';
+import { stepDefs } from './stepDefs.js';
+import TempUIDManager from './UIDManager.js';
 
 import * as _ from 'lodash';
 

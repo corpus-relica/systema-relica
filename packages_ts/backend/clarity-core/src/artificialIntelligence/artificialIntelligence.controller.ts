@@ -9,7 +9,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ArtificialIntelligenceService } from './artificialIntelligence.service';
+import { ArtificialIntelligenceService } from './artificialIntelligence.service.js';
 
 @Controller('artificialIntelligence')
 export class ArtificialIntelligenceController {

@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { CacheService } from 'src/cache/cache.service';
-import { GraphService } from 'src/graph/graph.service';
-import { FactService } from 'src/fact/fact.service';
+import { CacheService } from '../cache/cache.service.js';
+import { GraphService } from '../graph/graph.service.js';
+import { FactService } from '../fact/fact.service.js';
 
 @Injectable()
 export class EntityRetrievalService {

@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react"; // Changed from react-swc as discussed
 import { resolve } from "path";
 
 export default defineConfig({
@@ -8,20 +8,37 @@ export default defineConfig({
     alias: {
       "@relica/fact-search-ui": resolve(
         __dirname,
-        "../fact-search-ui/dist/index.js"
+        "../components/fact-search-ui/dist/index.js"
       ),
-      "@relica/constants": resolve(__dirname, "../constants/dist/constants.js"),
-      "@relica/types": resolve(__dirname, "../types/dist/index.js"),
+      "@relica/constants": resolve(
+        __dirname,
+        "../../libs/constants/dist/constants.js"
+      ),
+      "@relica/types": resolve(__dirname, "../../libs/types/dist/index.js"),
+      "@relica/3d-graph-ui": resolve(
+        __dirname,
+        "../components/3d-graph-ui/dist/3d-graph-ui.js"
+      ),
     },
   },
   server: {
-    host: "0.0.0.0", // Important for Docker
+    host: "0.0.0.0",
     port: 5173,
     watch: {
-      usePolling: true, // Important for Docker
+      usePolling: true,
     },
   },
   optimizeDeps: {
-    include: ["@relica/fact-search-ui", "@relica/constants", "@relica/types"],
+    include: [
+      "@relica/fact-search-ui",
+      "@relica/constants",
+      "@relica/types",
+      "@relica/3d-graph-ui",
+    ],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
   },
 });

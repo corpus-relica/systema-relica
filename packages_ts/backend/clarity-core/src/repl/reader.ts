@@ -9,7 +9,7 @@ import {
   MalSymbol,
   MalVector,
   MalHashMap,
-} from './types';
+} from './types.js';
 
 class Reader {
   position = 0;

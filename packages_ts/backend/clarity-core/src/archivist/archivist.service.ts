@@ -25,7 +25,7 @@ import {
   SUBMIT_BINARY_FACT_ENDPOINT,
   CLASSIFIED_ENDPOINT,
   CLASSIFICATION_FACT_ENDPOINT,
-} from './constants';
+} from './constants.js';
 
 const URL = 'http://archivist:3000'; //process.env.RELICA_NEO4J_URL;
 

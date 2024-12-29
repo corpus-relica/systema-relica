@@ -1,4 +1,4 @@
-import { Env } from './env';
+import { Env } from './env.js';
 
 export type MalType =
   | MalList

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { deleteFactQuery, deleteEntityQuery } from 'src/graph/queries';
-import { GraphService } from 'src/graph/graph.service';
-import { CacheService } from 'src/cache/cache.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
+import { deleteFactQuery, deleteEntityQuery } from '../graph/queries.js';
+import { GraphService } from '../graph/graph.service.js';
+import { CacheService } from '../cache/cache.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
 
 @Injectable()
 export class ConceptService {

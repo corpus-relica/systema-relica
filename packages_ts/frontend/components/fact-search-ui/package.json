@@ -4,22 +4,33 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "clean": "rm -rf dist tsconfig.build.tsbuildinfo",
+    "clean": "rm -rf ./dist && rm ./tsconfig.tsbuildinfo",
     "dev": "concurrently \"vite\" \"yarn build:watch\"",
-    "build:types": "tsc --project tsconfig.build.json --emitDeclarationOnly --listEmittedFiles",
+    "build:types": "tsc --project tsconfig.json",
     "build:vite": "vite build",
     "build": "yarn clean && yarn build:vite && yarn build:types",
     "build:watch": "nodemon -w src -e ts,tsx --exec 'yarn build'",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
+  "peerDependencies": {
+    "@mui/material": "^5.13.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
   "dependencies": {
-    "@relica/constants": "*",
-    "@relica/types": "*",
+    "@mui/icons-material": "^6.3.0",
+    "@relica/constants": "0.0.0",
+    "@relica/types": "0.0.0",
     "@tanstack/react-query": "^5.7.2",
+    "axios": "^1.4.0",
+    "grommet": "^2.33.1",
+    "grommet-icons": "^4.11.0",
     "lodash.debounce": "^4.0.8",
+    "mobx": "^6.10.2",
     "mobx-react-lite": "^4.0.5",
-    "qs": "^6.11.2"
+    "qs": "^6.11.2",
+    "styled-components": "^5.3.11"
   },
   "devDependencies": {
     "@types/qs": "^6.9.10",
@@ -28,18 +39,11 @@
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react-swc": "^3.7.2",
-    "axios": "^1.4.0",
     "concurrently": "^8.2.1",
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
-    "grommet": "^2.33.1",
-    "grommet-icons": "^4.11.0",
-    "mobx": "^6.10.2",
     "nodemon": "^3.0.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "styled-components": "^5.3.11",
     "typescript": "^5.0.2",
     "vite": "^6.0.5",
     "vite-plugin-checker": "^0.6.2"

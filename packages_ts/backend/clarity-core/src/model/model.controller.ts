@@ -11,7 +11,7 @@ import {
   Res,
   HttpException,
 } from '@nestjs/common';
-import { ModelService } from './model.service';
+import { ModelService } from './model.service.js';
 
 @Controller('model')
 export class ModelController {

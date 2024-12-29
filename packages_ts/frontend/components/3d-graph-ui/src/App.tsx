@@ -2,13 +2,14 @@ import React, { useEffect, useState, useRef } from "react";
 // @ts-ignore
 import * as THREE from "three";
 
-import { Canvas } from "@react-three/fiber";
+import { Canvas, extend } from "@react-three/fiber";
 import { Stats, Stars } from "@react-three/drei";
-import { NodeData, EdgeData, Fact } from "./types";
-import GraphRenderer from "./GraphRenderer";
 
-import RootStoreContext, { useStores } from "./context/RootStoreContext";
-import RootStore from "./stores/RootStore";
+import { NodeData, EdgeData, Fact } from "./types.js";
+import GraphRenderer from "./GraphRenderer.js";
+
+import RootStoreContext, { useStores } from "./context/RootStoreContext.js";
+import RootStore from "./stores/RootStore.js";
 import { observer } from "mobx-react";
 import { toJS } from "mobx";
 
@@ -217,6 +218,7 @@ const App: React.FC<AppProps> = observer(
           }}
         >
           <div style={{ width: dimensions.width, height: dimensions.height }}>
+            {/* @ts-ignore */}
             <Canvas
               camera={{
                 fov: 75,
@@ -243,6 +245,7 @@ const App: React.FC<AppProps> = observer(
               />
               <directionalLight color="blue" intensity={0.35} />
               <ambientLight color="white" intensity={0.8} />*/}
+              {/* @ts-ignore */}
               <ambientLight color="#404040" />
               {/*<directionalLight
                 color="white"
@@ -263,6 +266,7 @@ const App: React.FC<AppProps> = observer(
                 fade
                 speed={2}
               />
+              {/* @ts-ignore */}
               <fog attach="fog" args={["#000000", 25, 100]} />
             </Canvas>
           </div>

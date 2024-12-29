@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GraphService } from 'src/graph/graph.service';
-import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
-// import { FactService } from 'src/fact/fact.service';
+import { GraphService } from '../graph/graph.service.js';
+import { GellishBaseService } from '../gellish-base/gellish-base.service.js';
+// import { FactService } from '../fact/fact.service';
 import { Fact } from '@relica/types';
-import { GellishToCypherConverter } from './GellishToCypherConverter';
-import { GellishParser } from './GellishParser2';
+import { GellishToCypherConverter } from './GellishToCypherConverter.js';
+import { GellishParser } from './GellishParser2.js';
 
 import { Record } from 'neo4j-driver';
 
@@ -118,8 +118,8 @@ export class QueryService {
     const variables = new Map<string, any>();
 
     cypherResults.forEach((record) => {
-      record.keys.forEach((key: string) => {
-        if (key.startsWith('f')) {
+      record.keys.forEach((key: PropertyKey) => {
+        if (typeof key === 'string' && key.startsWith('f')) {
           const factNode = record.get(key);
           if (factNode && factNode.properties) {
             const fact = this.graphService.convertNeo4jInts(factNode)
@@ -129,13 +129,17 @@ export class QueryService {
               uniqueFacts.set(factKey, fact);
             }
           }
-        } else {
+        } else if (typeof key === 'string') {
           const varNode = record.get(key);
           if (varNode) {
             const s: Set<number> = variables.get(key) || new Set<number>();
             s.add(this.graphService.resolveNeo4jInt(varNode.uid));
             variables.set(key, s);
           }
+        } else {
+          console.log('unexpected key type');
+          console.log('record:', record);
+          console.log('key:', key);
         }
       });
     });

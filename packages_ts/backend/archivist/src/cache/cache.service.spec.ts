@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CacheService } from './cache.service';
+import { CacheService } from './cache.service.js';
 
 describe('CacheService', () => {
   let service: CacheService;

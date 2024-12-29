@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GraphService } from 'src/graph/graph.service';
+import { GraphService } from '../graph/graph.service.js';
 
 import {
   entity,
@@ -19,7 +19,7 @@ import {
   facts,
   updateFactDefinitionQuery,
   qualificationFact,
-} from 'src/graph/queries';
+} from '../graph/queries.js';
 
 import { linearize } from 'c3-linearization';
 

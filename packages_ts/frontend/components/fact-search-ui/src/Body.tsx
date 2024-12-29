@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { useStores } from "./context/RootStoreContext";
-import { RootStore } from "./stores/RootStore";
+import { useStores } from "./context/RootStoreContext.js";
+import { RootStore } from "./stores/RootStore.js";
 import { observer } from "mobx-react-lite";
 import { Fact } from "@relica/types";
 import { toJS } from "mobx";
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
+// import Box from "@mui/material/Box";
+// import Grid from "@mui/material/Grid";
+// import Button from "@mui/material/Button";
+// import Typography from "@mui/material/Typography";
+
+import { Box, Button, Grid, Typography } from "@mui/material";
 
 const Body = observer((props: { callback: (fact: Fact) => void }) => {
   const { callback } = props;
@@ -16,13 +18,13 @@ const Body = observer((props: { callback: (fact: Fact) => void }) => {
 
   console.log("BODY BODY BODY Body", facts.length);
 
-  const [expandedUID, setExpandedUID] = useState<string | null>(null);
+  const [expandedUID, setExpandedUID] = useState<number | null>(null);
 
   const handleSelectClick = (row: Fact) => {
     callback && callback(toJS(row));
   };
 
-  const toggleExpand = (uid: string) => {
+  const toggleExpand = (uid: number) => {
     setExpandedUID(expandedUID === uid ? null : uid);
   };
 
@@ -52,7 +54,7 @@ const Body = observer((props: { callback: (fact: Fact) => void }) => {
           rh_object_name
         </Grid>
       </Grid>
-      {facts.map((fact, idx) => (
+      {facts.map((fact: Fact, idx: number) => (
         <Grid key={fact.fact_uid} container direction="row" spacing={1}>
           <Grid item xs={0.25}>
             <Button onClick={() => toggleExpand(fact.fact_uid)}>

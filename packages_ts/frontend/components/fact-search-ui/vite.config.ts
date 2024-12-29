@@ -18,7 +18,7 @@ export default defineConfig({
         "react",
         "react-dom",
         "@mui/material",
-        "@mui/icons-material",
+        "@mui/icons-material", // Add this
         "@relica/types",
         "@relica/constants",
         "@tanstack/react-query",
@@ -35,6 +35,8 @@ export default defineConfig({
         globals: {
           react: "React",
           "react-dom": "ReactDOM",
+          "@mui/material": "MaterialUI",
+          "@mui/icons-material": "MaterialIcons", // Add this
           "@relica/types": "RelicaTypes",
           "@relica/constants": "RelicaConstants",
           "@tanstack/react-query": "ReactQuery",
@@ -51,8 +53,21 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@relica/constants": resolve(__dirname, "../constants/dist/constants.js"),
-      "@relica/types": resolve(__dirname, "../types/dist/index.js"),
+      "@relica/constants": resolve(
+        __dirname,
+        "../../../libs/constants/dist/constants.js"
+      ),
+      "@relica/types": resolve(__dirname, "../../../libs/types/dist/index.js"),
+      alias: {
+        "@mui/material": resolve(
+          __dirname,
+          "../../../../node_modules/@mui/material"
+        ),
+        "@mui/icons-material": resolve(
+          __dirname,
+          "../../../../node_modules/@mui/icons-material"
+        ),
+      },
     },
   },
   optimizeDeps: {

@@ -1,26 +1,15 @@
 {
+  "extends": "../../config/tsconfig.frontend.json",
   "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "jsx": "react-jsx"
   },
-  "include": [
-    "src"
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../../libs/constants" },
+    { "path": "../../core/hsm-manager" },
+    { "path": "../components/3d-graph-ui" },
+    { "path": "../components/fact-search-ui" }
   ]
 }

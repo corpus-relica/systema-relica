@@ -7,8 +7,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { REPLService } from './repl.service';
-import { ExecCommandDto } from './ExecCommandDto';
+import { REPLService } from './repl.service.js';
+import { ExecCommandDto } from './ExecCommandDto.js';
 
 @ApiTags('REPL')
 @Controller('REPLController')

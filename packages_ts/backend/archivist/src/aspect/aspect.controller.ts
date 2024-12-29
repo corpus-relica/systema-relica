@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AspectService } from './aspect.service';
+import { AspectService } from './aspect.service.js';
 
 @ApiTags('Aspect')
 @Controller('aspect')

@@ -9,7 +9,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ModellingService } from './modelling.service';
+import { ModellingService } from './modelling.service.js';
 
 @Controller('modelling')
 export class ModellingController {

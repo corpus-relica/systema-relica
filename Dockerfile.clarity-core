@@ -1,23 +1,27 @@
 FROM node:latest as build
-MAINTAINER Marc <marc@specular-occlusion>
+MAINTAINER Marc <marc@speculum-obscurum>
 
 WORKDIR /usr/src/app
 
 COPY package.json .
 COPY yarn.lock .
-COPY packages_ts/constants ./packages_ts/constants
-COPY packages_ts/types ./packages_ts/types
-COPY packages_ts/clarity-core ./packages_ts/clarity-core
+COPY packages_ts/libs/constants ./packages_ts/libs/constants
+COPY packages_ts/libs/types ./packages_ts/libs/types
+COPY packages_ts/backend/clarity-core ./packages_ts/backend/clarity-core
+
+COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
+COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
+COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
 
 RUN yarn install --pure-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages_ts/constants
+WORKDIR /usr/src/app/packages_ts/libs/constants
 RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/types
+WORKDIR /usr/src/app/packages_ts/libs/types
 RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/clarity-core
+WORKDIR /usr/src/app/packages_ts/backend/clarity-core
 RUN yarn build
 
 # --------------------------------------
@@ -29,18 +33,22 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 
-COPY --from=build /usr/src/app/packages_ts/constants/package.json /usr/src/app/packages_ts/constants/package.json
-COPY --from=build /usr/src/app/packages_ts/constants/dist /usr/src/app/packages_ts/constants/dist
+COPY --from=build /usr/src/app/packages_ts/libs/constants/package.json /usr/src/app/packages_ts/libs/constants/package.json
+COPY --from=build /usr/src/app/packages_ts/libs/constants/dist /usr/src/app/packages_ts/libs/constants/dist
 
-COPY --from=build /usr/src/app/packages_ts/types/package.json /usr/src/app/packages_ts/types/package.json
-COPY --from=build /usr/src/app/packages_ts/types/dist /usr/src/app/packages_ts/types/dist
+COPY --from=build /usr/src/app/packages_ts/libs/types/package.json /usr/src/app/packages_ts/libs/types/package.json
+COPY --from=build /usr/src/app/packages_ts/libs/types/dist /usr/src/app/packages_ts/libs/types/dist
 
-COPY --from=build /usr/src/app/packages_ts/clarity-core/package.json /usr/src/app/packages_ts/clarity-core/package.json
+COPY --from=build /usr/src/app/packages_ts/backend/clarity-core/package.json /usr/src/app/packages_ts/backend/clarity-core/package.json
+
+COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
+COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
+COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
 
 ENV NODE_ENV development
 
 RUN yarn install --pure-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages_ts/clarity-core
+WORKDIR /usr/src/app/packages_ts/backend/clarity-core
 
 CMD ["yarn", "start:dev"]

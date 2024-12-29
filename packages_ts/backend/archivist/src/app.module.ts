@@ -1,58 +1,69 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { ConceptController } from './concept/concept.controller';
-import { ConceptService } from './concept/concept.service';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import { ConceptController } from './concept/concept.controller.js';
+import { ConceptService } from './concept/concept.service.js';
 
 import { Neo4jModule } from 'nest-neo4j';
 import { RedisModule } from '@nestjs-modules/ioredis';
-import { TransactionModule } from './transaction/transaction.module';
+import { TransactionModule } from './transaction/transaction.module.js';
 
-import { CacheService } from './cache/cache.service';
-import { GraphService } from './graph/graph.service';
+import { CacheService } from './cache/cache.service.js';
+import { GraphService } from './graph/graph.service.js';
 
-import { AppInitService } from './app-init/app-init.service';
-import { GellishBaseService } from './gellish-base/gellish-base.service';
-import { DefinitionController } from './definition/definition.controller';
-import { DefinitionService } from './definition/definition.service';
-import { KindSearchController } from './kind-search/kind-search.controller';
-import { KindSearchService } from './kind-search/kind-search.service';
-import { ExecuteSearchQueryService } from './execute-search-query/execute-search-query.service';
-import { IndividualSearchController } from './individual-search/individual-search.controller';
-import { IndividualSearchService } from './individual-search/individual-search.service';
-import { GeneralSearchController } from './general-search/general-search.controller';
-import { GeneralSearchService } from './general-search/general-search.service';
-import { FactController } from './fact/fact.controller';
-import { FactService } from './fact/fact.service';
-import { EntityRetrievalController } from './entity-retrieval/entity-retrieval.controller';
-import { EntityRetrievalService } from './entity-retrieval/entity-retrieval.service';
-import { CompletionService } from './completion/completion.service';
-import { CompletionController } from './completion/completion.controller';
-import { ValidationController } from './validation/validation.controller';
-import { ValidationService } from './validation/validation.service';
-import { SubmissionController } from './submission/submission.controller';
-import { SubmissionService } from './submission/submission.service';
-import { UIDController } from './uid/uid.controller';
-import { UIDService } from './uid/uid.service';
-import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion.service';
-import { XLSService } from './xls/xls.service';
-import { FileService } from './file/file.service';
-import { KindController } from './kind/kind.controller';
-import { KindService } from './kind/kind.service';
-import { KindsController } from './kinds/kinds.controller';
-import { KindsService } from './kinds/kinds.service';
-import { AspectController } from './aspect/aspect.controller';
-import { AspectService } from './aspect/aspect.service';
-import { LinearizationService } from './linearization/linearization.service';
-import { QueryController } from './query/query.controller';
-import { QueryService } from './query/query.service';
-import { GellishToCypherConverter } from './query/GellishToCypherConverter';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { AppInitService } from './app-init/app-init.service.js';
+import { GellishBaseService } from './gellish-base/gellish-base.service.js';
+import { DefinitionController } from './definition/definition.controller.js';
+import { DefinitionService } from './definition/definition.service.js';
+import { KindSearchController } from './kind-search/kind-search.controller.js';
+import { KindSearchService } from './kind-search/kind-search.service.js';
+import { ExecuteSearchQueryService } from './execute-search-query/execute-search-query.service.js';
+import { IndividualSearchController } from './individual-search/individual-search.controller.js';
+import { IndividualSearchService } from './individual-search/individual-search.service.js';
+import { GeneralSearchController } from './general-search/general-search.controller.js';
+import { GeneralSearchService } from './general-search/general-search.service.js';
+import { FactController } from './fact/fact.controller.js';
+import { FactService } from './fact/fact.service.js';
+import { EntityRetrievalController } from './entity-retrieval/entity-retrieval.controller.js';
+import { EntityRetrievalService } from './entity-retrieval/entity-retrieval.service.js';
+import { CompletionService } from './completion/completion.service.js';
+import { CompletionController } from './completion/completion.controller.js';
+import { ValidationController } from './validation/validation.controller.js';
+import { ValidationService } from './validation/validation.service.js';
+import { SubmissionController } from './submission/submission.controller.js';
+import { SubmissionService } from './submission/submission.service.js';
+import { UIDController } from './uid/uid.controller.js';
+import { UIDService } from './uid/uid.service.js';
+import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion.service.js';
+import { XLSService } from './xls/xls.service.js';
+import { FileService } from './file/file.service.js';
+import { KindController } from './kind/kind.controller.js';
+import { KindService } from './kind/kind.service.js';
+import { KindsController } from './kinds/kinds.controller.js';
+import { KindsService } from './kinds/kinds.service.js';
+import { AspectController } from './aspect/aspect.controller.js';
+import { AspectService } from './aspect/aspect.service.js';
+import { LinearizationService } from './linearization/linearization.service.js';
+import { QueryController } from './query/query.controller.js';
+import { QueryService } from './query/query.service.js';
+import { GellishToCypherConverter } from './query/GellishToCypherConverter.js';
+import { AuthModule } from './auth/auth.module.js';
+import { UsersModule } from './users/users.module.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IndividualService } from './individual/individual.service';
-import { IndividualController } from './individual/individual.controller';
+import { IndividualService } from './individual/individual.service.js';
+import { IndividualController } from './individual/individual.controller.js';
+
+///////////////////////////
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import * as path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+///////////////////////////
 
 @Module({
   imports: [

@@ -1,21 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getCollections, performSearch } from "../axiosInstance";
-import { useStores } from "../context/RootStoreContext";
+import { getCollections, performSearch } from "../axiosInstance.js";
+import { useStores } from "../context/RootStoreContext.js";
 import { observer } from "mobx-react-lite";
 import { ALL } from "@relica/constants";
-import { useDebounce } from "../utils";
+import { useDebounce } from "../utils.js";
 
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
+// import Grid from "@mui/material/Grid";
+// import IconButton from "@mui/material/IconButton";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import Typography from "@mui/material/Typography";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
+// import Typography from "@mui/material/Typography";
+// import Select, { SelectChangeEvent } from "@mui/material/Select";
+// import MenuItem from "@mui/material/MenuItem";
+// import TextField from "@mui/material/TextField";
+// import Box from "@mui/material/Box";
+
+import {
+  Box,
+  Grid,
+  Typography,
+  Select,
+  SelectChangeEvent,
+  IconButton,
+  MenuItem,
+  TextField,
+} from "@mui/material";
 
 type CollectionsMenuData = {
   name: string;
@@ -104,6 +115,7 @@ const SearchMode: React.FC = observer(() => {
         {count > 0 && (
           <Box display="flex" alignItems="center">
             <IconButton onClick={decPage} disabled={page === 1}>
+              {/* @ts-ignore */}
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="body2" sx={{ mx: 1 }}>
@@ -111,6 +123,7 @@ const SearchMode: React.FC = observer(() => {
               {Math.min(page * pageSize, count)} of {count}
             </Typography>
             <IconButton onClick={incPage} disabled={page * pageSize >= count}>
+              {/* @ts-ignore */}
               <ArrowForwardIcon />
             </IconButton>
           </Box>
@@ -126,6 +139,7 @@ const SearchMode: React.FC = observer(() => {
           InputProps={{
             endAdornment: (
               <IconButton>
+                {/* @ts-ignore */}
                 <SearchIcon />
               </IconButton>
             ),

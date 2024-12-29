@@ -6,7 +6,7 @@ import {
   MalVector,
   MalHashMap,
   MalKeyword,
-} from './types';
+} from './types.js';
 
 export const jsToMal = (obj: any): MalType => {
   if (obj === null) {

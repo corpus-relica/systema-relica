@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import neo4j from 'neo4j-driver';
-import { highestUID } from 'src/graph/queries';
-import { GraphService } from 'src/graph/graph.service';
+import { highestUID } from '../graph/queries.js';
+import { GraphService } from '../graph/graph.service.js';
 
 @Injectable()
 export class UIDService {

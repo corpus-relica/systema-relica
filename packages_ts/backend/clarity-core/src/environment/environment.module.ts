@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EnvironmentController } from './environment.controller';
-import { EnvironmentService } from './environment.service';
-import { EnvFact } from './envFact.entity';
-import { EnvModel } from './envModel.entity';
-import { EnvSelectedEntity } from './envSelectedEntity.entity';
-import { ModelModule } from '../model/model.module';
-import { ArchivistModule } from '../archivist/archivist.module';
+import { EnvironmentController } from './environment.controller.js';
+import { EnvironmentService } from './environment.service.js';
+import { EnvFact } from './envFact.entity.js';
+import { EnvModel } from './envModel.entity.js';
+import { EnvSelectedEntity } from './envSelectedEntity.entity.js';
+import { ModelModule } from '../model/model.module.js';
+import { ArchivistModule } from '../archivist/archivist.module.js';
 
 @Module({
   imports: [
