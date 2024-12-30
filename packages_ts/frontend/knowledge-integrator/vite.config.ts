@@ -34,7 +34,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: [
+    exclude: [
       "@relica/fact-search-ui",
       "@relica/constants",
       "@relica/types",
