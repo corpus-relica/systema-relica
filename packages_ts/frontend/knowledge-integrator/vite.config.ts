@@ -4,6 +4,7 @@ import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
+  root: "./src",
   resolve: {
     alias: {
       "@relica/fact-search-ui": resolve(
@@ -39,6 +40,10 @@ export default defineConfig({
   build: {
     commonjsOptions: {
       include: [/node_modules/],
+    },
+    rollupOptions: {
+      input:
+        "/usr/src/app/packages_ts/frontend/knowledge-integrator/index.html",
     },
   },
 });
