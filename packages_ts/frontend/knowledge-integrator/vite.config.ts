@@ -1,10 +1,9 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react"; // Changed from react-swc as discussed
+import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
-  root: "./src",
   resolve: {
     alias: {
       "@relica/fact-search-ui": resolve(
@@ -42,8 +41,11 @@ export default defineConfig({
       include: [/node_modules/],
     },
     rollupOptions: {
-      input:
-        "/usr/src/app/packages_ts/frontend/knowledge-integrator/index.html",
+      input: {
+        app: resolve(__dirname, "index.html"),
+      },
     },
+    outDir: "dist",
+    emptyOutDir: true,
   },
 });
