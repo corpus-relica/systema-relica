@@ -15,7 +15,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "clean": "rm -rf ./dist && rm ./tsconfig.tsbuildinfo",
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
     "dev": "vite",
     "build:types": "tsc --project tsconfig.json",
     "build:vite": "vite build",
