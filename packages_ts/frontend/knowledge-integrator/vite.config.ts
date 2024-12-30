@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 export default defineConfig({
+  root: "/usr/src/app/packages_ts/frontend/knowledge-integrator",
   plugins: [react()],
   resolve: {
     alias: {
