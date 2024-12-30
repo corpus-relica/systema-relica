@@ -75,6 +75,7 @@ services:
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password
       - REDIS_URL=redis://:redis@redis:6379
+
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
@@ -106,6 +107,12 @@ services:
       dockerfile: Dockerfile.clarity-core
     # working_dir: /usr/src/app
     restart: always
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
     # command: sh -c "npm install && npx tsc --outDir dist && npm start"
     # command: sh -c "yarn install && yarn dev"
     command: ["yarn", "start:dev"]
