@@ -115,6 +115,7 @@ services:
 
   knowledge-integrator:
     container_name: knowledge-integrator
+    working_dir: /usr/src/app/packages_ts/frontend/knowledge-integrator
     build:
       context: .
       dockerfile: Dockerfile.knowledge-integrator
