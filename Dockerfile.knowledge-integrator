@@ -99,5 +99,6 @@ WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
 
 EXPOSE 5173
 
-CMD ["yarn", "dev"]
+# CMD ["yarn", "dev"]
 # CMD ["yarn", "preview", "--host", "0.0.0.0"]
+CMD ["yarn", "dev", "--host", "0.0.0.0"]
