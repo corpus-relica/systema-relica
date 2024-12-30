@@ -119,7 +119,7 @@ services:
       context: .
       dockerfile: Dockerfile.knowledge-integrator
     restart: always
-    command: yarn preview --host 0.0.0.0
+    command: yarn dev --host 0.0.0.0
     volumes:
       - ./packages_ts/frontend/knowledge-integrator:/usr/src/app/packages_ts/frontend/knowledge-integrator
       - ./packages_ts/libs/constants:/usr/src/app/packages_ts/libs/constants
