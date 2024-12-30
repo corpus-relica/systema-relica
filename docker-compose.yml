@@ -72,7 +72,8 @@ services:
     restart: always
     environment:
       - REDIS_URL=redis://redis:6379
-    command: ["yarn", "start:dev"]
+    # command: ["yarn", "start:dev"]
+    command: yarn dev --host 0.0.0.0
     volumes:
       - ./packages_ts/backend/archivist:/usr/src/app/packages_ts/backend/archivist
       - ./seed_xls:/usr/src/app/packages_ts/backend/archivist/seed_xls
