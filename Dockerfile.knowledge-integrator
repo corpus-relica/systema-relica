@@ -41,10 +41,18 @@ RUN yarn build
 
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/fact-search-ui
-RUN yarn build
+RUN yarn build && \
+    echo "=== Contents of fact-search-ui after build ===" && \
+    ls -la && \
+    echo "=== Contents of fact-search-ui/dist ===" && \
+    ls -la dist/
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/3d-graph-ui
-RUN yarn build
+RUN yarn build && \
+    echo "=== Contents of 3d-graph-ui after build ===" && \
+    ls -la && \
+    echo "=== Contents of 3d-graph-ui/dist ===" && \
+    ls -la dist/
 
 
 WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
@@ -80,16 +88,19 @@ COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/package.json ./packa
 COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/dist ./packages_ts/core/hsm-manager/dist
 
 
+COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/src ./packages_ts/frontend/components/fact-search-ui/src
 COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/package.json ./packages_ts/frontend/components/fact-search-ui/package.json
 COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/dist ./packages_ts/frontend/components/fact-search-ui/dist
+RUN ls -la ./packages_ts/frontend/components/fact-search-ui/dist/
 
+COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/src ./packages_ts/frontend/components/3d-graph-ui/src
 COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/package.json ./packages_ts/frontend/components/3d-graph-ui/package.json
 COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/dist ./packages_ts/frontend/components/3d-graph-ui/dist
+RUN ls -la ./packages_ts/frontend/components/3d-graph-ui/dist/
 
 
 COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/package.json ./packages_ts/frontend/knowledge-integrator/package.json
 COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/src ./packages_ts/frontend/knowledge-integrator/src
-
 
 ENV NODE_ENV development
 

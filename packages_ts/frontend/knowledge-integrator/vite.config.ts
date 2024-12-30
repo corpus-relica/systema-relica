@@ -8,7 +8,7 @@ export default defineConfig({
     alias: {
       "@relica/fact-search-ui": resolve(
         __dirname,
-        "../components/fact-search-ui/dist/index.js"
+        "../components/fact-search-ui/src/index.tsx"
       ),
       "@relica/constants": resolve(
         __dirname,
@@ -18,6 +18,10 @@ export default defineConfig({
       "@relica/3d-graph-ui": resolve(
         __dirname,
         "../components/3d-graph-ui/dist/3d-graph-ui.js"
+      ),
+      "@relica/fact-search-ui/src": resolve(
+        __dirname,
+        "../components/fact-search-ui/src"
       ),
     },
   },
