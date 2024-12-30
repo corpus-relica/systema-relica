@@ -47,7 +47,7 @@ services:
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
     volumes:
       - ./packages_ts/core/dataplex/data/neo4j:/data
-      - ./seed_csv:/var/lib/neo4j/import
+      - ./seed_csv:/var/lib/neo4j/import:ro
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -83,8 +83,8 @@ services:
     command: ["yarn", "start:dev"]
     volumes:
       - ./packages_ts/backend/archivist:/usr/src/app/packages_ts/backend/archivist
-      - ./seed_xls:/usr/src/app/packages_ts/backend/archivist/seed_xls
-      - ./seed_csv:/usr/src/app/packages_ts/backend/archivist/seed_csv
+      - ./seed_xls:/usr/src/app/packages_ts/backend/archivist/seed_xls:ro
+      - ./seed_csv:/usr/src/app/packages_ts/backend/archivist/seed_csv:rw
       - /usr/src/app/packages_ts/backend/archivist/node_modules
     ports:
       - "3000:3000"
