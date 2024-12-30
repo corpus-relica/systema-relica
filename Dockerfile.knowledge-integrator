@@ -106,6 +106,8 @@ RUN ls -la ./packages_ts/frontend/components/3d-graph-ui/dist/
 
 COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/package.json ./packages_ts/frontend/knowledge-integrator/package.json
 COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/src ./packages_ts/frontend/knowledge-integrator/src
+COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/index.html ./packages_ts/frontend/knowledge-integrator/
+COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/vite.config.ts ./packages_ts/frontend/knowledge-integrator/
 
 ENV NODE_ENV development
 
@@ -116,6 +118,7 @@ RUN yarn install --pure-lockfile --non-interactive
 
 COPY --from=build /usr/src/app/node_modules /usr/src/app/node_modules
 COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules
+
 
 ENV PATH /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules/.bin:$PATH
 
