@@ -33,7 +33,11 @@ WORKDIR /usr/src/app/packages_ts/libs/types
 RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/libs/constants
-RUN yarn build
+RUN yarn build && \
+    echo "=== Contents after constants build ===" && \
+    ls -la && \
+    echo "=== Contents of dist directory ===" && \
+    ls -la dist/
 
 
 WORKDIR /usr/src/app/packages_ts/core/hsm-manager
@@ -82,7 +86,8 @@ COPY --from=build /usr/src/app/packages_ts/libs/types/dist ./packages_ts/libs/ty
 
 COPY --from=build /usr/src/app/packages_ts/libs/constants/package.json ./packages_ts/libs/constants/package.json
 COPY --from=build /usr/src/app/packages_ts/libs/constants/dist ./packages_ts/libs/constants/dist
-
+RUN echo "=== Verifying constants dist in runtime ===" && \
+    ls -la ./packages_ts/libs/constants/dist/
 
 COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/package.json ./packages_ts/core/hsm-manager/package.json
 COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/dist ./packages_ts/core/hsm-manager/dist
