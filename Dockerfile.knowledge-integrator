@@ -96,6 +96,7 @@ ENV NODE_ENV development
 RUN yarn install
 
 WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
+ENV PATH /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules/.bin:$PATH
 
 EXPOSE 5173
 
