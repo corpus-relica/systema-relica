@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "clean": "rm -rf ./dist && -f rm ./tsconfig.tsbuildinfo",
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
     "dev": "concurrently \"vite\" \"yarn build:watch\"",
     "build:types": "tsc --project tsconfig.json",
     "build:vite": "vite build",
