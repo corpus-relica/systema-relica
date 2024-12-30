@@ -15,9 +15,6 @@ yarn-error.log*
 .env
 .aider*
 
-seed_csv/
-seed_xls/
-
 temp.*
 /postgres_backup/
 
