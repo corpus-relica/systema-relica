@@ -1,22 +1,23 @@
-import { fetchUtils } from 'react-admin';
-import { getAuthToken } from '../authProvider';
+import { fetchUtils } from "react-admin";
+import { getAuthToken } from "../authProvider";
 
 const { fetchJson } = fetchUtils;
 
 // Add a function to get the token from localStorage
 
-
-console.log('Creating axios instance...');
-const apiUrl = import.meta.env.VITE_RELICA_ARCHIVIST_API_URL || 'http://localhost:3000';
+console.log("Creating axios instance...");
+const apiUrl =
+  import.meta.env.VITE_RELICA_ARCHIVIST_API_URL || "http://localhost:3000";
 
 const httpClient = (url: string, options: any = {}) => {
   if (!options.headers) {
-    options.headers = new Headers({ Accept: 'application/json' });
+    options.headers = new Headers({ Accept: "application/json" });
   }
   const token = getAuthToken();
   if (token) {
-    options.headers.set('Authorization', `Bearer ${token}`);
+    options.headers.set("Authorization", `Bearer ${token}`);
   }
+  console.log("!!!!!!!!!! ARCHIVIST::FETCHING", url, options);
   return fetchJson(url, options);
 };
 
@@ -27,11 +28,12 @@ const dataProvider = {
 
     switch (resource) {
       case "concept/entities":
-        return httpClient(`${apiUrl}/concept/entities?uids=[${params.uids.join(",")}]`)
-          .then(({ json }) => ({
-            data: json.map((e: any) => ({ ...e, id: e.uid })),
-            total: json.length,
-          }));
+        return httpClient(
+          `${apiUrl}/concept/entities?uids=[${params.uids.join(",")}]`
+        ).then(({ json }) => ({
+          data: json.map((e: any) => ({ ...e, id: e.uid })),
+          total: json.length,
+        }));
       case "kinds":
         const sort = params.sort
           ? `["${params.sort.field}","${params.sort.order}"]`
@@ -41,11 +43,12 @@ const dataProvider = {
           params.pagination.perPage;
         const rangeMax = params.pagination.page * params.pagination.perPage;
         const range = `[${rangeMin}, ${rangeMax}]`;
-        return httpClient(`${apiUrl}/kinds?sort=${sort}&range=${range}&filter={}`)
-          .then(({ json }) => ({
-            data: json.data.map((e: any) => ({ ...e, id: e.uid })),
-            total: json.total,
-          }))
+        return httpClient(
+          `${apiUrl}/kinds?sort=${sort}&range=${range}&filter={}`
+        ).then(({ json }) => ({
+          data: json.data.map((e: any) => ({ ...e, id: e.uid })),
+          total: json.total,
+        }));
       default:
         //return rejected promise
         return Promise.reject("Unknown resource");
