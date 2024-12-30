@@ -78,11 +78,11 @@ const __dirname = dirname(__filename);
       },
     }),
     Neo4jModule.forRoot({
-      scheme: 'neo4j',
-      host: process.env.NEO4J_HOST, //'localhost', //'neo4j',
-      port: process.env.NEO4J_PORT, //7687,
-      username: process.env.NEO4J_USER, //'neo4j',
-      password: process.env.NEO4J_PASSWORD, //'password',
+      scheme: 'bolt',
+      host: process.env.NEO4J_HOST || 'neo4j',
+      port: parseInt(process.env.NEO4J_PORT) || 7687,
+      username: process.env.NEO4J_USER || 'neo4j',
+      password: process.env.NEO4J_PASSWORD || 'password',
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
