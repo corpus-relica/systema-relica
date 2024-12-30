@@ -122,12 +122,13 @@ services:
     restart: always
     command: yarn dev --host 0.0.0.0
     volumes:
-      - ./packages_ts/frontend/knowledge-integrator:/usr/src/app/packages_ts/frontend/knowledge-integrator
+      - ./packages_ts/frontend/knowledge-integrator:/usr/src/app/packages_ts/frontend/knowledge-integrator:rw
       - ./packages_ts/libs/constants:/usr/src/app/packages_ts/libs/constants
       - ./packages_ts/frontend/components/fact-search-ui:/usr/src/app/packages_ts/frontend/components/fact-search-ui
       - ./packages_ts/frontend/components/3d-graph-ui:/usr/src/app/packages_ts/frontend/components/3d-graph-ui
       - ./packages_ts/core/hsm-manager:/usr/src/app/packages_ts/core/hsm-manager
       - /usr/src/app/node_modules
+      - /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules
     ports:
       - "0.0.0.0:5173:5173"
     environment:

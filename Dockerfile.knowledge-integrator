@@ -96,6 +96,11 @@ ENV NODE_ENV development
 RUN yarn install
 
 WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
+RUN yarn install --pure-lockfile --non-interactive
+
+COPY --from=build /usr/src/app/node_modules /usr/src/app/node_modules
+COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules
+
 ENV PATH /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules/.bin:$PATH
 
 EXPOSE 5173
