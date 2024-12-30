@@ -44,6 +44,12 @@ export default defineConfig({
   build: {
     commonjsOptions: {
       include: [/node_modules/],
+      exclude: [
+        "@relica/fact-search-ui",
+        "@relica/constants",
+        "@relica/types",
+        "@relica/3d-graph-ui",
+      ],
     },
     rollupOptions: {
       input: {
