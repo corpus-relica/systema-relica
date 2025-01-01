@@ -108,7 +108,7 @@ services:
     # working_dir: /usr/src/app
     restart: always
     environment:
-      - RELICA_CLARITY_CORE_ALLOWED_ORIGIN="*"
+      - RELICA_CLARITY_CORE_ALLOWED_ORIGIN=*
       - RELICA_CLARITY_CORE_API_PORT=3001
 
       - RELICA_POSTGRES_HOST=postgres
@@ -116,7 +116,7 @@ services:
       - RELICA_POSTGRES_PASSWORD=password
       - RELICA_POSTGRES_DB_NAME=postgres
       - RELICA_POSTGRES_PORT=5432
-      - RELICA_NEO4J_URL="http://localhost:3000"
+      - RELICA_NEO4J_URL=http://localhost:3000
 
     # command: sh -c "npm install && npx tsc --outDir dist && npm start"
     # command: sh -c "yarn install && yarn dev"
