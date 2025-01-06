@@ -135,28 +135,18 @@ services:
 
   knowledge-integrator:
     container_name: knowledge-integrator
-    working_dir: /usr/src/app/packages_ts/frontend/knowledge-integrator
     build:
       context: .
       dockerfile: Dockerfile.knowledge-integrator
     restart: always
-    command: yarn dev --host 0.0.0.0
-    volumes:
-      - ./packages_ts/frontend/knowledge-integrator/src:/usr/src/app/packages_ts/frontend/knowledge-integrator/src
-      - /usr/src/app/node_modules
     ports:
-      - "0.0.0.0:5173:5173"
+      - "80:80" # or whatever port you prefer
     environment:
-      - CHOKIDAR_USEPOLLING=true
       - VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000
       - VITE_RELICA_DB_API_URL=http://localhost:3000
       - VITE_RELICA_CC_API_URL=http://localhost:3001
       - VITE_RELICA_CC_SOCKET_URL=http://localhost:3001
       - VITE_RELICA_NOUS_SOCKET_URL=http://localhost:8080
-      # - VITE_RELICA_ARCHIVIST_API_URL=http://archivist:3000
-      # - VITE_RELICA_DB_API_URL=http://archivist:3000
-      # - VITE_RELICA_CC_API_URL=http://clarity-core:3001
-      # - VITE_RELICA_CC_SOCKET_URL=http://clarity-core:3001
     depends_on:
       - archivist
       - clarity-core

@@ -1,6 +1,6 @@
+# Build stage
 FROM node:latest as build
 MAINTAINER Marc <marc@speculum-obscurum>
-
 
 WORKDIR /usr/src/app
 
@@ -8,122 +8,69 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 
-
+# Copy all the packages and configs
 COPY packages_ts/libs/types ./packages_ts/libs/types
 COPY packages_ts/libs/constants ./packages_ts/libs/constants
-
 COPY packages_ts/frontend/components/fact-search-ui ./packages_ts/frontend/components/fact-search-ui
 COPY packages_ts/frontend/components/3d-graph-ui ./packages_ts/frontend/components/3d-graph-ui
-
 COPY packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
-
 COPY packages_ts/frontend/knowledge-integrator ./packages_ts/frontend/knowledge-integrator
-
-
 COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
 COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
 COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
 COPY packages_ts/config/tsconfig.frontend.json ./packages_ts/config/tsconfig.frontend.json
 
-
+# Install dependencies
 RUN yarn install --pure-lockfile --non-interactive --network-timeout 100000
 
-
+# Build packages in order
 WORKDIR /usr/src/app/packages_ts/libs/types
 RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/libs/constants
-RUN yarn build && \
-    echo "=== Contents after constants build ===" && \
-    ls -la && \
-    echo "=== Contents of dist directory ===" && \
-    ls -la dist/
-
+RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/core/hsm-manager
 RUN yarn build
 
-
 WORKDIR /usr/src/app/packages_ts/frontend/components/fact-search-ui
-RUN yarn build && \
-    echo "=== Contents of fact-search-ui after build ===" && \
-    ls -la && \
-    echo "=== Contents of fact-search-ui/dist ===" && \
-    ls -la dist/
+RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/3d-graph-ui
-RUN yarn build && \
-    echo "=== Contents of 3d-graph-ui after build ===" && \
-    ls -la && \
-    echo "=== Contents of 3d-graph-ui/dist ===" && \
-    ls -la dist/
+RUN yarn build
 
-
+# Build the main application
 WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
 RUN yarn build
 
+# Production stage
+FROM nginx:alpine
 
-# --------------------------------------
+# Copy nginx config if you need it (commented out for now)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy the built files from build stage to nginx serving directory
+COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/dist /usr/share/nginx/html
 
-FROM node:latest
+# Basic nginx configuration for SPA
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html; \
+        try_files $uri $uri/ /index.html; \
+    } \
+    # Enable gzip compression \
+    gzip on; \
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript; \
+    # Cache static assets \
+    location /assets { \
+        expires 1y; \
+        add_header Cache-Control "public, no-transform"; \
+        root /usr/share/nginx/html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
+EXPOSE 80
 
-WORKDIR /usr/src/app
-
-COPY package.json .
-COPY yarn.lock .
-
-
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.base.json /usr/src/app/packages_ts/config/tsconfig.base.json
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib.json /usr/src/app/packages_ts/config/tsconfig.lib.json
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib-react.json /usr/src/app/packages_ts/config/tsconfig.lib-react.json
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.frontend.json /usr/src/app/packages_ts/config/tsconfig.frontend.json
-
-
-COPY --from=build /usr/src/app/packages_ts/libs/types/package.json ./packages_ts/libs/types/package.json
-COPY --from=build /usr/src/app/packages_ts/libs/types/dist ./packages_ts/libs/types/dist
-
-COPY --from=build /usr/src/app/packages_ts/libs/constants/package.json ./packages_ts/libs/constants/package.json
-COPY --from=build /usr/src/app/packages_ts/libs/constants/dist ./packages_ts/libs/constants/dist
-RUN echo "=== Verifying constants dist in runtime ===" && \
-    ls -la ./packages_ts/libs/constants/dist/
-
-COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/package.json ./packages_ts/core/hsm-manager/package.json
-COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/dist ./packages_ts/core/hsm-manager/dist
-
-
-COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/src ./packages_ts/frontend/components/fact-search-ui/src
-COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/package.json ./packages_ts/frontend/components/fact-search-ui/package.json
-COPY --from=build /usr/src/app/packages_ts/frontend/components/fact-search-ui/dist ./packages_ts/frontend/components/fact-search-ui/dist
-RUN ls -la ./packages_ts/frontend/components/fact-search-ui/dist/
-
-COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/src ./packages_ts/frontend/components/3d-graph-ui/src
-COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/package.json ./packages_ts/frontend/components/3d-graph-ui/package.json
-COPY --from=build /usr/src/app/packages_ts/frontend/components/3d-graph-ui/dist ./packages_ts/frontend/components/3d-graph-ui/dist
-RUN ls -la ./packages_ts/frontend/components/3d-graph-ui/dist/
-
-
-COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/package.json ./packages_ts/frontend/knowledge-integrator/package.json
-COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/src ./packages_ts/frontend/knowledge-integrator/src
-COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/index.html ./packages_ts/frontend/knowledge-integrator/
-COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/vite.config.ts ./packages_ts/frontend/knowledge-integrator/
-
-ENV NODE_ENV development
-
-RUN yarn install
-
-WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
-RUN yarn install --pure-lockfile --non-interactive
-
-COPY --from=build /usr/src/app/node_modules /usr/src/app/node_modules
-COPY --from=build /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules
-
-
-ENV PATH /usr/src/app/packages_ts/frontend/knowledge-integrator/node_modules/.bin:$PATH
-
-EXPOSE 5173
-
-# CMD ["yarn", "dev"]
-# CMD ["yarn", "preview", "--host", "0.0.0.0"]
-CMD ["yarn", "dev", "--host", "0.0.0.0"]
+CMD ["nginx", "-g", "daemon off;"]]
