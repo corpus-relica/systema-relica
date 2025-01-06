@@ -3,18 +3,37 @@
             [io.pedestal.http.route :as route]
             [clj-http.client :as client]
             [rlc.clarity.service :as service]
-            [portal.api :as p]))
+            [portal.api :as p]
+            [ring.middleware.cors :as cors]))
+
+;; Add CORS configuration
+(def cors-config
+  {:allowed-origins ["*"]
+   :allowed-methods [:get :post :put :delete :options]
+   :allowed-headers ["Content-Type" "Authorization"]
+   :exposed-headers []
+   :max-age 3600})
+
+(defn wrap-cors [service-map]
+  (update-in service-map
+             [::http/interceptors]
+             conj
+             (cors/wrap-cors
+              identity
+              :allowed-origins (constantly true) ; Allows all origins
+              :allowed-methods (:allowed-methods cors-config)
+              :allowed-headers (:allowed-headers cors-config)
+              :exposed-headers (:exposed-headers cors-config)
+              :max-age (:max-age cors-config))))
 
 (defonce server (atom nil))
-
-;; (defn start-server [service-map]
-;;   (http/start (http/create-server service-map)))
 
 (defn start [service-map]
   (println "Starting server on port 3002...")
   (tap> "Starting server on port 3002...")
   (try
     (let [server-instance (-> service-map
+                             wrap-cors ; Add CORS wrapper
                              http/create-server
                              http/start)]
       (println "Server configuration:" (select-keys service-map [::http/port ::http/host]))
@@ -26,6 +45,7 @@
       (println "Failed to start server:" (.getMessage e))
       (println "Stack trace:" (ex-data e)))))
 
+;; Rest of your code remains the same...
 (defn stop []
   (println "Stopping server...")
   (when @server
@@ -42,28 +62,18 @@
 
 (defn -main [& args]
   (println "Starting Clarity CLJ service...")
-
-  ;; Start portal with web UI
   (p/open {:port 5555
-           :host "0.0.0.0"  ;; Allow external connections
-           :launcher :web    ;; Ensure web UI is used
-           :window false})   ;; Don't try to open a browser window
+           :host "0.0.0.0"
+           :launcher :web
+           :window false})
   (add-tap #'p/submit)
-
   (restart))
 
 (comment
   (restart)
-
   (start service/service-map)
-
   (stop)
-
   @server
-
-  ;; Add these:
-  (::http/service-fn @server)  ;; Should return a function if server is running
-
+  (::http/service-fn @server)
   (::http/server @server)
-
-  )
+)
