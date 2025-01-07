@@ -39,10 +39,8 @@ COPY packages_clj/clarity /usr/src/app/packages_clj/clarity
 
 WORKDIR /usr/src/app/packages_clj/clarity
 
+# Expose both the application and nREPL ports
 EXPOSE 3002
-EXPOSE 7888  
-# Expose nREPL port
+EXPOSE 7888
 
-# CMD ["clojure", "-M:run"]
-# Use dev profile for development
 CMD ["clojure", "-M:dev"]
