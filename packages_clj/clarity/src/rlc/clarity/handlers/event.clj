@@ -44,7 +44,7 @@
         (response/response events)))
     ))
 
-(defn get [request]
+(defn get-event [request]
   (tap> "FETCHING EVENT")
   (let [uid (get-in request [:path-params :uid])
         token (clojure.core/get request :auth-token)

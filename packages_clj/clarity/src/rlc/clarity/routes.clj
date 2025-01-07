@@ -43,7 +43,7 @@
 
      ["/event/:uid"
       :get (conj protected-interceptors
-                 `event/get)
+                 `event/get-event)
       :route-name :event]
 
      ["/event/:uid/time"

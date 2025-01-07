@@ -1,5 +1,6 @@
 (ns rlc.clarity.service
-  (:require [rlc.clarity.routes :as routes]))
+  (:require [rlc.clarity.routes :as routes]
+            [io.pedestal.http :as http]))
 
 
 (def service-map
