@@ -4,7 +4,7 @@
             [rlc.clarity.handlers.occurrence :as occurrence]
             [rlc.clarity.handlers.state :as state]
             [rlc.clarity.handlers.base :as base]
-            [rlc.clarity.archivist-client :as archivist]
+            [rlc.clarity.io.archivist-api :as api]
             [ring.util.response :as response]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MODEL
@@ -20,7 +20,7 @@
 (defn get-all [request]
   (tap> "GETTING ALL EVENTS, FOO' !!!!!!!")
   (let [token (clojure.core/get request :auth-token)
-        response (archivist/get-classified-facts
+        response (api/get-classified-facts
                   {:uid "1000000395"
                    :recursive false}
                   token)
@@ -50,7 +50,7 @@
         token (clojure.core/get request :auth-token)
         _ (tap> uid)
         _ (tap> token)
-        response (archivist/get-classification-fact uid token)]
+        response (api/get-classification-fact uid token)]
     (if (:error response)
       (response/status 500 {:error "Failed to fetch event data"})
       (let [body (first response)
@@ -69,7 +69,7 @@
 (defn get-time-value [request]
   (let [uid (get-in request [:path-params :uid])
         token (clojure.core/get request :auth-token)
-        result (archivist/execute-query
+        result (api/execute-query
                 (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
                 (fn [facts]
                   (let [time (:rh_object_name (second facts))]
@@ -85,7 +85,7 @@
 (defn get-time [request]
   (let [uid (get-in request [:path-params :uid])
         token (clojure.core/get request :auth-token)]
-    (archivist/execute-query
+    (api/execute-query
      (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
      (fn [facts]
        (tap> "TIME FACTS ------->")
@@ -98,7 +98,7 @@
 (defn get-participants [request]
   (let [uid (get-in request [:path-params :uid])
         token (clojure.core/get request :auth-token)]
-    (archivist/execute-query
+    (api/execute-query
      (str uid " > 5644 > ?10.who")
      (fn [facts]
        (map :rh_object_uid facts))
@@ -129,7 +129,7 @@
 ;;      facts)))
 
 ;; (defn get-participation-fact [lh-object-uid rh-object-uid token]
-;;   (archivist/execute-query
+;;   (api/execute-query
 ;;    (str lh-object-uid " > 5644 > " rh-object-uid)
 ;;    (fn [facts]
 ;;      (tap> "PARTICIPATION FACT")

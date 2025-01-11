@@ -1,6 +1,9 @@
 (ns rlc.clarity.handlers.physical-object
   (:require [clojure.spec.alpha :as s]
+            [rlc.clarity.io.archivist-api :as api]
             [rlc.clarity.handlers.base :as base]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
 (s/def :rlc.clarity.handlers.physical-object/physical-object-kind
   (s/merge
@@ -78,3 +81,21 @@
   (s/explain ::physical-object some-phys-obj-with-state)
 
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; API ;;
+
+(defn delete-object [request]
+  (let [path-params (:path-params request)
+        uid (Integer/parseInt (:uid path-params))
+        token (clojure.core/get request :auth-token)
+        classification-fact (first (api/get-classification-fact uid token))
+        res (api/delete-fact! (:fact_uid classification-fact) token)]
+    (tap> "DELETE OBJECT !!!!!!!!!!!!")
+    (tap> token)
+    (tap> classification-fact)
+    (tap> res)
+    (cond
+      (nil? res) {:status 404
+                  :body {:message "Object not found"}}
+      :else {:status 200
+             :body {:message "Object deleted"}})))

@@ -69,4 +69,47 @@
      ;; ["/event" :post event/create-event :route-name :create-event]
      ;; ["/event/:id" :put event/update-event :route-name :update-event]
      ;; ["/event/:id" :delete event/delete-event :route-name :delete-event"]
+
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; PHYSICAL-OBJECT ;;
+
+     ;; ["/physical-object/:id"
+     ;;  :get (conj protected-interceptors
+     ;;             `physical-object/get-object)
+     ;;  :route-name :physical-object]
+
+     ;; ["/physical-object/:id/composition"
+     ;;  :get (conj protected-interceptors
+     ;;             `physical-object/get-composition)
+     ;;  :route-name :physical-object-composition]
+
+     ;; ["/physical-object/:id/totalities"
+     ;;  :get (conj protected-interceptors
+     ;;             `physical-object/get-totalities)
+     ;;  :route-name :physical-object-totalities]
+
+     ;; ["/physical-object/:id/parts"
+     ;;  :get (conj protected-interceptors
+     ;;             `physical-object/get-parts)
+     ;;  :route-name :physical-object-parts]
+
+     ;; ["/physical-object/:id/adopted-state"
+     ;;  :get (conj protected-interceptors
+     ;;             `physical-object/get-adopted-state)
+     ;;  :route-name :physical-object-adopted-state]
+
+     ;; ["/physical-object"
+     ;;  :post (conj protected-interceptors
+     ;;              `physical-object/create-object)
+     ;;  :route-name :create-physical-object]
+
+     ;; ["/physical-object/:id"
+     ;;  :put (conj protected-interceptors
+     ;;             `physical-object/update-object)
+     ;;  :route-name :update-physical-object]
+
+     ["/physical-object/:uid"
+      :delete (conj protected-interceptors
+                    `physical-object/delete-object)
+      :route-name :delete-physical-object]
+
      }))

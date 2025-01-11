@@ -1,11 +1,11 @@
 (ns rlc.clarity.handlers.entity
- (:require [rlc.clarity.archivist-client :as archivist]))
+ (:require [rlc.clarity.io.archivist-api :as api]))
 
 (defn get-classification
  [request]
  (let [id (get-in request [:path-params :id])
        token (get request :auth-token)
-       definition (archivist/get-definition id token)]
+       definition (api/get-definition id token)]
    {:status 200
     :body definition}))
 
