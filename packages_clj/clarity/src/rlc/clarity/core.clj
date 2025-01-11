@@ -1,6 +1,7 @@
 (ns rlc.clarity.core
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
+            [io.pedestal.interceptor :as interceptor]
             [clj-http.client :as client]
             [rlc.clarity.service :as service]
             [portal.api :as p]
@@ -14,17 +15,37 @@
    :exposed-headers []
    :max-age 3600})
 
+;; (defn wrap-cors [service-map]
+;;   (update-in service-map
+;;              [::http/interceptors]
+;;              conj
+;;              (cors/wrap-cors
+;;               identity
+;;               :allowed-origins (constantly true) ; Allows all origins
+;;               :allowed-methods (:allowed-methods cors-config)
+;;               :allowed-headers (:allowed-headers cors-config)
+;;               :exposed-headers (:exposed-headers cors-config)
+;;               :max-age (:max-age cors-config))))
+
+(def cors-interceptor
+  (interceptor/interceptor
+    {:name ::cors
+     :enter (fn [context]
+              (let [response ((cors/wrap-cors
+                              identity
+                              :allowed-origins (constantly true)
+                              :allowed-methods (:allowed-methods cors-config)
+                              :allowed-headers (:allowed-headers cors-config)
+                              :exposed-headers (:exposed-headers cors-config)
+                              :max-age (:max-age cors-config))
+                             (:request context))]
+                (assoc context :response response)))}))
+
 (defn wrap-cors [service-map]
   (update-in service-map
              [::http/interceptors]
              conj
-             (cors/wrap-cors
-              identity
-              :allowed-origins (constantly true) ; Allows all origins
-              :allowed-methods (:allowed-methods cors-config)
-              :allowed-headers (:allowed-headers cors-config)
-              :exposed-headers (:exposed-headers cors-config)
-              :max-age (:max-age cors-config))))
+             cors-interceptor))
 
 (defonce server (atom nil))
 
@@ -71,8 +92,10 @@
 
 (comment
   (restart)
+
   (start service/service-map)
   (stop)
+
   @server
   (::http/service-fn @server)
   (::http/server @server)
