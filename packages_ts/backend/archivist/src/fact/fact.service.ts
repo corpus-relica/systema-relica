@@ -63,15 +63,27 @@ export class FactService {
     return flattenedFacts;
   };
 
-  getClassified = async (uid: number, recursive: boolean = false) => {
-    if (!recursive) {
-      const result = await this.graphService.execQuery(classified, { uid });
-      if (result.length === 0) return [];
-      return this.graphService.transformResults(result);
-    } else {
+  getClassified = async (
+    uid: number,
+    recursive: boolean = false,
+  ): Promise<ClassifiedResult[]> => {
+    try {
+      // Get direct classifications for the input uid
+      const directResults = await this.graphService.execQuery(classified, {
+        uid,
+      });
+      const directClassified =
+        directResults.length === 0
+          ? []
+          : this.graphService.transformResults(directResults);
+
+      if (!recursive) {
+        return directClassified;
+      }
+
+      // Get classifications for all subtypes
       const subtypes = await this.cacheService.allDescendantsOf(uid);
-      this.logger.log('Subtypes:', subtypes);
-      const facts = await Promise.all(
+      const subtypesFacts = await Promise.all(
         subtypes.map(async (subtype) => {
           const result = await this.graphService.execQuery(classified, {
             uid: subtype,
@@ -80,9 +92,11 @@ export class FactService {
         }),
       );
 
-      const flattenedFacts = facts.flat();
-
-      return flattenedFacts;
+      // Combine direct classifications with subtype classifications
+      return [...directClassified, ...subtypesFacts.flat()];
+    } catch (error) {
+      this.logger.error('Error in getClassified:', error);
+      throw error;
     }
   };
 
