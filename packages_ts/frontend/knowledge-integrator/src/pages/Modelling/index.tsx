@@ -199,7 +199,7 @@ export default function BasicSelect() {
             p: 2,
           }}
         >
-          <XXX
+          <FactTable
             filter={{ type: "should't matter", uid: filter }}
             callback={(res: any) => {
               handleClose(res);
