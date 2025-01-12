@@ -47,7 +47,12 @@ export class FactController {
     @Query('recursive') recursive: string = 'false',
   ) {
     this.logger.log('getClassified', uid, recursive);
-    return this.factService.getClassified(parseInt(uid), recursive === 'true');
+    const result = this.factService.getClassified(
+      parseInt(uid),
+      recursive === 'true',
+    );
+    this.logger.log('getClassified Result', result);
+    return result;
   }
 
   @Get('classificationFact')
