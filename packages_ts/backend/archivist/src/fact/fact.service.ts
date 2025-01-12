@@ -66,7 +66,7 @@ export class FactService {
   getClassified = async (
     uid: number,
     recursive: boolean = false,
-  ): Promise<ClassifiedResult[]> => {
+  ): Promise<any[]> => {
     try {
       // Get direct classifications for the input uid
       const directResults = await this.graphService.execQuery(classified, {
