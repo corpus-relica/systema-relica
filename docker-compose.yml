@@ -141,12 +141,6 @@ services:
     restart: always
     ports:
       - "80:80" # or whatever port you prefer
-    environment:
-      - VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000
-      - VITE_RELICA_DB_API_URL=http://localhost:3000
-      - VITE_RELICA_CC_API_URL=http://localhost:3001
-      - VITE_RELICA_CC_SOCKET_URL=http://localhost:3001
-      - VITE_RELICA_NOUS_SOCKET_URL=http://localhost:8080
     depends_on:
       - archivist
       - clarity-core

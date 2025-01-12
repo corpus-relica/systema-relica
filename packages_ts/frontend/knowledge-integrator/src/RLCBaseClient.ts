@@ -19,11 +19,11 @@ import { Fact } from "./types";
 
 console.log(
   "connectins RLC BASE CLIENT ",
-  import.meta.env.VITE_RELICA_DB_API_URL,
+  import.meta.env.VITE_RELICA_ARCHIVIST_API_URL
 );
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_RELICA_DB_API_URL,
+  baseURL: import.meta.env.VITE_RELICA_ARCHIVIST_API_URL,
 });
 
 export const getSpecializationHierarchy = async (uid: number) => {
@@ -49,7 +49,7 @@ export const getDefinition = async (uid: number) => {
 
 export const uidSearch = async (
   searchTerm: number,
-  collectionUID: string = "",
+  collectionUID: string = ""
 ) => {
   try {
     const response = await axiosInstance.get(UID_SEARCH_ENDPOINT, {
@@ -65,7 +65,7 @@ export const uidSearch = async (
 export const textSearch = async (
   searchTerm: string,
   page: number = 1,
-  pageSize: number = 50,
+  pageSize: number = 50
 ) => {
   const response = await axiosInstance.get(TEXT_SEARCH_ENDPOINT, {
     params: { searchTerm, page, pageSize, collectionUID: "" },
@@ -141,7 +141,7 @@ export const postEntityPrompt = async (uid: number, prompt: string) => {
 export const validateBinaryFact = async (fact: Fact) => {
   const response = await axiosInstance.get(
     SIMPLE_VALIDATE_BINARY_FACT_ENDPOINT,
-    { params: fact },
+    { params: fact }
   );
   return response.data;
 };

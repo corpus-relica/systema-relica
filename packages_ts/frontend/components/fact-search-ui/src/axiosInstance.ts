@@ -17,7 +17,7 @@ import qs from "qs"; // You may need to install the 'qs' library
 // Create a function to initialize the axios instance with a token
 export const createAxiosInstance = (token?: string) => {
   const instance = axios.create({
-    baseURL: import.meta.env.VITE_RELICA_DB_API_URL,
+    baseURL: import.meta.env.VITE_RELICA_ARCHIVIST_API_URL,
   });
 
   instance.interceptors.request.use((config) => {

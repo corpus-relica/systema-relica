@@ -34,6 +34,7 @@ WORKDIR /usr/src/app/packages_ts/core/hsm-manager
 RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/fact-search-ui
+RUN echo "VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000" > .env && \
 RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/3d-graph-ui
@@ -41,6 +42,11 @@ RUN yarn build
 
 # Build the main application
 WORKDIR /usr/src/app/packages_ts/frontend/knowledge-integrator
+RUN echo "VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000" > .env && \
+    echo "VITE_RELICA_DB_API_URL=http://localhost:3000" >> .env && \
+    echo "VITE_RELICA_CC_API_URL=http://localhost:3001" >> .env && \
+    echo "VITE_RELICA_CC_SOCKET_URL=http://localhost:3001" >> .env && \
+    echo "VITE_RELICA_NOUS_SOCKET_URL=http://localhost:8080" >> .env
 RUN yarn build
 
 # Production stage
