@@ -1,51 +1,9 @@
 (ns rlc.clarity.core
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
-            [io.pedestal.interceptor :as interceptor]
             [clj-http.client :as client]
             [rlc.clarity.service :as service]
-            [portal.api :as p]
-            [ring.middleware.cors :as cors]))
-
-;; Add CORS configuration
-(def cors-config
-  {:allowed-origins ["*"]
-   :allowed-methods [:get :post :put :delete :options]
-   :allowed-headers ["Content-Type" "Authorization"]
-   :exposed-headers []
-   :max-age 3600})
-
-;; (defn wrap-cors [service-map]
-;;   (update-in service-map
-;;              [::http/interceptors]
-;;              conj
-;;              (cors/wrap-cors
-;;               identity
-;;               :allowed-origins (constantly true) ; Allows all origins
-;;               :allowed-methods (:allowed-methods cors-config)
-;;               :allowed-headers (:allowed-headers cors-config)
-;;               :exposed-headers (:exposed-headers cors-config)
-;;               :max-age (:max-age cors-config))))
-
-(def cors-interceptor
-  (interceptor/interceptor
-    {:name ::cors
-     :enter (fn [context]
-              (let [response ((cors/wrap-cors
-                              identity
-                              :allowed-origins (constantly true)
-                              :allowed-methods (:allowed-methods cors-config)
-                              :allowed-headers (:allowed-headers cors-config)
-                              :exposed-headers (:exposed-headers cors-config)
-                              :max-age (:max-age cors-config))
-                             (:request context))]
-                (assoc context :response response)))}))
-
-(defn wrap-cors [service-map]
-  (update-in service-map
-             [::http/interceptors]
-             conj
-             cors-interceptor))
+            [portal.api :as p]))
 
 (defonce server (atom nil))
 
@@ -54,7 +12,10 @@
   (tap> "Starting server on port 3002...")
   (try
     (let [server-instance (-> service-map
-                             wrap-cors ; Add CORS wrapper
+                             (assoc ::http/port 3002
+                                    ::http/host "0.0.0.0"
+                                    ::http/allowed-origins {:creds true
+                                                          :allowed-origins (constantly true)})
                              http/create-server
                              http/start)]
       (println "Server configuration:" (select-keys service-map [::http/port ::http/host]))
@@ -66,7 +27,6 @@
       (println "Failed to start server:" (.getMessage e))
       (println "Stack trace:" (ex-data e)))))
 
-;; Rest of your code remains the same...
 (defn stop []
   (println "Stopping server...")
   (when @server
@@ -95,8 +55,6 @@
 
   (start service/service-map)
   (stop)
-
   @server
   (::http/service-fn @server)
-  (::http/server @server)
-)
+  (::http/server @server))

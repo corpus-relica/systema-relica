@@ -96,6 +96,8 @@
     (tap> res)
     (cond
       (nil? res) {:status 404
-                  :body {:message "Object not found"}}
+                  :body {:status :error
+                         :message "Object not found"}}
       :else {:status 200
-             :body {:message "Object deleted"}})))
+             :body {:status :success
+                    :message "Object deleted"}})))

@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 
 COPY package.json .
 COPY yarn.lock .
+
 COPY packages_ts/libs/constants ./packages_ts/libs/constants
 COPY packages_ts/libs/types ./packages_ts/libs/types
 COPY packages_ts/backend/clarity-core ./packages_ts/backend/clarity-core
