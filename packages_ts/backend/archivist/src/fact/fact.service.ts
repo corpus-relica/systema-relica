@@ -70,6 +70,7 @@ export class FactService {
       return this.graphService.transformResults(result);
     } else {
       const subtypes = await this.cacheService.allDescendantsOf(uid);
+      this.logger.log('Subtypes:', subtypes);
       const facts = await Promise.all(
         subtypes.map(async (subtype) => {
           const result = await this.graphService.execQuery(classified, {
