@@ -47,7 +47,7 @@ export class FactController {
     @Query('recursive') recursive: string = 'false',
   ) {
     this.logger.log('getClassified', uid, recursive);
-    const result = this.factService.getClassified(
+    const result = await this.factService.getClassified(
       parseInt(uid),
       recursive === 'true',
     );
