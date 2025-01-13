@@ -3,6 +3,7 @@ import {
   Delete,
   Get,
   Post,
+  Put,
   Query,
   Param,
   Body,
@@ -125,6 +126,11 @@ export class FactController {
   // BEGIN FACT //
   ////////////////
 
+  @Get('/fact')
+  async getFact(@Query('uid') uid: string) {
+    return this.gellishBaseService.getFact(parseInt(uid));
+  }
+
   @Post('/fact')
   async postFact(@Body() body: any) {
     const result = await this.factService.submitBinaryFact(body);
@@ -137,9 +143,10 @@ export class FactController {
     return result;
   }
 
-  @Get('/fact')
-  async getFact(@Query('uid') uid: string) {
-    return this.gellishBaseService.getFact(parseInt(uid));
+  @Put('/fact')
+  async putFact(@Body() body: any) {
+    const result = await this.factService.updateBinaryFact(body);
+    return result;
   }
 
   @Delete('/fact')

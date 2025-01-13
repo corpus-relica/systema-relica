@@ -652,4 +652,53 @@ RETURN r
       return { success: false, message: error.message };
     }
   };
+
+  updateBinaryFact = async (fact) => {
+    try {
+      const { fact_uid, lh_object_uid, rh_object_uid } = fact;
+
+      const result = await this.graphService.execWriteQuery(
+        `MATCH (r:Fact {fact_uid: $fact_uid})
+SET r += $properties
+  RETURN r`,
+        {
+          fact_uid,
+          properties: fact,
+        },
+      );
+
+      if (!result || result.length == 0) {
+        return {
+          success: false,
+          message: 'Execution of updateBinaryFact failed',
+        };
+      }
+
+      const convertedResult = this.graphService.convertNeo4jInts(
+        result[0].toObject().r,
+      );
+      const returnFact = Object.assign(
+        { rel_type_name: fact.rel_type_name },
+        convertedResult.properties,
+      );
+
+      // UPATE CACHE
+      // collect all the uids of the nodes involved in the fact
+      const uids = [returnFact.lh_object_uid, returnFact.rh_object_uid];
+      await Promise.all(
+        uids.map(async (uid) => {
+          await this.cacheService.updateFactsInvolvingEntity(uid);
+        }),
+      );
+      //
+
+      return {
+        success: true,
+        fact: returnFact,
+      };
+    } catch (error: any) {
+      console.error(`Error in updateBinaryFact: ${error.message}`);
+      return { success: false, message: error.message };
+    }
+  };
 }
