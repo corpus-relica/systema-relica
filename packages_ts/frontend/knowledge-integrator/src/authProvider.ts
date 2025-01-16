@@ -1,61 +1,106 @@
 import { AuthProvider, HttpError } from "react-admin";
-import data from "./users.json";
+import axios from "axios";
+
+const apiClient = axios.create({
+  baseURL: "http://localhost:3000",
+});
+
+// Add interceptor to handle 401s globally
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("access_token");
+      return Promise.reject(new HttpError("Session expired", 401));
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const getAuthToken = () => {
-  const token = localStorage.getItem('access_token');
-  console.log('getAuthToken called, token:', token ? 'exists' : 'missing');
+  const token = localStorage.getItem("access_token");
+  console.log("getAuthToken called, token:", token ? "exists" : "missing");
   return token;
 };
 
-/**
- * This authProvider is only for test purposes. Don't use it in production.
- */
 export const authProvider: AuthProvider = {
-  login: async ({ username, password }) => {
-    const response = await fetch('http://localhost:3000/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (!response.ok) {
+  login: async ({
+    username,
+    password,
+  }: {
+    username: string;
+    password: string;
+  }) => {
+    try {
+      const { data } = await apiClient.post("/auth/login", {
+        username,
+        password,
+      });
+      const { access_token } = data;
+      localStorage.setItem("access_token", access_token);
+      return Promise.resolve(data);
+    } catch (error) {
       throw new HttpError("Unauthorized", 401, {
         message: "Invalid username or password",
       });
     }
-
-    const user = await response.json();
-    const { access_token } = user;
-    localStorage.setItem("access_token", access_token);
-    return Promise.resolve(user);
   },
+
   logout: () => {
     localStorage.removeItem("access_token");
     return Promise.resolve();
   },
-  checkError: () => Promise.resolve(),
-  checkAuth: () => {
-    const accessToken = localStorage.getItem("access_token");
-    if (!accessToken) {
+
+  checkError: (error) => {
+    const status = error.status;
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("access_token");
       return Promise.reject();
     }
     return Promise.resolve();
   },
-  getPermissions: () => {
-    return Promise.resolve(undefined);
-  },
-  getIdentity: () => {
-    const accessToken = localStorage.getItem("access_token");
-    if (!accessToken) {
+
+  checkAuth: async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
       return Promise.reject();
     }
-    // TODO: get user from backend
-    return Promise.resolve({
-      id: 'user',
-      fullName: 'User',
-    });
+
+    try {
+      // Validate token with backend
+      await apiClient.post("/auth/validate", null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return Promise.resolve();
+    } catch {
+      localStorage.removeItem("access_token");
+      return Promise.reject();
+    }
+  },
+
+  getIdentity: async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return Promise.reject();
+    }
+
+    try {
+      const { data } = await apiClient.get("/auth/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return {
+        id: data.sub,
+        fullName: data.username,
+        // Add any other user properties you want to expose
+      };
+    } catch {
+      return Promise.reject();
+    }
+  },
+
+  getPermissions: () => {
+    return Promise.resolve(undefined);
   },
 };
 

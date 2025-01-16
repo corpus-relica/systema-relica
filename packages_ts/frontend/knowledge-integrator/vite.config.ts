@@ -6,6 +6,7 @@ export default defineConfig({
   root: "/usr/src/app/packages_ts/frontend/knowledge-integrator",
   plugins: [react()],
   resolve: {
+    preserveSymlinks: true,
     alias: {
       "@relica/fact-search-ui": resolve(
         __dirname,
@@ -34,6 +35,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    include: ["react", "react-dom"],
     exclude: [
       "@relica/fact-search-ui",
       "@relica/constants",

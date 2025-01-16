@@ -5,7 +5,7 @@ const { fetchJson } = fetchUtils;
 
 // Add a function to get the token from localStorage
 
-console.log("Creating axios instance...");
+console.log("Creating axios instance... fool");
 const apiUrl =
   import.meta.env.VITE_RELICA_ARCHIVIST_API_URL || "http://localhost:3000";
 
