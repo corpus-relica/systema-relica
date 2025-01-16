@@ -13,34 +13,36 @@ import {
 import { AuthGuard } from './auth.guard.js';
 import { AuthService } from './auth.service.js';
 import { Public } from './auth.decorator.js';
+import { UnauthorizedException } from '@nestjs/common';
+import { SignInDto } from './auth.dto.js';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
+
   constructor(private authService: AuthService) {}
 
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  signIn(@Body() signInDto: Record<string, any>) {
-    console.log("MUTHERFUCKING SIGNIN DTO", signInDto);
-    return this.authService.signIn(signInDto.username, signInDto.password);
+  signIn(@Body() signInDto: SignInDto) {
+    return this.authService.signIn(signInDto);
   }
 
   @Public()
   @Post('validate')
-  async validate(@Headers() validateDto: Record<string, any>) {
-    const { authorization } = validateDto;
-    const token = authorization.split(' ')[1];
+  async validate(@Headers() headers: Record<string, any>) {
+    const { authorization } = headers;
+    if (!authorization) {
+      throw new UnauthorizedException('No token provided');
+    }
 
-    return true;
-    // try {
-    //   return await this.authService.validate(token);
-    // } catch (e) {
-    //   this.logger.error('Error validating token /////////////////////////');
-    //   this.logger.error(e);
-    //   return e;
-    // }
+    const [type, token] = authorization.split(' ');
+    if (type !== 'Bearer') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+
+    return this.authService.validate(token);
   }
 
   @UseGuards(AuthGuard)
