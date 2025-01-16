@@ -21,7 +21,8 @@ export default (facts: any[], setSubmissionStatus?: any) => ({
     });
 
     return axios.post(
-      "http://localhost:3000" + SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
+      import.meta.env.VITE_RELICA_ARCHIVIST_API_URL +
+        SIMPLE_VALIDATE_BINARY_FACTS_ENDPOINT,
       foo
     );
   },
@@ -48,7 +49,8 @@ export default (facts: any[], setSubmissionStatus?: any) => ({
         };
       });
       const result = axios.post(
-        "http://localhost:3000" + SUBMIT_BINARY_FACTS_ENDPOINT,
+        import.meta.env.VITE_RELICA_ARCHIVIST_API_URL +
+          SUBMIT_BINARY_FACTS_ENDPOINT,
         foo
       );
       console.log("RESULT", result);

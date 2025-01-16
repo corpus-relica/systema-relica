@@ -24,7 +24,10 @@ export default (facts: any[]) => ({
       collection_uid: foo[0].collection_uid,
       collection_name: foo[0].collection_name,
     };
-    return axios.post("http://localhost:3000" + SUBMIT_DATE_ENDPOINT, bar);
+    return axios.post(
+      import.meta.env.VITE_RELICA_ARCHIVIST_API_URL + SUBMIT_DATE_ENDPOINT,
+      bar
+    );
   },
   onSuccess: (data, variables, context) => {
     // const success = data.data.reduce((acc: boolean, result: any) => {

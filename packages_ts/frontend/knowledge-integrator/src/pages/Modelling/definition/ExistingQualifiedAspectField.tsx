@@ -31,7 +31,11 @@ const ExistingQualifiedAspectField = (props: any) => {
       console.log(field);
       if (field.value && field.value.conceptualAspect) {
         const foo = await axios.get(
-          `http://localhost:3000/aspect/qualifications?uid=${field.value.conceptualAspect.lh_object_uid}`
+          `${
+            import.meta.env.VITE_RELICA_ARCHIVIST_API_URL
+          }/aspect/qualifications?uid=${
+            field.value.conceptualAspect.lh_object_uid
+          }`
         );
         console.log(foo);
         if (foo.data && foo.data.length > 0) {

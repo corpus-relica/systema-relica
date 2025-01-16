@@ -36,7 +36,8 @@ const Collection: React.FC<CollectionProps> = ({ uid, collection }) => {
     queryKey: ["collections"],
     queryFn: async () => {
       const res = await fetch(
-        "http://localhost:3000/retrieveEntity/collections"
+        import.meta.env.VITE_RELICA_ARCHIVIST_API_URL +
+          "/retrieveEntity/collections"
       );
       return res.json();
     },
