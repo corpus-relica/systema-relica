@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { updateModelDefinition } from "../../../CCClient";
+import { updateModelDefinition } from "../../../io/CCBaseClient.js";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import CheckIcon from "@mui/icons-material/Check";

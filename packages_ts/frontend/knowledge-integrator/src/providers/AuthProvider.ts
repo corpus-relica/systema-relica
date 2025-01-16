@@ -1,21 +1,5 @@
 import { AuthProvider, HttpError } from "react-admin";
-import axios from "axios";
-
-const apiClient = axios.create({
-  baseURL: "http://localhost:3000",
-});
-
-// Add interceptor to handle 401s globally
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("access_token");
-      return Promise.reject(new HttpError("Session expired", 401));
-    }
-    return Promise.reject(error);
-  }
-);
+import { archivistClient } from "../io/ArchivistBaseClient.js";
 
 export const getAuthToken = () => {
   const token = localStorage.getItem("access_token");
@@ -32,7 +16,7 @@ export const authProvider: AuthProvider = {
     password: string;
   }) => {
     try {
-      const { data } = await apiClient.post("/auth/login", {
+      const { data } = await archivistClient.axiosInstance.post("/auth/login", {
         username,
         password,
       });
@@ -68,9 +52,8 @@ export const authProvider: AuthProvider = {
 
     try {
       // Validate token with backend
-      await apiClient.post("/auth/validate", null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // The token will be automatically injected by the axiosInstance interceptor
+      await archivistClient.axiosInstance.post("/auth/validate");
       return Promise.resolve();
     } catch {
       localStorage.removeItem("access_token");
@@ -85,10 +68,8 @@ export const authProvider: AuthProvider = {
     }
 
     try {
-      const { data } = await apiClient.get("/auth/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      // The token will be automatically injected by the axiosInstance interceptor
+      const { data } = await archivistClient.axiosInstance.get("/auth/profile");
       return {
         id: data.sub,
         fullName: data.username,

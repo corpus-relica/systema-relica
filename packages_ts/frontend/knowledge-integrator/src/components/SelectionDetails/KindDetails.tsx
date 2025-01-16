@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
-import { retrieveKindModel } from "../../CCClient";
+import { retrieveKindModel } from "../../io/CCBaseClient.js";
 import { sockSendCC } from "../../socket";
 
 import Box from "@mui/material/Box";

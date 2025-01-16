@@ -14,12 +14,13 @@ import {
   SIMPLE_VALIDATE_BINARY_FACT_ENDPOINT,
   SUBMIT_BINARY_FACT_ENDPOINT,
 } from "@relica/constants";
+
 import axios, { AxiosInstance } from "axios";
 import { Fact } from "./types";
 
-console.log("Creating apiClient instance... francine");
-class ApiClient {
-  private axiosInstance: AxiosInstance;
+console.log("Creating ArchivistBaseClient instance...");
+class ArchivistBaseClient {
+  axiosInstance: AxiosInstance;
 
   constructor() {
     this.axiosInstance = axios.create({
@@ -28,7 +29,11 @@ class ApiClient {
 
     // Add request interceptor to inject token
     this.axiosInstance.interceptors.request.use((config) => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
+      console.log(
+        "IS THERE A MUTHER FUCKING TOKEN...MY GUESS IS NOT --> ",
+        token
+      );
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -41,7 +46,7 @@ class ApiClient {
       (error) => {
         if (error.response?.status === 401) {
           // Clear token and redirect to login
-          localStorage.removeItem("token");
+          localStorage.removeItem("access_token");
           window.location.href = "/#/login";
           return Promise.reject(
             new Error("Session expired, please login again")
@@ -49,6 +54,11 @@ class ApiClient {
         }
         return Promise.reject(error);
       }
+    );
+
+    console.log(
+      "CONNECTING ARCHIVIST CLIENT",
+      import.meta.env.VITE_RELICA_ARCHIVIST_API_URL
     );
   }
 
@@ -186,37 +196,43 @@ class ApiClient {
 }
 
 // Create and export a singleton instance
-export const apiClient = new ApiClient();
+export const archivistClient = new ArchivistBaseClient();
 
 // You can also export individual methods if you want to keep the same interface
 export const getSpecializationHierarchy = (uid: number) =>
-  apiClient.getSpecializationHierarchy(uid);
-export const getCollections = (uid: number) => apiClient.getCollections(uid);
-export const getDefinition = (uid: number) => apiClient.getDefinition(uid);
+  archivistClient.getSpecializationHierarchy(uid);
+export const getCollections = (uid: number) =>
+  archivistClient.getCollections(uid);
+export const getDefinition = (uid: number) =>
+  archivistClient.getDefinition(uid);
 export const uidSearch = (searchTerm: number, collectionUID: string = "") =>
-  apiClient.uidSearch(searchTerm, collectionUID);
+  archivistClient.uidSearch(searchTerm, collectionUID);
 export const textSearch = (
   searchTerm: string,
   page: number = 1,
   pageSize: number = 50
-) => apiClient.textSearch(searchTerm, page, pageSize);
-export const getEntityType = (uid: number) => apiClient.getEntityType(uid);
+) => archivistClient.textSearch(searchTerm, page, pageSize);
+export const getEntityType = (uid: number) =>
+  archivistClient.getEntityType(uid);
 export const getAllRelatedFacts = (uid: number, n: number = 1) =>
-  apiClient.getAllRelatedFacts(uid, n);
-export const getSubtypes = (uid: number) => apiClient.getSubtypes(uid);
-export const getSubtypesCone = (uid: number) => apiClient.getSubtypesCone(uid);
-export const getClassified = (uid: number) => apiClient.getClassified(uid);
+  archivistClient.getAllRelatedFacts(uid, n);
+export const getSubtypes = (uid: number) => archivistClient.getSubtypes(uid);
+export const getSubtypesCone = (uid: number) =>
+  archivistClient.getSubtypesCone(uid);
+export const getClassified = (uid: number) =>
+  archivistClient.getClassified(uid);
 export const getClassificationFact = (uid: number) =>
-  apiClient.getClassificationFact(uid);
-export const resolveUIDs = (uids: number[]) => apiClient.resolveUIDs(uids);
+  archivistClient.getClassificationFact(uid);
+export const resolveUIDs = (uids: number[]) =>
+  archivistClient.resolveUIDs(uids);
 export const getEntityPrompt = ({ queryKey }: { queryKey: [string, number] }) =>
-  apiClient.getEntityPrompt({ queryKey });
+  archivistClient.getEntityPrompt({ queryKey });
 export const postEntityPrompt = (uid: number, prompt: string) =>
-  apiClient.postEntityPrompt(uid, prompt);
+  archivistClient.postEntityPrompt(uid, prompt);
 export const validateBinaryFact = (fact: Fact) =>
-  apiClient.validateBinaryFact(fact);
+  archivistClient.validateBinaryFact(fact);
 export const submitBinaryFact = (fact: Fact) =>
-  apiClient.submitBinaryFact(fact);
+  archivistClient.submitBinaryFact(fact);
 
-// Export the class as well in case someone needs to create a new instance
-export default ApiClient;
+// // Export the class as well in case someone needs to create a new instance
+// export default ArchivistBaseClient;

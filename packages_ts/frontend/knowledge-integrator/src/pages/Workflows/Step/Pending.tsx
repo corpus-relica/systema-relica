@@ -10,7 +10,7 @@ import {
   finalizeWorkflow,
   popWorkflow,
   setWorkflowValue,
-} from "../../../CCClient";
+} from "../../../io/CCBaseClient.js";
 
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";

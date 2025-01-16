@@ -23,7 +23,7 @@ import {
   getSubtypesCone,
   getClassified,
   getSpecializationHierarchy,
-} from "../../../RLCBaseClient";
+} from "../../../io/ArchivistBaseClient.js";
 
 import { useStores } from "../../../context/RootStoreContext";
 import { Fact } from "../../../types";

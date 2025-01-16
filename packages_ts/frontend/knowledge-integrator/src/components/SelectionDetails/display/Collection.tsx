@@ -6,7 +6,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@tanstack/react-query";
-import { updateModelCollection } from "../../../CCClient";
+import { updateModelCollection } from "../../../io/CCBaseClient.js";
 import Typography from "@mui/material/Typography";
 
 import Grid from "@mui/material/Grid";

@@ -21,7 +21,7 @@ import {
 } from "@relica/constants";
 import { useStore } from "react-admin";
 
-import { conjureDefinition } from "../../../CCClient";
+import { conjureDefinition } from "../../../io/CCBaseClient.js";
 
 import SynonymAbbrvCode from "./SynonymAbbrvCode";
 import MyAspectField from "./MyAspectField";

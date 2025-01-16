@@ -21,7 +21,7 @@ import Modal from "@mui/material/Modal";
 import GraphAndSelectionLayout from "./GraphToo";
 import { Fact } from "../types";
 
-import { getAuthToken } from "../authProvider";
+import { getAuthToken } from "../providers/AuthProvider.js";
 
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";

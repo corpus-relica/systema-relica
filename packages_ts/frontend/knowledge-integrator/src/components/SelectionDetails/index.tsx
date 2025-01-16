@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
-import { getEntityType } from "../../RLCBaseClient";
-import KindDetails from "./KindDetails";
-import IndividualDetails from "./IndividualDetails";
+import { getEntityType } from "../../io/ArchivistBaseClient.js";
+import KindDetails from "./KindDetails.js";
+import IndividualDetails from "./IndividualDetails.js";
 
 const START_INT_UID_RANGE = 5000000000;
 

@@ -4,7 +4,7 @@ import { Field, useFormikContext } from "formik";
 import IconButton from "@mui/material/IconButton";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
-import { conjureDefinition } from "../../../CCClient";
+import { conjureDefinition } from "../../../io/CCBaseClient.js";
 
 import { useStore } from "react-admin";
 

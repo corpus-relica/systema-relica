@@ -17,7 +17,7 @@ import {
   finalizeWorkflow,
   popWorkflow,
   setWorkflowValue,
-} from "../../CCClient";
+} from "../../io/CCBaseClient.js";
 
 import Step from "./Step";
 

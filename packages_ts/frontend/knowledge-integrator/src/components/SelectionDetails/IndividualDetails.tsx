@@ -17,7 +17,7 @@ import Definition from "./display/Definition";
 import WorkflowFactsVisualizer from "../../pages/Workflows/WorkflowFactsVisualizer";
 import Synonyms from "./display/Synonyms";
 
-import { retrieveIndividualModel } from "../../CCClient";
+import { retrieveIndividualModel } from "../../io/CCBaseClient.js";
 
 const IndividualDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");

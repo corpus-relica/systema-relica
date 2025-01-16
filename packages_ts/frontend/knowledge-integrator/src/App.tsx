@@ -20,22 +20,22 @@ import {
 
 import { Route } from "react-router-dom";
 
-import { authProvider } from "./authProvider";
+import { authProvider } from "./providers/AuthProvider.js";
 
-import CCDataProvider from "./data/CCDataProvider";
-import ArchivistDataProvider from "./data/ArchivistDataProvider";
+import CCDataProvider from "./providers/CCDataProvider.js";
+import ArchivistDataProvider from "./providers/ArchivistDataProvider.js";
 
-import { useStores } from "./context/RootStoreContext";
+import { useStores } from "./context/RootStoreContext.js";
 
-import { resolveUIDs } from "./RLCBaseClient";
-import { retrieveEnvironment } from "./CCClient";
+import { resolveUIDs } from "./io/ArchivistBaseClient.js";
+import { retrieveEnvironment } from "./io/CCBaseClient.js";
 
-import { MyLayout } from "./MyLayout";
-import Graph from "./pages/Graph";
-import Settings from "./pages/Settings";
-import Modelling from "./pages/Modelling/";
-import Workflows from "./pages/Workflows";
-import Dashboard from "./Dashboard";
+import { MyLayout } from "./MyLayout.js";
+import Graph from "./pages/Graph.js";
+import Settings from "./pages/Settings.js";
+import Modelling from "./pages/Modelling/index.js";
+import Workflows from "./pages/Workflows/index.js";
+import Dashboard from "./Dashboard.js";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -50,7 +50,10 @@ const dataProvider = new Proxy(defaultDataProvider, {
         return;
       }
       if (resource.startsWith("db/")) {
-        return (ArchivistDataProvider as any)[name](resource.substring(3), params);
+        return (ArchivistDataProvider as any)[name](
+          resource.substring(3),
+          params
+        );
       }
       if (resource.startsWith("env/")) {
         if (name === "getList") {

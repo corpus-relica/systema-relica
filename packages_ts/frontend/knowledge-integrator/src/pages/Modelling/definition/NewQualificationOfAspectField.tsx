@@ -5,7 +5,7 @@ import { Field, useFormikContext } from "formik";
 import Grid from "@mui/material/Grid";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { IconButton } from "@mui/material";
-import { conjureDefinition } from "../../../CCClient";
+import { conjureDefinition } from "../../../io/CCBaseClient.js";
 
 import MyField from "./MyField";
 
