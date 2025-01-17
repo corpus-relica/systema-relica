@@ -1,5 +1,6 @@
 import { AuthProvider, HttpError } from "react-admin";
 import { archivistClient } from "../io/ArchivistBaseClient.js";
+import { sockSendCC } from "../socket.js";
 
 export const getAuthToken = () => {
   const token = localStorage.getItem("access_token");
@@ -22,6 +23,7 @@ export const authProvider: AuthProvider = {
       });
       const { access_token } = data;
       localStorage.setItem("access_token", access_token);
+      sockSendCC("user", "login", { token: access_token });
       return Promise.resolve(data);
     } catch (error) {
       throw new HttpError("Unauthorized", 401, {

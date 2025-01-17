@@ -40,7 +40,7 @@ const Graph = observer(() => {
   const token = getAuthToken();
 
   const selectNode = (id: number) => {
-    sockSendCC("user", "selectEntity", { uid: id, token: token });
+    sockSendCC("user", "selectEntity", { uid: id });
   };
 
   // START MENU
@@ -100,7 +100,6 @@ const Graph = observer(() => {
     const { lh_object_uid } = res;
     sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
       uid: lh_object_uid,
-      token: token,
     });
     selectNode(lh_object_uid);
   };

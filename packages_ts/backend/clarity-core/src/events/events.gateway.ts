@@ -4,6 +4,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   WsResponse,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 // import { from, Observable } from 'rxjs';
 // import { map } from 'rxjs/operators';
@@ -47,6 +48,7 @@ export class EventsGateway {
   }
 
   handleDisconnect(client: Socket) {
+    delete client.data.token;
     this.logger.log(`Client disconnected: ${client.id}`);
     // Optionally broadcast to other clients that a client has left
     this.server.emit('clientLeft', { clientId: client.id });
@@ -58,6 +60,24 @@ export class EventsGateway {
   async handleAddFacts(payload: any) {
     this.logger.log('EMIT:', payload.type);
     this.server.emit(payload.type, payload.payload);
+  }
+
+  // LOGIN/OUT //
+  @SubscribeMessage('user:login')
+  async userLogin(
+    @MessageBody('token') token: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    // console.log('USER LOGIN, USER !!!!!!!!2', client);
+    console.log('USER LOGIN !!!!!!!!!!!!!!1', token);
+    client.data.token = token;
+
+    // const result = await new Promise<any>((resolve, reject) => {
+    //   this.repl.exec(`(selectEntity ${uid})`, resolve);
+    // });
+
+    // return result;
+    // return 0;
   }
 
   // NOUS //
@@ -151,9 +171,12 @@ export class EventsGateway {
   @SubscribeMessage('user:loadSpecializationHierarchy')
   async userLoadSpecializationHierarchy(
     @MessageBody('uid') uid: number,
-    @MessageBody('token') token: string,
+    @ConnectedSocket() client: Socket,
   ): Promise<any> {
-    console.log('suchk my dhick', uid, token);
+    const token = client.data.token;
+
+    console.log('LOAD SPEC H, ', uid, token);
+
     const result = await new Promise<any>((resolve, reject) => {
       this.repl.exec(
         `(loadSpecializationHierarchy ${uid} "${token}")`,
