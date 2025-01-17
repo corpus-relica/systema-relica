@@ -53,7 +53,8 @@ export class EnvironmentController {
   @Get('/loadEntity/:uid')
   async loadEntity(@Param('uid') uid: string) {
     if (typeof uid === 'string') {
-      const result = await this.environmentService.loadEntity(+uid);
+      const token = 'XXX';
+      const result = await this.environmentService.loadEntity(+uid, token);
       return result;
     } else {
       // Handle the case where 'uid' is not a string
@@ -65,7 +66,11 @@ export class EnvironmentController {
   async textSearch(@Param('searchTerm') searchTerm: string) {
     console.log('textSearch', searchTerm);
     if (typeof searchTerm === 'string') {
-      const result = await this.environmentService.textSearch(searchTerm);
+      const token = 'XXX';
+      const result = await this.environmentService.textSearch(
+        searchTerm,
+        token,
+      );
       return result;
     } else {
       // Handle the case where 'searchTerm' is not a string
@@ -81,11 +86,14 @@ export class EnvironmentController {
     @Param('name') name: string,
   ) {
     if (typeof uid === 'string') {
+      const token = 'XXX';
       const result = await this.environmentService.specializeKind(
         +uid,
         supertypeName,
         name,
+        token,
       );
+
       return result;
     } else {
       // Handle the case where 'uid' is not a string
@@ -105,6 +113,7 @@ export class EnvironmentController {
         +uid,
         typeName,
         name,
+        'XXX TOKEN',
       );
       return result;
     } else {
@@ -116,8 +125,10 @@ export class EnvironmentController {
   @Get('loadSpecializationHierarchy/:uid')
   async loadSpecializationHierarchy(@Param('uid') uid: string) {
     if (typeof uid === 'string') {
-      const result =
-        await this.environmentService.getSpecializationHierarchy(+uid);
+      const result = await this.environmentService.getSpecializationHierarchy(
+        +uid,
+        'XXX TOKEN',
+      );
       return result;
     } else {
       // Handle the case where 'uid' is not a string
@@ -128,8 +139,10 @@ export class EnvironmentController {
   @Get('loadSpecialization/:uid')
   async loadSpecialization(@Param('uid') uid: string) {
     if (typeof uid === 'string') {
-      const result =
-        await this.environmentService.getSpecializationFactByUID(+uid);
+      const result = await this.environmentService.getSpecializationFactByUID(
+        +uid,
+        'XXX TOKEN',
+      );
       return result;
     } else {
       throw new HttpException('Invalid UID', 400);
@@ -139,7 +152,10 @@ export class EnvironmentController {
   @Get('loadClassified/:uid')
   async loadClassified(@Param('uid') uid: string) {
     if (typeof uid === 'string') {
-      const result = await this.environmentService.getClassified(+uid);
+      const result = await this.environmentService.getClassified(
+        +uid,
+        'XXX TOKEN',
+      );
       return result;
     } else {
       throw new HttpException('Invalid UID', 400);
@@ -149,8 +165,10 @@ export class EnvironmentController {
   @Get('loadClassification/:uid')
   async loadClassification(@Param('uid') uid: string) {
     if (typeof uid === 'string') {
-      const result =
-        await this.environmentService.getClassificationFactByUID(+uid);
+      const result = await this.environmentService.getClassificationFactByUID(
+        +uid,
+        'XXX TOKEN',
+      );
       return result;
     } else {
       throw new HttpException('Invalid UID', 400);
@@ -160,7 +178,10 @@ export class EnvironmentController {
   @Get('loadAllRelatedFacts/:uid')
   async loadAllRelatedFacts(@Param('uid') uid: string) {
     if (typeof uid === 'string') {
-      const result = await this.environmentService.loadAllRelatedFacts(+uid);
+      const result = await this.environmentService.loadAllRelatedFacts(
+        +uid,
+        'XXX TOKEN',
+      );
       return result;
     } else {
       throw new HttpException('Invalid UID', 400);
@@ -171,7 +192,10 @@ export class EnvironmentController {
   async listSubtypes(@Param('uid') uid: string) {
     console.log('listSubtypes', uid);
     if (!isNaN(Number(uid))) {
-      const result = await this.environmentService.listSubtypes(+uid);
+      const result = await this.environmentService.listSubtypes(
+        +uid,
+        'XXX TOKEN',
+      );
       return result;
     } else {
       throw new HttpException('Invalid UID', 400);

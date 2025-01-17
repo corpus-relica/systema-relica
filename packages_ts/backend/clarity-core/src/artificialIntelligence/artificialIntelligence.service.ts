@@ -17,8 +17,8 @@ export class ArtificialIntelligenceService {
   ) {
     this.logger.log('~~~~~~~~~~~~CONJURE DEFINITION~~~~~~~~~~~~');
 
-    const SH: any =
-      await this.archivistService.getSpecializationHierarchy(supertypeUID);
+    const SH: any = { facts: [] };
+    // await this.archivistService.getSpecializationHierarchy(supertypeUID);
 
     const shStr: string = SH.facts
       .map(

@@ -62,26 +62,26 @@ export class EventsGateway {
 
   // NOUS //
 
-  @SubscribeMessage('nous:selectEntity')
-  async nouseSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('NOUS:SELECT ENTITY', uid);
+  // @SubscribeMessage('nous:selectEntity')
+  // async nouseSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
+  //   console.log('NOUS:SELECT ENTITY', uid);
 
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectEntity ${uid})`, resolve);
-    });
-    // this.server.emit('system:selectEntity', { uid: uid });
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(selectEntity ${uid})`, resolve);
+  //   });
+  //   // this.server.emit('system:selectEntity', { uid: uid });
 
-    return result;
-  }
+  //   return result;
+  // }
 
-  @SubscribeMessage('nous:loadEntity')
-  async nouseLoadEntity(@MessageBody('uid') uid: number): Promise<any> {
-    console.log('NOUS:LOAD ENTITY', uid);
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadEntity ${uid})`, resolve);
-    });
-    return result;
-  }
+  // @SubscribeMessage('nous:loadEntity')
+  // async nouseLoadEntity(@MessageBody('uid') uid: number): Promise<any> {
+  //   console.log('NOUS:LOAD ENTITY', uid);
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(loadEntity ${uid})`, resolve);
+  //   });
+  //   return result;
+  // }
 
   // COMMAND //
 
@@ -113,11 +113,12 @@ export class EventsGateway {
 
   @SubscribeMessage('user:selectEntity')
   async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectEntity ${uid})`, resolve);
-    });
+    // const result = await new Promise<any>((resolve, reject) => {
+    //   this.repl.exec(`(selectEntity ${uid})`, resolve);
+    // });
 
-    return result;
+    // return result;
+    return 0;
   }
 
   @SubscribeMessage('user:selectFact')
@@ -150,9 +151,14 @@ export class EventsGateway {
   @SubscribeMessage('user:loadSpecializationHierarchy')
   async userLoadSpecializationHierarchy(
     @MessageBody('uid') uid: number,
+    @MessageBody('token') token: string,
   ): Promise<any> {
+    console.log('suchk my dhick', uid, token);
     const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadSpecializationHierarchy ${uid})`, resolve);
+      this.repl.exec(
+        `(loadSpecializationHierarchy ${uid} "${token}")`,
+        resolve,
+      );
     });
 
     return result;

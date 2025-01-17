@@ -68,33 +68,58 @@ export class REPLService {
         if (!(arg instanceof MalNumber)) {
           throw new Error('retrieveAllFacts: expected number argument');
         }
-        const res = await this.archivist.retrieveAllFacts(arg.v);
+        const res = await this.archivist.retrieveAllFacts(arg.v, 'XXX TOKEN');
         return jsToMal(res);
       }),
     );
 
     replEnv.set(
       MalSymbol.get('getSpecializationHierarchy'),
-      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
-        if (!(arg instanceof MalNumber)) {
-          throw new Error(
-            'getSpecializationHierarchy: expected number argument',
+      MalFunction.fromBootstrap(
+        async (uid: MalType, token: MalType): Promise<MalType> => {
+          this.logger.warn('getSpecializationHierarchy', uid, token);
+          console.log(uid);
+          console.log(token);
+          console.log('EAT SHIT');
+          if (!(uid instanceof MalNumber)) {
+            throw new Error(
+              'getSpecializationHierarchy: first argument (uid) must be a number',
+            );
+          }
+          if (!(token instanceof MalString)) {
+            throw new Error(
+              'getSpecializationHierarchy: second argument (token) must be a string',
+            );
+          }
+          this.logger.warn('getSpecializationHierarchy', uid.v, token.v);
+          const res = await this.archivist.getSpecializationHierarchy(
+            uid.v,
+            token.v,
           );
-        }
-        const res = await this.archivist.getSpecializationHierarchy(arg.v);
-        return jsToMal(res);
-      }),
+          return jsToMal(res);
+        },
+      ),
     );
 
     replEnv.set(
       MalSymbol.get('modelsFromFacts'),
-      MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
-        if (!(arg instanceof MalVector)) {
-          throw new Error('modelsFromFacts: expected vector argument');
-        }
-        const res = await this.environment.modelsFromFacts(malToJs(arg));
-        return jsToMal(res);
-      }),
+      MalFunction.fromBootstrap(
+        async (arg: MalType, token: MalType): Promise<MalType> => {
+          if (!(arg instanceof MalVector)) {
+            throw new Error('modelsFromFacts: expected vector argument');
+          }
+          if (!(token instanceof MalString)) {
+            throw new Error(
+              'getSpecializationHierarchy: second argument (token) must be a string',
+            );
+          }
+          const res = await this.environment.modelsFromFacts(
+            malToJs(arg),
+            token.v,
+          );
+          return jsToMal(res);
+        },
+      ),
     );
 
     replEnv.set(
@@ -158,7 +183,7 @@ export class REPLService {
         if (!(arg instanceof MalNumber)) {
           throw new Error('loadSubtypesCone: expected number argument');
         }
-        const res = await this.environment.loadSubtypesCone(arg.v);
+        const res = await this.environment.loadSubtypesCone(arg.v, 'XXX TOKEN');
         return jsToMal(res);
       }),
     );
@@ -180,7 +205,7 @@ export class REPLService {
         if (!(arg instanceof MalNumber)) {
           throw new Error('loadEntity: expected number argument');
         }
-        const res = await this.environment.loadEntity(arg.v);
+        const res = await this.environment.loadEntity(arg.v, 'XXX TOKEN');
         return jsToMal(res);
       }),
     );
@@ -195,7 +220,10 @@ export class REPLService {
         let models: any[] = [];
         const entityIds = malToJs(arg);
         for (let i = 0; i < entityIds.length; i++) {
-          const payload = await this.environment.loadEntity(entityIds[i]);
+          const payload = await this.environment.loadEntity(
+            entityIds[i],
+            'XXX TOKEN',
+          );
           facts = facts.concat(payload.facts);
           models = models.concat(payload.models);
         }
@@ -268,10 +296,10 @@ models (modelsFromFacts result)]
     await this.rep(loadAllRelatedFactsDef, replEnv);
 
     const loadSpecializationHierarchyDef = `
-(def! loadSpecializationHierarchy (fn* [uid]
-(let* [result (getSpecializationHierarchy uid)
+(def! loadSpecializationHierarchy (fn* [uid token]
+(let* [result (getSpecializationHierarchy uid token)
 facts  (get result :facts )
-models (modelsFromFacts facts)
+models (modelsFromFacts facts token)
 payload {:facts facts :models models}]
 (do
   (insertFacts facts)
@@ -458,6 +486,7 @@ payload {:facts facts :models models}]
     this._queueProcessing = true;
     while (this._expressionQueue.length > 0) {
       const [str, resolve] = this._expressionQueue.shift();
+      console.log('processing : ', str);
       try {
         if (str) {
           const res = await this.rep(str, this.replEnv);

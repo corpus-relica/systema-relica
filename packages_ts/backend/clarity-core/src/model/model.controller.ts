@@ -26,7 +26,10 @@ export class ModelController {
     } else {
       this.logger.log('~~~~~~~~~~~~KIND~~~~~~~~~~~~');
       this.logger.log(uid);
-      const result = await this.modelService.retrieveKindModel(+uid);
+      const result = await this.modelService.retrieveKindModel(
+        +uid,
+        'XXX TOKEN',
+      );
       this.logger.log(result);
       return result;
     }
@@ -37,7 +40,10 @@ export class ModelController {
     if (uid === undefined) {
       throw new HttpException('No UID provided', 400);
     } else {
-      const result = await this.modelService.retrieveIndividualModel(+uid);
+      const result = await this.modelService.retrieveIndividualModel(
+        +uid,
+        'XXX TOKEN',
+      );
       return result;
     }
   }
@@ -45,7 +51,7 @@ export class ModelController {
   @Get()
   async model(@Query('uid') uid: string, @Query('uids') uids: number[]) {
     if (uid !== undefined) {
-      const result = await this.modelService.retrieveModel(+uid);
+      const result = await this.modelService.retrieveModel(+uid, 'XXX TOKEN');
       return result;
     } else if (uids !== undefined) {
       let parsedUIDs;
@@ -54,7 +60,10 @@ export class ModelController {
       } else if (Array.isArray(uids)) {
         parsedUIDs = uids;
       }
-      const result = await this.modelService.retrieveModels(parsedUIDs);
+      const result = await this.modelService.retrieveModels(
+        parsedUIDs,
+        'XXX TOKEN',
+      );
       return result;
     } else {
       throw new HttpException(

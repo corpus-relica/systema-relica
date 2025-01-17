@@ -37,11 +37,11 @@ const Graph = observer(() => {
   const [searchUIOpen, setSearchUIOpen] = useState(false);
   const [filter, setFilter] = useState<number>(0);
 
-  const selectNode = (id: number) => {
-    sockSendCC("user", "selectEntity", { uid: id });
-  };
-
   const token = getAuthToken();
+
+  const selectNode = (id: number) => {
+    sockSendCC("user", "selectEntity", { uid: id, token: token });
+  };
 
   // START MENU
   const [open, setOpen] = useState(false);
@@ -100,6 +100,7 @@ const Graph = observer(() => {
     const { lh_object_uid } = res;
     sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
       uid: lh_object_uid,
+      token: token,
     });
     selectNode(lh_object_uid);
   };

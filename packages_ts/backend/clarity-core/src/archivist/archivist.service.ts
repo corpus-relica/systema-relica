@@ -35,10 +35,16 @@ export class ArchivistService {
 
   constructor(private httpService: HttpService) {}
 
-  async getSpecializationHierarchy(uid: number) {
+  async getSpecializationHierarchy(uid: number, token: string) {
+    console.log('getSpecializationHierarchy: ', uid, token);
+    this.logger.log('~~~~~~~~~~~~GET SPECIALIZATION HIERARCHY~~~~~~~~~~~~');
+
     const url = `${URL}${SPECIALIZATION_HIERARCHY_ENDPOINT}`;
     const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
+      this.httpService.get(url, {
+        params: { uid },
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     );
     return data;
   }
@@ -91,27 +97,36 @@ export class ArchivistService {
     return data;
   }
 
-  async retrieveAllFacts(uid: number) {
+  async retrieveAllFacts(uid: number, token: string) {
     const url = `${URL}${ALL_RELATED_FACTS_ENDPOINT}`;
     const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
+      this.httpService.get(url, {
+        params: { uid },
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     );
     return data;
   }
 
-  async getCategory(uid: number) {
+  async getCategory(uid: number, token: string) {
     const url = `${URL}${ENTITY_CATEGORY_ENDPOINT}`;
     console.log('\\\\\\\\\\\\\\\\\\ url \\\\\\\\\\\\\\\\\\\\\\\\', url);
     const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
+      this.httpService.get(url, {
+        params: { uid },
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     );
     return data;
   }
 
-  async getDefinitiveFacts(uid: number) {
+  async getDefinitiveFacts(uid: number, token: string) {
     const url = `${URL}${DEFINITIVE_FACTS_ENDPOINT}`;
     const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
+      this.httpService.get(url, {
+        params: { uid },
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     );
     return data;
   }
@@ -119,18 +134,25 @@ export class ArchivistService {
   async getRelatedOnUIDSubtypeCone(
     lh_object_uid: number,
     rel_type_uid: number,
+    token: string,
   ) {
     const url = `${URL}${RELATED_ON_SUBTYPE_CONE_ENDPOINT}`;
     const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { lh_object_uid, rel_type_uid } }),
+      this.httpService.get(url, {
+        params: { lh_object_uid, rel_type_uid },
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     );
     return data;
   }
 
-  async getEntityType(uid: number) {
+  async getEntityType(uid: number, token: string) {
     const url = `${URL}${ENTITY_TYPE_ENDPOINT}`;
     const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
+      this.httpService.get(url, {
+        params: { uid },
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     );
     return data;
   }

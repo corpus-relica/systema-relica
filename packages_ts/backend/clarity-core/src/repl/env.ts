@@ -39,12 +39,12 @@ export class Env {
   get(key: MalSymbol): MalType {
     const env = this.find(key);
     if (!env) {
-      throw new Error(`'${key.v}' not found`);
+      throw new Error(`'${key.v}' not found, nukkha, key: ${key}`);
     }
 
     const v = env.data.get(key);
     if (!v) {
-      throw new Error(`'${key.v}' not found`);
+      throw new Error(`'${key.v}' not found, nigger, key: ${key}`);
     }
 
     return v;
