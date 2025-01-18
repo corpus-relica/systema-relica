@@ -162,3 +162,46 @@ GRANT ALL ON TABLE public.refresh_tokens TO postgres;
 
 -- Sequences
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO postgres;
+
+------------------------------------------------------------------------
+-- User environments table
+CREATE TABLE public.user_environments (
+    id serial PRIMARY KEY,
+    user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    selected_entity_id bigint,  -- As column because frequently accessed
+    selected_entity_type entity_fact_enum,  -- As column because enumerated type
+    facts jsonb DEFAULT '[]'::jsonb,  -- As JSONB because variable collection
+    models jsonb DEFAULT '[]'::jsonb,  -- As JSONB because variable collection
+    lisp_env jsonb,  -- As JSONB because complex state
+    last_accessed timestamp DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_user_environment UNIQUE (user_id)
+);
+
+-- Add indexes for common queries
+CREATE INDEX idx_user_environments_user_id ON public.user_environments(user_id);
+CREATE INDEX idx_user_environments_last_accessed ON public.user_environments(last_accessed);
+
+-- Index for JSON querying if needed
+CREATE INDEX idx_user_environments_facts ON public.user_environments USING gin (facts jsonb_path_ops);
+CREATE INDEX idx_user_environments_models ON public.user_environments USING gin (models jsonb_path_ops);
+
+-- Permissions
+ALTER TABLE public.user_environments OWNER TO postgres;
+GRANT ALL ON TABLE public.user_environments TO postgres;
+
+-- Update trigger for updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_user_environments_updated_at
+    BEFORE UPDATE ON user_environments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+------------------------------------------------------------------------

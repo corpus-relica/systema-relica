@@ -10,6 +10,7 @@ import {
   Logger,
   Res,
   HttpException,
+  Headers,
 } from '@nestjs/common';
 import { ModelService } from './model.service.js';
 
@@ -20,38 +21,51 @@ export class ModelController {
   constructor(private readonly modelService: ModelService) {}
 
   @Get('/kind')
-  async kind(@Query('uid') uid: string) {
+  async kind(
+    @Headers('authorization') authHeader: string,
+    @Query('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (uid === undefined) {
       throw new HttpException('No UID provided', 400);
     } else {
-      this.logger.log('~~~~~~~~~~~~KIND~~~~~~~~~~~~');
-      this.logger.log(uid);
-      const result = await this.modelService.retrieveKindModel(
-        +uid,
-        'XXX TOKEN',
-      );
-      this.logger.log(result);
+      // this.logger.log('~~~~~~~~~~~~MODEL CONNTROLER /KIND~~~~~~~~~~~~');
+      // this.logger.log(uid);
+      const result = await this.modelService.retrieveKindModel(+uid, token);
+      // this.logger.log(result);
       return result;
     }
   }
 
   @Get('/individual')
-  async individual(@Query('uid') uid: string) {
+  async individual(
+    @Headers('authorization') authHeader: string,
+    @Query('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (uid === undefined) {
       throw new HttpException('No UID provided', 400);
     } else {
       const result = await this.modelService.retrieveIndividualModel(
         +uid,
-        'XXX TOKEN',
+        token,
       );
       return result;
     }
   }
 
   @Get()
-  async model(@Query('uid') uid: string, @Query('uids') uids: number[]) {
+  async model(
+    @Headers('authorization') authHeader: string,
+    @Query('uid') uid: string,
+    @Query('uids') uids: number[],
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (uid !== undefined) {
-      const result = await this.modelService.retrieveModel(+uid, 'XXX TOKEN');
+      const result = await this.modelService.retrieveModel(+uid, token);
       return result;
     } else if (uids !== undefined) {
       let parsedUIDs;
@@ -60,10 +74,7 @@ export class ModelController {
       } else if (Array.isArray(uids)) {
         parsedUIDs = uids;
       }
-      const result = await this.modelService.retrieveModels(
-        parsedUIDs,
-        'XXX TOKEN',
-      );
+      const result = await this.modelService.retrieveModels(parsedUIDs, token);
       return result;
     } else {
       throw new HttpException(

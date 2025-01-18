@@ -27,6 +27,9 @@ import { AppState } from './state/appState.entity.js';
 import { ModellingModule } from './modelling/modelling.module.js';
 import { ModellingSession } from './modelling/modellingSession.entity.js';
 
+import { UserEnvironment } from './environment/user-environment.entity.js';
+import { User } from './environment/user.entity.js';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -46,6 +49,8 @@ import { ModellingSession } from './modelling/modellingSession.entity.js';
         EnvSelectedEntity,
         AppState,
         ModellingSession,
+        UserEnvironment,
+        User,
       ],
     }),
     EventsModule,

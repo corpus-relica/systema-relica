@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { EnvFact } from './envFact.entity.js';
 import { EnvModel } from './envModel.entity.js';
 import { EnvSelectedEntity } from './envSelectedEntity.entity.js';
+import { UserEnvironment } from './user-environment.entity.js';
 import { Fact } from '@relica/types';
 import { EntityFactEnum } from './envSelectedEntity.entity.js';
 import { ModelService } from '../model/model.service.js';
@@ -13,6 +14,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class EnvironmentService {
   private readonly logger = new Logger(EnvironmentService.name);
+  // private userEnvironments: Map<string, REPLEnvironment> = new Map();
 
   constructor(
     @InjectRepository(EnvFact)
@@ -21,10 +23,42 @@ export class EnvironmentService {
     private readonly envModelRepository: Repository<EnvModel>,
     @InjectRepository(EnvSelectedEntity)
     private readonly envSelectedEntityRepository: Repository<EnvSelectedEntity>,
+    @InjectRepository(UserEnvironment)
+    private readonly userEnvRepository: Repository<UserEnvironment>,
+
     private readonly modelService: ModelService,
     private readonly archivistService: ArchivistService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  // async getUserEnvironment(userId: string) {
+  //   // Try memory first
+  //   let replEnv = this.userEnvironments.get(userId);
+
+  //   if (!replEnv) {
+  //     // Load from database
+  //     let userEnv = await this.userEnvRepository.findOne({ where: { userId } });
+
+  //     if (!userEnv) {
+  //       // Create new environment
+  //       userEnv = await this.initializeUserEnvironment(userId);
+  //     }
+
+  //     // Initialize REPL environment
+  //     replEnv = await this.replService.createEnvironment();
+  //     // Restore saved state
+  //     if (userEnv.lispEnvironment) {
+  //       await this.replService.restoreEnvironment(
+  //         replEnv,
+  //         userEnv.lispEnvironment,
+  //       );
+  //     }
+
+  //     this.userEnvironments.set(userId, replEnv);
+  //   }
+
+  //   return replEnv;
+  // }
 
   async modelsFromFacts(facts: Fact[], token: string) {
     const entityUIDs = facts.reduce((acc: number[], fact: Fact) => {

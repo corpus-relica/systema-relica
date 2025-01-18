@@ -2,12 +2,10 @@ import {
   Controller,
   Get,
   Query,
-  Inject,
   Param,
   Logger,
-  Res,
   HttpException,
-  forwardRef,
+  Headers,
 } from '@nestjs/common';
 import { EnvironmentService } from './environment.service.js';
 // import { REPLService } from '../repl/repl.service.js';
@@ -51,9 +49,13 @@ export class EnvironmentController {
   }
 
   @Get('/loadEntity/:uid')
-  async loadEntity(@Param('uid') uid: string) {
+  async loadEntity(
+    @Headers('authorization') authHeader: string,
+    @Param('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
-      const token = 'XXX';
       const result = await this.environmentService.loadEntity(+uid, token);
       return result;
     } else {
@@ -63,10 +65,14 @@ export class EnvironmentController {
   }
 
   @Get('textSearch/:searchTerm')
-  async textSearch(@Param('searchTerm') searchTerm: string) {
+  async textSearch(
+    @Headers('authorization') authHeader: string,
+    @Param('searchTerm') searchTerm: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     console.log('textSearch', searchTerm);
     if (typeof searchTerm === 'string') {
-      const token = 'XXX';
       const result = await this.environmentService.textSearch(
         searchTerm,
         token,
@@ -81,12 +87,14 @@ export class EnvironmentController {
   // TODO: maybe change this to a POST request
   @Get('/specializeKind/:uid/:supertypeName/:name')
   async specializeKind(
+    @Headers('authorization') authHeader: string,
     @Param('uid') uid: string,
     @Param('supertypeName') supertypeName: string,
     @Param('name') name: string,
   ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
-      const token = 'XXX';
       const result = await this.environmentService.specializeKind(
         +uid,
         supertypeName,
@@ -104,16 +112,19 @@ export class EnvironmentController {
   // TODO: maybe change this to a POST request
   @Get('/classifyEntity/:uid/:name/:typeName')
   async classifyEntity(
+    @Headers('authorization') authHeader: string,
     @Param('uid') uid: string,
     @Param('name') name: string,
     @Param('typeName') typeName: string,
   ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
       const result = await this.environmentService.classifyIndividual(
         +uid,
         typeName,
         name,
-        'XXX TOKEN',
+        token,
       );
       return result;
     } else {
@@ -123,11 +134,16 @@ export class EnvironmentController {
   }
 
   @Get('loadSpecializationHierarchy/:uid')
-  async loadSpecializationHierarchy(@Param('uid') uid: string) {
+  async loadSpecializationHierarchy(
+    @Headers('authorization') authHeader: string,
+    @Param('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
       const result = await this.environmentService.getSpecializationHierarchy(
         +uid,
-        'XXX TOKEN',
+        token,
       );
       return result;
     } else {
@@ -137,11 +153,16 @@ export class EnvironmentController {
   }
 
   @Get('loadSpecialization/:uid')
-  async loadSpecialization(@Param('uid') uid: string) {
+  async loadSpecialization(
+    @Headers('authorization') authHeader: string,
+    @Param('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
       const result = await this.environmentService.getSpecializationFactByUID(
         +uid,
-        'XXX TOKEN',
+        token,
       );
       return result;
     } else {
@@ -150,12 +171,14 @@ export class EnvironmentController {
   }
 
   @Get('loadClassified/:uid')
-  async loadClassified(@Param('uid') uid: string) {
+  async loadClassified(
+    @Headers('authorization') authHeader: string,
+    @Param('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
-      const result = await this.environmentService.getClassified(
-        +uid,
-        'XXX TOKEN',
-      );
+      const result = await this.environmentService.getClassified(+uid, token);
       return result;
     } else {
       throw new HttpException('Invalid UID', 400);
@@ -163,11 +186,16 @@ export class EnvironmentController {
   }
 
   @Get('loadClassification/:uid')
-  async loadClassification(@Param('uid') uid: string) {
+  async loadClassification(
+    @Headers('authorization') authHeader: string,
+    @Param('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
       const result = await this.environmentService.getClassificationFactByUID(
         +uid,
-        'XXX TOKEN',
+        token,
       );
       return result;
     } else {
@@ -176,11 +204,16 @@ export class EnvironmentController {
   }
 
   @Get('loadAllRelatedFacts/:uid')
-  async loadAllRelatedFacts(@Param('uid') uid: string) {
+  async loadAllRelatedFacts(
+    @Headers('authorization') authHeader: string,
+    @Param('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     if (typeof uid === 'string') {
       const result = await this.environmentService.loadAllRelatedFacts(
         +uid,
-        'XXX TOKEN',
+        token,
       );
       return result;
     } else {
@@ -189,13 +222,15 @@ export class EnvironmentController {
   }
 
   @Get('listSubtypes/:uid')
-  async listSubtypes(@Param('uid') uid: string) {
+  async listSubtypes(
+    @Headers('authorization') authHeader: string,
+    @Param('uid') uid: string,
+  ) {
+    const token = authHeader?.split(' ')[1];
+
     console.log('listSubtypes', uid);
     if (!isNaN(Number(uid))) {
-      const result = await this.environmentService.listSubtypes(
-        +uid,
-        'XXX TOKEN',
-      );
+      const result = await this.environmentService.listSubtypes(+uid, token);
       return result;
     } else {
       throw new HttpException('Invalid UID', 400);

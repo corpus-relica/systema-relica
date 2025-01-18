@@ -17,6 +17,11 @@ import { REPLService } from '../repl/repl.service.js';
 
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
+const decodeToken = (token: string) => {
+  const [_header, payload, _signature] = token.split('.');
+  return JSON.parse(Buffer.from(payload, 'base64url').toString());
+};
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -68,16 +73,22 @@ export class EventsGateway {
     @MessageBody('token') token: string,
     @ConnectedSocket() client: Socket,
   ) {
-    // console.log('USER LOGIN, USER !!!!!!!!2', client);
-    console.log('USER LOGIN !!!!!!!!!!!!!!1', token);
+    const decoded = decodeToken(token);
+    const userID = decoded.sub;
+
+    this.logger.log('USER LOGIN !!!!!!!!!!!!!!', token);
+    console.log('USER WHO IS LOGGED IN: ', userID);
+
+    // const env = await this.environmentService.getUserEnvironment(userId);
+
+    // client.data.environment = env;
+    client.data.userId = userID;
     client.data.token = token;
 
-    // const result = await new Promise<any>((resolve, reject) => {
-    //   this.repl.exec(`(selectEntity ${uid})`, resolve);
-    // });
+    const r = await this.repl.getUserRepl(userID, token);
 
-    // return result;
-    // return 0;
+    console.log('USER REPL CREATED');
+    console.log(r);
   }
 
   // NOUS //
@@ -116,280 +127,271 @@ export class EventsGateway {
   // }
 
   // CLIENT(knowledge-integrator) REPL
-  @SubscribeMessage('repl:eval')
-  async replEval(@MessageBody('command') command: string): Promise<string> {
-    this.logger.log('REPL:EVAL');
-    this.logger.log(command);
+  // @SubscribeMessage('repl:eval')
+  // async replEval(@MessageBody('command') command: string): Promise<string> {
+  //   this.logger.log('REPL:EVAL');
+  //   this.logger.log(command);
 
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(command, resolve);
-    });
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(command, resolve);
+  //   });
 
-    console.log('REPL:EVAL RESULT', result);
-    return result;
-  }
+  //   console.log('REPL:EVAL RESULT', result);
+  //   return result;
+  // }
 
-  // LEGACY //
+  // // LEGACY //
 
-  @SubscribeMessage('user:selectEntity')
-  async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
-    // const result = await new Promise<any>((resolve, reject) => {
-    //   this.repl.exec(`(selectEntity ${uid})`, resolve);
-    // });
+  // @SubscribeMessage('user:selectEntity')
+  // async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(selectEntity ${uid})`, resolve);
+  //   });
 
-    // return result;
-    return 0;
-  }
+  //   return result;
+  // }
 
-  @SubscribeMessage('user:selectFact')
-  async userSelectFact(@MessageBody('uid') uid: any): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectFact ${uid})`, resolve);
-    });
+  // @SubscribeMessage('user:selectFact')
+  // async userSelectFact(@MessageBody('uid') uid: any): Promise<number> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(selectFact ${uid})`, resolve);
+  //   });
 
-    return result;
-  }
+  //   return result;
+  // }
 
-  @SubscribeMessage('user:selectNone')
-  async userSelectNone(): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectNone)`, resolve);
-    });
+  // @SubscribeMessage('user:selectNone')
+  // async userSelectNone(): Promise<number> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(selectNone)`, resolve);
+  //   });
 
-    return result;
-  }
+  //   return result;
+  // }
 
-  @SubscribeMessage('user:loadSubtypesCone')
-  async userGetSubtypesCone(@MessageBody('uid') uid: any): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadSubtypesCone ${uid})`, resolve);
-    });
+  // @SubscribeMessage('user:loadSubtypesCone')
+  // async userGetSubtypesCone(@MessageBody('uid') uid: any): Promise<number> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(loadSubtypesCone ${uid})`, resolve);
+  //   });
 
-    return result;
-  }
+  //   return result;
+  // }
 
-  @SubscribeMessage('user:loadSpecializationHierarchy')
-  async userLoadSpecializationHierarchy(
-    @MessageBody('uid') uid: number,
-    @ConnectedSocket() client: Socket,
-  ): Promise<any> {
-    const token = client.data.token;
+  // @SubscribeMessage('user:loadSpecializationHierarchy')
+  // async userLoadSpecializationHierarchy(
+  //   @MessageBody('uid') uid: number,
+  // ): Promise<any> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(loadSpecializationHierarchy ${uid})`, resolve);
+  //   });
 
-    console.log('LOAD SPEC H, ', uid, token);
+  //   return result;
+  // }
 
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(
-        `(loadSpecializationHierarchy ${uid} "${token}")`,
-        resolve,
-      );
-    });
+  // @SubscribeMessage('user:loadEntity')
+  // async userLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(loadEntity ${uid})`, resolve);
+  //   });
+  //   return result;
+  // }
 
-    return result;
-  }
+  // @SubscribeMessage('user:loadEntities')
+  // async userLoadEntities(@MessageBody('uids') uids: number[]): Promise<any> {
+  //   const loadUidsStr = uids.join(' ');
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(loadEntities [${loadUidsStr}])`, resolve);
+  //   });
+  //   return result;
+  // }
 
-  @SubscribeMessage('user:loadEntity')
-  async userLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadEntity ${uid})`, resolve);
-    });
-    return result;
-  }
+  // @SubscribeMessage('user:unloadEntity')
+  // async userUnloadEntity(@MessageBody('uid') uid: number): Promise<number> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(unloadEntity ${uid})`, resolve);
+  //   });
+  //   return result;
+  // }
 
-  @SubscribeMessage('user:loadEntities')
-  async userLoadEntities(@MessageBody('uids') uids: number[]): Promise<any> {
-    const loadUidsStr = uids.join(' ');
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadEntities [${loadUidsStr}])`, resolve);
-    });
-    return result;
-  }
+  // @SubscribeMessage('user:unloadEntities')
+  // async userUnloadEntities(
+  //   @MessageBody('uids') uids: number[],
+  // ): Promise<number[]> {
+  //   const loadUidsStr = uids.join(' ');
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(unloadEntities [${loadUidsStr}])`, resolve);
+  //   });
+  //   return result;
+  // }
 
-  @SubscribeMessage('user:unloadEntity')
-  async userUnloadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(unloadEntity ${uid})`, resolve);
-    });
-    return result;
-  }
+  // @SubscribeMessage('user:clearEntities')
+  // async userClearEntities(): Promise<void> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(clearEntities)`, resolve);
+  //   });
+  //   return;
+  // }
 
-  @SubscribeMessage('user:unloadEntities')
-  async userUnloadEntities(
-    @MessageBody('uids') uids: number[],
-  ): Promise<number[]> {
-    const loadUidsStr = uids.join(' ');
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(unloadEntities [${loadUidsStr}])`, resolve);
-    });
-    return result;
-  }
+  // @SubscribeMessage('user:deleteEntity')
+  // async userDeleteEntity(@MessageBody('uid') uid: number): Promise<number> {
+  //   console.log('DELETE ENTITY');
+  //   console.log(uid);
+  //   const result = await this.archivistService.deleteEntity(uid);
+  //   // if result is success
+  //   console.log('DELETE ENTITY RESULT', result);
+  //   const removedFactUids = await this.environmentService.unloadEntity(uid);
+  //   // console.log("Entity deleted");
 
-  @SubscribeMessage('user:clearEntities')
-  async userClearEntities(): Promise<void> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(clearEntities)`, resolve);
-    });
-    return;
-  }
+  //   this.server.emit('system:remFacts', { fact_uids: removedFactUids });
+  //   return uid;
+  // }
 
-  @SubscribeMessage('user:deleteEntity')
-  async userDeleteEntity(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('DELETE ENTITY');
-    console.log(uid);
-    const result = await this.archivistService.deleteEntity(uid);
-    // if result is success
-    console.log('DELETE ENTITY RESULT', result);
-    const removedFactUids = await this.environmentService.unloadEntity(uid);
-    // console.log("Entity deleted");
+  // @SubscribeMessage('user:deleteFact')
+  // async userDeleteFact(@MessageBody('uid') uid: number): Promise<number> {
+  //   console.log('DELETE FACT');
+  //   console.log(uid);
 
-    this.server.emit('system:remFacts', { fact_uids: removedFactUids });
-    return uid;
-  }
+  //   const result = await this.archivistService.deleteFact(uid);
+  //   //if result is success
+  //   console.log('DELETE FACT RESULT', result);
+  //   this.environmentService.removeFact(uid);
+  //   // console.log("Fact deleted");
 
-  @SubscribeMessage('user:deleteFact')
-  async userDeleteFact(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('DELETE FACT');
-    console.log(uid);
+  //   this.server.emit('system:remFacts', { fact_uids: [uid] });
+  //   return uid;
+  // }
 
-    const result = await this.archivistService.deleteFact(uid);
-    //if result is success
-    console.log('DELETE FACT RESULT', result);
-    this.environmentService.removeFact(uid);
-    // console.log("Fact deleted");
+  // // @SubscribeMessage('user:unloadSubtypesCone')
+  // // async userRemoveEntitySubtypesRecursive(
+  // //   @MessageBody('uid') uid: number,
+  // // ): Promise<number> {
+  // //   console.log('REMOVE ENTITY SUBTYPES RECURSIVE');
+  // //   console.log(uid);
+  // //   console.log('>// REMOVE ENTITY DESCENDANTS');
+  // //   const env = await this.environmentService.retrieveEnvironment();
+  // //   const facts = env.facts;
+  // //   let factsToRemove: Fact[] = [];
+  // //   let remainingFacts: Fact[] = [];
+  // //   facts.forEach((fact: Fact) => {
+  // //     if (/* fact.lh_object_uid === uid || */ fact.rh_object_uid === uid) {
+  // //       factsToRemove.push(fact);
+  // //     } else {
+  // //       remainingFacts.push(fact);
+  // //     }
+  // //   });
+  // //   let factUIDsToRemove: number[] = [];
+  // //   let candidateModelUIDsToRemove: Set<number> = new Set();
+  // //   factsToRemove.forEach((fact: Fact) => {
+  // //     factUIDsToRemove.push(fact.fact_uid);
+  // //     candidateModelUIDsToRemove.add(fact.lh_object_uid);
+  // //     candidateModelUIDsToRemove.add(fact.rh_object_uid);
+  // //   });
+  // //   remainingFacts.forEach((fact: Fact) => {
+  // //     if (candidateModelUIDsToRemove.has(fact.lh_object_uid)) {
+  // //       candidateModelUIDsToRemove.delete(fact.lh_object_uid);
+  // //     }
+  // //     if (candidateModelUIDsToRemove.has(fact.rh_object_uid)) {
+  // //       candidateModelUIDsToRemove.delete(fact.rh_object_uid);
+  // //     }
+  // //   });
+  // //   this.environmentService.removeFacts(factUIDsToRemove);
+  // //   // TODO: i don't think all the models needing to be removed are being removed
+  // //   this.environmentService.removeModels(
+  // //     Array.from(candidateModelUIDsToRemove),
+  // //   );
+  // //   // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
+  // //   const subtypingFacts = factsToRemove.filter(
+  // //     (fact: Fact) => fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
+  // //   );
+  // //   console.log('SUBTYPING FACTS: ', subtypingFacts);
+  // //   subtypingFacts.forEach((fact: Fact) => {
+  // //     console.log('>>> RECURSE ON: ', fact.lh_object_uid);
+  // //     this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
+  // //   });
 
-    this.server.emit('system:remFacts', { fact_uids: [uid] });
-    return uid;
-  }
+  // //   return uid;
+  // // }
 
   // @SubscribeMessage('user:unloadSubtypesCone')
   // async userRemoveEntitySubtypesRecursive(
   //   @MessageBody('uid') uid: number,
   // ): Promise<number> {
   //   console.log('REMOVE ENTITY SUBTYPES RECURSIVE');
-  //   console.log(uid);
+  //   console.log('UID:', uid);
   //   console.log('>// REMOVE ENTITY DESCENDANTS');
-  //   const env = await this.environmentService.retrieveEnvironment();
-  //   const facts = env.facts;
-  //   let factsToRemove: Fact[] = [];
-  //   let remainingFacts: Fact[] = [];
-  //   facts.forEach((fact: Fact) => {
-  //     if (/* fact.lh_object_uid === uid || */ fact.rh_object_uid === uid) {
-  //       factsToRemove.push(fact);
-  //     } else {
-  //       remainingFacts.push(fact);
-  //     }
-  //   });
-  //   let factUIDsToRemove: number[] = [];
-  //   let candidateModelUIDsToRemove: Set<number> = new Set();
-  //   factsToRemove.forEach((fact: Fact) => {
-  //     factUIDsToRemove.push(fact.fact_uid);
-  //     candidateModelUIDsToRemove.add(fact.lh_object_uid);
-  //     candidateModelUIDsToRemove.add(fact.rh_object_uid);
-  //   });
-  //   remainingFacts.forEach((fact: Fact) => {
-  //     if (candidateModelUIDsToRemove.has(fact.lh_object_uid)) {
-  //       candidateModelUIDsToRemove.delete(fact.lh_object_uid);
-  //     }
-  //     if (candidateModelUIDsToRemove.has(fact.rh_object_uid)) {
-  //       candidateModelUIDsToRemove.delete(fact.rh_object_uid);
-  //     }
-  //   });
-  //   this.environmentService.removeFacts(factUIDsToRemove);
-  //   // TODO: i don't think all the models needing to be removed are being removed
-  //   this.environmentService.removeModels(
-  //     Array.from(candidateModelUIDsToRemove),
-  //   );
-  //   // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
-  //   const subtypingFacts = factsToRemove.filter(
-  //     (fact: Fact) => fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
-  //   );
-  //   console.log('SUBTYPING FACTS: ', subtypingFacts);
-  //   subtypingFacts.forEach((fact: Fact) => {
-  //     console.log('>>> RECURSE ON: ', fact.lh_object_uid);
-  //     this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
-  //   });
 
-  //   return uid;
+  //   try {
+  //     const env = await this.environmentService.retrieveEnvironment();
+  //     const facts = env.facts;
+  //     let factsToRemove: Fact[] = [];
+  //     let remainingFacts: Fact[] = [];
+
+  //     facts.forEach((fact: Fact) => {
+  //       if (/*fact.lh_object_uid === uid ||*/ fact.rh_object_uid === uid) {
+  //         factsToRemove.push(fact);
+  //       } else {
+  //         remainingFacts.push(fact);
+  //       }
+  //     });
+
+  //     console.log('Facts to remove:', factsToRemove.length);
+  //     console.log('Remaining facts:', remainingFacts.length);
+
+  //     let factUIDsToRemove: number[] = [];
+  //     let lhModelUIDsToRemove: Set<number> = new Set();
+  //     let rhModelUIDsToRemove: Set<number> = new Set();
+
+  //     factsToRemove.forEach((fact: Fact) => {
+  //       factUIDsToRemove.push(fact.fact_uid);
+  //       lhModelUIDsToRemove.add(fact.lh_object_uid);
+  //       rhModelUIDsToRemove.add(fact.rh_object_uid);
+  //     });
+
+  //     remainingFacts.forEach((fact: Fact) => {
+  //       lhModelUIDsToRemove.delete(fact.lh_object_uid);
+  //       lhModelUIDsToRemove.delete(fact.rh_object_uid);
+  //       rhModelUIDsToRemove.delete(fact.lh_object_uid);
+  //       rhModelUIDsToRemove.delete(fact.rh_object_uid);
+  //     });
+
+  //     const modelsToRemove = new Set([
+  //       ...lhModelUIDsToRemove,
+  //       ...rhModelUIDsToRemove,
+  //     ]);
+  //     console.log('Models to remove:', modelsToRemove.size);
+
+  //     await this.environmentService.removeFacts(factUIDsToRemove);
+  //     await this.environmentService.removeModels(Array.from(modelsToRemove));
+
+  //     // Uncomment if needed:
+  //     // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
+
+  //     const subtypingFacts = factsToRemove.filter(
+  //       (fact: Fact) =>
+  //         fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
+  //     );
+  //     console.log('SUBTYPING FACTS: ', subtypingFacts.length);
+
+  //     await Promise.all(
+  //       subtypingFacts.map(async (fact: Fact) => {
+  //         console.log('>>> RECURSE ON: ', fact.lh_object_uid);
+  //         await this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
+  //       }),
+  //     );
+
+  //     return uid;
+  //   } catch (error) {
+  //     console.error('Error in userRemoveEntitySubtypesRecursive:', error);
+  //     throw error;
+  //   }
   // }
 
-  @SubscribeMessage('user:unloadSubtypesCone')
-  async userRemoveEntitySubtypesRecursive(
-    @MessageBody('uid') uid: number,
-  ): Promise<number> {
-    console.log('REMOVE ENTITY SUBTYPES RECURSIVE');
-    console.log('UID:', uid);
-    console.log('>// REMOVE ENTITY DESCENDANTS');
-
-    try {
-      const env = await this.environmentService.retrieveEnvironment();
-      const facts = env.facts;
-      let factsToRemove: Fact[] = [];
-      let remainingFacts: Fact[] = [];
-
-      facts.forEach((fact: Fact) => {
-        if (/*fact.lh_object_uid === uid ||*/ fact.rh_object_uid === uid) {
-          factsToRemove.push(fact);
-        } else {
-          remainingFacts.push(fact);
-        }
-      });
-
-      console.log('Facts to remove:', factsToRemove.length);
-      console.log('Remaining facts:', remainingFacts.length);
-
-      let factUIDsToRemove: number[] = [];
-      let lhModelUIDsToRemove: Set<number> = new Set();
-      let rhModelUIDsToRemove: Set<number> = new Set();
-
-      factsToRemove.forEach((fact: Fact) => {
-        factUIDsToRemove.push(fact.fact_uid);
-        lhModelUIDsToRemove.add(fact.lh_object_uid);
-        rhModelUIDsToRemove.add(fact.rh_object_uid);
-      });
-
-      remainingFacts.forEach((fact: Fact) => {
-        lhModelUIDsToRemove.delete(fact.lh_object_uid);
-        lhModelUIDsToRemove.delete(fact.rh_object_uid);
-        rhModelUIDsToRemove.delete(fact.lh_object_uid);
-        rhModelUIDsToRemove.delete(fact.rh_object_uid);
-      });
-
-      const modelsToRemove = new Set([
-        ...lhModelUIDsToRemove,
-        ...rhModelUIDsToRemove,
-      ]);
-      console.log('Models to remove:', modelsToRemove.size);
-
-      await this.environmentService.removeFacts(factUIDsToRemove);
-      await this.environmentService.removeModels(Array.from(modelsToRemove));
-
-      // Uncomment if needed:
-      // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
-
-      const subtypingFacts = factsToRemove.filter(
-        (fact: Fact) =>
-          fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
-      );
-      console.log('SUBTYPING FACTS: ', subtypingFacts.length);
-
-      await Promise.all(
-        subtypingFacts.map(async (fact: Fact) => {
-          console.log('>>> RECURSE ON: ', fact.lh_object_uid);
-          await this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
-        }),
-      );
-
-      return uid;
-    } catch (error) {
-      console.error('Error in userRemoveEntitySubtypesRecursive:', error);
-      throw error;
-    }
-  }
-
-  @SubscribeMessage('user:loadAllRelatedFacts')
-  async userGetAllRelatedFacts(@MessageBody('uid') uid: number): Promise<any> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadAllRelatedFacts ${uid})`, resolve);
-    });
-    return result;
-  }
+  // @SubscribeMessage('user:loadAllRelatedFacts')
+  // async userGetAllRelatedFacts(@MessageBody('uid') uid: number): Promise<any> {
+  //   const result = await new Promise<any>((resolve, reject) => {
+  //     this.repl.exec(`(loadAllRelatedFacts ${uid})`, resolve);
+  //   });
+  //   return result;
+  // }
 }

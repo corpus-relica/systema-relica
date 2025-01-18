@@ -34,7 +34,8 @@ export class REPLController {
 
     try {
       const result = await new Promise<any>((resolve, reject) => {
-        this.repl.exec(execCommandDto.command, resolve);
+        // this.repl.exec(execCommandDto.command, resolve);
+        resolve('foo');
       });
       return result;
     } catch (e) {

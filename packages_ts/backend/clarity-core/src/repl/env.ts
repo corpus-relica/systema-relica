@@ -39,14 +39,18 @@ export class Env {
   get(key: MalSymbol): MalType {
     const env = this.find(key);
     if (!env) {
-      throw new Error(`'${key.v}' not found, nukkha, key: ${key}`);
+      throw new Error(`'${key.v}' not found`);
     }
 
     const v = env.data.get(key);
     if (!v) {
-      throw new Error(`'${key.v}' not found, nigger, key: ${key}`);
+      throw new Error(`'${key.v}' not found`);
     }
 
     return v;
+  }
+
+  get entries(): IterableIterator<[MalSymbol, MalType]> {
+    return this.data.entries();
   }
 }
