@@ -133,6 +133,33 @@ services:
         aliases:
           - clarity-core
 
+  shutter:
+    container_name: shutter
+    build:
+      context: ./
+      dockerfile: Dockerfile.shutter
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      - ./packages_clj/shutter:/usr/src/app/packages_clj/shutter
+      - /usr/src/app/.m2
+    ports:
+      - "2173:2173"
+      # nREPL port
+      - "7889:7889"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    depends_on:
+      - postgres
+    networks:
+      rlc-net:
+        aliases:
+          - shutter
+
   knowledge-integrator:
     container_name: knowledge-integrator
     build:

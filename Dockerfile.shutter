@@ -1,0 +1,13 @@
+FROM clojure:temurin-21-tools-deps-jammy
+MAINTAINER Marc <xtof@relica.io>
+
+WORKDIR /usr/src/app/packages_clj/shutter
+
+COPY ./packages_clj/shutter/deps.edn .
+RUN clojure -P  # Download dependencies
+
+COPY ./packages_clj/shutter .
+
+EXPOSE 2173
+
+CMD ["clojure", "-M:dev"]

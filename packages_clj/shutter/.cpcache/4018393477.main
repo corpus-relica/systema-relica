@@ -1,0 +1,4 @@
+-m
+nrepl.cmdline
+--middleware
+[vlaaad.reveal.nrepl/middleware]
