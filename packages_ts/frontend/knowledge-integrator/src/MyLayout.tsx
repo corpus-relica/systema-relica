@@ -17,7 +17,7 @@ export const MyLayout = (props) => {
   const redirect = useRedirect();
   const rootStore: any = useStores();
 
-  console.log("vvvv - ROOT STORE vvvv:");
+  console.log("vvvv - ROOT STORAGE vvvv:");
   console.log(rootStore);
   const { factDataStore } = rootStore;
 

@@ -330,6 +330,10 @@ payload {:facts facts :models models}]
     return malToJs(token);
   }
 
+  deleteToken() {
+    this.replEnv.delete(MalSymbol.get('token'));
+  }
+
   // READ
   READ(str: string): MalType {
     return readStr(str);
@@ -337,6 +341,7 @@ payload {:facts facts :models models}]
 
   // EVAL
   private async evalAST(ast: MalType, env: Env): Promise<MalType> {
+    // console.log('env', env);
     switch (ast.type) {
       case Node.Symbol:
         const f = env.get(ast);
@@ -504,7 +509,7 @@ payload {:facts facts :models models}]
     this._queueProcessing = true;
     while (this._expressionQueue.length > 0) {
       const [str, resolve] = this._expressionQueue.shift();
-      console.log('processing : ', str);
+      // console.log('processing : ', str);
       try {
         if (str) {
           const res = await this.rep(str, this.replEnv);

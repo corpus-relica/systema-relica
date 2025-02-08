@@ -133,6 +133,59 @@ services:
         aliases:
           - clarity-core
 
+  # aperture:
+  #   container_name: aperture
+  #   build:
+  #     context: ./
+  #     dockerfile: Dockerfile.aperture
+  #   restart: always
+  #   command: ["clojure", "-M:dev"]
+  #   volumes:
+  #     - ./packages_clj/aperture:/usr/src/app/packages_clj/aperture
+  #     - /usr/src/app/.m2
+  #   ports:
+  #     - "2173:8080"
+  #     # nREPL port
+  #     - "7889:7889"
+  #   environment:
+  #     - POSTGRES_HOST=postgres
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_DB=postgres
+  #     - JWT_SECRET=changeme
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     rlc-net:
+  #       aliases:
+  #         - aperture
+
+  portal:
+    container_name: portal
+    build:
+      context: ./
+      dockerfile: Dockerfile.portal
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      - ./packages_clj/portal:/usr/src/app/packages_clj/portal
+      - /usr/src/app/.m2
+    ports:
+      - "2174:8080"
+      # nREPL port
+      - "7890:7889"
+    environment:
+      - JWT_SECRET=changeme
+    # depends_on:
+    #   - shutter
+    #   - clarity
+    #   - archivist
+    networks:
+      rlc-net:
+        aliases:
+          - portal
+
   shutter:
     container_name: shutter
     build:
@@ -153,6 +206,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
     depends_on:
       - postgres
     networks:

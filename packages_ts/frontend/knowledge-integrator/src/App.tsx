@@ -31,6 +31,7 @@ import { resolveUIDs } from "./io/ArchivistBaseClient.js";
 import { retrieveEnvironment } from "./io/CCBaseClient.js";
 
 import { MyLayout } from "./MyLayout.js";
+import MyLoginPage from "./MyLoginPage.js";
 import Graph from "./pages/Graph.js";
 import Settings from "./pages/Settings.js";
 import Modelling from "./pages/Modelling/index.js";
@@ -83,8 +84,8 @@ console.log(memStore);
 export const App = () => {
   const rootStore: any = useStores();
 
-  console.log("vvvv - ROOT STORE vvvv:");
-  console.log(rootStore);
+  // console.log("vvvv - ROOT STORE vvvv:");
+  // console.log(rootStore);
   const { factDataStore } = rootStore;
 
   const { setCategories } = factDataStore;
@@ -93,46 +94,52 @@ export const App = () => {
   // const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   // const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
 
-  const establishCats = async () => {
-    const concepts = await resolveUIDs(
-      Object.keys(cats).map((x) => parseInt(x))
-    );
-    console.log("vvvv - CONCEPTS vvvv:");
-    console.log(concepts);
-    const newCats = [];
-    for (const [key, name] of Object.entries(cats)) {
-      const concept = concepts.find((c: any) => c.uid === parseInt(key));
-      const { uid, descendants } = concept;
-      newCats.push({ uid, name, descendants });
-    }
-    console.log("vvvv - CATEGORIES vvvv:");
-    console.log(newCats);
-    setCategories(newCats);
-  };
+  // const establishCats = async () => {
+  //   const concepts = await resolveUIDs(
+  //     Object.keys(cats).map((x) => parseInt(x))
+  //   );
+  //   console.log("vvvv - CONCEPTS vvvv:");
+  //   console.log(concepts);
+  //   const newCats = [];
+  //   for (const [key, name] of Object.entries(cats)) {
+  //     const concept = concepts.find((c: any) => c.uid === parseInt(key));
+  //     const { uid, descendants } = concept;
+  //     newCats.push({ uid, name, descendants });
+  //   }
+  //   console.log("vvvv - CATEGORIES vvvv:");
+  //   console.log(newCats);
+  //   setCategories(newCats);
+  // };
 
-  useEffect(() => {
-    const retrieveEnv = async () => {
-      const env = await retrieveEnvironment();
-      console.log("vvvv - ENVIRONMENT vvvv:");
-      console.log(env);
-      factDataStore.addFacts(env.facts);
-      // semanticModelStore.addModels(env.models);
-      // graphViewStore.selectedNode = env.selectedEntity;
-    };
+  // useEffect(() => {
+  //   const retrieveEnv = async () => {
+  //     const foo = await authProvider.getIdentity();
 
-    const foobarbaz = async () => {
-      await establishCats();
-      await retrieveEnv();
-      console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
-    };
+  //     console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:");
+  //     console.log(foo);
 
-    foobarbaz();
-  }, []);
+  //     const env = await retrieveEnvironment();
+  //     console.log("vvvv - ENVIRONMENT NUKKAH foo vvvv:");
+  //     console.log(env);
+  //     factDataStore.addFacts(env.facts);
+  //     // semanticModelStore.addModels(env.models);
+  //     // graphViewStore.selectedNode = env.selectedEntity;
+  //   };
+
+  //   const foobarbaz = async () => {
+  //     // await establishCats();
+  //     await retrieveEnv();
+  //     console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
+  //   };
+
+  //   foobarbaz();
+  // }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <Admin
         layout={MyLayout}
+        loginPage={MyLoginPage}
         dashboard={Dashboard}
         dataProvider={dataProvider}
         authProvider={authProvider}

@@ -39,6 +39,8 @@ export class REPLService {
   private logger: Logger = new Logger('REPLService');
   private activeRepls: Map<number, REPL> = new Map();
 
+  private tempREPL: REPL;
+
   // private replEnv: Env;
 
   constructor(
@@ -54,9 +56,21 @@ export class REPLService {
   ) {
     // private stateService: StateService, // private eventEmitter: EventEmitter2, // private environment: EnvironmentService, // private archivist: ArchivistService,
     // this.initReplEnv();
+    this.tempREPL = new REPL(
+      this.archivistService,
+      this.environmentService,
+      this.eventEmitter,
+      this.stateService,
+    );
+    this.tempREPL.initReplEnv();
+  }
+
+  exec(fonk, resolve) {
+    this.tempREPL.exec(fonk, resolve);
   }
 
   async getUserRepl(userId: number, token: string): Promise<REPL> {
+    console.log('getUserRepl !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1');
     // Check memory first
     let repl = this.activeRepls.get(userId);
 
@@ -126,6 +140,8 @@ export class REPLService {
     // Collect user-defined symbols and their definitions
     for (const [symbol, value] of env.entries) {
       if (this.isUserDefinedSymbol(symbol)) {
+        console.log('MUH FUCKING VALUE!!!!');
+        console.log(value);
         customDefs.push({
           symbolName: symbol.v,
           definition: repl.PRINT(value),

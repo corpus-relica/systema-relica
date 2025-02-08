@@ -85,10 +85,12 @@ export class EventsGateway {
     client.data.userId = userID;
     client.data.token = token;
 
-    const r = await this.repl.getUserRepl(userID, token);
+    // const r = await this.repl.getUserRepl(userID, token);
 
-    console.log('USER REPL CREATED');
-    console.log(r);
+    // console.log('USER REPL CREATED');
+    // console.log(r);
+
+    // const x = await this.repl.saveUserState(userID, r);
   }
 
   // NOUS //
@@ -142,14 +144,14 @@ export class EventsGateway {
 
   // // LEGACY //
 
-  // @SubscribeMessage('user:selectEntity')
-  // async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
-  //   const result = await new Promise<any>((resolve, reject) => {
-  //     this.repl.exec(`(selectEntity ${uid})`, resolve);
-  //   });
+  @SubscribeMessage('user:selectEntity')
+  async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(selectEntity ${uid})`, resolve);
+    });
 
-  //   return result;
-  // }
+    return result;
+  }
 
   // @SubscribeMessage('user:selectFact')
   // async userSelectFact(@MessageBody('uid') uid: any): Promise<number> {
@@ -178,16 +180,37 @@ export class EventsGateway {
   //   return result;
   // }
 
-  // @SubscribeMessage('user:loadSpecializationHierarchy')
-  // async userLoadSpecializationHierarchy(
-  //   @MessageBody('uid') uid: number,
-  // ): Promise<any> {
-  //   const result = await new Promise<any>((resolve, reject) => {
-  //     this.repl.exec(`(loadSpecializationHierarchy ${uid})`, resolve);
-  //   });
+  @SubscribeMessage('user:loadSpecializationHierarchy')
+  async userLoadSpecializationHierarchy(
+    @MessageBody('uid') uid: number,
+    @MessageBody('token') token: string,
+  ): Promise<any> {
+    const decoded = decodeToken(token);
+    const userID = decoded.sub;
 
-  //   return result;
-  // }
+    const res = await this.archivistService.getSpecializationHierarchy(
+      uid,
+      token,
+    );
+    const facts = res.facts;
+    const models = res.models;
+
+    console.log('USER WHO IS LOGGED IN: ', userID);
+
+    await this.environmentService.insertFacts(facts, userID);
+    await this.environmentService.insertModels(models); //, userID);
+
+    // const result = await new Promise<any>((resolve, reject) => {
+    //   this.repl.exec(`(loadSpecializationHierarchy ${uid})`, resolve);
+    // });
+
+    // return result;
+
+    return {
+      facts,
+      models,
+    };
+  }
 
   // @SubscribeMessage('user:loadEntity')
   // async userLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
@@ -225,13 +248,13 @@ export class EventsGateway {
   //   return result;
   // }
 
-  // @SubscribeMessage('user:clearEntities')
-  // async userClearEntities(): Promise<void> {
-  //   const result = await new Promise<any>((resolve, reject) => {
-  //     this.repl.exec(`(clearEntities)`, resolve);
-  //   });
-  //   return;
-  // }
+  @SubscribeMessage('user:clearEntities')
+  async userClearEntities(): Promise<void> {
+    const result = await new Promise<any>((resolve, reject) => {
+      this.repl.exec(`(clearEntities)`, resolve);
+    });
+    return;
+  }
 
   // @SubscribeMessage('user:deleteEntity')
   // async userDeleteEntity(@MessageBody('uid') uid: number): Promise<number> {

@@ -8,7 +8,26 @@ import {
   Headers,
 } from '@nestjs/common';
 import { EnvironmentService } from './environment.service.js';
+
 // import { REPLService } from '../repl/repl.service.js';
+// const getIdentity = async () => {
+//   const token = localStorage.getItem('access_token');
+//   if (!token) {
+//     return Promise.reject();
+//   }
+
+//   try {
+//     // The token will be automatically injected by the axiosInstance interceptor
+//     const { data } = await archivistClient.axiosInstance.get('/auth/profile');
+//     return {
+//       id: data.sub,
+//       fullName: data.username,
+//       // Add any other user properties you want to expose
+//     };
+//   } catch {
+//     return Promise.reject();
+//   }
+// };
 
 @Controller('environment')
 export class EnvironmentController {
@@ -18,15 +37,23 @@ export class EnvironmentController {
 
   @Get('/retrieve')
   async retrieve(
+    @Headers('authorization') authHeader: string,
     @Query('envID') envID: string,
     // @Res({ passthrough: true }) res: Response,
   ) {
+    const token = authHeader?.split(' ')[1];
+    const [header, payload, signature] = token.split('.');
+    const decodedPayload = JSON.parse(atob(payload));
+    const userID = decodedPayload.sub;
+    const username = decodedPayload.username;
+
     // const { envID } = req.query;
     this.logger.log('~~~~~~~~~~~~RETRIEVE~~~~~~~~~~~~');
-    this.logger.log(envID);
+    this.logger.log(token);
+    console.log('retrieve', userID, username, envID);
 
     try {
-      const result = await this.environmentService.retrieveEnvironment(envID);
+      const result = await this.environmentService.retrieveEnvironment(userID);
       return result;
     } catch (e) {
       console.log(e);

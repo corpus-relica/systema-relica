@@ -50,6 +50,10 @@ export class Env {
     return v;
   }
 
+  delete(key: MalSymbol): boolean {
+    return this.data.delete(key);
+  }
+
   get entries(): IterableIterator<[MalSymbol, MalType]> {
     return this.data.entries();
   }

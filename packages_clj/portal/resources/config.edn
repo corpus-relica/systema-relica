@@ -1,0 +1,9 @@
+{:portal/service
+ {:env {::http/port #long #or [#env PORT 8080]
+        ::http/host #or [#env HOST "0.0.0.0"]
+        ::http/allowed-origins {:creds true :allowed-origins (constantly true)}
+        ::http/container-options {:context-configurator #(ws/add-ws-endpoints % {"/ws" ws-config})}}
+  :routes #ig/ref :portal/routes}
+
+ :portal/routes
+ #resource "routes.edn"}

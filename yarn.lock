@@ -2347,6 +2347,11 @@
     fflate "~0.8.2"
     meshoptimizer "~0.18.1"
 
+"@types/transit-js@^0.8.3":
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/@types/transit-js/-/transit-js-0.8.3.tgz#87c800bf97be835807f36db97309c42bd789c1b9"
+  integrity sha512-6Q9DbQDNK80U42rj0fADpBt7FJ/lEt/xzFHDcyjYMjgac18CKwZvUXwDMliMYSUxkO8N3qR5Rqlvgx8DZnPuuA==
+
 "@types/validator@^13.11.8":
   version "13.12.2"
   resolved "https://registry.yarnpkg.com/@types/validator/-/validator-13.12.2.tgz#760329e756e18a4aab82fc502b51ebdfebbe49f5"
@@ -8684,6 +8689,11 @@ tr46@~0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/tr46/-/tr46-0.0.3.tgz#8184fd347dac9cdc185992f3a6622e14b9d9ab6a"
   integrity sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==
+
+transit-js@^0.8.874:
+  version "0.8.874"
+  resolved "https://registry.yarnpkg.com/transit-js/-/transit-js-0.8.874.tgz#37b27d6632bd796567c359220297c862e3988bbb"
+  integrity sha512-IDJJGKRzUbJHmN0P15HBBa05nbKor3r2MmG6aSt0UxXIlJZZKcddTk67/U7WyAeW9Hv/VYI02IqLzolsC4sbPA==
 
 tree-kill@1.2.2, tree-kill@^1.2.2:
   version "1.2.2"

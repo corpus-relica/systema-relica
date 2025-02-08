@@ -1,6 +1,7 @@
 (ns io.relica.shutter.core
   (:require[io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
+            [io.pedestal.http.cors :as cors]
             [io.pedestal.interceptor :refer [interceptor]]
             [cheshire.core :as json]
             [buddy.sign.jwt :as jwt]
@@ -10,6 +11,14 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log])
   (:gen-class))
+
+(def cors-config
+  {:allowed-origins (constantly true)  ; Allow all origins for development
+   :allowed-methods [:get :post :put :delete :options]
+   :allowed-headers ["Content-Type" "Authorization" "Accept"]
+   :exposed-headers []
+   :max-age 300})
+
 
 ;; Environment configuration
 (def env
@@ -90,6 +99,14 @@
                     (assoc context :response {:status 400
                                             :body {:error "Invalid JSON"}})))))}))
 
+(def json-response-interceptor
+  (interceptor
+   {:name ::json-response
+    :leave (fn [context]
+             (if-let [response (:response context)]
+               (assoc-in context [:response :headers "Content-Type"] "application/json")
+               context))}))
+
 (def common-interceptors [auth-interceptor])
 
 ;; Login handler
@@ -98,10 +115,8 @@
    :enter
    (fn [context]
      (let [raw-body (-> context :request :body slurp)
-           _ (println "Raw body:" raw-body)  ; Debug print
            body (json/parse-string raw-body true)
            {:keys [email password]} body]
-       (println "Parsed body:" body)  ; Debug print
        (if-let [user (verify-user email password)]
          (let [claims {:user-id (:id user)
                       :email (:email user)
@@ -111,11 +126,15 @@
                                      (* 24 60 60 1000))})]
            (assoc context :response
                   {:status 200
-                   :body {:token token
-                         :user (dissoc user :password_hash)}}))
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/generate-string
+                          {:token token
+                           :user (dissoc user :password_hash)})}))
          (assoc context :response
                 {:status 401
-                 :body {:error "Invalid credentials"}}))))})
+                 :headers {"Content-Type" "application/json"}
+                 :body (json/generate-string
+                        {:error "Invalid credentials"})}))))})
 
 (def routes
   #{["/health" :get
@@ -123,39 +142,67 @@
        (try
          (jdbc/execute-one! ds ["SELECT 1"])
          {:status 200
-          :body {:status "healthy"
-                :db "connected"}}
+          :headers {"Content-Type" "application/json"}
+          :body (json/generate-string
+                 {:status "healthy"
+                  :db "connected"})}
          (catch Exception e
-           (log/error e "Database health check failed")
            {:status 500
-            :body {:status "unhealthy"
-                  :db "disconnected"}})))
+            :headers {"Content-Type" "application/json"}
+            :body (json/generate-string
+                   {:status "unhealthy"
+                    :db "disconnected"})})))
      :route-name :health-check]
 
     ["/api/login" :post
-     login-handler
+     (assoc login-handler
+            :error (fn [context e]
+                    {:status 401
+                     :headers {"Content-Type" "application/json"}
+                     :body (json/generate-string
+                            {:error "Authentication failed"})}))
      :route-name :login]
 
-    ["/api/v1/verify" :get
-     (conj common-interceptors
+    ["/api/validate" :post
+     (conj common-interceptors json-response-interceptor
            (fn [request]
              {:status 200
-              :body {:message "Token valid"
-                    :identity (:identity request)}}))
-     :route-name :verify-token]})
+              :body (json/generate-string
+                     {:message "Token valid"
+                      :identity (:identity request)})}))
+     :route-name :validate-token]
+
+    ["/auth/profile" :get
+     (conj common-interceptors json-response-interceptor
+           (fn [request]
+             (let [identity (:identity request)]
+               {:status 200
+                :body (json/generate-string
+                       {:sub (:user-id identity)
+                        :username (:email identity)})})))
+     :route-name :get-profile]})
+
+(def expanded-routes
+  (route/expand-routes routes))
 
 (def service-map
-  {::http/routes routes
-   ::http/type   :jetty
-   ::http/host   "0.0.0.0"
-   ::http/port   (:port env)
-   ::http/join?  false
-   ::http/mime-types {"application/json" :json}
-   ::http/body-params {:edn :edn-string
-                      :json json/decode}
-   ::http/json-body {:encoder json/encode
-                     :decoder json/decode
-                     :decode-key-fn keyword}})
+  (-> {::http/routes expanded-routes
+       ::http/type   :jetty
+       ::http/host   "0.0.0.0"
+       ::http/port   (:port env)
+       ::http/join?  false
+       ::http/mime-types {"application/json" :json}
+       ::http/secure-headers nil  ; Disable secure headers for CORS
+       ::http/body-params {:edn :edn-string
+                          :json json/decode}
+       ::http/json-body {:encoder json/encode
+                        :decoder json/decode
+                        :decode-key-fn keyword}}
+      http/default-interceptors
+      (update ::http/interceptors conj
+              (cors/allow-origin cors-config))
+      (update ::http/interceptors conj json-response-interceptor)
+      (update ::http/interceptors conj (cors/allow-origin cors-config))))
 
 (defonce server (atom nil))
 

@@ -1,46 +1,45 @@
 import { AuthProvider, HttpError } from "react-admin";
-import { archivistClient } from "../io/ArchivistBaseClient.js";
-import { sockSendCC } from "../socket.js";
-
-export const getAuthToken = () => {
-  const token = localStorage.getItem("access_token");
-  console.log("getAuthToken called, token:", token ? "exists" : "missing");
-  return token;
-};
+import { shutterClient } from "../io/ShutterClient.js";
+import { initializeWebSocket, closeWebSocket } from "../socket";
 
 export const authProvider: AuthProvider = {
-  login: async ({
-    username,
-    password,
-  }: {
-    username: string;
-    password: string;
-  }) => {
+  login: async ({ email, password }: { email: string; password: string }) => {
     try {
-      const { data } = await archivistClient.axiosInstance.post("/auth/login", {
-        username,
+      const { data } = await shutterClient.post("/api/login", {
+        email,
         password,
       });
-      const { access_token } = data;
-      localStorage.setItem("access_token", access_token);
-      sockSendCC("user", "login", { token: access_token });
+      console.log("Login response:", data);
+      console.log(typeof data);
+      // Note: backend sends 'token' in response, not 'access_token'
+      const { token, user } = data;
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Initialize WebSocket connection after successful login
+      await initializeWebSocket(token);
       return Promise.resolve(data);
     } catch (error) {
+      console.error("Login error:", error);
       throw new HttpError("Unauthorized", 401, {
-        message: "Invalid username or password",
+        message: "Invalid email or password",
       });
     }
   },
 
   logout: () => {
-    localStorage.removeItem("access_token");
+    // localStorage.removeItem("access_token");
+    // localStorage.removeItem("user");
+    closeWebSocket();
     return Promise.resolve();
   },
 
   checkError: (error) => {
     const status = error.status;
     if (status === 401 || status === 403) {
-      localStorage.removeItem("access_token");
+      // localStorage.removeItem("access_token");
+      // localStorage.removeItem("user");
+      closeWebSocket();
       return Promise.reject();
     }
     return Promise.resolve();
@@ -48,43 +47,58 @@ export const authProvider: AuthProvider = {
 
   checkAuth: async () => {
     const token = localStorage.getItem("access_token");
+    console.log("Checking auth with token:", token);
     if (!token) {
       return Promise.reject();
     }
-
     try {
-      // Validate token with backend
-      // The token will be automatically injected by the axiosInstance interceptor
-      await archivistClient.axiosInstance.post("/auth/validate");
+      // Validate token with backend - use the verify endpoint
+      await shutterClient.post("/api/validate");
+
+      // Ensure WebSocket is connected
+      await initializeWebSocket(token);
       return Promise.resolve();
-    } catch {
-      localStorage.removeItem("access_token");
+    } catch (error) {
+      console.error("Auth check error:", error);
+      // localStorage.removeItem("access_token");
+      // localStorage.removeItem("user");
+      closeWebSocket();
       return Promise.reject();
     }
   },
 
   getIdentity: async () => {
     const token = localStorage.getItem("access_token");
+    console.log("Getting identity with token:", token);
+
     if (!token) {
       return Promise.reject();
     }
 
+    // Try to get from localStorage first
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      return {
+        id: user.id,
+        fullName: user.username,
+      };
+    }
+
+    // Fallback to API call if not in localStorage
     try {
-      // The token will be automatically injected by the axiosInstance interceptor
-      const { data } = await archivistClient.axiosInstance.get("/auth/profile");
+      const { data } = await shutterClient.get("/auth/profile");
       return {
         id: data.sub,
         fullName: data.username,
-        // Add any other user properties you want to expose
       };
-    } catch {
+    } catch (error) {
+      console.error("Get identity error:", error);
       return Promise.reject();
     }
   },
 
-  getPermissions: () => {
-    return Promise.resolve(undefined);
-  },
+  getPermissions: () => Promise.resolve(undefined),
 };
 
-export default authProvider;
+export const getAuthToken = () => localStorage.getItem("access_token");

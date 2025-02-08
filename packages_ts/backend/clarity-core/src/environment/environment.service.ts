@@ -72,20 +72,33 @@ export class EnvironmentService {
     return models;
   }
 
-  async retrieveEnvironment(envID?: string) {
+  async retrieveEnvironment(userID?: string) {
+    const foo = await this.userEnvRepository.find({
+      where: { userId: +userID },
+    });
+
+    console.log(
+      'GOT THE MUTHER FUCKING ENVIRONMENT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111',
+    );
+    console.log(foo);
+
     const models = await this.envModelRepository.find();
     const facts = await this.envFactRepository.find();
     const selectedEntity = await this.envSelectedEntityRepository.find();
     const selectedEntityUID = selectedEntity[0] ? selectedEntity[0].uid : null;
 
-    return {
+    const ret = {
       models: models.map((row: any) => row.model),
       facts: facts.map((row: any) => row.fact),
       selectedEntity: selectedEntityUID,
     };
+
+    console.log(ret);
+
+    return ret;
   }
 
-  async insertFacts(facts: Fact[]) {
+  async insertFacts(facts: Fact[], userID?: number) {
     console.log('INSERT FACTS');
     for (const fact of facts) {
       const newFact = new EnvFact();
