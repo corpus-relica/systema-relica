@@ -80,6 +80,11 @@ class PortalWebSocketClient extends EventEmitter {
   private isConnecting: boolean = false;
   private pingInterval: number | null = null;
 
+  constructor() {
+    super();
+    console.log("PortalWebSocketClient created");
+  }
+
   private async getSocketToken(): Promise<string> {
     const response = await fetch(
       `${import.meta.env.VITE_PORTAL_URL || "http://localhost:2174"}/ws-auth`,
@@ -105,7 +110,7 @@ class PortalWebSocketClient extends EventEmitter {
     this.jwtToken = jwtToken;
 
     console.log(
-      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
+      "Connect PortalWebsocketClient !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
     );
 
     try {
@@ -238,6 +243,7 @@ class PortalWebSocketClient extends EventEmitter {
 export const portalWs = new PortalWebSocketClient();
 
 export const initializeWebSocket = async (token: string) => {
+  console.log("Initializing WebSocket with token:", token);
   await portalWs.connect(token);
 };
 

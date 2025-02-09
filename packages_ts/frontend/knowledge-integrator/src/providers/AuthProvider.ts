@@ -1,6 +1,6 @@
 import { AuthProvider, HttpError } from "react-admin";
 import { shutterClient } from "../io/ShutterClient.js";
-import { initializeWebSocket, closeWebSocket } from "../socket";
+import { initializeWebSocket, closeWebSocket } from "../socket.js";
 
 export const authProvider: AuthProvider = {
   login: async ({ email, password }: { email: string; password: string }) => {
@@ -18,6 +18,7 @@ export const authProvider: AuthProvider = {
 
       // Initialize WebSocket connection after successful login
       await initializeWebSocket(token);
+
       return Promise.resolve(data);
     } catch (error) {
       console.error("Login error:", error);
