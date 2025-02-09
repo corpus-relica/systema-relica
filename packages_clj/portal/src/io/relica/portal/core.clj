@@ -1,81 +1,163 @@
 (ns io.relica.portal.core
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
-            [io.pedestal.interceptor :as interceptor]
-            [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
+            [io.pedestal.http.cors :as cors]
+            [io.pedestal.http.jetty.websockets :as ws]
             [clojure.tools.logging :as log]
-            [buddy.sign.jwt :as jwt]))
+            [clojure.core.async :as async]
+            [cheshire.core :as json]
+            [buddy.sign.jwt :as jwt])
+  (:import [org.eclipse.jetty.websocket.api Session]))
 
-;; Initialize Sente
-(let [{:keys [ch-recv send-fn connected-uids
-             ajax-post-fn ajax-get-or-ws-handshake-fn]}
-      (sente/make-channel-socket! (get-sch-adapter)
-                                 {:user-id-fn (fn [ring-req] (:client-id ring-req))})]
-  (def ring-ajax-post ajax-post-fn)
-  (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
-  (def ch-chsk ch-recv)
-  (def chsk-send! send-fn)
-  (def connected-uids connected-uids))
+;; Track authenticated sessions and tokens
+(def ws-sessions (atom {}))  ; {ws-session -> {:user-id id :session ws-session :channel ch}}
+(def socket-tokens (atom {})) ; {token -> {:user-id id :created-at timestamp}}
 
-;; JWT Validation Interceptor
+(defn generate-socket-token []
+  (str (java.util.UUID/randomUUID)))
+
+;; JWT Validation Interceptor (for HTTP routes)
 (def validate-jwt
   {:name ::validate-jwt
    :enter (fn [context]
-            (let [token (-> context :request :headers (get "authorization") (clojure.string/replace "Bearer " ""))]
+            (let [token (-> context :request :headers (get "authorization")
+                          (clojure.string/replace "Bearer " ""))]
               (try
-                (let [claims (jwt/unsign token (or (System/getenv "JWT_SECRET") "your-dev-secret-change-me"))]
+                (let [claims (jwt/unsign token (System/getenv "JWT_SECRET"))]
                   (assoc-in context [:request :identity] claims))
                 (catch Exception e
                   (assoc context :response {:status 401 :body "Invalid token"})))))})
 
-;; WebSocket event handler
-(defmulti event-msg-handler :id)
+(defn validate-socket-token [token]
+  (when-let [user-data (get @socket-tokens token)]
+    ;; Check if token is still valid (optional: add expiry check here)
+    (:user-id user-data)))
 
-(defmethod event-msg-handler :default [{:as ev-msg :keys [event]}]
-  (log/info "Unhandled event:" event))
+(defn get-user-sessions
+  "Get all sessions for a user"
+  [user-id]
+  (->> @ws-sessions
+       vals
+       (filter #(= (:user-id %) user-id))))
 
-(defmethod event-msg-handler :chsk/uidport-open [{:keys [uid client-id]}]
-  (log/info "New connection:" uid client-id))
+(defn broadcast-to-user
+  "Send a message to all sessions of a user"
+  [user-id message]
+  (doseq [{:keys [channel]} (get-user-sessions user-id)]
+    (async/put! channel (json/generate-string message))))
 
-(defmethod event-msg-handler :chsk/uidport-close [{:keys [uid]}]
-  (log/info "Disconnected:" uid))
 
-(defmethod event-msg-handler :chsk/ws-ping [_]
-  ; Handle ping
-  nil)
+(defn handle-client-message [text]
+  (log/info "Handling client message:" text)
+  (try
+    (let [data (json/parse-string text true)
+          ;; Get first active session that matches this message
+          first-session (first (vals @ws-sessions))
+          user-id (:user-id first-session)]
+      (when user-id
+        (case (:type data)
+          "ping" (broadcast-to-user user-id {:type "pong"})
 
-;; Sente event router
-(defonce router_ (atom nil))
+          "test" (broadcast-to-user user-id
+                                  {:type "test-response"
+                                   :echo (:data data)})
 
-(defn stop-router! []
-  (when-let [stop-fn @router_]
-    (stop-fn)))
+          ;; Default case
+          (do
+            (log/warn "Unknown message type:" (:type data))
+            (broadcast-to-user user-id
+                             {:type "error"
+                              :message "Unknown message type"})))))
+    (catch Exception e
+      (log/error "Error handling message:" e))))
 
-(defn start-router! []
-  (stop-router!)
-  (reset! router_
-          (sente/start-server-chsk-router!
-           ch-chsk event-msg-handler)))
+(def ws-paths
+  {"/chsk" {:on-connect (ws/start-ws-connection
+             (fn [ws-session send-ch]
+               (log/info "WebSocket connection attempt starting...")
+               (let [token (-> ws-session
+                             .getUpgradeRequest
+                             .getParameterMap
+                             (get "token")
+                             first)]
+                 (log/info "Got token from params:" token)
+                 (if-let [user-data (get @socket-tokens token)]
+                   (let [user-id (:user-id user-data)]
+                     (log/info "WebSocket client authenticated for user:" user-id)
+                     ;; Store this connection
+                     (swap! ws-sessions assoc ws-session
+                            {:user-id user-id
+                             :session ws-session
+                             :channel send-ch})
+                     ;; Notify this connection
+                     (async/put! send-ch (json/generate-string
+                                         {:type "welcome"
+                                          :message "Connection established!"
+                                          :user-id user-id}))
+                     ;; Log total connections for this user
+                     (log/info "Total connections for user" user-id ":"
+                              (count (get-user-sessions user-id))))
+                   (do
+                     (log/error "Invalid socket token:" token)
+                     (.close ws-session))))))
 
-;; Pedestal routes
+           :on-text handle-client-message
+
+           :on-binary (fn [ws-session payload offset length]
+                       (log/warn "Binary message received - not supported"))
+
+           :on-error (fn [ws-session throwable]
+                      (log/error "WebSocket error occurred:" throwable)
+                      (when-let [session-data (get @ws-sessions ws-session)]
+                        (log/info "Removing errored connection for user:"
+                                 (:user-id session-data)))
+                      (swap! ws-sessions dissoc ws-session))
+
+           :on-close (fn [ws-session status-code reason]
+                      (when-let [session-data (get @ws-sessions ws-session)]
+                        (log/info "Closing connection for user:"
+                                 (:user-id session-data)))
+                      (swap! ws-sessions dissoc ws-session))}})
+
+
+;; HTTP Routes
 (def routes
   (route/expand-routes
-   #{["/chsk" :get [validate-jwt ring-ajax-get-or-ws-handshake] :route-name ::ws-handshake]
-     ["/chsk" :post [validate-jwt ring-ajax-post] :route-name ::ws-post]
-     ["/health" :get (constantly {:status 200 :body "healthy"}) :route-name ::health]}))
+   #{["/ws-auth" :post
+      [validate-jwt
+       (fn [request]
+         (let [user-id (-> request :identity :user-id)
+               socket-token (generate-socket-token)]
+           (log/info "Generated socket token:" socket-token "for user:" user-id)
+           (swap! socket-tokens assoc socket-token
+                  {:user-id user-id
+                   :created-at (System/currentTimeMillis)})
+           {:status 200
+            :headers {"Content-Type" "application/json"}
+            :body (json/generate-string
+                    {:token socket-token})}))]
+      :route-name ::ws-auth]
+
+     ["/health" :get
+      (fn [_]
+        (log/info "Health check hit")
+        {:status 200 :body "healthy"})
+      :route-name ::health]}))
 
 ;; Server configuration
 (def service-map
-  {::http/routes routes
-   ::http/type :jetty
-   ::http/port 8080
-   ::http/host "0.0.0.0"
-   ::http/join? false})
+  (-> {::http/routes routes
+       ::http/type :jetty
+       ::http/port 8080
+       ::http/host "0.0.0.0"
+       ::http/join? false
+       ::http/allowed-origins {:creds true :allowed-origins (constantly true)}
+       ::http/container-options {:context-configurator #(ws/add-ws-endpoints % ws-paths)}}
+      http/default-interceptors
+      (update ::http/interceptors conj (cors/allow-origin cors-config))))
 
 (defn start []
   (log/info "Starting server...")
-  (start-router!)
   (-> service-map
       http/create-server
       http/start))
@@ -86,8 +168,7 @@
 ;; REPL helpers
 (comment
   (def server (start))
+
   (http/stop server)
 
-  ;; Test sending a message to all connected clients
-  (doseq [uid (:any @connected-uids)]
-    (chsk-send! uid [:some/event {:data "test"}])))
+  )

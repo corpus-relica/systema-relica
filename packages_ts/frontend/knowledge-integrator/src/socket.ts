@@ -75,50 +75,117 @@ class PortalWebSocketClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private reconnectTimeout: number = 1000;
   private maxReconnectTimeout: number = 30000;
-  private token: string | null = null;
+  private jwtToken: string | null = null;
+  private socketToken: string | null = null;
   private isConnecting: boolean = false;
   private pingInterval: number | null = null;
 
-  async connect(token: string) {
+  private async getSocketToken(): Promise<string> {
+    const response = await fetch(
+      `${import.meta.env.VITE_PORTAL_URL || "http://localhost:2174"}/ws-auth`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.jwtToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to get socket token");
+    }
+
+    const data = await response.json();
+    return data.token;
+  }
+
+  async connect(jwtToken: string) {
     if (this.isConnecting) return;
     this.isConnecting = true;
-    this.token = token;
+    this.jwtToken = jwtToken;
+
+    console.log(
+      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
+    );
 
     try {
+      // First get our socket token
+      console.log("Requesting socket token...");
+      const wsAuthResponse = await fetch(
+        `${import.meta.env.VITE_PORTAL_URL || "http://localhost:2174"}/ws-auth`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${jwtToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!wsAuthResponse.ok) {
+        throw new Error(`Failed to get socket token: ${wsAuthResponse.status}`);
+      }
+
+      const wsAuthData = await wsAuthResponse.json();
+      this.socketToken = wsAuthData.token;
+      console.log("Received socket token:", this.socketToken);
+
+      if (!this.socketToken) {
+        throw new Error("No socket token received");
+      }
+
       const wsUrl = `${
-        import.meta.env.VITE_PORTAL_WS_URL || "ws://localhost:2173"
-      }/chsk`;
+        import.meta.env.VITE_PORTAL_WS_URL || "ws://localhost:2174"
+      }/chsk?token=${encodeURIComponent(this.socketToken)}`;
+
+      console.log("Attempting WebSocket connection to:", wsUrl);
+      console.log("Current protocol:", window.location.protocol);
+
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log("Portal WebSocket connected");
-        this.isConnecting = false;
-        this.reconnectTimeout = 1000;
-        this.setupPing();
-
-        // Send authentication immediately after connection
-        this.send("auth", { token });
+        console.log("WebSocket connection opened!");
+        // Let's send an immediate test message
+        const testMsg = {
+          type: "test",
+          data: "Testing connection",
+        };
+        console.log("Sending test message:", testMsg);
+        this.ws?.send(JSON.stringify(testMsg));
       };
 
       this.ws.onmessage = (event) => {
+        console.log("WebSocket message received:", event.data);
         try {
-          const message: SocketMessage = JSON.parse(event.data);
-          this.emit(message.type, message.payload);
-        } catch (error) {
-          console.error("Error parsing Portal WebSocket message:", error);
+          const parsed = JSON.parse(event.data);
+          console.log("Parsed message:", parsed);
+        } catch (e) {
+          console.error("Error parsing message:", e);
         }
       };
 
-      this.ws.onclose = () => {
-        this.isConnecting = false;
-        this.cleanupPing();
-        this.scheduleReconnect();
+      this.ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        console.log("WebSocket state:", this.ws?.readyState);
       };
 
-      this.ws.onerror = (error) => {
-        console.error("Portal WebSocket error:", error);
-        this.ws?.close();
+      this.ws.onclose = (event) => {
+        console.log("WebSocket closed:", {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+        });
       };
+
+      // Test sending a message:
+      // this.ws.send(
+      //   JSON.stringify({
+      //     type: "test",
+      //     data: "Hello from the client!",
+      //   })
+      // );
+
+      //
     } catch (error) {
       console.error("Portal WebSocket connection error:", error);
       this.isConnecting = false;
