@@ -21,51 +21,32 @@ export class ModelController {
   constructor(private readonly modelService: ModelService) {}
 
   @Get('/kind')
-  async kind(
-    @Headers('authorization') authHeader: string,
-    @Query('uid') uid: string,
-  ) {
-    const token = authHeader?.split(' ')[1];
-
+  async kind(@Query('uid') uid: string) {
     if (uid === undefined) {
       throw new HttpException('No UID provided', 400);
     } else {
       // this.logger.log('~~~~~~~~~~~~MODEL CONNTROLER /KIND~~~~~~~~~~~~');
       // this.logger.log(uid);
-      const result = await this.modelService.retrieveKindModel(+uid, token);
+      const result = await this.modelService.retrieveKindModel(+uid);
       // this.logger.log(result);
       return result;
     }
   }
 
   @Get('/individual')
-  async individual(
-    @Headers('authorization') authHeader: string,
-    @Query('uid') uid: string,
-  ) {
-    const token = authHeader?.split(' ')[1];
-
+  async individual(@Query('uid') uid: string) {
     if (uid === undefined) {
       throw new HttpException('No UID provided', 400);
     } else {
-      const result = await this.modelService.retrieveIndividualModel(
-        +uid,
-        token,
-      );
+      const result = await this.modelService.retrieveIndividualModel(+uid);
       return result;
     }
   }
 
   @Get()
-  async model(
-    @Headers('authorization') authHeader: string,
-    @Query('uid') uid: string,
-    @Query('uids') uids: number[],
-  ) {
-    const token = authHeader?.split(' ')[1];
-
+  async model(@Query('uid') uid: string, @Query('uids') uids: number[]) {
     if (uid !== undefined) {
-      const result = await this.modelService.retrieveModel(+uid, token);
+      const result = await this.modelService.retrieveModel(+uid);
       return result;
     } else if (uids !== undefined) {
       let parsedUIDs;
@@ -74,7 +55,7 @@ export class ModelController {
       } else if (Array.isArray(uids)) {
         parsedUIDs = uids;
       }
-      const result = await this.modelService.retrieveModels(parsedUIDs, token);
+      const result = await this.modelService.retrieveModels(parsedUIDs);
       return result;
     } else {
       throw new HttpException(

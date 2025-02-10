@@ -17,11 +17,6 @@ import { REPLService } from '../repl/repl.service.js';
 
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
-const decodeToken = (token: string) => {
-  const [_header, payload, _signature] = token.split('.');
-  return JSON.parse(Buffer.from(payload, 'base64url').toString());
-};
-
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -53,7 +48,6 @@ export class EventsGateway {
   }
 
   handleDisconnect(client: Socket) {
-    delete client.data.token;
     this.logger.log(`Client disconnected: ${client.id}`);
     // Optionally broadcast to other clients that a client has left
     this.server.emit('clientLeft', { clientId: client.id });
@@ -69,23 +63,18 @@ export class EventsGateway {
 
   // LOGIN/OUT //
   @SubscribeMessage('user:login')
-  async userLogin(
-    @MessageBody('token') token: string,
-    @ConnectedSocket() client: Socket,
-  ) {
-    const decoded = decodeToken(token);
-    const userID = decoded.sub;
+  async userLogin(@ConnectedSocket() client: Socket) {
+    const userID = 7;
 
-    this.logger.log('USER LOGIN !!!!!!!!!!!!!!', token);
+    this.logger.log('USER LOGIN !!!!!!!!!!!!!!');
     console.log('USER WHO IS LOGGED IN: ', userID);
 
     // const env = await this.environmentService.getUserEnvironment(userId);
 
     // client.data.environment = env;
     client.data.userId = userID;
-    client.data.token = token;
 
-    // const r = await this.repl.getUserRepl(userID, token);
+    // const r = await this.repl.getUserRepl(userID);
 
     // console.log('USER REPL CREATED');
     // console.log(r);
@@ -183,15 +172,10 @@ export class EventsGateway {
   @SubscribeMessage('user:loadSpecializationHierarchy')
   async userLoadSpecializationHierarchy(
     @MessageBody('uid') uid: number,
-    @MessageBody('token') token: string,
   ): Promise<any> {
-    const decoded = decodeToken(token);
-    const userID = decoded.sub;
+    const userID = 7;
 
-    const res = await this.archivistService.getSpecializationHierarchy(
-      uid,
-      token,
-    );
+    const res = await this.archivistService.getSpecializationHierarchy(uid);
     const facts = res.facts;
     const models = res.models;
 

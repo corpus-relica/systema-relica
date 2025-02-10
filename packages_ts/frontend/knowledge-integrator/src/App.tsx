@@ -22,7 +22,7 @@ import { Route } from "react-router-dom";
 
 import { authProvider } from "./providers/AuthProvider.js";
 
-import CCDataProvider from "./providers/CCDataProvider.js";
+import EnvDataProvider from "./providers/EnvDataProvider.js";
 import ArchivistDataProvider from "./providers/ArchivistDataProvider.js";
 
 import { useStores } from "./context/RootStoreContext.js";
@@ -58,9 +58,9 @@ const dataProvider = new Proxy(defaultDataProvider, {
       }
       if (resource.startsWith("env/")) {
         if (name === "getList") {
-          return CCDataProvider.getList(resource.substring(4), params);
+          return EnvDataProvider.getList(resource.substring(4), params);
         } else if (name === "getOne") {
-          return CCDataProvider.getOne(resource.substring(4), params);
+          return EnvDataProvider.getOne(resource.substring(4), params);
         }
       }
     };
@@ -119,7 +119,7 @@ export const App = () => {
   //     console.log(foo);
 
   //     const env = await retrieveEnvironment();
-  //     console.log("vvvv - ENVIRONMENT NUKKAH foo vvvv:");
+  //     console.log("vvvv - ENVIRONMENT foo vvvv:");
   //     console.log(env);
   //     factDataStore.addFacts(env.facts);
   //     // semanticModelStore.addModels(env.models);
@@ -148,8 +148,8 @@ export const App = () => {
         <Resource name="db/kinds" list={ListGuesser} />
         <CustomRoutes>
           <Route path="env/graph" element={<Graph />} />
-          <Route path="/modelling" element={<Modelling />} />
-          <Route path="/workflows" element={<Workflows />} />
+          {/*<Route path="/modelling" element={<Modelling />} />
+          <Route path="/workflows" element={<Workflows />} />*/}
           <Route path="/settings" element={<Settings />} />
         </CustomRoutes>
       </Admin>

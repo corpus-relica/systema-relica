@@ -48,7 +48,6 @@ import { LinearizationService } from './linearization/linearization.service.js';
 import { QueryController } from './query/query.controller.js';
 import { QueryService } from './query/query.service.js';
 import { GellishToCypherConverter } from './query/GellishToCypherConverter.js';
-import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IndividualService } from './individual/individual.service.js';
@@ -95,7 +94,6 @@ const __dirname = dirname(__filename);
       synchronize: true,
     }),
     TransactionModule,
-    AuthModule,
     UsersModule,
   ],
   controllers: [

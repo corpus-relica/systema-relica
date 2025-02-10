@@ -5,12 +5,11 @@
 (def base-url "http://archivist:3000")
 
 (defn make-request
-  ([path opts token]
+  ([path opts]
    (try
      (let [default-opts {:as :json
                         :content-type :json
-                        :accept :json
-                        :headers {"Authorization" (str "Bearer " token)}}
+                        :accept :json}
            full-opts (merge default-opts opts)]
        (:body (http/get (str base-url path) full-opts)))
      (catch Exception e
@@ -18,12 +17,11 @@
        {:error (.getMessage e)}))))
 
 (defn make-post-request
-  [path body opts token]
+  [path body opts]
   (try
     (let [default-opts {:as :json
                        :content-type :json
                        :accept :json
-                       :headers {"Authorization" (str "Bearer " token)}
                        :body (j/write-str body)}
           full-opts (merge default-opts opts)]
       (:body (http/post (str base-url path) full-opts)))
@@ -32,12 +30,11 @@
       {:error (.getMessage e)})))
 
 (defn make-put-request
-  [path body opts token]
+  [path body opts]
   (try
     (let [default-opts {:as :json
                        :content-type :json
                        :accept :json
-                       :headers {"Authorization" (str "Bearer " token)}
                        :body (j/write-str body)}
           full-opts (merge default-opts opts)]
       (:body (http/put (str base-url path) full-opts)))
@@ -46,12 +43,11 @@
       {:error (.getMessage e)})))
 
 (defn make-delete-request
-  [path opts token]
+  [path opts]
   (try
     (let [default-opts {:as :json
                        :content-type :json
-                       :accept :json
-                       :headers {"Authorization" (str "Bearer " token)}}
+                       :accept :json}
           full-opts (merge default-opts opts)]
       (:body (http/delete (str base-url path) full-opts)))
     (catch Exception e

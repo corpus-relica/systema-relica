@@ -65,13 +65,11 @@ export class REPL {
     replEnv.set(
       MalSymbol.get('retrieveAllFacts'),
       MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
-        const token = this.getToken();
-
         if (!(arg instanceof MalNumber)) {
           throw new Error('retrieveAllFacts: expected number argument');
         }
 
-        const res = await this.archivist.retrieveAllFacts(arg.v, token);
+        const res = await this.archivist.retrieveAllFacts(arg.v);
 
         return jsToMal(res);
       }),
@@ -80,12 +78,10 @@ export class REPL {
     replEnv.set(
       MalSymbol.get('getSpecializationHierarchy'),
       MalFunction.fromBootstrap(async (uid: MalType): Promise<MalType> => {
-        const token = this.getToken();
-
         this.logger.warn('getSpecializationHierarchy', uid);
         console.log(uid);
         console.log('EAT SHIT');
-        console.log('EEEET SHIIIIT', token);
+        console.log('EEEET SHIIIIT');
 
         if (!(uid instanceof MalNumber)) {
           throw new Error(
@@ -97,11 +93,8 @@ export class REPL {
         //     'getSpecializationHierarchy: second argument (token) must be a string',
         //   );
         // }
-        this.logger.warn('getSpecializationHierarchy', uid.v, token);
-        const res = await this.archivist.getSpecializationHierarchy(
-          uid.v,
-          token,
-        );
+        this.logger.warn('getSpecializationHierarchy', uid.v);
+        const res = await this.archivist.getSpecializationHierarchy(uid.v);
         return jsToMal(res);
       }),
     );
@@ -109,8 +102,6 @@ export class REPL {
     replEnv.set(
       MalSymbol.get('modelsFromFacts'),
       MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
-        const token = this.getToken();
-
         if (!(arg instanceof MalVector)) {
           throw new Error('modelsFromFacts: expected vector argument');
         }
@@ -120,7 +111,7 @@ export class REPL {
         //     'getSpecializationHierarchy: second argument (token) must be a string',
         //   );
         // }
-        const res = await this.environment.modelsFromFacts(malToJs(arg), token);
+        const res = await this.environment.modelsFromFacts(malToJs(arg));
         return jsToMal(res);
       }),
     );
@@ -183,13 +174,11 @@ export class REPL {
     replEnv.set(
       MalSymbol.get('loadSubtypesCone'),
       MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
-        const token = this.getToken();
-
         if (!(arg instanceof MalNumber)) {
           throw new Error('loadSubtypesCone: expected number argument');
         }
 
-        const res = await this.environment.loadSubtypesCone(arg.v, token);
+        const res = await this.environment.loadSubtypesCone(arg.v);
         return jsToMal(res);
       }),
     );
@@ -208,13 +197,11 @@ export class REPL {
     replEnv.set(
       MalSymbol.get('loadEntity'),
       MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
-        const token = this.getToken();
-
         if (!(arg instanceof MalNumber)) {
           throw new Error('loadEntity: expected number argument');
         }
 
-        const res = await this.environment.loadEntity(arg.v, 'XXX TOKEN');
+        const res = await this.environment.loadEntity(arg.v);
         return jsToMal(res);
       }),
     );
@@ -229,10 +216,7 @@ export class REPL {
         let models: any[] = [];
         const entityIds = malToJs(arg);
         for (let i = 0; i < entityIds.length; i++) {
-          const payload = await this.environment.loadEntity(
-            entityIds[i],
-            'XXX TOKEN',
-          );
+          const payload = await this.environment.loadEntity(entityIds[i]);
           facts = facts.concat(payload.facts);
           models = models.concat(payload.models);
         }
@@ -319,19 +303,6 @@ payload {:facts facts :models models}]
     await this.rep('(def! not (fn* (a) (if a false true)))', replEnv);
 
     this.replEnv = replEnv;
-  }
-
-  setToken(token: string) {
-    this.replEnv.set(MalSymbol.get('token'), jsToMal(token));
-  }
-
-  getToken(): string {
-    const token = this.replEnv.get(MalSymbol.get('token'));
-    return malToJs(token);
-  }
-
-  deleteToken() {
-    this.replEnv.delete(MalSymbol.get('token'));
   }
 
   // READ

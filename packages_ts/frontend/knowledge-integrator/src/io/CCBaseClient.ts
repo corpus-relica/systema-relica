@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 
 console.log("Creating CCBaseClient instance...");
+
 class CCBaseClient {
   private axiosInstance: AxiosInstance;
 

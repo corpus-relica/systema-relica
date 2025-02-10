@@ -41,51 +41,43 @@ export class ModelService {
     return { aspects: [], involved: [] };
   }
 
-  async retrieveKindModel(uid, token) {
+  async retrieveKindModel(uid) {
     console.log('RETREIVE MODEL uid', uid);
-    const category = await this.archivistService.getCategory(uid, token);
+    const category = await this.archivistService.getCategory(uid);
     console.log('category', category);
-    const facts = await this.archivistService.retrieveAllFacts(uid, token);
+    const facts = await this.archivistService.retrieveAllFacts(uid);
     // console.log('facts', facts);
-    const definitiveFacts = await this.archivistService.getDefinitiveFacts(
-      uid,
-      token,
-    );
+    const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
     // console.log('definitiveFacts', definitiveFacts);
     const specialization =
-      await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1146, token);
+      await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1146);
     // console.log('specialization', specialization);
     const classification =
-      await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1225, token);
+      await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1225);
     // console.log("classification", classification);
     const synonyms = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       1981,
-      token,
     );
     // console.log("synonyms", synonyms);
     const inverses = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       1986,
-      token,
     );
     // console.log("inverses", inverses);
     const reqRole1 = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       4731,
-      token,
     );
     // console.log("reqRole1", reqRole1);
     const reqRole2 = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       4733,
-      token,
     );
     // console.log("reqRole2", reqRole2);
     const possRoles = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       4714,
-      token,
     );
     // console.log("possRoles", possRoles);
     let model;
@@ -137,15 +129,12 @@ export class ModelService {
     });
   }
 
-  async retrieveIndividualModel(uid: number, token: string) {
-    const category = await this.archivistService.getCategory(uid, token);
-    const facts = await this.archivistService.retrieveAllFacts(uid, token);
-    const definitiveFacts = await this.archivistService.getDefinitiveFacts(
-      uid,
-      token,
-    );
+  async retrieveIndividualModel(uid: number) {
+    const category = await this.archivistService.getCategory(uid);
+    const facts = await this.archivistService.retrieveAllFacts(uid);
+    const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
     const classification =
-      await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1225, token);
+      await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1225);
     // // const synonyms = await getRelatedOnUIDSubtypeCone(uid, 1981);
     // // const inverses = await getRelatedOnUIDSubtypeCone(uid, 1986);
     // // const reqRole1 = await getRelatedOnUIDSubtypeCone(uid, 4731);
@@ -174,7 +163,6 @@ export class ModelService {
     const value = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       5025,
-      token,
     ); // 'has on scale a value equal to'
     if (value.length > 0) {
       const valFact = value[0];
@@ -185,13 +173,10 @@ export class ModelService {
     return baseObj;
   }
 
-  async retrieveQualificationModel(uid: number, token: string) {
-    const category = await this.archivistService.getCategory(uid, token);
-    const facts = await this.archivistService.retrieveAllFacts(uid, token);
-    const definitiveFacts = await this.archivistService.getDefinitiveFacts(
-      uid,
-      token,
-    );
+  async retrieveQualificationModel(uid: number) {
+    const category = await this.archivistService.getCategory(uid);
+    const facts = await this.archivistService.retrieveAllFacts(uid);
+    const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
     const baseObj = {
       name: definitiveFacts[0].lh_object_name,
       uid: uid,
@@ -202,17 +187,17 @@ export class ModelService {
     return baseObj;
   }
 
-  async retrieveModel(uid: number, token: string) {
-    const type = await this.archivistService.getEntityType(uid, token);
+  async retrieveModel(uid: number) {
+    const type = await this.archivistService.getEntityType(uid);
 
     console.log('type', type);
 
     if (type === 'kind') {
-      return this.retrieveKindModel(uid, token);
+      return this.retrieveKindModel(uid);
     } else if (type === 'individual') {
-      return this.retrieveIndividualModel(uid, token);
+      return this.retrieveIndividualModel(uid);
     } else if (type === 'qualification') {
-      return this.retrieveQualificationModel(uid, token);
+      return this.retrieveQualificationModel(uid);
     } else if (uid === 730000) {
       return {
         uid: uid,
@@ -255,8 +240,8 @@ export class ModelService {
     return Promise.all(results);
   }
 
-  async retrieveModels(uids: number[], token) {
-    const funcs = uids.map((uid) => () => this.retrieveModel(uid, token));
+  async retrieveModels(uids: number[]) {
+    const funcs = uids.map((uid) => () => this.retrieveModel(uid));
     return await this.throttlePromises(funcs, 5);
   }
 

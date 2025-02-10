@@ -30,10 +30,6 @@ class ArchivistBaseClient {
     // Add request interceptor to inject token
     this.axiosInstance.interceptors.request.use((config) => {
       const token = localStorage.getItem("access_token");
-      console.log(
-        "IS THERE A MUTHER FUCKING TOKEN...MY GUESS IS NOT --> ",
-        token
-      );
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

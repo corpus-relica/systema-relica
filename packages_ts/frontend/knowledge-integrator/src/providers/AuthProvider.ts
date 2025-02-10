@@ -29,8 +29,8 @@ export const authProvider: AuthProvider = {
   },
 
   logout: () => {
-    // localStorage.removeItem("access_token");
-    // localStorage.removeItem("user");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
     closeWebSocket();
     return Promise.resolve();
   },
@@ -38,8 +38,8 @@ export const authProvider: AuthProvider = {
   checkError: (error) => {
     const status = error.status;
     if (status === 401 || status === 403) {
-      // localStorage.removeItem("access_token");
-      // localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
       closeWebSocket();
       return Promise.reject();
     }
@@ -61,8 +61,8 @@ export const authProvider: AuthProvider = {
       return Promise.resolve();
     } catch (error) {
       console.error("Auth check error:", error);
-      // localStorage.removeItem("access_token");
-      // localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
       closeWebSocket();
       return Promise.reject();
     }

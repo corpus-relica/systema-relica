@@ -69,7 +69,7 @@ export class REPLService {
     this.tempREPL.exec(fonk, resolve);
   }
 
-  async getUserRepl(userId: number, token: string): Promise<REPL> {
+  async getUserRepl(userId: number): Promise<REPL> {
     console.log('getUserRepl !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1');
     // Check memory first
     let repl = this.activeRepls.get(userId);
@@ -84,9 +84,6 @@ export class REPLService {
       );
 
       await repl.initReplEnv();
-
-      // Set token
-      repl.setToken(token);
 
       // Load saved state if exists
       await this.loadUserState(userId, repl);

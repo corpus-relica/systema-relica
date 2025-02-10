@@ -60,15 +60,15 @@ export class EnvironmentService {
   //   return replEnv;
   // }
 
-  async modelsFromFacts(facts: Fact[], token: string) {
+  async modelsFromFacts(facts: Fact[]) {
     const entityUIDs = facts.reduce((acc: number[], fact: Fact) => {
       if (!acc.includes(fact.lh_object_uid)) acc.push(fact.lh_object_uid);
       if (!acc.includes(fact.rh_object_uid)) acc.push(fact.rh_object_uid);
       return acc;
     }, []);
-    const models = (
-      await this.modelService.retrieveModels(entityUIDs, token)
-    ).filter((model: any) => model !== null);
+    const models = (await this.modelService.retrieveModels(entityUIDs)).filter(
+      (model: any) => model !== null,
+    );
     return models;
   }
 
@@ -226,39 +226,36 @@ export class EnvironmentService {
 
   //
 
-  async getSpecializationHierarchy(uid: number, token: string) {
+  async getSpecializationHierarchy(uid: number) {
     // const result = await this.archivistService.getSpecializationHierarchy(uid);
     const result = { facts: [] };
     const facts = result.facts;
-    const models = await this.modelsFromFacts(facts, token);
+    const models = await this.modelsFromFacts(facts);
     this.insertFacts(facts);
     this.insertModels(models);
     const payload = { facts, models };
     return payload;
   }
 
-  async getSpecializationFactByUID(uid: number, token: string) {
+  async getSpecializationFactByUID(uid: number) {
     const result = await this.archivistService.getSpecializationFact(uid);
-    const models = await this.modelsFromFacts(result, token);
+    const models = await this.modelsFromFacts(result);
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
     return payload;
   }
 
-  async loadEntity(uid: number, token: string) {
+  async loadEntity(uid: number) {
     if (uid === undefined) return { facts: [], models: [] };
     const selectedEntity = await this.getSelectedEntity();
-    const defResult = await this.archivistService.getDefinitiveFacts(
-      uid,
-      token,
-    );
+    const defResult = await this.archivistService.getDefinitiveFacts(uid);
     const relResult = await this.archivistService.getFactsRelatingEntities(
       uid,
       +selectedEntity,
     );
     const result = defResult.concat(relResult);
-    const models = await this.modelsFromFacts(result, token);
+    const models = await this.modelsFromFacts(result);
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
@@ -360,35 +357,35 @@ export class EnvironmentService {
     return removedFactUids;
   }
 
-  async getSubtypes(uid: number, token: string) {
+  async getSubtypes(uid: number) {
     const result = await this.archivistService.getSubtypes(uid);
-    const models = await this.modelsFromFacts(result, token);
+    const models = await this.modelsFromFacts(result);
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
     return payload;
   }
 
-  async loadSubtypesCone(uid: number, token: string) {
+  async loadSubtypesCone(uid: number) {
     const result = await this.archivistService.getSubtypesCone(uid);
-    const models = await this.modelsFromFacts(result, token);
+    const models = await this.modelsFromFacts(result);
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
     return payload;
   }
 
-  async listSubtypes(uid: number, token: string) {
+  async listSubtypes(uid: number) {
     console.log('LIST SUBTYPES');
     const result = await this.archivistService.getSubtypes(uid);
-    const models = await this.modelsFromFacts(result, token);
+    const models = await this.modelsFromFacts(result);
     const payload = { facts: result, models };
     return payload;
   }
 
   // THIS PROBABLY DOESN"T BELONG HERE!!
   // TODO: weigh the meritts of routing all such calls through CC vs. giving NOUS and Integrator direct access to the DB layer
-  async textSearch(searchTerm: string, token: string) {
+  async textSearch(searchTerm: string) {
     const selectedEntity = await this.getSelectedEntity();
     const searchResult: any =
       await this.archivistService.textSearchExact(searchTerm);
@@ -399,18 +396,13 @@ export class EnvironmentService {
       +selectedEntity,
     );
     const facts = searchResult.facts.concat(relResult);
-    const models = await this.modelsFromFacts(facts, token);
+    const models = await this.modelsFromFacts(facts);
     this.insertFacts(facts);
     this.insertModels(models);
     return { facts: facts, models };
   }
 
-  async specializeKind(
-    uid: number,
-    supertypeName: string,
-    name: string,
-    token: string,
-  ) {
+  async specializeKind(uid: number, supertypeName: string, name: string) {
     const result = await this.archivistService.createKind(
       uid,
       supertypeName,
@@ -421,7 +413,7 @@ export class EnvironmentService {
     if (result.success) {
       const { fact } = result;
       const facts = [fact];
-      const models = await this.modelsFromFacts(facts, token);
+      const models = await this.modelsFromFacts(facts);
       this.insertFacts(facts);
       this.insertModels(models);
       return { success: true, uid: fact.lh_object_uid };
@@ -429,12 +421,7 @@ export class EnvironmentService {
     return { error: 'failed to specialize kind' };
   }
 
-  async classifyIndividual(
-    uid: number,
-    typeName: string,
-    name: string,
-    token: string,
-  ) {
+  async classifyIndividual(uid: number, typeName: string, name: string) {
     const result = await this.archivistService.createIndividual(
       uid,
       typeName,
@@ -445,7 +432,7 @@ export class EnvironmentService {
     if (result.success) {
       const { fact } = result;
       const facts = [fact];
-      const models = await this.modelsFromFacts(facts, token);
+      const models = await this.modelsFromFacts(facts);
       this.insertFacts(facts);
       this.insertModels(models);
       return { success: true, uid: fact.lh_object_uid };
@@ -453,27 +440,27 @@ export class EnvironmentService {
     return { error: 'failed to classify individual' };
   }
 
-  async getClassified(uid: number, token: string) {
+  async getClassified(uid: number) {
     const result = await this.archivistService.getClassified(uid);
     const facts = result;
-    const models = await this.modelsFromFacts(facts, token);
+    const models = await this.modelsFromFacts(facts);
     this.insertFacts(facts);
     this.insertModels(models);
     return { success: true, facts, models };
   }
 
-  async getClassificationFactByUID(uid: number, token: string) {
+  async getClassificationFactByUID(uid: number) {
     const result = await this.archivistService.getClassificationFact(uid);
-    const models = await this.modelsFromFacts(result, token);
+    const models = await this.modelsFromFacts(result);
     this.insertFacts(result);
     this.insertModels(models);
     const payload = { facts: result, models };
     return payload;
   }
 
-  async loadAllRelatedFacts(uid: number, token: string) {
-    const results = await this.archivistService.retrieveAllFacts(uid, token);
-    const models = await this.modelsFromFacts(results, token);
+  async loadAllRelatedFacts(uid: number) {
+    const results = await this.archivistService.retrieveAllFacts(uid);
+    const models = await this.modelsFromFacts(results);
     this.insertFacts(results);
     this.insertModels(models);
     const payload = { facts: results, models };
