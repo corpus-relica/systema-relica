@@ -133,33 +133,56 @@ services:
         aliases:
           - clarity-core
 
-  # aperture:
-  #   container_name: aperture
-  #   build:
-  #     context: ./
-  #     dockerfile: Dockerfile.aperture
-  #   restart: always
-  #   command: ["clojure", "-M:dev"]
-  #   volumes:
-  #     - ./packages_clj/aperture:/usr/src/app/packages_clj/aperture
-  #     - /usr/src/app/.m2
-  #   ports:
-  #     - "2173:8080"
-  #     # nREPL port
-  #     - "7889:7889"
-  #   environment:
-  #     - POSTGRES_HOST=postgres
-  #     - POSTGRES_PORT=5432
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=password
-  #     - POSTGRES_DB=postgres
-  #     - JWT_SECRET=changeme
-  #   depends_on:
-  #     - postgres
-  #   networks:
-  #     rlc-net:
-  #       aliases:
-  #         - aperture
+  clarity-clj:
+    container_name: clarity-clj
+    build:
+      context: ./
+      dockerfile: Dockerfile.clarity-clj
+    restart: always
+    command: ["clojure", "-M:dev"]
+    # command: ["clojure", "-M:run"]
+    volumes:
+      - ./packages_clj/clarity:/usr/src/app/packages_clj/clarity
+      - /usr/src/app/.m2
+    ports:
+      - "3002:3002"
+      # nREPL port
+      - "7888:7888"
+      - "5555:5555"
+    depends_on:
+      - archivist
+    networks:
+      rlc-net:
+        aliases:
+          - clarity-clj
+
+  aperture:
+    container_name: aperture
+    build:
+      context: ./
+      dockerfile: Dockerfile.aperture
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      - ./packages_clj/aperture:/usr/src/app/packages_clj/aperture
+      - /usr/src/app/.m2
+    ports:
+      - "2175:2175"
+      # nREPL port
+      - "7891:7891"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
+    depends_on:
+      - postgres
+    networks:
+      rlc-net:
+        aliases:
+          - aperture
 
   portal:
     container_name: portal
@@ -172,9 +195,9 @@ services:
       - ./packages_clj/portal:/usr/src/app/packages_clj/portal
       - /usr/src/app/.m2
     ports:
-      - "2174:8080"
+      - "2174:2174"
       # nREPL port
-      - "7890:7889"
+      - "7890:7890"
     environment:
       - JWT_SECRET=changeme
     # depends_on:
@@ -229,29 +252,6 @@ services:
       rlc-net:
         aliases:
           - knowledge-integrator
-
-  clarity-clj:
-    container_name: clarity-clj
-    build:
-      context: ./
-      dockerfile: Dockerfile.clarity-clj
-    restart: always
-    command: ["clojure", "-M:dev"]
-    # command: ["clojure", "-M:run"]
-    volumes:
-      - ./packages_clj/clarity:/usr/src/app/packages_clj/clarity
-      - /usr/src/app/.m2
-    ports:
-      - "3002:3002"
-      # nREPL port
-      - "7888:7888"
-      - "5555:5555"
-    depends_on:
-      - archivist
-    networks:
-      rlc-net:
-        aliases:
-          - clarity-clj
 
 networks:
   rlc-net:
