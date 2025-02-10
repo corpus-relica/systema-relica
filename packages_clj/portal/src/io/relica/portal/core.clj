@@ -2,12 +2,14 @@
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.cors :as cors]
+            [io.pedestal.http.body-params :as body-params]
             [io.pedestal.websocket :as ws]
             [clojure.tools.logging :as log]
             [clojure.core.async :as async]
             [cheshire.core :as json]
             [buddy.sign.jwt :as jwt]
             [clojure.string :as str]
+            [io.relica.portal.io.archivist-client :as archivist-client]
             )
   (:import [org.eclipse.jetty.websocket.api Session]))
 
@@ -202,7 +204,45 @@
       (fn [_]
         (tap> (str "Health check hit"))
         {:status 200 :body "healthy"})
-      :route-name ::health]}))
+      :route-name ::health]
+
+["/kinds" :get
+ [http/json-body
+  (fn [{:keys [query-params] :as request}]
+    (tap> {:msg "Received kinds request"
+           :params query-params})
+    (let [{:keys [sort range filter userId]} query-params]
+      (try
+        (let [response (archivist-client/get-kinds
+                        {:sort (json/parse-string sort)
+                         :range (json/parse-string range)
+                         :filter (json/parse-string filter)
+                         :user-id userId})]
+          (tap> {:msg "Got response from archivist"
+                 :response response})
+          {:status 200
+           :headers {"Content-Type" "application/json"
+                    "Access-Control-Allow-Origin" "*"}  ; Explicitly add CORS header
+           :body (json/generate-string response)})
+        (catch Exception e
+          (tap> {:msg "Error in kinds handler"
+                 :error e})
+          {:status 500
+           :headers {"Content-Type" "application/json"
+                    "Access-Control-Allow-Origin" "*"}  ; Add CORS even for errors
+           :body (json/generate-string
+                  {:error "Failed to fetch kinds"})}))))]
+ :route-name ::get-kinds]
+
+     ["/kinds" :options
+      (fn [_]
+        {:status 200
+         :headers {"Access-Control-Allow-Origin" "*"
+                  "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+                  "Access-Control-Allow-Headers" "Content-Type, Authorization"}})
+      :route-name ::kinds-options]
+
+     }))
 
 (def cors-config
   {:allowed-origins (constantly true)  ; Allow all origins for development

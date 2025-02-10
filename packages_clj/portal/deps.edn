@@ -6,10 +6,11 @@
         http-kit/http-kit {:mvn/version "2.7.0"}
         org.clojure/tools.logging {:mvn/version "1.2.4"}
         org.clojure/core.async {:mvn/version "1.7.701"}
-        ch.qos.logback/logback-classic {:mvn/version "1.4.11"}
-        buddy/buddy-sign                             {:mvn/version "3.5.351"}
-        org.eclipse.jetty.websocket/websocket-server {:mvn/version "9.4.51.v20230217"}
-        cheshire/cheshire                            {:mvn/version "5.13.0"}
+        ch.qos.logback/logback-classic                {:mvn/version "1.4.11"}
+        buddy/buddy-sign                              {:mvn/version "3.5.351"}
+        org.eclipse.jetty.websocket/websocket-server  {:mvn/version "9.4.51.v20230217"}
+        cheshire/cheshire                             {:mvn/version "5.13.0"}
+        clj-http/clj-http                             {:mvn/version "3.13.0"}
         }
  :aliases {:dev {:extra-deps {cider/cider-nrepl  {:mvn/version "0.37.1"}
                              binaryage/devtools  {:mvn/version "1.0.7"}}

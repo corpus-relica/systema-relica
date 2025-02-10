@@ -1,9 +1,25 @@
 import axios, { AxiosInstance } from "axios";
 
+import {
+  ENTITY_TYPE_ENDPOINT,
+  SPECIALIZATION_HIERARCHY_ENDPOINT,
+  GET_DEFINITION_ENDPOINT,
+  COLLECTIONS_ENDPOINT,
+  UID_SEARCH_ENDPOINT,
+  TEXT_SEARCH_ENDPOINT,
+  SUBTYPES_ENDPOINT,
+  SUBTYPES_CONE_ENDPOINT,
+  ALL_RELATED_FACTS_ENDPOINT,
+  CLASSIFIED_ENDPOINT,
+  CLASSIFICATION_FACT_ENDPOINT,
+  SIMPLE_VALIDATE_BINARY_FACT_ENDPOINT,
+  SUBMIT_BINARY_FACT_ENDPOINT,
+} from "@relica/constants";
+
 console.log("Creating PortalClient instance...");
 
 class PortalClient {
-  private axiosInstance: AxiosInstance;
+  axiosInstance: AxiosInstance;
 
   constructor() {
     const baseURL =
@@ -53,6 +69,8 @@ class PortalClient {
     console.log("CONNECTING PORTAL CLIENT", baseURL);
   }
 
+  /////////////////////////// ENV ///////////////////////////
+
   async retrieveEnvironment() {
     const response = await this.axiosInstance.get("/environment/retrieve");
     return response.data;
@@ -96,6 +114,54 @@ class PortalClient {
       collection_uid,
       collection_name,
     });
+    return response.data;
+  }
+
+  /////////////////////////// FACTS ///////////////////////////
+
+  async resolveUIDs(uids: number[]) {
+    const response = await this.axiosInstance.get("/concept/entities", {
+      params: { uids: "[" + uids.join(",") + "]" },
+    });
+    return response.data;
+  }
+
+  async getSpecializationHierarchy(uid: number) {
+    const response = await this.axiosInstance.get(
+      SPECIALIZATION_HIERARCHY_ENDPOINT,
+      {
+        params: { uid },
+      }
+    );
+    return response.data;
+  }
+
+  async getDefinition(uid: number) {
+    const response = await this.axiosInstance.get(GET_DEFINITION_ENDPOINT, {
+      params: { uid },
+    });
+    return response.data;
+  }
+
+  async getEntityType(uid: number) {
+    const type = await this.axiosInstance.get(ENTITY_TYPE_ENDPOINT, {
+      params: { uid },
+    });
+    return type.data;
+  }
+
+  async getAllRelatedFacts(uid: number, n: number = 1) {
+    const response = await this.axiosInstance.get(ALL_RELATED_FACTS_ENDPOINT, {
+      params: { uid, depth: n },
+    });
+    return response.data;
+  }
+
+  async submitBinaryFact(fact: Fact) {
+    const response = await this.axiosInstance.post(
+      SUBMIT_BINARY_FACT_ENDPOINT,
+      fact
+    );
     return response.data;
   }
 }

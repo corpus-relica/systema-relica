@@ -23,6 +23,8 @@ import { Route } from "react-router-dom";
 import { authProvider } from "./providers/AuthProvider.js";
 
 import EnvDataProvider from "./providers/EnvDataProvider.js";
+import FactsDataProvider from "./providers/FactsDatProvider.js";
+
 import ArchivistDataProvider from "./providers/ArchivistDataProvider.js";
 
 import { useStores } from "./context/RootStoreContext.js";
@@ -51,10 +53,7 @@ const dataProvider = new Proxy(defaultDataProvider, {
         return;
       }
       if (resource.startsWith("db/")) {
-        return (ArchivistDataProvider as any)[name](
-          resource.substring(3),
-          params
-        );
+        return (FactsDataProvider as any)[name](resource.substring(3), params);
       }
       if (resource.startsWith("env/")) {
         if (name === "getList") {
