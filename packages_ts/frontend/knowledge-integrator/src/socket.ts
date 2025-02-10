@@ -150,22 +150,37 @@ class PortalWebSocketClient extends EventEmitter {
 
       this.ws.onopen = () => {
         console.log("WebSocket connection opened!");
-        // Let's send an immediate test message
-        const testMsg = {
-          type: "test",
-          data: "Testing connection",
-        };
-        console.log("Sending test message:", testMsg);
-        this.ws?.send(JSON.stringify(testMsg));
+        // // Let's send an immediate test message
+        // const testMsg = {
+        //   type: "test",
+        //   data: "Testing connection",
+        // };
+        // console.log("Sending test message:", testMsg);
+        // this.ws?.send(JSON.stringify(testMsg));
+
+        console.log("WebSocket connection opened!");
+        this.isConnecting = false;
+        this.reconnectTimeout = 1000; // Reset backoff
+        this.setupPing(); // Set up ping handling
       };
 
       this.ws.onmessage = (event) => {
         console.log("WebSocket message received:", event.data);
+        // try {
+        //   const parsed = JSON.parse(event.data);
+        //   console.log("Parsed message:", parsed);
+        // } catch (e) {
+        //   console.error("Error parsing message:", e);
+        // }
         try {
-          const parsed = JSON.parse(event.data);
-          console.log("Parsed message:", parsed);
-        } catch (e) {
-          console.error("Error parsing message:", e);
+          const message = JSON.parse(event.data);
+          this.emit(message.type, message.payload);
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
+          console.error("Portal WebSocket connection error:", error);
+          this.cleanupPing();
+          this.isConnecting = false;
+          this.scheduleReconnect();
         }
       };
 
@@ -180,6 +195,8 @@ class PortalWebSocketClient extends EventEmitter {
           reason: event.reason,
           wasClean: event.wasClean,
         });
+        this.cleanupPing();
+        this.scheduleReconnect();
       };
 
       // Test sending a message:
@@ -199,9 +216,23 @@ class PortalWebSocketClient extends EventEmitter {
   }
 
   private setupPing() {
+    // Clear any existing ping handlers
+    this.cleanupPing();
+
+    // Send ping every 25 seconds
     this.pingInterval = window.setInterval(() => {
-      this.send("ping", {});
-    }, 30000);
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        console.log("Sending ping");
+        this.ws.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 25000);
+
+    // Also handle server pings (though they shouldn't happen)
+    this.on("ping", () => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: "pong" }));
+      }
+    });
   }
 
   private cleanupPing() {
@@ -230,13 +261,23 @@ class PortalWebSocketClient extends EventEmitter {
     }
   }
 
+  // close() {
+  //   this.token = null;
+  //   this.cleanupPing();
+  //   if (this.ws) {
+  //     this.ws.close();
+  //     this.ws = null;
+  //   }
+  // }
+
   close() {
-    this.token = null;
     this.cleanupPing();
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
+    this.isConnecting = false;
+    this.jwtToken = null;
   }
 }
 

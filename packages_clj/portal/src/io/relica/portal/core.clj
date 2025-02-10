@@ -7,10 +7,32 @@
             [clojure.core.async :as async]
             [cheshire.core :as json]
             [buddy.sign.jwt :as jwt]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            )
   (:import [org.eclipse.jetty.websocket.api Session]))
 
-(println "Hello, World!")
+;; Add ping configuration
+(def ping-config
+  {:interval 25000    ; Send ping every 25 seconds
+   :timeout 10000})   ; Consider connection dead after 10s without pong
+
+(defn start-ping-loop
+  "Starts a ping loop for a websocket session"
+  [{:keys [session channel user-id] :as sesh}]
+  (tap> {:event :starting-ping-loop :user-id user-id})
+  (let [stop-ch (async/chan)]
+    (async/go-loop []
+      (when (.isOpen session)
+        (let [[_ ch] (async/alts! [(async/timeout (:interval ping-config)) stop-ch])]
+          (when (nil? ch)  ;; timeout occurred, not stop-ch
+            (when (.isOpen session)  ;; double-check session is still open
+              (try
+                (async/put! channel (json/generate-string {:type "ping"}))
+                (tap> {:event :ping-sent :user-id user-id})
+                (catch Exception e
+                  (tap> {:event :ping-error :error e})))
+              (recur))))))  ;; recur outside the try block
+    stop-ch))
 
 ;; Track authenticated sessions and tokens
 (def ws-sessions (atom {}))  ; {ws-session -> {:user-id id :session ws-session :channel ch}}
@@ -83,86 +105,80 @@
 
 (defn token-from-session [ws-session]
   (let [uri (.getRequestURI ws-session)
-        query (.getQuery uri)
-        q-params (clojure.string/split query #"&")
-        map-params (into {} (map #(clojure.string/split % #"=" 2) q-params))
-        token (get map-params "token")]
-    token
-    ))
+        query (.getQuery uri)]
+    (when query  ; Add nil check
+      (let [q-params (clojure.string/split query #"&")
+            map-params (into {} (map #(clojure.string/split % #"=" 2) q-params))]
+        (get map-params "token")))))
 
 (def ws-paths
-  {"/chsk" {:on-open (fn [ws-session conf]
-           ;; (log/info "WebSocket connection attempt starting...")
-           (tap> "WebSocket connection attempt starting...")
-           (tap> (token-from-session ws-session))
-           ;; Extract the token from the WebSocket session parameters
-           (let [token (token-from-session ws-session)]
-             ;; (log/info "Got token from params:" token)
-             (tap> (str"Got token from params:" token))
-             (tap> (str "Socket tokens:" @socket-tokens))
-             (tap> (get @socket-tokens token))
-
-             (tap> "THIS ISN'T WHAT YOU THINK IT IS!!!")
-            (tap> conf)
-
-             (if-let [user-data (get @socket-tokens token)]
-               (let [user-id (:user-id user-data)
-                     ;; Create connection context that will be passed to handlers
-                     ;; conn (->WSConnection user-id conf)
-                     chan (ws/start-ws-connection ws-session {})
-                     sesh {:user-id user-id
-                          :session ws-session
-                          :channel chan}]
-
-                 (tap> (str "WebSocket client authenticated for user:" user-id))
-                 (swap! ws-sessions assoc ws-session sesh)
-
-                 (tap> "THE MUTHERFUCKING CHAN")
-                 (tap> chan)
-
-                 (async/put! chan (json/generate-string
+  {"/chsk"
+   {:on-open (fn [ws-session conf]
+               (tap> "WebSocket connection attempt starting...")
+               (let [token (token-from-session ws-session)]
+                 (if-let [user-data (get @socket-tokens token)]
+                   (let [user-id (:user-id user-data)
+                         chan (ws/start-ws-connection ws-session {})
+                         stop-ch (async/chan)
+                         sesh {:user-id user-id
+                              :session ws-session
+                              :channel chan
+                              :last-pong (System/currentTimeMillis)
+                              :stop-ping stop-ch}]
+                     (swap! ws-sessions assoc ws-session sesh)
+                     ;; Start ping loop
+                     (start-ping-loop sesh)
+                     (async/put! chan (json/generate-string
                                      {:type "welcome"
                                       :message "Connection established!"
                                       :user-id user-id}))
-                 ;; Return connection context
-                 sesh)
-               (do
-                 (tap> (str "Invalid socket token:" token))
-                 (.close ws-session)
-                 nil))))
+                     sesh)
+                   (do
+                     (tap> (str "Invalid socket token:" token))
+                     (.close ws-session)
+                     nil))))
 
-           ;; Now we get both the connection context and the message
-           :on-text (fn [sesh text]
-                      (let [user-id (:user-id sesh)]
-                        (tap> (str "!!!!! Message from user:" user-id " - " text))
-                        (try
-                          (let [data (json/parse-string text true)]
-                            (case (:type data)
-                              "ping" (broadcast-to-user user-id {:type "pong"})
+    :on-text (fn [sesh text]
+               (let [user-id (:user-id sesh)]
+                 (try
+                   (let [data (json/parse-string text true)]
+                     (case (:type data)
+                       ;; Add pong handler
+                       "pong" (do
+                               (tap> {:event :pong-received :user-id user-id})
+                               (swap! ws-sessions assoc-in
+                                     [(:session sesh) :last-pong]
+                                     (System/currentTimeMillis)))
 
-                              "test" (broadcast-to-user user-id {:type "test-response" :echo (:data data)})
+                       ;; Your existing handlers...
+                       "test" (broadcast-to-user user-id
+                                               {:type "test-response"
+                                                :echo (:data data)})
 
-                              ;; Default case
-                              (broadcast-to-user user-id {:type "error" :message "Unknown message type"})))
+                       (broadcast-to-user user-id
+                                        {:type "error"
+                                         :message "Unknown message type"})))
+                   (catch Exception e
+                     (tap> {:event :message-error :error e})))))
 
-                          (catch Exception e
-                            (tap> (str "Error handling message:" e))))))
+    :on-binary (fn [conn payload offset length]
+                (log/warn "Binary message from user"
+                         (:user-id conn)
+                         "not supported"))
 
-           :on-binary (fn [conn payload offset length]
-                       (log/warn "Binary message from user"
-                                (:user-id conn)
-                                "not supported"))
+    :on-error (fn [conn ws-session throwable]
+               (log/error "WebSocket error for user"
+                         (:user-id conn) ":" throwable)
+               (swap! ws-sessions dissoc ws-session))
 
-           :on-error (fn [conn ws-session throwable]
-                      (log/error "WebSocket error for user"
-                                (:user-id conn) ":" throwable)
-                      (swap! ws-sessions dissoc ws-session))
-
-           :on-close (fn [conn ws-session status-code reason]
-                       (tap> (str "Closing connection for user:"
-                                 (:user-id conn)))
-                      (swap! ws-sessions dissoc ws-session))}})
-
+    :on-close (fn [sesh ws-session status-code reason]
+                (when-let [stop-ch (:stop-ping sesh)]
+                  (async/close! stop-ch))
+                (swap! ws-sessions dissoc ws-session)
+                (tap> {:event :connection-closed
+                      :user-id (:user-id sesh)
+                      :status-code status-code
+                      :reason reason}))}})
 
 ;; HTTP Routes
 (def routes
