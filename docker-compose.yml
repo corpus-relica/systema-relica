@@ -177,6 +177,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
       - JWT_SECRET=changeme
+      - ARCHIVIST_URL=http://archivist:3000
     depends_on:
       - postgres
     networks:
@@ -200,6 +201,7 @@ services:
       - "7890:7890"
     environment:
       - JWT_SECRET=changeme
+      - ARCHIVIST_URL=http://archivist:3000
     # depends_on:
     #   - shutter
     #   - clarity

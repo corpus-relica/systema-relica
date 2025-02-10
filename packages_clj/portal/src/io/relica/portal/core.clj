@@ -10,6 +10,7 @@
             [buddy.sign.jwt :as jwt]
             [clojure.string :as str]
             [io.relica.portal.io.archivist-client :as archivist-client]
+            [io.relica.portal.io.aperture-client :as aperture-client]
             )
   (:import [org.eclipse.jetty.websocket.api Session]))
 
@@ -152,6 +153,14 @@
                                      [(:session sesh) :last-pong]
                                      (System/currentTimeMillis)))
 
+                       "loadSpecializationHierarchy" (do
+                                                       (tap> {:event :loadSpecializationHierarchy :user-id user-id})
+                                                       (tap> data)
+                                                       (let [uid (:uid (:payload data))
+                                                             response (aperture-client/load-specialization-hierarchy uid user-id)]
+                                                         (tap> {:event :loadSpecializationHierarchy-response :response response})
+                                                         (async/put! (:channel sesh) (json/generate-string response))))
+
                        ;; Your existing handlers...
                        "test" (broadcast-to-user user-id
                                                {:type "test-response"
@@ -159,7 +168,7 @@
 
                        (broadcast-to-user user-id
                                         {:type "error"
-                                         :message "Unknown message type"})))
+                                         :message (str "Unknown message type: " (:type data) " from user: " user-id)})))
                    (catch Exception e
                      (tap> {:event :message-error :error e})))))
 

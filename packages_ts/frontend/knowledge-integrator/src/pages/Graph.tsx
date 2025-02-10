@@ -1,25 +1,25 @@
 import React, { useState, useCallback } from "react";
 
-import { useStores } from "../context/RootStoreContext";
+import { useStores } from "../context/RootStoreContext.js";
 
 import { observer } from "mobx-react";
 
 import { useStore } from "react-admin";
 
-import { sockSendCC } from "../socket";
+import { sockSendCC, sendSocketMessage } from "../socket.js";
 
 import Box from "@mui/material/Box";
 
 import Fab from "@mui/material/Fab";
-import CopyAllIcon from "@mui/icons-material/CopyAll";
+import CopyAllIcon from "@mui/icons-material/CopyAll.js";
 
 //TODO: rename "FactTable" to something more descriptive
 import { FactTable } from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 
-import GraphAndSelectionLayout from "./GraphToo";
-import { Fact } from "../types";
+import GraphAndSelectionLayout from "./GraphToo.js";
+import { Fact } from "../types.js";
 
 import { getAuthToken } from "../providers/AuthProvider.js";
 
@@ -98,9 +98,13 @@ const Graph = observer(() => {
     if (!res) return;
 
     const { lh_object_uid } = res;
-    sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
-      uid: lh_object_uid,
-    });
+
+    // sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
+    //   uid: lh_object_uid,
+    // });
+
+    sendSocketMessage(LOAD_SPECIALIZATION_HIERARCHY, { uid: lh_object_uid });
+
     selectNode(lh_object_uid);
   };
 

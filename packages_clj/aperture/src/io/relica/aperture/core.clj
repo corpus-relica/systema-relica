@@ -6,7 +6,12 @@
             [next.jdbc.result-set :as rs]
             [cheshire.core :as json]
             [clojure.core.async :as async]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [io.relica.io.archivist-client :as archivist]
+            ))
+
+;; Configure logging levels
+(System/setProperty "org.eclipse.jetty.LEVEL" "INFO")
 
 ;; Database configuration
 (def db-spec
@@ -39,22 +44,37 @@
 (defn update-user-environment!
   "Update specific fields in user's environment"
   [user-id updates]
-  (let [set-clauses (remove nil?
+  (let [user-id (long user-id)
+
+        set-clauses (remove nil?
                      [(when (:facts updates) "facts = ?::jsonb")
                       (when (:models updates) "models = ?::jsonb")
                       (when (:selected_entity_id updates) "selected_entity_id = ?")
                       (when (:selected_entity_type updates) "selected_entity_type = ?::entity_fact_enum")
                       "last_accessed = CURRENT_TIMESTAMP"])
-        values (remove nil?
-                [(when (:facts updates) (json/generate-string (:facts updates)))
-                 (when (:models updates) (json/generate-string (:models updates)))
-                 (when (:selected_entity_id updates) (:selected_entity_id updates))
-                 (when (:selected_entity_type updates) (name (:selected_entity_type updates)))])
+
+        ;; Generate the values for update fields
+        set-values (remove nil?
+                    [(when (:facts updates) (json/generate-string (:facts updates)))
+                     (when (:models updates) (json/generate-string (:models updates)))
+                     (when (:selected_entity_id updates) (:selected_entity_id updates))
+                     (when (:selected_entity_type updates) (name (:selected_entity_type updates)))])
+
         query (str "UPDATE user_environments SET "
                   (clojure.string/join ", " set-clauses)
-                  " WHERE user_id = ? RETURNING *")]
+                  " WHERE user_id = ? RETURNING *")
+
+        ;; Now append user-id at the end since that's where the WHERE clause is
+        all-values (vec set-values)  ; Convert to vector first
+        all-values (conj all-values user-id)]  ; Add user-id at the end
+
+    ;; Debug output
+    (println "Debug - Query:" query)
+    (println "Debug - Values:" (vec all-values))
+    (println "Debug - user-id type:" (type user-id))
+
     (jdbc/execute-one! ds
-      (into [query] (conj values user-id))
+      (into [query] all-values)
       {:builder-fn rs/as-unqualified-maps})))
 
 ;; Environment sync channels
@@ -107,7 +127,7 @@
                      :db "disconnected"}})))
        :route-name ::health]
 
-      ["/api/environment/:user-id" :get
+      ["/api/environment/:user-id/get" :get
        (fn [{{:keys [user-id]} :path-params}]
          (if-let [env (get-user-environment (parse-long user-id))]
            {:status 200
@@ -116,7 +136,7 @@
             :body {:error "Environment not found"}}))
        :route-name ::get-environment]
 
-      ["/api/environment/:user-id" :put
+      ["/api/environment/:user-id/put" :put
        (fn [{{:keys [user-id]} :path-params
              updates :json-params}]
          (if-let [updated (update-user-environment!
@@ -126,7 +146,24 @@
             :body updated}
            {:status 404
             :body {:error "Failed to update environment"}}))
-       :route-name ::update-environment]}))
+       :route-name ::update-environment]
+
+      ["/api/environment/:user-id/load-specialization-heirarchy/:uid" :get
+       (fn [{{:keys [uid user-id]} :path-params}]
+         (let [user-id (parse-long user-id)
+               uid (parse-long uid)
+               sh (archivist/get-specialization-hierarchy uid user-id)
+               facts (:facts sh)]
+           (println "Specialization hierarchy:" sh)
+           (println sh)
+           (update-user-environment! user-id {:facts facts})
+           (if facts
+             {:status 200
+              :body facts}
+             {:status 404
+              :body {:error "Specialization not found"}})))
+       :route-name ::load-specialization-hierarchy]
+      }))
 
 (def cors-config
   {:allowed-origins (constantly true)
@@ -161,6 +198,37 @@
   ;; Test environment operations
   (get-user-environment 7)
 
-  (update-user-environment! 1 {:facts [[:new-fact "value"]]})
+  ;; Example usage with vectors of maps:
+  (def example-updates
+    {:facts [{:type "fact1"
+              :value "value1"
+              :metadata {:source "system1"}}
+             {:type "fact2"
+              :value "value2"
+              :metadata {:source "system2"}}]
+     :models [{:type "model1"
+               :params {:p1 "v1"}
+               :status "active"}
+              {:type "model2"
+               :params {:p2 "v2"}
+               :status "pending"}]
+     :selected_entity_id 42
+     :selected_entity_type :person})
+
+  ;; Example calls:
+  ;; Update just facts
+  (update-user-environment! 7
+    {:facts [{:type "new-fact"
+              :value "some value"
+              :metadata {:source "user-input"}}]})
+
+  ;; Update just models
+  (update-user-environment! 7
+    {:models [{:type "new-model"
+               :params {:key "value"}
+               :status "active"}]})
+
+  ;; Update multiple fields
+  (update-user-environment! 7 example-updates)
 
   )
