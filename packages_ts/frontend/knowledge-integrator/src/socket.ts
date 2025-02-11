@@ -174,6 +174,7 @@ class PortalWebSocketClient extends EventEmitter {
         // }
         try {
           const message = JSON.parse(event.data);
+          console.log("Parsed message:", message);
           this.emit(message.type, message.payload);
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);

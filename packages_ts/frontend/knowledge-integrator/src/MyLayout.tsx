@@ -2,16 +2,28 @@ import React, { useState, useEffect } from "react";
 import { Layout, useRedirect, useStore } from "react-admin";
 import { Slide, IconButton } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
-import { MyMenu } from "./MyMenu";
-import { MyAppBar } from "./MyAppBar";
-import LispREPL from "./LispREPL";
-import { useStores } from "./context/RootStoreContext";
+import { MyMenu } from "./MyMenu.js";
+import { MyAppBar } from "./MyAppBar.js";
+import LispREPL from "./LispREPL.js";
+import { useStores } from "./context/RootStoreContext.js";
 
 const replHeight = "40vh"; // Adjust as needed
 
-import { ccSocket } from "./socket";
+import { ccSocket, portalWs } from "./socket.js";
+
+import { portalClient } from "./io/PortalClient.js";
+import { authProvider } from "./providers/AuthProvider.js";
 
 // const memStore = localStorageStore();
+
+const cats = {
+  730044: "Physical Object",
+  193671: "Occurrence",
+  160170: "Role",
+  790229: "Aspect",
+  //970002: "Information",
+  2850: "Relation",
+};
 
 export const MyLayout = (props) => {
   const redirect = useRedirect();
@@ -24,7 +36,7 @@ export const MyLayout = (props) => {
   const [replOpen, setReplOpen] = useState(false);
 
   const { addFacts, addConcepts, setCategories } = factDataStore;
-  const [isConnected, setIsConnected] = useState(false);
+  // const [isConnected, setIsConnected] = useState(false);
 
   const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
@@ -33,15 +45,63 @@ export const MyLayout = (props) => {
     setReplOpen(!replOpen);
   };
 
+  const establishCats = async () => {
+    console.log("vvvv - VULNERABLE II - vvvv");
+    const concepts = await portalClient.resolveUIDs(
+      Object.keys(cats).map((x) => parseInt(x))
+    );
+    console.log("vvvv - CONCEPTS vvvv:");
+    console.log(concepts);
+    const newCats = [];
+    for (const [key, name] of Object.entries(cats)) {
+      const concept = concepts.find((c: any) => c.uid === parseInt(key));
+      const { uid, descendants } = concept;
+      newCats.push({ uid, name, descendants });
+    }
+    console.log("vvvv - CATEGORIES vvvv:");
+    console.log(newCats);
+    setCategories(newCats);
+  };
+
+  useEffect(() => {
+    const retrieveEnv = async () => {
+      const foo = await authProvider.getIdentity();
+      console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:");
+      console.log(foo);
+      const env = await portalClient.retrieveEnvironment();
+      console.log("vvvv - ENVIRONMENT foo vvvv:");
+      console.log(env);
+      factDataStore.addFacts(env.facts);
+      // semanticModelStore.addModels(env.models);
+      // graphViewStore.selectedNode = env.selected_entity_id;
+    };
+
+    const foobarbaz = async () => {
+      await establishCats();
+      await retrieveEnv();
+      console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
+    };
+
+    foobarbaz();
+  }, []);
+
   useEffect(() => {
     const onConnect = () => {
-      setIsConnected(true);
+      // setIsConnected(true);
       console.log("//// CONNECTED SOCKET> CC");
     };
 
+    const onPortalConnect = () => {
+      console.log("\\\\ CONNECTED SOCKET> PORTAL");
+    };
+
     const onDisconnect = () => {
-      setIsConnected(false);
+      // setIsConnected(false);
       console.log("//// DISCONNECTED SOCKET> CC");
+    };
+
+    const onPortalDisconnect = () => {
+      console.log("\\\\ DISCONNECTED SOCKET> PORTAL");
     };
 
     const onSelectEntity = (d) => {
@@ -142,6 +202,13 @@ export const MyLayout = (props) => {
     ccSocket.on("system:stateInitialized", onStateInitialized);
     ccSocket.on("system:stateChanged", onStateChange);
 
+    // ------------------------------------------------------------- //
+
+    portalWs.on("connect", onPortalConnect);
+    portalWs.on("disconnect", onPortalDisconnect);
+
+    portalWs.on("system:loadedFacts", onAddFacts);
+
     return () => {
       ccSocket.off("connect", onConnect);
       ccSocket.off("disconnect", onDisconnect);
@@ -158,6 +225,13 @@ export const MyLayout = (props) => {
 
       ccSocket.off("system:stateInitialized", onStateInitialized);
       ccSocket.off("system:stateChanged", onStateChange);
+
+      // ------------------------------------------------------------- //
+
+      portalWs.off("connect", onPortalConnect);
+      portalWs.off("disconnect", onPortalDisconnect);
+
+      portalWs.off("system:loadedFacts", onAddFacts);
     };
   }, []);
 

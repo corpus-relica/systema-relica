@@ -153,13 +153,27 @@
                                      [(:session sesh) :last-pong]
                                      (System/currentTimeMillis)))
 
-                       "loadSpecializationHierarchy" (do
-                                                       (tap> {:event :loadSpecializationHierarchy :user-id user-id})
-                                                       (tap> data)
-                                                       (let [uid (:uid (:payload data))
-                                                             response (aperture-client/load-specialization-hierarchy uid user-id)]
-                                                         (tap> {:event :loadSpecializationHierarchy-response :response response})
-                                                         (async/put! (:channel sesh) (json/generate-string response))))
+                       ;; "loadSpecializationHierarchy" (do
+                       ;;                                 (tap> {:event :loadSpecializationHierarchy :user-id user-id})
+                       ;;                                 (tap> data)
+                       ;;                                 (let [uid (:uid (:payload data))
+                       ;;                                       response (aperture-client/load-specialization-hierarchy uid user-id)]
+                       ;;                                   (tap> {:event :loadSpecializationHierarchy-response :response response})
+                       ;;                                   (async/put! (:channel sesh) (json/generate-string response))))
+                       "loadSpecializationHierarchy"
+                         (do
+                           (tap> {:event :loadSpecializationHierarchy :user-id user-id})
+                           (tap> data)
+                           (let [uid (:uid (:payload data))
+                                 response (aperture-client/load-specialization-hierarchy uid user-id)
+                                 ;; First convert the EDN response to a Clojure data structure if it isn't already
+                                 clj-data (if (string? response)
+                                           (read-string response)  ;; if it's an EDN string
+                                           response)               ;; if it's already a data structure
+                                 ;; Then convert to JSON
+                                 json-msg (json/generate-string {:type "system:loadedFacts" :payload {:facts clj-data}})]
+                             (tap> {:event :loadSpecializationHierarchy-response :response response})
+                             (async/put! (:channel sesh) json-msg)))
 
                        ;; Your existing handlers...
                        "test" (broadcast-to-user user-id
@@ -250,6 +264,67 @@
                   "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
                   "Access-Control-Allow-Headers" "Content-Type, Authorization"}})
       :route-name ::kinds-options]
+
+["/concept/entities" :get
+  [http/json-body
+    (fn [{:keys [query-params] :as request}]
+      (tap> {:msg "Received concept entities request"
+             :params query-params})
+      (let [{:keys [uids]} query-params]
+        (try
+          (let [response (archivist-client/resolve-uids
+                          (json/parse-string uids))]
+            (tap> {:msg "Got response from archivist"
+                   :response response})
+            {:status 200
+             :headers {"Content-Type" "application/json"
+                      "Access-Control-Allow-Origin" "*"}  ; Explicitly add CORS header
+             :body (json/generate-string response)})
+          (catch Exception e
+            (tap> {:msg "Error in concept entities handler"
+                   :error e})
+            {:status 500
+             :headers {"Content-Type" "application/json"
+                      "Access-Control-Allow-Origin" "*"}  ; Add CORS even for errors
+             :body (json/generate-string
+                    {:error "Failed to fetch concept entities"})}))))]
+ :route-name ::get-concept-entities]
+
+["/environment/retrieve" :get
+ [http/json-body
+  (fn [{:keys [query-params] :as request}]
+    (tap> {:msg "Received environment retrieve request"
+           :params query-params})
+    (let [{:keys [userId]} query-params]
+      (try
+        (let [response (aperture-client/get-environment userId)
+              _ (tap> {:msg "Raw response type" :type (type response)})  ;; Debug the response type
+              ;; Parse string if needed
+              parsed-response (if (string? response)
+                              (read-string response)
+                              response)
+              ;; Then convert to JSON-friendly format
+              json-response (-> parsed-response
+                              clojure.walk/stringify-keys
+                              (update :last_accessed str)
+                              (update :updated_at str)
+                              (update :created_at str))]
+          (tap> {:msg "Got retrieve environment response"
+                 :response parsed-response})
+          {:status 200
+           :headers {"Content-Type" "application/json"
+                    "Access-Control-Allow-Origin" "*"}
+           :body (json/generate-string json-response)})
+        (catch Exception e
+          (tap> {:msg "Error in environment retrieve handler"
+                 :error e})
+          {:status 500
+           :headers {"Content-Type" "application/json"
+                    "Access-Control-Allow-Origin" "*"}
+           :body (json/generate-string
+                  {:error "Failed to fetch environment"})}))))]
+ :route-name ::get-environment]
+
 
      }))
 

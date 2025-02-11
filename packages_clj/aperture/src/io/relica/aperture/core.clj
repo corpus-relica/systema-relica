@@ -25,12 +25,24 @@
 (def ds (jdbc/get-datasource db-spec))
 
 ;; Environment Operations
+;; (defn get-user-environment
+;;   "Retrieve user's environment by user-id"
+;;   [user-id]
+;;   (jdbc/execute-one! ds
+;;     ["SELECT * FROM user_environments WHERE user_id = ?" user-id]
+;;     {:builder-fn rs/as-unqualified-maps}))
+
 (defn get-user-environment
   "Retrieve user's environment by user-id"
   [user-id]
-  (jdbc/execute-one! ds
-    ["SELECT * FROM user_environments WHERE user_id = ?" user-id]
-    {:builder-fn rs/as-unqualified-maps}))
+  (let [raw-env (jdbc/execute-one! ds
+                  ["SELECT * FROM user_environments WHERE user_id = ?" user-id]
+                  {:builder-fn rs/as-unqualified-maps})
+        ;; Parse the JSON fields from PGobjects
+        parsed-env (-> raw-env
+                      (update :facts #(json/parse-string (.getValue %) true))
+                      (update :models #(json/parse-string (.getValue %) true)))]
+    parsed-env))
 
 (defn create-user-environment!
   "Create initial environment for user"
@@ -131,8 +143,10 @@
        (fn [{{:keys [user-id]} :path-params}]
          (if-let [env (get-user-environment (parse-long user-id))]
            {:status 200
+            :headers {"Content-Type" "application/edn"}  ;; Add this
             :body env}
            {:status 404
+            :headers {"Content-Type" "application/edn"}  ;; Add this
             :body {:error "Environment not found"}}))
        :route-name ::get-environment]
 
@@ -148,21 +162,23 @@
             :body {:error "Failed to update environment"}}))
        :route-name ::update-environment]
 
-      ["/api/environment/:user-id/load-specialization-heirarchy/:uid" :get
-       (fn [{{:keys [uid user-id]} :path-params}]
-         (let [user-id (parse-long user-id)
-               uid (parse-long uid)
-               sh (archivist/get-specialization-hierarchy uid user-id)
-               facts (:facts sh)]
-           (println "Specialization hierarchy:" sh)
-           (println sh)
-           (update-user-environment! user-id {:facts facts})
-           (if facts
-             {:status 200
-              :body facts}
-             {:status 404
-              :body {:error "Specialization not found"}})))
-       :route-name ::load-specialization-hierarchy]
+["/api/environment/:user-id/load-specialization-heirarchy/:uid" :get
+  (fn [{{:keys [uid user-id]} :path-params}]
+    (let [user-id (parse-long user-id)
+          uid (parse-long uid)
+          sh (archivist/get-specialization-hierarchy uid user-id)
+          facts (:facts sh)]
+      (println "Specialization hierarchy:" sh)
+      (println sh)
+      (update-user-environment! user-id {:facts facts})
+      (if facts
+        {:status 200
+         :headers {"Content-Type" "application/edn"}  ;; Add this
+         :body (pr-str facts)}                       ;; And this
+        {:status 404
+         :headers {"Content-Type" "application/edn"}  ;; Add this
+         :body (pr-str {:error "Specialization not found"})}))) ;; And this
+  :route-name ::load-specialization-hierarchy]
       }))
 
 (def cors-config
@@ -176,7 +192,15 @@
        ::http/port 2175
        ::http/host "0.0.0.0"
        ::http/join? false
-       ::http/allowed-origins {:creds true :allowed-origins (constantly true)}}
+       ::http/allowed-origins {:creds true :allowed-origins (constantly true)}
+       ::http/container-options {:context-configurator
+                                 ;; Disable Jetty debug logging
+                                 ;; it somehow pollutes the websocket traffic
+       (fn [^org.eclipse.jetty.servlet.ServletContextHandler context]
+         ;; Get the Jetty logger
+         (let [logger (org.eclipse.jetty.util.log.Log/getLogger "org.eclipse.jetty")]
+           (.setDebugEnabled logger false))
+         context)}}
       http/default-interceptors
       (update ::http/interceptors conj (cors/allow-origin cors-config))))
 
@@ -230,5 +254,7 @@
 
   ;; Update multiple fields
   (update-user-environment! 7 example-updates)
+
+  (println (get-user-environment 7))
 
   )
