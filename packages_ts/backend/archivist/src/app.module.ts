@@ -52,6 +52,7 @@ import { UsersModule } from './users/users.module.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IndividualService } from './individual/individual.service.js';
 import { IndividualController } from './individual/individual.controller.js';
+import { WebSocketModule } from './websocket/websocket.module.js';
 
 ///////////////////////////
 
@@ -93,6 +94,7 @@ const __dirname = dirname(__filename);
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
+    WebSocketModule,
     TransactionModule,
     UsersModule,
   ],

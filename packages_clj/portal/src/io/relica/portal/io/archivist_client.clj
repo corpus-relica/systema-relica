@@ -1,164 +1,145 @@
+;; src/io/relica/portal/io/archivist_client.clj
 (ns io.relica.portal.io.archivist-client
-  (:require [clj-http.client :as http]
-            [cheshire.core :as json]
+  (:require [io.relica.common.websocket.client :as ws]
+            [clojure.core.async :refer [go <!]]
             [clojure.tools.logging :as log]
+            [cheshire.core :as json]
             [clojure.string :as str]))
 
+;; Configuration
+(def default-timeout 5000)
+(def default-ws-url
+  (or (System/getenv "ARCHIVIST_WS_URL") "ws://localhost:3000/ws"))
 
-;; Constants (would typically be in a separate constants namespace)
-(def endpoints
-  {:specialization-hierarchy "/api/specialization/hierarchy"
-   :collections "/api/collections"
-   :definition "/api/definition"
-   :uid-search "/api/search/uid"
-   :text-search "/api/search/text"
-   :entity-type "/api/entity/type"
-   :related-facts "/api/facts/related"
-   :subtypes "/api/subtypes"
-   :subtypes-cone "/api/subtypes/cone"
-   :classified "/api/classified"
-   :classification-fact "/api/classification/fact"
-   :concept-entities "/concept/entities"
-   :entity-prompt "/retrieveEntity/prompt"
-   :validate-binary-fact "/api/facts/binary/validate"
-   :submit-binary-fact "/api/facts/binary/submit"})
+;; Client instance
+(defonce archivist-client
+  (ws/create-client default-ws-url
+                    {
+                     ;; :read-mode :json
+                     ;; :write-mode :json
+                     :handlers {:on-error #(log/error "Archivist WS Error:" %)
+                              :on-message #(log/debug "Archivist message received:" %)}}))
 
-(def base-url
-  (or (System/getenv "ARCHIVIST_URL") "http://localhost:3000"))
+;; Request helper
+(defn send-archivist!
+  ([type payload]
+   (send-archivist! type payload default-timeout))
+  ([type payload timeout-ms]
+   (ws/send-message! archivist-client type payload timeout-ms)))
 
-(defn- make-request
-  "Generic request handler with error handling"
-  [method endpoint & [opts]]
-  (try
-    (let [url (str base-url endpoint)
-          response (http/request
-                    (merge
-                      {:method method
-                       :url url
-                       :as :json
-                       :throw-exceptions false
-                       :content-type :json}
-                      opts))]
-      (if (= 200 (:status response))
-        (:body response)
-        (throw (ex-info "Request failed"
-                       {:status (:status response)
-                        :body (:body response)
-                        :url url}))))
-    (catch Exception e
-      (log/error e "Request failed" {:endpoint endpoint :opts opts})
-      (throw e))))
-
-;; API Functions
+;; API Functions - converted to use WebSocket
 (defn get-specialization-hierarchy [uid]
-  (make-request :get (endpoints :specialization-hierarchy)
-               {:query-params {:uid uid}}))
+  (send-archivist! "specialization:hierarchy:get"
+                   {:uid uid}))
 
 (defn get-collections [uid]
-  (make-request :get (endpoints :collections)
-               {:query-params {:uid uid}}))
+  (send-archivist! "collections:get"
+                   {:uid uid}))
 
 (defn get-definition [uid]
-  (make-request :get (endpoints :definition)
-               {:query-params {:uid uid}}))
+  (send-archivist! "definition:get"
+                   {:uid uid}))
 
 (defn uid-search
   ([search-term] (uid-search search-term ""))
   ([search-term collection-uid]
-   (make-request :get (endpoints :uid-search)
-                {:query-params {:searchTerm search-term
-                              :collectionUID collection-uid}})))
+   (send-archivist! "search:uid"
+                    {:search-term search-term
+                     :collection-uid collection-uid})))
 
 (defn text-search
   ([search-term]
    (text-search search-term 1 50))
   ([search-term page page-size]
-   (make-request :get (endpoints :text-search)
-                {:query-params {:searchTerm search-term
-                              :page page
-                              :pageSize page-size
-                              :collectionUID ""}})))
+   (send-archivist! "search:text"
+                    {:search-term search-term
+                     :page page
+                     :page-size page-size
+                     :collection-uid ""})))
 
 (defn get-entity-type [uid]
-  (make-request :get (endpoints :entity-type)
-               {:query-params {:uid uid}}))
+  (send-archivist! "entity:type:get"
+                   {:uid uid}))
 
 (defn get-all-related-facts
   ([uid] (get-all-related-facts uid 1))
   ([uid depth]
-   (make-request :get (endpoints :related-facts)
-                {:query-params {:uid uid
-                              :depth depth}})))
+   (send-archivist! "facts:related:get"
+                    {:uid uid
+                     :depth depth})))
 
 (defn get-subtypes [uid]
-  (make-request :get (endpoints :subtypes)
-               {:query-params {:uid uid}}))
+  (send-archivist! "subtypes:get"
+                   {:uid uid}))
 
 (defn get-subtypes-cone [uid]
-  (make-request :get (endpoints :subtypes-cone)
-               {:query-params {:uid uid}}))
+  (send-archivist! "subtypes:cone:get"
+                   {:uid uid}))
 
 (defn get-classified [uid]
-  (make-request :get (endpoints :classified)
-               {:query-params {:uid uid}}))
+  (send-archivist! "classified:get"
+                   {:uid uid}))
 
 (defn get-classification-fact [uid]
-  (make-request :get (endpoints :classification-fact)
-               {:query-params {:uid uid}}))
+  (send-archivist! "classification:fact:get"
+                   {:uid uid}))
 
 (defn resolve-uids [uids]
-  (make-request :get (endpoints :concept-entities)
-               {:query-params {:uids (str "[" (str/join "," uids) "]")}}))
+  (send-archivist! "entities:resolve"
+                   {:uids uids}))
 
 (defn get-entity-prompt [[_ uid]]
-  (make-request :get (endpoints :entity-prompt)
-               {:query-params {:uid uid}}))
+  (send-archivist! "entity:prompt:get"
+                   {:uid uid}))
 
 (defn post-entity-prompt [uid prompt]
-  (make-request :post (endpoints :entity-prompt)
-               {:form-params {:uid uid
-                            :prompt prompt}}))
+  (send-archivist! "entity:prompt:submit"
+                   {:uid uid
+                    :prompt prompt}))
 
 (defn validate-binary-fact [fact]
-  (make-request :get (endpoints :validate-binary-fact)
-               {:query-params fact}))
+  (send-archivist! "facts:binary:validate"
+                   fact))
 
 (defn submit-binary-fact [fact]
-  (make-request :post (endpoints :submit-binary-fact)
-               {:body (json/generate-string fact)}))
+  (send-archivist! "facts:binary:submit"
+                   fact))
 
-;; Kind-specific functions (from previous discussion)
 (defn get-kinds [{:keys [sort range filter user-id]}]
-  (let [[sort-field sort-order] sort
-        [range-start range-end] range
-        request-params {"sort" (json/generate-string sort)
-                       "range" (json/generate-string range)
-                       "filter" (json/generate-string filter)
-                       "user_id" user-id}]
-    (tap> {:msg "Making request to Archivist get-kinds"
-           :url (str base-url "/kinds")
-           :params request-params})
-    (make-request :get "/kinds"
-                 {:query-params request-params})))
+  (send-archivist! "kinds:get"
+                   {:sort sort
+                    :range range
+                    :filter filter
+                    :user-id user-id}))
 
-;; (defn get-kinds [{:keys [sort range filter user-id]}]
-;;   (try
-;;     (let [[sort-field sort-order] sort
-;;           [range-start range-end] range
-;;           response (http/get (str base-url "/api/kinds")
-;;                            {:as :json
-;;                             :throw-exceptions false
-;;                             :query-params {"sort_field" sort-field
-;;                                          "sort_order" sort-order
-;;                                          "offset" range-start
-;;                                          "limit" (- range-end range-start)
-;;                                          "filter" (json/generate-string filter)
-;;                                          "user_id" user-id}})]
-;;       (if (= 200 (:status response))
-;;         (:body response)
-;;         (throw (ex-info "Failed to fetch kinds from Archivist"
-;;                        {:status (:status response)
-;;                         :body (:body response)}))))
-;;     (catch Exception e
-;;       (log/error e "Error fetching kinds from Archivist")
-;;       (throw e))))
+;; Connection management
+(defn ensure-connection! []
+  (when-not (ws/connected? archivist-client)
+    (ws/connect! archivist-client)))
+
+(defn disconnect! []
+  (ws/disconnect! archivist-client))
+
+;; REPL helpers
+(comment
+  ;; Ensure connection
+  (ensure-connection!)
+
+  (ws/connected? archivist-client)
+
+  ;; Test some endpoints
+  (go
+    (let [response (<! (get-kinds {:sort ["name" "ASC"]
+                                  :range [0 10]
+                                  :filter {}
+                                  :user-id "test-user"}))]
+      (println "Got kinds:" response)))
+
+  (go
+    (let [response (<! (resolve-uids [1234 5678]))]
+      (println "Resolved UIDs:" response)))
+
+  ;; Cleanup
+  (disconnect!)
+
+  )
