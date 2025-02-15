@@ -3,7 +3,6 @@
             [clojure.tools.logging :as log]
             [clojure.core.async :as async :refer [<! go chan]]
             [io.relica.common.websocket.server :as ws]
-
             [io.relica.archivist.gellish-base-service :as gellish-base-service]))
 
 (defprotocol WebSocketOperations
@@ -11,84 +10,55 @@
   (send-to-session! [this session-id message])
   (get-active-sessions [this])
   (disconnect-all! [this])
-  (get-xxx [this])
-  )
+  (get-xxx [this]))
 
-(defmulti handle-ws-message (fn [component msg] (:type msg)))
 
-(defmethod handle-ws-message :default
-  [_ {:keys [type client-id]}]
-  {:type "error"
-   :client-id client-id
-   :error (str "Unknown message type: " type)})
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message :entities/resolve
+  [{:keys [?data ?reply-fn xxx] :as msg}]
+  (tap> {:event :websocket/handling-entities-resolve
+         :data ?data
+         :full-msg msg})
+  (when ?reply-fn
+    (let [result (gellish-base-service/get-entities xxx (:uids ?data))]
+      (tap> {:event :websocket/sending-resolve-response
+             :result result})
+      (?reply-fn {:resolved true :data result}))))
 
-(defrecord WebSocketComponent [xxx server options]
+(defrecord WebSocketComponent [xxx server]
   WebSocketOperations
   (broadcast! [_ message]
-    (ws/broadcast! server message))
+    (broadcast! server message))
 
   (send-to-session! [_ client-id message]
     (ws/send! server client-id message))
 
   (get-active-sessions [_]
-    (count @(:clients options)))
+    (when-let [connected-uids (:connected-uids @(:state server))]
+      (count (:any @connected-uids))))
 
-  (disconnect-all! [this]
+  (disconnect-all! [_]
     (ws/stop! server))
 
   (get-xxx [_]
     xxx))
 
-(defn create-handlers [xxx component]
-  {"example:ping" (fn [payload]
-                    (go {:pong true}))
-   "entities:resolve" (fn [payload]
-                        (tap> "Resolving entity, nukkah")
-                        (tap> payload)
-                        (tap> xxx)
-                        (tap> "-----------------------------")
-                        (let [res (gellish-base-service/get-entities xxx (:uids payload))]
-                          (tap> "Resolved entity, biotch1")
-                          (tap> res)
-                          (go {:resolved true
-                               :data res}))
+(defn create-event-handler [xxx]
+  (fn [msg]
+    (io.relica.common.websocket.server/handle-ws-message (assoc msg :xxx xxx))))
 
-                        ;; (go
-                        ;;   (let [foo (<! (gellish-base-service/get-entities
-                        ;;                 @xxx
-                        ;;                 (:uids payload)))]
-                        ;;     (tap> "foo")
-                        ;;     (tap> foo)
-                        ;;   )
-                        ;; (go{:resolved true}))
-                        )
-   ;; Add more handlers as needed
-   })
-
-(defonce ws-comp (atom nil))
-
-(defn start
-  ([xxx] (start xxx 3000))
-  ([xxx port]
-   (println "Starting WebSocket server on port" port)
-   (let [handlers (create-handlers xxx nil)  ; We'll pass component later if needed
-         server (ws/create-server port {:handlers handlers})
-         comp (->WebSocketComponent xxx server {:clients (atom {})})]
-     (reset! ws-comp comp)
-     (ws/start! server)
-     comp)))
+(defn start [xxx port]
+  (tap> (str "!!! Starting WebSocket server on port" port))
+  (let [server (ws/create-server {:port port
+                                 :event-msg-handler (create-event-handler xxx)})
+        component (->WebSocketComponent xxx server)]
+    (ws/start! server)
+    component))
 
 (defn stop [component]
-  (println "Stopping WebSocket server...")
+  (log/info "Stopping WebSocket server...")
   (when-let [server (:server component)]
     (ws/stop! server)))
 
-(comment
-
-  (io.relica.archivist.io.ws-server/get-xxx @ws-comp)
-
-  (gellish-base-service/get-entities
-         (io.relica.archivist.io.ws-server/get-xxx @ws-comp)
-         [1225 1146])
-
-  )
+;; (defstate ws-server
+;;   :start (start (:xxx (mount.core/args)) (:port (mount.core/args)))
+;;   :stop (stop ws-server))

@@ -44,9 +44,13 @@
           (gellish-base-service/stop)))
 
 (defstate ws-server
-  :start (let [{:keys [host port]} (:ws-server db-config)]
-           (println "Starting WebSocket server...")
-           (ws-server/start gellish-base-service))
+  :start (let [;;{:keys [host port]} (:ws-server db-config)
+               server-port 3000];;(or port 3000)]
+           (tap> "Starting WebSocket server...")
+           (println "Starting WebSocket server on port" server-port "...")
+           ;; (mount.core/args {:xxx gellish-base-service
+           ;;                   :port server-port})
+           (ws-server/start gellish-base-service server-port))
   :stop (do
           (println "Stopping WebSocket server...")
-          (ws-server/stop)))
+          (ws-server/stop ws-server)))

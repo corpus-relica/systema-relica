@@ -1,191 +1,154 @@
-;; src/io/relica/common/websocket/server.clj
 (ns io.relica.common.websocket.server
-  (:require [clojure.tools.logging :as log]
-            [clojure.core.async :as async :refer [go go-loop <! >! chan close!]])
-  (:import [org.java_websocket.server WebSocketServer]
-           [org.java_websocket.handshake ClientHandshake]
-           [org.java_websocket WebSocket]
-           [java.net InetSocketAddress]))
+  (:require [org.httpkit.server :as http-kit]
+            [compojure.core :refer [GET POST defroutes]]
+            [compojure.route :as route]
+            [ring.middleware.params :refer [wrap-params]]
+            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+            [taoensso.sente :as sente]
+            [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
+            [clojure.core.async :as async :refer [go go-loop <! >!]]
+            [clojure.tools.logging :as log]))
 
-(defprotocol IWebSocketServer
+
+(defmulti handle-ws-message :id)
+
+;; System message handlers with low priority
+(defmethod ^{:priority -1} handle-ws-message :chsk/uidport-open
+  [{:keys [uid] :as msg}]
+  (tap> {:event :websocket/client-connected
+         :uid uid}))
+
+(defmethod ^{:priority -1} handle-ws-message :chsk/uidport-close
+  [{:keys [uid] :as msg}]
+  (tap> {:event :websocket/client-disconnected
+         :uid uid}))
+
+(defmethod ^{:priority -1} handle-ws-message :chsk/ws-ping
+  [_]
+  nil)
+
+(defmethod ^{:priority -1} handle-ws-message :chsk/ws-pong
+  [_]
+  nil)
+
+;; Default handler with lowest priority
+(defmethod ^{:priority -100} handle-ws-message :default
+  [{:keys [event id] :as msg}]
+  (tap> {:event :websocket/unknown-message-type
+         :message-id id
+         :event-type event}))
+
+(defprotocol WebSocketServer
   (start! [this])
   (stop! [this])
   (broadcast! [this message])
   (send! [this client-id message]))
 
-(defrecord RelicaWebSocketServer [options]
-  IWebSocketServer
-  (start! [_]
-    (when-not (:server @(:state options))
-      (let [server ((:server-factory options) options)]
-        (tap> {:event :server/starting
-               :port (:port options)
-               :options (dissoc options :server-factory)})
-        (swap! (:state options) assoc :server server)
-        (.start server)
-        (tap> {:event :server/started
-               :port (:port options)})
-        server)))
+(defn create-sente-setup [options]
+  (tap> {:event :websocket/creating-sente-setup
+         :options options})
+  (let [{:keys [ch-recv send-fn connected-uids ajax-post-fn ajax-get-or-ws-handshake-fn]}
+        (sente/make-channel-socket! (get-sch-adapter)
+                                   {:packer :edn
+                                    :csrf-token-fn nil
+                                    :user-id-fn (fn [ring-req]
+                                                (tap> {:event :websocket/generating-user-id
+                                                      :req ring-req})
+                                                (let [uid (java.util.UUID/randomUUID)]
+                                                  (tap> {:event :websocket/generated-user-id
+                                                        :uid uid})
+                                                  uid))})]
+    (tap> {:event :websocket/sente-setup-complete
+           :connected-uids @connected-uids})
+    {:ring-ajax-post ajax-post-fn
+     :ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn
+     :ch-chsk ch-recv
+     :chsk-send! send-fn
+     :connected-uids connected-uids}))
 
-  (stop! [_]
-      (when-let [server (:server @(:state options))]
-        (tap> {:event :server/stopping})
-        ;; First close all client connections
-        (doseq [conn (.getConnections server)]
-          (try
-            (.close conn)
-            (catch Exception e
-              (tap> {:event :server/client-close-error
-                     :error (.getMessage e)}))))
-        ;; Close all channels
-        (doseq [[_ ch] @(:client-channels options)]
-          (close! ch))
-        ;; Stop the server
-        (try
-          (.stop server 1000)  ; Give it 1 second to shutdown
-          (catch Exception e
-            (tap> {:event :server/stop-error
-                   :error (.getMessage e)})))
-        ;; Clear state
-        (swap! (:state options) assoc :server nil)
-        (swap! (:clients options) empty)
-        (swap! (:client-channels options) empty)
-        ;; Add a small delay to ensure port is released
-        (Thread/sleep 1000)
-        (tap> {:event :server/stopped})))
+(defn create-routes [sente-fns]
+  (tap> {:event :websocket/creating-routes})
+  (defroutes routes
+    (GET "/chsk" req
+      (tap> {:event :websocket/handling-get
+             :uri (:uri req)
+             :params (:params req)
+             :headers (:headers req)})
+      ((:ring-ajax-get-or-ws-handshake sente-fns) req))
+    (POST "/chsk" req
+      (tap> {:event :websocket/handling-post
+             :uri (:uri req)
+             :params (:params req)
+             :body (:body req)})
+      ((:ring-ajax-post sente-fns) req))
+    (route/not-found "404")))
 
-  (broadcast! [_ message]
-    (when-let [server (:server @(:state options))]
-      (let [edn-msg (pr-str message)]
-        (tap> {:event :server/broadcasting
-               :message message})
-        (doseq [conn (.getConnections server)]
-          (.send conn edn-msg)))))
+(defn create-handler [routes]
+  (tap> {:event :websocket/creating-handler})
+  (-> routes
+      wrap-keyword-params
+      wrap-params))
 
-  (send! [_ client-id message]
-    (when-let [server (:server @(:state options))]
-      (when-let [conn (get @(:clients options) client-id)]
-        (tap> {:event :server/sending
-               :client-id client-id
-               :message message})
-        (.send conn (pr-str message))))))
+(defn start-router! [ch-chsk event-msg-handler]
+  (tap> {:event :websocket/starting-router})
+  (go-loop []
+    (when-let [{:keys [id event ?data ring-req] :as msg} (<! ch-chsk)]
+      (tap> {:event-foo :websocket/router-received
+             :msg-id id
+             :event event
+             :data ?data
+             :ring-req (select-keys ring-req [:uri :request-method])
+             :full-msg msg})
+      (event-msg-handler msg)
+      (recur))))
 
-(defn handle-incoming-message! [message conn options]
-  (try
-    (let [{:keys [id type payload]} (read-string message)
-          handler (get-in options [:handlers type])]
-      (tap> {:event :websocket/handling-message
-             :message-type type
-             :has-handler? (boolean handler)})
-      (if handler
-        (go
-          (try
-            (let [result (<! (handler payload))
-                  response {:id id
-                          :type "response"
-                          :payload result}]
-              (tap> {:event :websocket/handler-response
-                     :response response})
-              (.send conn (pr-str response)))
-            (catch Exception e
-              (tap> {:event :websocket/handler-error
-                     :error (.getMessage e)})
-              (.send conn (pr-str
-                         {:id id
-                          :type "error"
-                          :error (.getMessage e)})))))
-        (do
-          (tap> {:event :websocket/unknown-message-type
-                 :type type})
-          (.send conn (pr-str
-                      {:id id
-                       :type "error"
-                       :error (str "Unknown message type: " type)})))))
-    (catch Exception e
-      (tap> {:event :websocket/parse-error
-             :error (.getMessage e)})
-      (.send conn (pr-str
-                  {:type "error"
-                   :error "Invalid message format"})))))
+(defrecord SenteServer [options state]
+  WebSocketServer
+  (start! [this]
+    (tap> {:event :websocket/server-starting
+           :options options})
+    (let [sente-fns (create-sente-setup options)
+          routes (create-routes sente-fns)
+          handler (create-handler routes)
+          stop-fn (http-kit/run-server handler {:port (:port options)})
+          router (when-let [handler (:event-msg-handler options)]
+                  (start-router! (:ch-chsk sente-fns) handler))]
+      (tap> {:event :websocket/server-started
+             :port (:port options)
+             :connected-uids @(:connected-uids sente-fns)})
+      (reset! state (assoc sente-fns
+                          :stop-fn stop-fn
+                          :router router))
+      this))
 
-(defn create-default-server-factory []
-  (fn [{:keys [port state clients client-channels handlers] :as options}]
-    (proxy [WebSocketServer] [(InetSocketAddress. port)]
-      (onStart []
-        (tap> {:event :websocket/started
-               :port port}))
+  (stop! [this]
+    (tap> {:event :websocket/server-stopping})
+    (when-let [stop-fn (:stop-fn @state)]
+      (stop-fn)
+      (reset! state nil)
+      (tap> {:event :websocket/server-stopped})))
 
-      (onOpen [^WebSocket conn ^ClientHandshake handshake]
-        (tap> {:event :websocket/connecting
-               :remote-addr (str (.getRemoteSocketAddress conn))})
-        (try
-          (let [client-id (str (random-uuid))
-                client-ch (chan)]
-            (tap> {:event :websocket/connected
-                   :client-id client-id
-                   :remote-addr (str (.getRemoteSocketAddress conn))})
-            (swap! clients assoc client-id conn)
-            (swap! client-channels assoc client-id client-ch)
-            ;; Handle client channel messages
-            (go-loop []
-              (when-let [msg (<! client-ch)]
-                (.send conn (pr-str msg))
-                (recur))))
-          (catch Exception e
-            (tap> {:event :websocket/error
-                   :phase :open
-                   :error (.getMessage e)
-                   :stacktrace (with-out-str (.printStackTrace e))}))))
+  (broadcast! [this message]
+    (tap> {:event :websocket/broadcasting
+           :message message})
+    (when-let [{:keys [chsk-send! connected-uids]} @state]
+      (let [connected @connected-uids]
+        (tap> {:event :websocket/broadcast-targeting
+               :connected-uids connected})
+        (doseq [uid (:any connected)]
+          (tap> {:event :websocket/broadcast-to-user
+                 :uid uid})
+          (chsk-send! uid [:broadcast/message message])))))
 
-      (onClose [^WebSocket conn code reason remote]
-        (try
-          (let [client-id (some (fn [[id c]] (when (= c conn) id)) @clients)]
-            (when client-id
-              (tap> {:event :websocket/closed
-                     :client-id client-id
-                     :code code
-                     :reason reason
-                     :remote remote})
-              (swap! clients dissoc client-id)
-              (when-let [ch (get @client-channels client-id)]
-                (close! ch)
-                (swap! client-channels dissoc client-id))))
-          (catch Exception e
-            (tap> {:event :websocket/error
-                   :phase :close
-                   :error (.getMessage e)
-                   :stacktrace (with-out-str (.printStackTrace e))}))))
+  (send! [this client-id message]
+    (tap> {:event :websocket/sending-to-client
+           :client-id client-id
+           :message message})
+    (when-let [{:keys [chsk-send!]} @state]
+      (chsk-send! client-id [:response/message message]))))
 
-      (onMessage [^WebSocket conn ^String message]
-        (tap> {:event :websocket/message-received
-               :remote-addr (str (.getRemoteSocketAddress conn))
-               :message message})
-        (handle-incoming-message! message conn options))
-
-      (onError [^WebSocket conn ^Exception ex]
-        (tap> {:event :websocket/error
-               :remote-addr (when conn (str (.getRemoteSocketAddress conn)))
-               :error (.getMessage ex)
-               :stacktrace (with-out-str (.printStackTrace ex))})))))
-
-(def system-handlers
-  {"system:heartbeat" (fn [_]
-                       (go {:success true}))})
-
-(defn create-server
-  ([port]
-   (create-server port {}))
-  ([port {:keys [handlers]
-          :or {handlers {}}
-          :as opts}]
-   (let [state (atom {:server nil})
-         clients (atom {})
-         client-channels (atom {})
-         options (merge opts
-                       {:port port
-                        :state state
-                        :clients clients
-                        :client-channels client-channels
-                        :handlers (merge system-handlers handlers)
-                        :server-factory (create-default-server-factory)})]
-     (->RelicaWebSocketServer options))))
+(defn create-server [{:keys [port event-msg-handler] :as options}]
+  (tap> {:event :websocket/creating-server
+         :port port
+         :has-handler? (boolean event-msg-handler)})
+  (->SenteServer options (atom nil)))

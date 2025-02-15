@@ -1,145 +1,222 @@
-;; src/io/relica/portal/io/archivist_client.clj
 (ns io.relica.portal.io.archivist-client
   (:require [io.relica.common.websocket.client :as ws]
             [clojure.core.async :refer [go <!]]
-            [clojure.tools.logging :as log]
-            [cheshire.core :as json]
-            [clojure.string :as str]))
+            [clojure.tools.logging :as log]))
 
 ;; Configuration
-(def default-timeout 5000)
-(def default-ws-url
-  (or (System/getenv "ARCHIVIST_WS_URL") "ws://localhost:3000/ws"))
+(def ^:private default-timeout 5000)
 
-;; Client instance
-(defonce archivist-client
-  (ws/create-client default-ws-url
-                    {
-                     ;; :read-mode :json
-                     ;; :write-mode :json
-                     :handlers {:on-error #(log/error "Archivist WS Error:" %)
-                              :on-message #(log/debug "Archivist message received:" %)}}))
+(def ^:private default-ws-url
+  (or (System/getenv "ARCHIVIST_WS_URL") "localhost:3000"))
 
-;; Request helper
-(defn send-archivist!
-  ([type payload]
-   (send-archivist! type payload default-timeout))
-  ([type payload timeout-ms]
-   (ws/send-message! archivist-client type payload timeout-ms)))
+(defprotocol ArchivistOperations
+  (resolve-uids [this uids])
+  ;; (get-kinds [this opts])
+  ;; (get-specialization-hierarchy [this uid])
+  ;; (get-collections [this uid])
+  ;; (get-definition [this uid])
+  ;; (uid-search [this search-term] [this search-term collection-uid])
+  ;; (text-search [this search-term] [this search-term page page-size])
+  ;; (get-entity-type [this uid])
+  ;; (get-all-related-facts [this uid] [this uid depth])
+  ;; (get-subtypes [this uid])
+  ;; (get-subtypes-cone [this uid])
+  ;; (get-classified [this uid])
+  ;; (get-classification-fact [this uid])
+  ;; (get-entity-prompt [this uid])
+  ;; (post-entity-prompt [this uid prompt])
+  ;; (validate-binary-fact [this fact])
+  ;; (submit-binary-fact [this fact])
+  )
 
-;; API Functions - converted to use WebSocket
-(defn get-specialization-hierarchy [uid]
-  (send-archivist! "specialization:hierarchy:get"
-                   {:uid uid}))
+(defprotocol ConnectionManagement
+  (connect! [this])
+  (disconnect! [this])
+  (connected? [this]))
 
-(defn get-collections [uid]
-  (send-archivist! "collections:get"
-                   {:uid uid}))
+(defrecord ArchivistClient [client options]
+  ConnectionManagement
+  (connect! [_]
+    (tap> {:event :archivist/connecting
+           :url (:url options)})
+    (ws/connect! client))
 
-(defn get-definition [uid]
-  (send-archivist! "definition:get"
-                   {:uid uid}))
+  (disconnect! [_]
+    (ws/disconnect! client))
 
-(defn uid-search
-  ([search-term] (uid-search search-term ""))
-  ([search-term collection-uid]
-   (send-archivist! "search:uid"
-                    {:search-term search-term
-                     :collection-uid collection-uid})))
+  (connected? [_]
+    (ws/connected? client))
 
-(defn text-search
-  ([search-term]
-   (text-search search-term 1 50))
-  ([search-term page page-size]
-   (send-archivist! "search:text"
-                    {:search-term search-term
-                     :page page
-                     :page-size page-size
-                     :collection-uid ""})))
+  ArchivistOperations
+  (resolve-uids [this uids]
+    (when-not (connected? this) (connect! this))
+    (tap> {:event :archivist/resolve-uids
+          :uids uids
+           :client client})
+    (ws/send-message! client :entities/resolve {:uids uids} (:timeout options)))
 
-(defn get-entity-type [uid]
-  (send-archivist! "entity:type:get"
-                   {:uid uid}))
+  ;; (get-kinds [this {:keys [sort range filter user-id]}]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :kinds/get
+  ;;                     {:sort sort
+  ;;                      :range range
+  ;;                      :filter filter
+  ;;                      :user-id user-id}
+  ;;                     (:timeout options)))
 
-(defn get-all-related-facts
-  ([uid] (get-all-related-facts uid 1))
-  ([uid depth]
-   (send-archivist! "facts:related:get"
-                    {:uid uid
-                     :depth depth})))
+  ;; (get-specialization-hierarchy [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :specialization/hierarchy-get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-(defn get-subtypes [uid]
-  (send-archivist! "subtypes:get"
-                   {:uid uid}))
+  ;; (get-collections [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :collections/get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-(defn get-subtypes-cone [uid]
-  (send-archivist! "subtypes:cone:get"
-                   {:uid uid}))
+  ;; (get-definition [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :definition/get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-(defn get-classified [uid]
-  (send-archivist! "classified:get"
-                   {:uid uid}))
+  ;; (uid-search [this search-term]
+  ;;   (uid-search this search-term ""))
 
-(defn get-classification-fact [uid]
-  (send-archivist! "classification:fact:get"
-                   {:uid uid}))
+  ;; (uid-search [this search-term collection-uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :search/uid
+  ;;                     {:search-term search-term
+  ;;                      :collection-uid collection-uid}
+  ;;                     (:timeout options)))
 
-(defn resolve-uids [uids]
-  (send-archivist! "entities:resolve"
-                   {:uids uids}))
+  ;; (text-search
+  ;;   ([this search-term]
+  ;;    (text-search this search-term 1 50))
+  ;;   ([this search-term page page-size]
+  ;;    (when-not (connected? this) (connect! this))
+  ;;    (ws/send-message! client :search/text
+  ;;                      {:search-term search-term
+  ;;                       :page page
+  ;;                       :page-size page-size
+  ;;                       :collection-uid ""}
+  ;;                      (:timeout options))))
 
-(defn get-entity-prompt [[_ uid]]
-  (send-archivist! "entity:prompt:get"
-                   {:uid uid}))
+  ;; (get-entity-type [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :entity/type-get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-(defn post-entity-prompt [uid prompt]
-  (send-archivist! "entity:prompt:submit"
-                   {:uid uid
-                    :prompt prompt}))
+  ;; (get-all-related-facts
+  ;;   ([this uid]
+  ;;    (get-all-related-facts this uid 1))
+  ;;   ([this uid depth]
+  ;;    (when-not (connected? this) (connect! this))
+  ;;    (ws/send-message! client :facts/related-get
+  ;;                      {:uid uid
+  ;;                       :depth depth}
+  ;;                      (:timeout options))))
 
-(defn validate-binary-fact [fact]
-  (send-archivist! "facts:binary:validate"
-                   fact))
+  ;; (get-subtypes [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :subtypes/get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-(defn submit-binary-fact [fact]
-  (send-archivist! "facts:binary:submit"
-                   fact))
+  ;; (get-subtypes-cone [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :subtypes/cone-get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-(defn get-kinds [{:keys [sort range filter user-id]}]
-  (send-archivist! "kinds:get"
-                   {:sort sort
-                    :range range
-                    :filter filter
-                    :user-id user-id}))
+  ;; (get-classified [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :classified/get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-;; Connection management
-(defn ensure-connection! []
-  (when-not (ws/connected? archivist-client)
-    (ws/connect! archivist-client)))
+  ;; (get-classification-fact [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :classification/fact-get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-(defn disconnect! []
-  (ws/disconnect! archivist-client))
+  ;; (get-entity-prompt [this uid]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :entity/prompt-get
+  ;;                     {:uid uid}
+  ;;                     (:timeout options)))
 
-;; REPL helpers
+  ;; (post-entity-prompt [this uid prompt]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :entity/prompt-submit
+  ;;                     {:uid uid
+  ;;                      :prompt prompt}
+  ;;                     (:timeout options)))
+
+  ;; (validate-binary-fact [this fact]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :facts/binary-validate
+  ;;                     fact
+  ;;                     (:timeout options)))
+
+  ;; (submit-binary-fact [this fact]
+  ;;   (when-not (connected? this) (connect! this))
+  ;;   (ws/send-message! client :facts/binary-submit
+  ;;                     fact
+  ;;                     (:timeout options)))
+                    )
+
+(defn create-client
+  ([]
+   (create-client default-ws-url {}))
+  ([url]
+   (create-client url {}))
+  ([url {:keys [timeout handlers] :or {timeout default-timeout} :as opts}]
+   (let [default-handlers {:on-error (fn [e]
+                                      (tap> {:event :archivist/websocket-error
+                                            :error e})
+                                      (log/error "Archivist WS Error:" e))
+                          :on-message (fn [msg]
+                                      (tap> {:event :archivist/message-received
+                                            :message msg})
+                                      (log/debug "Archivist message received:" msg))}
+         merged-handlers (merge default-handlers handlers)
+         client (ws/create-client url {:handlers merged-handlers})]
+     (->ArchivistClient client {:url url
+                               :timeout timeout
+                               :handlers merged-handlers}))))
+
+;; Singleton instance for backward compatibility
+(defonce archivist-client (create-client))
+
+;; REPL testing helpers
 (comment
-  ;; Ensure connection
-  (ensure-connection!)
+  ;; Create a test client
+  (def test-client (create-client "localhost:3000"))
 
-  (ws/connected? archivist-client)
+  ;; Test connection
+  (connect! test-client)
 
-  ;; Test some endpoints
+  (connected? test-client)
+
+  ;; Test API calls
   (go
-    (let [response (<! (get-kinds {:sort ["name" "ASC"]
+    (let [response (<! (get-kinds test-client
+                                 {:sort ["name" "ASC"]
                                   :range [0 10]
                                   :filter {}
                                   :user-id "test-user"}))]
       (println "Got kinds:" response)))
 
   (go
-    (let [response (<! (resolve-uids [1234 5678]))]
+    (let [response (<! (resolve-uids test-client [1234 5678]))]
       (println "Resolved UIDs:" response)))
 
   ;; Cleanup
-  (disconnect!)
+  (disconnect! test-client)
 
   )
