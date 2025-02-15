@@ -2,7 +2,8 @@
   (:require [mount.core :refer [defstate]]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [io.relica.archivist.db.neo4j :as neo4j])
+            [io.relica.archivist.db.neo4j :as neo4j]
+            [io.relica.archivist.db.queries :as queries])
   (:import (java.net URI))
   (:gen-class))
 
@@ -12,19 +13,22 @@
 
 (defrecord GellishBaseServiceComponent [neo4j-conn]
   GellishBaseServiceOperations
+
   (get-entities [this uids]
     (tap> "UIDS")
     (tap> uids)
     (let [result (neo4j/execute-query
                   neo4j-conn
-                  neo4j/match-entities  ; Use the predefined query
+                  queries/match-entities  ; Use the predefined query
                   {:uids uids})]
       (tap> {:event :get-entities-result
              :result result})
       result))
 
   (someshit [this]
-    (println "SOMESHIT")))
+    (println "SOMESHIT"))
+
+  )
 
 (defn create-gellish-base-service-component [neo4j-conn]
   (->GellishBaseServiceComponent neo4j-conn))
