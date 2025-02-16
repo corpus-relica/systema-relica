@@ -11,7 +11,7 @@
 
 (defprotocol ArchivistOperations
   (resolve-uids [this uids])
-  ;; (get-kinds [this opts])
+  (get-kinds [this opts])
   ;; (get-specialization-hierarchy [this uid])
   ;; (get-collections [this uid])
   ;; (get-definition [this uid])
@@ -55,7 +55,12 @@
            :client client})
     (ws/send-message! client :entities/resolve {:uids uids} (:timeout options)))
 
-  ;; (get-kinds [this {:keys [sort range filter user-id]}]
+  (get-kinds [this {:keys [sort range filter user-id]}]
+    (tap> {:event :archivist/get-kinds
+          :sort sort
+          :range range
+          :filter filter
+          :user-id user-id}))
   ;;   (when-not (connected? this) (connect! this))
   ;;   (ws/send-message! client :kinds/get
   ;;                     {:sort sort
@@ -192,6 +197,7 @@
 
 ;; Singleton instance for backward compatibility
 (defonce archivist-client (create-client))
+(connect! archivist-client)
 
 ;; REPL testing helpers
 (comment
@@ -213,7 +219,7 @@
       (println "Got kinds:" response)))
 
   (go
-    (let [response (<! (resolve-uids test-client [1234 5678]))]
+    (let [response (<! (resolve-uids test-client [1234 5678 1225 1146]))]
       (println "Resolved UIDs:" response)))
 
   ;; Cleanup

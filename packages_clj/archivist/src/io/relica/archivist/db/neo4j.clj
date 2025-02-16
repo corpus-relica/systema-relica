@@ -1,6 +1,7 @@
 (ns io.relica.archivist.db.neo4j
   (:require [mount.core :refer [defstate]]
-            [neo4j-clj.core :as neo4j])
+            [neo4j-clj.core :as neo4j]
+            [io.relica.archivist.db.queries :as queries])
   (:import (java.net URI)))
 
 ;;
@@ -87,9 +88,9 @@
 
   ;; (io.relica.archivist.db.neo4j/execute-query @conn "MATCH (n) RETURN n LIMIT 10" {})
 
-  (io.relica.archivist.db.neo4j/execute-query @conn match-entities {:uids [1225]})
+  (io.relica.archivist.db.neo4j/execute-query @conn queries/entities {:uids [1225]})
 
-  (io.relica.archivist.db.neo4j/execute-query @conn uid-search-query {:relTypeUIDs [1146 1225]
+  (io.relica.archivist.db.neo4j/execute-query @conn queries/uid-search-query {:relTypeUIDs [1146 1225]
                                                                       :searchTerm 990010
                                                                       :collectionUID ""
                                                                       :skip 0

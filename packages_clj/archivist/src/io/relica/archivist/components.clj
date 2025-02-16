@@ -6,9 +6,27 @@
             [io.relica.archivist.db.redis :as redis]
             [io.relica.archivist.io.ws-server :as ws-server]
             [io.relica.archivist.gellish-base-service :as gellish-base-service]
+            [io.relica.archivist.linearization-service :as linearization-service]
+            [io.relica.archivist.cache-service :as cache-service]
             )
   (:import (java.net URI)))
 
+
+(defstate lin-service
+  :start (do
+           (println "Starting Linearization service...")
+           (linearization-service/start))
+  :stop (do
+          (println "Stopping Linearization service...")
+          (linearization-service/stop)))
+
+(defstate cache-service
+  :start (do
+           (println "Starting Cache service...")
+           (cache-service/start lin-service))
+  :stop (do
+          (println "Stopping Cache service...")
+          (cache-service/stop)))
 
 (defstate neo4j-conn
   :start (let [{:keys [url user password]} (:neo4j db-config)
@@ -27,18 +45,18 @@
           (println "Stopping PostgreSQL connection...")
           (postgres/stop)))
 
-(defstate redis-pool
-  :start (let [{:keys [host port]} (:redis db-config)]
-           (println "Starting Redis connection pool...")
-           (redis/start))
-  :stop (do
-          (println "Stopping Redis connection pool...")
-          (redis/stop)))
+;; (defstate redis-pool
+;;   :start (let [{:keys [host port]} (:redis db-config)]
+;;            (println "Starting Redis connection pool...")
+;;            (redis/start))
+;;   :stop (do
+;;           (println "Stopping Redis connection pool...")
+;;           (redis/stop)))
 
 (defstate gellish-base-service
   :start (do
            (println "Starting Gellish Base service...")
-           (gellish-base-service/start neo4j-conn))
+           (gellish-base-service/start neo4j-conn cache-service))
   :stop (do
            (println "Stopping Gellish Base service...")
           (gellish-base-service/stop)))
@@ -54,3 +72,4 @@
   :stop (do
           (println "Stopping WebSocket server...")
           (ws-server/stop ws-server)))
+

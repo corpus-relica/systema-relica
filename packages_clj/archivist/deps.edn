@@ -24,6 +24,7 @@
         ring/ring-json                                {:mvn/version "0.5.1"}
         ring-cors/ring-cors                           {:mvn/version "0.1.13"}
 
+        com.taoensso/carmine                              {:mvn/version "3.4.1"}
         }
  :aliases {:dev {:extra-deps {cider/cider-nrepl  {:mvn/version "0.37.1"}
                              binaryage/devtools  {:mvn/version "1.0.7"}}

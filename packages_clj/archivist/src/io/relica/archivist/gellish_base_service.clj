@@ -3,7 +3,9 @@
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
             [io.relica.archivist.db.neo4j :as neo4j]
-            [io.relica.archivist.db.queries :as queries])
+            [io.relica.archivist.db.queries :as queries]
+            [io.relica.archivist.cache-service :as cache]
+            )
   (:import (java.net URI))
   (:gen-class))
 
@@ -11,16 +13,21 @@
   (get-entities [this uids])
   (someshit [this]))
 
-(defrecord GellishBaseServiceComponent [neo4j-conn]
+(defrecord GellishBaseServiceComponent [neo4j-conn cache-service]
   GellishBaseServiceOperations
 
   (get-entities [this uids]
     (tap> "UIDS")
     (tap> uids)
-    (let [result (neo4j/execute-query
-                  neo4j-conn
-                  queries/match-entities  ; Use the predefined query
-                  {:uids uids})]
+    (let [raw-result (neo4j/execute-query
+                      neo4j-conn
+                      queries/entities  ; Use the predefined query
+                      {:uids uids})
+          result (map(fn [record]
+                       (let [uid (:uid (:n record))
+                             descendants (cache/all-descendants-of cache-service uid)]
+                         {:uid uid :descendants descendants}))
+                      raw-result)]
       (tap> {:event :get-entities-result
              :result result})
       result))
@@ -30,14 +37,14 @@
 
   )
 
-(defn create-gellish-base-service-component [neo4j-conn]
-  (->GellishBaseServiceComponent neo4j-conn))
+(defn create-gellish-base-service-component [neo4j-conn cache-service]
+  (->GellishBaseServiceComponent neo4j-conn cache-service))
 
 (defonce gb-comp (atom nil))
 
-(defn start [neo4j-conn]
+(defn start [neo4j-conn cache-service]
   (println "Starting Gellish Base Service...")
-  (let [service (create-gellish-base-service-component neo4j-conn)]
+  (let [service (create-gellish-base-service-component neo4j-conn cache-service)]
     (reset! gb-comp service)
     service))
 

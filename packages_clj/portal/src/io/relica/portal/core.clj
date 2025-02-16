@@ -12,8 +12,9 @@
             [ring.util.response :as response]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
-            [io.relica.portal.io.archivist-client :as archivist]
-            [io.relica.portal.io.aperture-client :as aperture]))
+            [io.relica.portal.io.archivist-client :as archivist :refer [archivist-client]]
+            [io.relica.portal.io.aperture-client :as aperture :refer [aperture-client]]))
+
 ;;
 ;; Authentication state
 (defonce socket-tokens (atom {}))
@@ -130,10 +131,12 @@
 (defn handle-get-kinds [{:keys [sort range filter user-id]}]
   (go
     (try
-      (<! (archivist/get-kinds {:sort sort
-                               :range range
-                               :filter filter
-                               :user-id user-id}))
+      (<! (archivist/get-kinds
+           archivist-client
+           {:sort sort
+            :range range
+            :filter filter
+            :user-id user-id}))
       (catch Exception e
         (log/error "Failed to fetch kinds:" e)
         {:error "Failed to fetch kinds"}))))
@@ -144,7 +147,9 @@
                  [])]
     (go
       (try
-        (let [result (<! (archivist/resolve-uids uids))]
+        (let [result (<! (archivist/resolve-uids
+                          archivist-client
+                          uids))]
     (tap> "RESOLVING UIDEEEEEEEEZ NUTZZ!!!!")
     (tap> result)
     (tap> body)
@@ -161,14 +166,21 @@
            :body {:error "Failed to resolve entities"
                  :message (.getMessage e)}})))))
 
-(defn handle-get-environment [{:keys [user-id]}]
+(defn handle-get-environment [{:keys [identity]}]
   (go
     (try
-      (let [response (<! (aperture/get-environment user-id))]
-        {:success true
-         :environment (if (string? response)
-                       (read-string response)
-                       response)})
+      (tap> "GETTING ENVIRONMENT")
+      (tap> identity)
+      (let [response (<! (aperture/get-environment aperture-client (:user-id identity)))]
+        ;; {:success true
+        ;;  :environment (if (string? response)
+        ;;                (read-string response)
+        ;;                response)}
+        (tap> "TEH MUTHER FUCKING RESPONSE!!!!!")
+        (tap> response)
+        {:status 200
+         :headers {"Content-Type" "application/json"}
+         :body (json/generate-string (:environment response))})
       (catch Exception e
         (log/error "Failed to fetch environment:" e)
         {:error "Failed to fetch environment"}))))
@@ -289,7 +301,10 @@
   (POST "/concept/entities" [] (-> handle-resolve-uids
                                   wrap-async-handler
                                   wrap-jwt-auth))  ; Support POST with body
-  (GET "/environment/retrieve" [] (wrap-jwt-auth handle-get-environment))
+  (GET "/environment/retrieve" [] (-> handle-get-environment
+                                      wrap-async-handler
+                                      wrap-jwt-auth
+                                   ))
   (GET "/health" [] {:status 200 :body "healthy"})
   (OPTIONS "/*" [] {:status 200
                     :headers {"Access-Control-Allow-Origin" "*"

@@ -1,10 +1,6 @@
 (ns io.relica.archivist.db.queries
   (:require [neo4j-clj.core :as neo4j]))
 
-
-(neo4j/defquery match-entities
-  "MATCH (n) WHERE n.uid IN $uids RETURN n")
-
 ;; ;;(neo4j/defquery match-entities-by-uid
 ;; (neo4j/defquery uid-search-query
 ;;   "MATCH (kind:Entity)--(r:Fact)-->(parent:Entity)
