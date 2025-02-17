@@ -37,6 +37,8 @@ export const dataProvider: DataProvider = {
             },
           });
 
+          console.log("KINDS RESPONSE", response.data);
+
           return {
             data: response.data.data.map((e: any) => ({ ...e, id: e.uid })),
             total: response.data.total,

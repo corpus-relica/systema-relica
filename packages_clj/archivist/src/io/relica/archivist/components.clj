@@ -6,6 +6,7 @@
             [io.relica.archivist.db.redis :as redis]
             [io.relica.archivist.io.ws-server :as ws-server]
             [io.relica.archivist.gellish-base-service :as gellish-base-service]
+            [io.relica.archivist.kind-service :as kind-service]
             [io.relica.archivist.linearization-service :as linearization-service]
             [io.relica.archivist.cache-service :as cache-service]
             )
@@ -61,6 +62,14 @@
            (println "Stopping Gellish Base service...")
           (gellish-base-service/stop)))
 
+(defstate kind-service
+  :start (do
+           (println "Starting Kinds service...")
+           (kind-service/start neo4j-conn cache-service))
+  :stop (do
+           (println "Stopping Kinds service...")
+          (kind-service/stop)))
+
 (defstate ws-server
   :start (let [;;{:keys [host port]} (:ws-server db-config)
                server-port 3000];;(or port 3000)]
@@ -68,7 +77,7 @@
            (println "Starting WebSocket server on port" server-port "...")
            ;; (mount.core/args {:xxx gellish-base-service
            ;;                   :port server-port})
-           (ws-server/start gellish-base-service server-port))
+           (ws-server/start gellish-base-service kind-service server-port))
   :stop (do
           (println "Stopping WebSocket server...")
           (ws-server/stop ws-server)))

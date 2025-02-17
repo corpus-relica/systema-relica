@@ -55,12 +55,14 @@
            :client client})
     (ws/send-message! client :entities/resolve {:uids uids} (:timeout options)))
 
-  (get-kinds [this {:keys [sort range filter user-id]}]
+  (get-kinds [this {:keys [sort range filter user-id] :as conf}]
     (tap> {:event :archivist/get-kinds
           :sort sort
           :range range
           :filter filter
-          :user-id user-id}))
+          :user-id user-id})
+    (ws/send-message! client :kinds/list {:data conf} (:timeout options)))
+
   ;;   (when-not (connected? this) (connect! this))
   ;;   (ws/send-message! client :kinds/get
   ;;                     {:sort sort

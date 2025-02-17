@@ -37,8 +37,10 @@ const FactsDataProvider: DataProvider = {
             },
           });
 
+          console.log("KINDS RESPONSE: FACTS DATA PROVIDER", response.data);
+
           return {
-            data: response.data.data.map((e: any) => ({ ...e, id: e.uid })),
+            data: response.data.map((e: any) => ({ ...e, id: e.uid })),
             total: response.data.total,
           };
         }

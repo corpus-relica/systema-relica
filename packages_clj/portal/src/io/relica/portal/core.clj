@@ -128,18 +128,32 @@
     {:status 401
      :body {:error "Authentication failed"}}))
 
-(defn handle-get-kinds [{:keys [sort range filter user-id]}]
+(defn handle-get-kinds [{:keys [params] :as req}]
+  (let [user-id (-> req :identity :user-id)
+        params {:sort (or (some-> params :sort read-string)
+                     ["name" "ASC"])
+           :range (or (some-> params :range read-string)
+                      [0 10])
+           :filter (or (some-> params :filter read-string)
+                       {})
+                ;;parse float
+           :user-id user-id}]
+  (tap> "GETTING KINDS, MY DUDE!!")
+  (tap> "LET'S GO!!!!!!!!!!!!!!!!")
   (go
     (try
-      (<! (archivist/get-kinds
-           archivist-client
-           {:sort sort
-            :range range
-            :filter filter
-            :user-id user-id}))
+      (let [result (<! (archivist/get-kinds
+                        archivist-client
+                        params))]
+        {:status 200
+         :headers {"Content-Type" "application/json"}
+         :body (json/generate-string (:data result))})
       (catch Exception e
         (log/error "Failed to fetch kinds:" e)
-        {:error "Failed to fetch kinds"}))))
+        {:status 500
+         :headers {"Content-Type" "application/json"}
+         :body {:error "Failed to fetch kinds"
+                :message (.getMessage e)}})))))
 
 (defn handle-resolve-uids [{:keys [params body] :as request}]
   (let [uids (or (some-> params :uids read-string)  ; Handle query param array
@@ -150,12 +164,6 @@
         (let [result (<! (archivist/resolve-uids
                           archivist-client
                           uids))]
-    (tap> "RESOLVING UIDEEEEEEEEZ NUTZZ!!!!")
-    (tap> result)
-    (tap> body)
-    (tap> params)
-    (tap> request)
-    (tap> uids)
           {:status 200
            :headers {"Content-Type" "application/json"}
            :body (json/generate-string (:data result))})
@@ -169,15 +177,7 @@
 (defn handle-get-environment [{:keys [identity]}]
   (go
     (try
-      (tap> "GETTING ENVIRONMENT")
-      (tap> identity)
       (let [response (<! (aperture/get-environment aperture-client (:user-id identity)))]
-        ;; {:success true
-        ;;  :environment (if (string? response)
-        ;;                (read-string response)
-        ;;                response)}
-        (tap> "TEH MUTHER FUCKING RESPONSE!!!!!")
-        (tap> response)
         {:status 200
          :headers {"Content-Type" "application/json"}
          :body (json/generate-string (:environment response))})
@@ -288,7 +288,9 @@
 (defroutes app-routes
   (GET "/chsk" [] (wrap-jwt-auth ws-handler))
   (POST "/ws-auth" [] (wrap-jwt-auth handle-ws-auth))
-  (GET "/kinds" [] (wrap-jwt-auth handle-get-kinds))
+  (GET "/kinds" [] (->  handle-get-kinds
+                        wrap-async-handler
+                        wrap-jwt-auth))
   (OPTIONS "/concept/entities" []
           {:status 200
            :headers {"Access-Control-Allow-Origin" "*"
