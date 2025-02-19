@@ -52,14 +52,14 @@
                                    {:packer :edn
                                     :csrf-token-fn nil
                                     :user-id-fn (fn [ring-req]
-                                                (tap> {:event :websocket/generating-user-id
-                                                      :req ring-req})
+                                                ;; (tap> {:event :websocket/generating-user-id
+                                                ;;       :req ring-req})
                                                 (let [uid (java.util.UUID/randomUUID)]
-                                                  (tap> {:event :websocket/generated-user-id
-                                                        :uid uid})
+                                                  ;; (tap> {:event :websocket/generated-user-id
+                                                  ;;       :uid uid})
                                                   uid))})]
-    (tap> {:event :websocket/sente-setup-complete
-           :connected-uids @connected-uids})
+    ;; (tap> {:event :websocket/sente-setup-complete
+    ;;        :connected-uids @connected-uids})
     {:ring-ajax-post ajax-post-fn
      :ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn
      :ch-chsk ch-recv
@@ -70,85 +70,86 @@
   (tap> {:event :websocket/creating-routes})
   (defroutes routes
     (GET "/chsk" req
-      (tap> {:event :websocket/handling-get
-             :uri (:uri req)
-             :params (:params req)
-             :headers (:headers req)})
+      ;; (tap> {:event :websocket/handling-get
+      ;;        :uri (:uri req)
+      ;;        :params (:params req)
+      ;;        :headers (:headers req)})
       ((:ring-ajax-get-or-ws-handshake sente-fns) req))
     (POST "/chsk" req
-      (tap> {:event :websocket/handling-post
-             :uri (:uri req)
-             :params (:params req)
-             :body (:body req)})
+      ;; (tap> {:event :websocket/handling-post
+      ;;        :uri (:uri req)
+      ;;        :params (:params req)
+      ;;        :body (:body req)})
       ((:ring-ajax-post sente-fns) req))
     (route/not-found "404")))
 
 (defn create-handler [routes]
-  (tap> {:event :websocket/creating-handler})
+  ;; (tap> {:event :websocket/creating-handler})
   (-> routes
       wrap-keyword-params
       wrap-params))
 
 (defn start-router! [ch-chsk event-msg-handler]
-  (tap> {:event :websocket/starting-router})
+  ;; (tap> {:event :websocket/starting-router})
   (go-loop []
     (when-let [{:keys [id event ?data ring-req] :as msg} (<! ch-chsk)]
-      (tap> {:event-foo :websocket/router-received
-             :msg-id id
-             :event event
-             :data ?data
-             :ring-req (select-keys ring-req [:uri :request-method])
-             :full-msg msg})
+      ;; (tap> {:event-foo :websocket/router-received
+      ;;        :msg-id id
+      ;;        :event event
+      ;;        :data ?data
+      ;;        :ring-req (select-keys ring-req [:uri :request-method])
+      ;;        :full-msg msg})
       (event-msg-handler msg)
       (recur))))
 
 (defrecord SenteServer [options state]
   WebSocketServer
   (start! [this]
-    (tap> {:event :websocket/server-starting
-           :options options})
+    ;; (tap> {:event :websocket/server-starting
+    ;;        :options options})
     (let [sente-fns (create-sente-setup options)
           routes (create-routes sente-fns)
           handler (create-handler routes)
           stop-fn (http-kit/run-server handler {:port (:port options)})
           router (when-let [handler (:event-msg-handler options)]
                   (start-router! (:ch-chsk sente-fns) handler))]
-      (tap> {:event :websocket/server-started
-             :port (:port options)
-             :connected-uids @(:connected-uids sente-fns)})
+      ;; (tap> {:event :websocket/server-started
+      ;;        :port (:port options)
+      ;;        :connected-uids @(:connected-uids sente-fns)})
       (reset! state (assoc sente-fns
                           :stop-fn stop-fn
                           :router router))
       this))
 
   (stop! [this]
-    (tap> {:event :websocket/server-stopping})
+    ;; (tap> {:event :websocket/server-stopping})
     (when-let [stop-fn (:stop-fn @state)]
       (stop-fn)
       (reset! state nil)
-      (tap> {:event :websocket/server-stopped})))
+      ;; (tap> {:event :websocket/server-stopped})
+      ))
 
   (broadcast! [this message]
-    (tap> {:event :websocket/broadcasting
-           :message message})
+    ;; (tap> {:event :websocket/broadcasting
+    ;;        :message message})
     (when-let [{:keys [chsk-send! connected-uids]} @state]
       (let [connected @connected-uids]
-        (tap> {:event :websocket/broadcast-targeting
-               :connected-uids connected})
+        ;; (tap> {:event :websocket/broadcast-targeting
+        ;;        :connected-uids connected})
         (doseq [uid (:any connected)]
-          (tap> {:event :websocket/broadcast-to-user
-                 :uid uid})
+          ;; (tap> {:event :websocket/broadcast-to-user
+          ;;        :uid uid})
           (chsk-send! uid [:broadcast/message message])))))
 
   (send! [this client-id message]
-    (tap> {:event :websocket/sending-to-client
-           :client-id client-id
-           :message message})
+    ;; (tap> {:event :websocket/sending-to-client
+    ;;        :client-id client-id
+    ;;        :message message})
     (when-let [{:keys [chsk-send!]} @state]
       (chsk-send! client-id [:response/message message]))))
 
 (defn create-server [{:keys [port event-msg-handler] :as options}]
-  (tap> {:event :websocket/creating-server
-         :port port
-         :has-handler? (boolean event-msg-handler)})
+  ;; (tap> {:event :websocket/creating-server
+  ;;        :port port
+  ;;        :has-handler? (boolean event-msg-handler)})
   (->SenteServer options (atom nil)))
