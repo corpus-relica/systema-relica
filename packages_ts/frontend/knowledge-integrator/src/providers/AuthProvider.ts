@@ -17,7 +17,7 @@ export const authProvider: AuthProvider = {
       localStorage.setItem("user", JSON.stringify(user));
 
       // Initialize WebSocket connection after successful login
-      await initializeWebSocket(token);
+      // await initializeWebSocket(token);
 
       return Promise.resolve(data);
     } catch (error) {

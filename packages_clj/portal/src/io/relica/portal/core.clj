@@ -47,10 +47,13 @@
 ;; WebSocket message handling
 (declare ws-handlers)
 (defn handle-ws-message [channel data]
+      (tap>"HANDLING MESSAGE !")
+      (tap> data)
   (try
     (let [message (json/parse-string data true)
           {:keys [id type payload]} message
           handler (get ws-handlers type)]
+      (tap> message)
       (if handler
         (go
           (try
@@ -58,6 +61,8 @@
                   response {:id id
                           :type "response"
                           :payload result}]
+              (tap>"SENDING RESPONSE !!!!!!!!!!!!!!!!!!!!!!!!!!11")
+              (tap> response)
               (http/send! channel (json/generate-string response)))
             (catch Exception e
               (log/error "Error processing message:" e)
@@ -78,12 +83,14 @@
                            :error "Invalid message format"})))))
 
 ;; WebSocket connection handler
-(defn ws-handler [request]
-  (if-let [token (-> request :params (get "token"))]
+(defn ws-handler [{:keys [params] :as request}]
+  (tap> "WS HANDLER START")
+  (if-let [token (:token params)]
     (if-let [user-id (validate-socket-token token)]
       (http/with-channel request channel
         (let [client-id (str (random-uuid))] (swap! connected-clients assoc client-id {:channel channel
                                                   :user-id user-id})
+          (tap> "WS HANDLER MORE OR LESS COMPLETE")
           (http/on-close channel
                         (fn [status]
                           (swap! connected-clients dissoc client-id)
@@ -117,6 +124,23 @@
          :user-id user-id})
       {:error "Invalid JWT"})))
 
+(defn handle-select-entity [{:keys [uid]}]
+(tap> "SELECT ENTITY")
+  (tap> uid)
+  (go
+    {:success true
+     :message "Entity selected"})
+  )
+
+
+(defn handle-ping [_]
+  (tap> "PING")
+  (go
+    {:success true
+     :message "Pong"})
+  )
+
+
 (defn handle-ws-auth [request]
   (if-let [user-id (-> request :identity :user-id)]
     (let [socket-token (generate-socket-token)]
@@ -138,8 +162,6 @@
                        {})
                 ;;parse float
            :user-id user-id}]
-  (tap> "GETTING KINDS, MY DUDE!!")
-  (tap> "LET'S GO!!!!!!!!!!!!!!!!")
   (go
     (try
       (let [result (<! (archivist/get-kinds
@@ -184,6 +206,7 @@
       (catch Exception e
         (log/error "Failed to fetch environment:" e)
         {:error "Failed to fetch environment"}))))
+
 
 ;; JWT Validation Middleware
 (defn wrap-jwt-auth [handler]
@@ -257,36 +280,14 @@
   {"auth" handle-auth
    "kinds:get" handle-get-kinds
    "entities:resolve" handle-resolve-uids
-   "environment:get" handle-get-environment})
+   "environment:get" handle-get-environment
+   "ping" handle-ping
+   "selectEntity" handle-select-entity})
 
-;; Server management
-;; (defn start! []
-;;   (when-not @server-instance
-;;     (let [port 2174
-;;           server (ws/create-server
-;;                   port
-;;                   {:handlers handlers
-;;                    :middleware [auth-middleware]
-;;                    :on-connect (fn [session-id]
-;;                                (log/info "New connection:" session-id))
-;;                    :on-disconnect (fn [session-id]
-;;                                   (log/info "Connection closed:" session-id))
-;;                    :on-error (fn [session-id error]
-;;                              (log/error "WebSocket error:" error))})]
-;;       (ws/start! server)
-;;       (reset! server-instance server)
-;;       (log/info "Portal WebSocket server started on port" port)
-;;       server)))
-
-;; (defn stop! []
-;;   (when-let [server @server-instance]
-;;     (ws/stop! server)
-;;     (reset! server-instance nil)
-;;     (log/info "Portal WebSocket server stopped")))
 
 ;; Define routes with WebSocket support
 (defroutes app-routes
-  (GET "/chsk" [] (wrap-jwt-auth ws-handler))
+  (GET "/chsk" [] ws-handler)
   (POST "/ws-auth" [] (wrap-jwt-auth handle-ws-auth))
   (GET "/kinds" [] (->  handle-get-kinds
                         wrap-async-handler

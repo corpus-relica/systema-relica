@@ -9,7 +9,7 @@ import { useStores } from "./context/RootStoreContext.js";
 
 const replHeight = "40vh"; // Adjust as needed
 
-import { ccSocket, portalWs } from "./socket.js";
+import { ccSocket, portalWs, initializeWebSocket } from "./socket.js";
 
 import { portalClient } from "./io/PortalClient.js";
 import { authProvider } from "./providers/AuthProvider.js";
@@ -208,6 +208,11 @@ export const MyLayout = (props) => {
     portalWs.on("disconnect", onPortalDisconnect);
 
     portalWs.on("system:loadedFacts", onAddFacts);
+
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      initializeWebSocket(token);
+    }
 
     return () => {
       ccSocket.off("connect", onConnect);

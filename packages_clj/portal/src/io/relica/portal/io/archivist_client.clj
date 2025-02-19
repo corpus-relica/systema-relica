@@ -37,8 +37,8 @@
 (defrecord ArchivistClient [client options]
   ConnectionManagement
   (connect! [_]
-    (tap> {:event :archivist/connecting
-           :url (:url options)})
+    ;; (tap> {:event :archivist/connecting
+    ;;        :url (:url options)})
     (ws/connect! client))
 
   (disconnect! [_]
@@ -50,17 +50,17 @@
   ArchivistOperations
   (resolve-uids [this uids]
     (when-not (connected? this) (connect! this))
-    (tap> {:event :archivist/resolve-uids
-          :uids uids
-           :client client})
+    ;; (tap> {:event :archivist/resolve-uids
+    ;;       :uids uids
+    ;;        :client client})
     (ws/send-message! client :entities/resolve {:uids uids} (:timeout options)))
 
   (get-kinds [this {:keys [sort range filter user-id] :as conf}]
-    (tap> {:event :archivist/get-kinds
-          :sort sort
-          :range range
-          :filter filter
-          :user-id user-id})
+    ;; (tap> {:event :archivist/get-kinds
+    ;;       :sort sort
+    ;;       :range range
+    ;;       :filter filter
+    ;;       :user-id user-id})
     (ws/send-message! client :kinds/list {:data conf} (:timeout options)))
 
   ;;   (when-not (connected? this) (connect! this))
@@ -184,12 +184,12 @@
    (create-client url {}))
   ([url {:keys [timeout handlers] :or {timeout default-timeout} :as opts}]
    (let [default-handlers {:on-error (fn [e]
-                                      (tap> {:event :archivist/websocket-error
-                                            :error e})
+                                      ;; (tap> {:event :archivist/websocket-error
+                                      ;;       :error e})
                                       (log/error "Archivist WS Error:" e))
                           :on-message (fn [msg]
-                                      (tap> {:event :archivist/message-received
-                                            :message msg})
+                                      ;; (tap> {:event :archivist/message-received
+                                      ;;       :message msg})
                                       (log/debug "Archivist message received:" msg))}
          merged-handlers (merge default-handlers handlers)
          client (ws/create-client url {:handlers merged-handlers})]
@@ -211,14 +211,16 @@
 
   (connected? test-client)
 
+  archivist-client
+
   ;; Test API calls
   (go
-    (let [response (<! (get-kinds test-client
+    (let [response (<! (get-kinds archivist-client
                                  {:sort ["name" "ASC"]
                                   :range [0 10]
                                   :filter {}
                                   :user-id "test-user"}))]
-      (println "Got kinds:" response)))
+      (tap> (str "Got kinds:" response))))
 
   (go
     (let [response (<! (resolve-uids test-client [1234 5678 1225 1146]))]

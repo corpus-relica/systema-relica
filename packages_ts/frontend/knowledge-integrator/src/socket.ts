@@ -224,14 +224,16 @@ class PortalWebSocketClient extends EventEmitter {
     this.pingInterval = window.setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
         console.log("Sending ping");
-        this.ws.send(JSON.stringify({ type: "ping" }));
+        // this.ws.send(JSON.stringify({ type: "ping" }));
+        this.send("ping", {});
       }
     }, 25000);
 
     // Also handle server pings (though they shouldn't happen)
     this.on("ping", () => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: "pong" }));
+        // this.ws.send(JSON.stringify({ type: "pong" }));
+        this.send("ping", {});
       }
     });
   }
@@ -257,8 +259,12 @@ class PortalWebSocketClient extends EventEmitter {
   }
 
   send(type: string, payload: any) {
+    console.log(
+      "!!!!!!!!!!!!!!!!!!!!!!! SEND MUTHERFUCKING SOCKET MESSAGE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
+    );
+    const id = Math.random().toString(36).substr(2, 9);
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type, payload }));
+      this.ws.send(JSON.stringify({ id, type, payload }));
     }
   }
 
@@ -285,7 +291,10 @@ class PortalWebSocketClient extends EventEmitter {
 export const portalWs = new PortalWebSocketClient();
 
 export const initializeWebSocket = async (token: string) => {
-  console.log("Initializing WebSocket with token:", token);
+  console.log(
+    "&&&&&&&&&&&&&&&&&&&&&  Initializing WebSocket with token  &&&&&&&&&&&&&&&&&&&:",
+    token
+  );
   await portalWs.connect(token);
 };
 

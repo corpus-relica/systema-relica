@@ -25,6 +25,7 @@ import { getAuthToken } from "../providers/AuthProvider.js";
 
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
+const SELECT_ENTITY = "selectEntity";
 
 const Graph = observer(() => {
   const { factDataStore, colorPaletteStore } = useStores();
@@ -39,10 +40,6 @@ const Graph = observer(() => {
 
   const token = getAuthToken();
 
-  const selectNode = (id: number) => {
-    sockSendCC("user", "selectEntity", { uid: id });
-  };
-
   // START MENU
   const [open, setOpen] = useState(false);
   const [x, setX] = useState(0);
@@ -50,6 +47,12 @@ const Graph = observer(() => {
   const [uid, setUid] = useState(0);
   const [type, setType] = useState("");
   const [relType, setRelType] = useState(0);
+
+  const selectNode = (id: number) => {
+    console.log("!!!!!!!!!!!!!! SELECT NODE", id);
+    // sendSocketMessage(LOAD_SPECIALIZATION_HIERARCHY, { uid: lh_object_uid });
+    sendSocketMessage(SELECT_ENTITY, { uid: id });
+  };
 
   const handleContextMenuTrigger = async (
     uid: number,
