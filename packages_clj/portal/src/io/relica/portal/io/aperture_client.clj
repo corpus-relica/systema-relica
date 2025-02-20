@@ -12,7 +12,9 @@
 (defprotocol ApertureOperations
   (get-environment [this user-id])
   (load-specialization-hierarchy [this uid user-id])
-  (update-environment! [this user-id updates]))
+  (update-environment! [this user-id updates])
+  (select-entity [this entity-uid])
+  )
 
 (defprotocol ConnectionManagement
   (connect! [this])
@@ -35,17 +37,17 @@
   ApertureOperations
   (get-environment [this user-id]
     (when-not (connected? this) (connect! this))
-    (tap> {:event :aperture/get-environment
-           :user-id user-id})
+    ;; (tap> {:event :aperture/get-environment
+    ;;        :user-id user-id})
     (ws/send-message! client :environment/get
                       {:user-id user-id}
                       (:timeout options)))
 
   (load-specialization-hierarchy [this uid user-id]
     (when-not (connected? this) (connect! this))
-    (tap> {:event :aperture/load-specialization
-           :uid uid
-           :user-id user-id})
+    ;; (tap> {:event :aperture/load-specialization
+    ;;        :uid uid
+    ;;        :user-id user-id})
     (ws/send-message! client :environment/load-specialization
                       {:uid uid
                        :user-id user-id}
@@ -53,12 +55,20 @@
 
   (update-environment! [this user-id updates]
     (when-not (connected? this) (connect! this))
-    (tap> {:event :aperture/update-environment
-           :user-id user-id
-           :updates updates})
+    ;; (tap> {:event :aperture/update-environment
+    ;;        :user-id user-id
+    ;;        :updates updates})
     (ws/send-message! client :environment/update
                       {:user-id user-id
                        :updates updates}
+                      (:timeout options)))
+
+  (select-entity [this entity-uid]
+    (when-not (connected? this) (connect! this))
+    ;; (tap> {:event :aperture/select-entity
+    ;;        :entity-id entity-id})
+    (ws/send-message! client :entity/select
+                      {:entity-id entity-uid}
                       (:timeout options))))
 
 (defn create-client
@@ -84,6 +94,7 @@
 ;; Singleton instance for backward compatibility
 (defonce aperture-client (create-client))
 (connect! aperture-client)
+
 
 ;; REPL testing helpers
 (comment
