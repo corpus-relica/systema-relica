@@ -20,3 +20,12 @@ temp.*
 
 .clj-kondo/
 .calva/
+
+# Clojure compilation cache
+.cpcache/
+*/.cpcache/
+**/.cpcache/
+
+# Clojure deps and Maven
+.m2/
+.maven/

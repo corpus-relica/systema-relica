@@ -3,6 +3,6 @@ nrepl.cmdline
 --middleware
 [cider.nrepl/cider-middleware]
 --port
-7889
+7890
 --bind
 0.0.0.0
