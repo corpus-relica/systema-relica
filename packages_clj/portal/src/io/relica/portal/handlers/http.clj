@@ -48,7 +48,8 @@
   (if-let [token (:token params)]
     (if-let [user-id (validate-socket-token token)]
       (http/with-channel request channel
-        (let [client-id (str (random-uuid))] (swap! connected-clients assoc client-id {:channel channel :user-id user-id})
+        (let [client-id (str (random-uuid))]
+          (swap! connected-clients assoc client-id {:channel channel :user-id user-id})
           (tap> "WS HANDLER MORE OR LESS COMPLETE")
           (http/on-close channel
                         (fn [status]

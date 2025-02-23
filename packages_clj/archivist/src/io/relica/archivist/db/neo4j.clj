@@ -88,7 +88,7 @@
 
   ;; (io.relica.archivist.db.neo4j/execute-query @conn "MATCH (n) RETURN n LIMIT 10" {})
 
-  (io.relica.archivist.db.neo4j/execute-query @conn queries/entities {:uids [1225]})
+  (io.relica.archivist.db.neo4j/execute-query @conn queries/entities {:uids [1225 1146]})
 
   (io.relica.archivist.db.neo4j/execute-query @conn queries/uid-search-query {:relTypeUIDs [1146 1225]
                                                                       :searchTerm 990010

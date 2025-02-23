@@ -263,8 +263,11 @@ class PortalWebSocketClient extends EventEmitter {
       "!!!!!!!!!!!!!!!!!!!!!!! SEND MUTHERFUCKING SOCKET MESSAGE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
     );
     const id = Math.random().toString(36).substr(2, 9);
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ id, type, payload }));
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userID = user.id;
+    if (this.ws?.readyState === WebSocket.OPEN && userID) {
+      const finalPayload = { ...payload, "user-id": userID };
+      this.ws.send(JSON.stringify({ id, type, payload: finalPayload }));
     }
   }
 

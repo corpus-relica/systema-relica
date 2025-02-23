@@ -1,8 +1,7 @@
 (ns io.relica.portal.routes
   (:require
    [compojure.core :refer [defroutes GET POST OPTIONS]]
-   [io.relica.portal.handlers.core :refer [handle-ping
-                                           handle-select-entity]]
+   [io.relica.portal.handlers.core :refer [handle-ping]]
    [io.relica.portal.handlers.http :refer [ws-handler
                                            handle-ws-auth
                                            handle-resolve-uids

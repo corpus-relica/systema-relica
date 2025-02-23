@@ -31,7 +31,6 @@ class PortalClient {
 
     this.axiosInstance.interceptors.request.use((config) => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      console.log("THE MUTHER FUCKIN USER", user);
 
       // Add user context to all requests
       if (user.id) {

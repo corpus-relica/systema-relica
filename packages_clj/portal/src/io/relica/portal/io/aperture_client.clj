@@ -10,11 +10,12 @@
   (or (System/getenv "APERTURE_WS_URL") "localhost:2175"))
 
 (defprotocol ApertureOperations
-  (get-environment [this user-id])
+  (get-environment [this user-id] [this user-id env-id])
+  (list-environments [this user-id])
+  (create-environment [this user-id env-name])
   (load-specialization-hierarchy [this uid user-id])
-  (update-environment! [this user-id updates])
-  (select-entity [this entity-uid])
-  )
+  (update-environment! [this user-id env-id updates])
+  (select-entity [this user-id entity-uid] [this user-id env-id entity-uid]))
 
 (defprotocol ConnectionManagement
   (connect! [this])
@@ -35,61 +36,73 @@
     (ws/connected? client))
 
   ApertureOperations
-  (get-environment [this user-id]
+  (get-environment
+    ([this user-id]
+     (when-not (connected? this) (connect! this))
+     (ws/send-message! client :environment/get
+                       {:user-id user-id}
+                       (:timeout options)))
+    ([this user-id env-id]
+     (when-not (connected? this) (connect! this))
+     (ws/send-message! client :environment/get
+                       {:user-id user-id
+                        :environment-id env-id}
+                       (:timeout options))))
+
+  (list-environments [this user-id]
     (when-not (connected? this) (connect! this))
-    ;; (tap> {:event :aperture/get-environment
-    ;;        :user-id user-id})
-    (ws/send-message! client :environment/get
+    (ws/send-message! client :environment/list
                       {:user-id user-id}
+                      (:timeout options)))
+
+  (create-environment [this user-id env-name]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :environment/create
+                      {:user-id user-id
+                       :name env-name}
                       (:timeout options)))
 
   (load-specialization-hierarchy [this uid user-id]
     (when-not (connected? this) (connect! this))
-    ;; (tap> {:event :aperture/load-specialization
-    ;;        :uid uid
-    ;;        :user-id user-id})
     (ws/send-message! client :environment/load-specialization
                       {:uid uid
                        :user-id user-id}
                       (:timeout options)))
 
-  (update-environment! [this user-id updates]
+  (update-environment! [this user-id env-id updates]
     (when-not (connected? this) (connect! this))
-    ;; (tap> {:event :aperture/update-environment
-    ;;        :user-id user-id
-    ;;        :updates updates})
     (ws/send-message! client :environment/update
                       {:user-id user-id
+                       :environment-id env-id
                        :updates updates}
                       (:timeout options)))
 
-  (select-entity [this entity-uid]
-    (when-not (connected? this) (connect! this))
-    ;; (tap> {:event :aperture/select-entity
-    ;;        :entity-id entity-id})
-    (ws/send-message! client :entity/select
-                      {:entity-id entity-uid}
-                      (:timeout options))))
+  (select-entity
+    ([this user-id entity-uid]
+     (when-not (connected? this) (connect! this))
+     (ws/send-message! client :entity/select
+                       {:user-id user-id
+                        :entity-uid entity-uid}
+                       (:timeout options)))
+    ([this user-id env-id entity-uid]
+     (when-not (connected? this) (connect! this))
+     (ws/send-message! client :entity/select
+                       {:user-id user-id
+                        :environment-id env-id
+                        :entity-uid entity-uid}
+                       (:timeout options)))))
 
 (defn create-client
   ([]
-   (create-client default-ws-url {}))
-  ([url]
-   (create-client url {}))
-  ([url {:keys [timeout handlers] :or {timeout default-timeout} :as opts}]
-   (let [default-handlers {:on-error (fn [e]
-                                      (tap> {:event :aperture/websocket-error
-                                            :error e})
-                                      (log/error "Aperture WS Error:" e))
-                          :on-message (fn [msg]
-                                      (tap> {:event :aperture/message-received
-                                            :message msg})
-                                      (log/debug "Aperture message received:" msg))}
-         merged-handlers (merge default-handlers handlers)
-         client (ws/create-client url {:handlers merged-handlers})]
-     (->ApertureClient client {:url url
-                              :timeout timeout
-                              :handlers merged-handlers}))))
+   (create-client {}))
+  ([{:keys [url timeout]
+     :or {url default-ws-url
+          timeout default-timeout}
+     :as options}]
+   (->ApertureClient
+    (ws/create-client {:url url})
+    {:url url
+     :timeout timeout})))
 
 ;; Singleton instance for backward compatibility
 (defonce aperture-client (create-client))
@@ -116,9 +129,10 @@
 
   (go
     (let [response (<! (update-environment! test-client
-                                          "test-user"
-                                          {:facts [{:type "new-fact"
-                                                   :value "test"}]}))]
+                                            "test-user"
+                                            "test-env"
+                                            {:facts [{:type "new-fact"
+                                                      :value "test"}]}))]
       (println "Update result:" response)))
 
   ;; Cleanup

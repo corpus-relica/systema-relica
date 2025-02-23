@@ -27,12 +27,13 @@
          :user-id user-id})
       {:error "Invalid JWT"})))
 
-(defn handle-select-entity [{:keys [uid]}]
+(defn handle-select-entity [{:keys [uid] :as message}]
   (tap> "SELECT ENTITY")
   (tap> uid)
+  (tap> message)
   (go
     (try
-      (let [result (<! (aperture/select-entity aperture-client uid))]
+      (let [result (<! (aperture/select-entity aperture-client (:user-id message) uid))]
         {:success true
          :message "Entity selected"})
       (catch Exception e
@@ -53,7 +54,7 @@
       (tap> data)
   (try
     (let [message (json/parse-string data true)
-          {:keys [id type payload]} message
+          {:keys [id user-id type payload]} message
           handler (get ws-handlers type)]
       (tap> message)
       (if handler

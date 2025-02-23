@@ -10,12 +10,11 @@
     {:success true
      :message "Pong"}))
 
-(defn handle-select-entity [{:keys [uid]}]
-  (go
-    (try
-      (let [result (<! (aperture/select-entity aperture-client uid))]
-        {:success true
-         :message "Entity selected"})
-      (catch Exception e
-        {:error "Failed to select entity"}))))
-
+;; (defn handle-select-entity [{:keys [uid]}]
+;;   (go
+;;     (try
+;;       (let [result (<! (aperture/select-entity aperture-client uid))]
+;;         {:success true
+;;          :message "Entity selected"})
+;;       (catch Exception e
+;;         {:error "Failed to select entity"}))))

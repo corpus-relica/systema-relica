@@ -1,78 +1,90 @@
 ;; src/io/relica/aperture/core.clj
 (ns io.relica.aperture.core
   (:require [clojure.tools.logging :as log]
-            [io.relica.common.websocket.server]
+            [io.relica.common.websocket.server :as common-ws]
             [io.relica.aperture.io.ws-server :as ws]
-            [io.relica.aperture.env :refer [get-user-environment update-user-environment!]]
-            [io.relica.io.archivist-client :as archivist]
+            [io.relica.aperture.env :refer [get-user-environment get-user-environments 
+                                          update-user-environment! select-entity!
+                                          get-default-environment create-user-environment!]]
             [clojure.core.async :as async :refer [go <! >! chan]]
             [cheshire.core :as json]))
 
 ;; Server instance
 (defonce server-instance (atom nil))
+
 ;; Message Handlers
-(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/get
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
     (tap> (str "Getting environment for user:" (:user-id ?data)))
-    ;; (go
+    (go
       (try
-        (if-let [env (get-user-environment (:user-id ?data))]
-          (?reply-fn {:success true
-                      :environment env})
-          (?reply-fn {:error "Environment not found"}))
+        (let [user-id (:user-id ?data)
+              env-id (:environment-id ?data)
+              _ (tap> (str "Getting environment " env-id " for user " user-id))
+              env (if env-id
+                   (get-user-environment user-id env-id)
+                   (get-default-environment user-id))]
+          (tap> (str "Got environment " env))
+          (if env
+            (?reply-fn {:success true
+                       :environment env})
+            (?reply-fn {:error "Environment not found"})))
         (catch Exception e
           (log/error e "Failed to get environment")
-          {:error "Failed to get environment"}))))
-;;)
+          {:error "Failed to get environment"})))))
 
-;; (defn handle-update-environment [{:keys [user-id updates]}]
-;;   (go
-;;     (try
-;;       (if-let [updated (update-user-environment! (parse-long user-id) updates)]
-;;         (do
-;;           ;; Broadcast update to all connected clients
-;;           (ws/broadcast! server-instance
-;;                         {:type "environment-updated"
-;;                          :user-id user-id
-;;                          :environment updated})
-;;           {:success true
-;;            :environment updated})
-;;         {:error "Failed to update environment"})
-;;       (catch Exception e
-;;         (log/error e "Failed to update environment")
-;;         {:error "Failed to update environment"}))))
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/list
+  [{:keys [?data ?reply-fn] :as msg}]
+  (when ?reply-fn
+    (tap> (str "Getting all environments for user:" (:user-id ?data)))
+    (go
+      (try
+        (let [environments (get-user-environments (:user-id ?data))]
+          (?reply-fn {:success true
+                     :environments environments}))
+        (catch Exception e
+          (log/error e "Failed to list environments")
+          {:error "Failed to list environments"})))))
 
-;; (defn handle-load-specialization [{:keys [user-id uid]}]
-;;   (go
-;;     (try
-;;       (let [
-;;             ;; user-id (parse-long user-id)
-;;             ;; uid (parse-long uid)
-;;             sh (archivist/get-specialization-hierarchy uid user-id)
-;;             facts (:facts sh)]
-;;         (if facts
-;;           (do
-;;             (update-user-environment! user-id {:facts facts})
-;;             {:success true
-;;              :facts facts})
-;;           {:error "Specialization not found"}))
-;;       (catch Exception e
-;;         (log/error e "Failed to load specialization")
-;;         {:error "Failed to load specialization"}))))
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/create
+  [{:keys [?data ?reply-fn] :as msg}]
+  (when ?reply-fn
+    (tap> (str "Creating environment for user:" (:user-id ?data)))
+    (go
+      (try
+        (let [env (create-user-environment! (:user-id ?data) (:name ?data))]
+          (if env
+            (?reply-fn {:success true
+                       :environment env})
+            (?reply-fn {:error "Failed to create environment"})))
+        (catch Exception e
+          (log/error e "Failed to create environment")
+          {:error "Failed to create environment"})))))
 
-;; Health check handler
-;; (defn handle-health-check [_]
-;;   (go {:status "healthy"
-;;        :timestamp (System/currentTimeMillis)}))
-
-;; Message handlers map
-;; (def handlers
-;;   {"environment:get" handle-get-environment
-;;    "environment:update" handle-update-environment
-;;    "environment:load-specialization" handle-load-specialization
-;;    "system:health" handle-health-check})
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :entity/select
+  [{:keys [?data ?reply-fn] :as msg}]
+  (tap> (str "Handling entity/select"))
+  (tap> ?data)
+  (when ?reply-fn
+    (tap> (str "selecting entity " (:entity-uid ?data) " for user:" (:user-id ?data)))
+    (go
+      (try
+        (let [env-id (or (:environment-id ?data)
+                        (:environment_id (get-default-environment (:user-id ?data))))
+              updated (when env-id 
+                       (select-entity! (:user-id ?data) env-id (:entity-uid ?data)))]
+          (if updated
+            (?reply-fn {:success true
+                       :selected-entity (:entity-uid ?data)})
+            (?reply-fn {:error "Failed to select entity"})))
+        (catch Exception e
+          (log/error e "Failed to select entity")
+          {:error "Failed to select entity"})))))
 
 ;; Server management
 (defn start! []
@@ -105,16 +117,18 @@
                 {:type "system-notification"
                  :message "Test broadcast"})
 
+  (get-user-environments 7)
+
+  (create-user-environment! 7 "Test env tres")
+
+  (get-default-environment 7)
+
+  (get-environment @aperture-client 7 1)
+  (list-environments @aperture-client 7)
+  (update-environment! @aperture-client 7 1 {:name "Test env" :description "Test env"})
+  (load-specialization-hierarchy @aperture-client 7 7)
+  (select-entity @aperture-client 7 1)
+  (select-entity @aperture-client 7 1 1)
+
   ;; Stop server
-  (stop!)
-
-  ;; Test individual handlers
-  (handle-get-environment {:user-id "7"})
-
-  ;; Test environment updates
-  (handle-update-environment
-    {:user-id "7"
-     :updates {:facts [{:type "new-fact"
-                       :value "test"
-                       :metadata {:source "repl"}}]}})
-  )
+  (stop!))

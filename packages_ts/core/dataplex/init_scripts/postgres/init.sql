@@ -164,28 +164,37 @@ GRANT ALL ON TABLE public.refresh_tokens TO postgres;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO postgres;
 
 ------------------------------------------------------------------------
--- User environments table
+-- Environments table to store the actual environment data
+CREATE TABLE public.environments (
+    id serial PRIMARY KEY,
+    name varchar(255),  -- Optional name for the environment
+    selected_entity_id bigint,
+    selected_entity_type entity_fact_enum,
+    facts jsonb DEFAULT '[]'::jsonb,
+    models jsonb DEFAULT '[]'::jsonb,
+    lisp_env jsonb,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Join table for user-environment relationships
 CREATE TABLE public.user_environments (
     id serial PRIMARY KEY,
     user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    selected_entity_id bigint,  -- As column because frequently accessed
-    selected_entity_type entity_fact_enum,  -- As column because enumerated type
-    facts jsonb DEFAULT '[]'::jsonb,  -- As JSONB because variable collection
-    models jsonb DEFAULT '[]'::jsonb,  -- As JSONB because variable collection
-    lisp_env jsonb,  -- As JSONB because complex state
+    environment_id integer NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
+    is_owner boolean DEFAULT true,  -- Indicates if user owns this environment
+    can_write boolean DEFAULT true,  -- For future access control
     last_accessed timestamp DEFAULT CURRENT_TIMESTAMP,
     created_at timestamp DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_user_environment UNIQUE (user_id)
+    CONSTRAINT unique_user_environment UNIQUE (user_id, environment_id)
 );
 
--- Add indexes for common queries
-CREATE INDEX idx_user_environments_user_id ON public.user_environments(user_id);
+-- Indexes
+CREATE INDEX idx_environments_updated ON public.environments(updated_at);
+CREATE INDEX idx_user_environments_user ON public.user_environments(user_id);
+CREATE INDEX idx_user_environments_environment ON public.user_environments(environment_id);
 CREATE INDEX idx_user_environments_last_accessed ON public.user_environments(last_accessed);
-
--- Index for JSON querying if needed
-CREATE INDEX idx_user_environments_facts ON public.user_environments USING gin (facts jsonb_path_ops);
-CREATE INDEX idx_user_environments_models ON public.user_environments USING gin (models jsonb_path_ops);
 
 -- Permissions
 ALTER TABLE public.user_environments OWNER TO postgres;

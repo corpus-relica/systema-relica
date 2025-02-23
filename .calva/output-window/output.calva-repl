@@ -30,3 +30,5 @@ You can configure this with the setting:
   "calva.outputDestinations"
 
 
+; TypeError: Cannot read properties of undefined (reading 'label')
+; Aborting connect.

@@ -7,6 +7,7 @@
 (def redis-conn {:pool {} :spec {:uri "redis://localhost:6379"
                                  :username "default"
                                  :password "redis"}})
+
 (defmacro wcar* [& body] `(car/wcar redis-conn ~@body))
 
 (defprotocol CacheServiceOperations
