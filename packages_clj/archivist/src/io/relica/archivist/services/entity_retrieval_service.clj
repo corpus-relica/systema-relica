@@ -14,31 +14,40 @@
 
 (defrecord EntityRetrievalService [graph-service cache-service fact-service]
   EntityRetrievalOperations
-  
+
   (get-collections [_]
     (go
       (try
-        (let [collection-uids (conj (<! (cache/all-descendants-of cache-service collection-root-uid))
-                                   collection-root-uid)
-              _ (log/debug "Getting collections for UIDs:" collection-uids)
+        (when (nil? cache-service)
+          (throw (ex-info "Cache service not initialized" {:service :cache})))
+        (when (nil? fact-service)
+          (throw (ex-info "Fact service not initialized" {:service :fact})))
+
+        (let [_ (tap> "Fetching collection descendants from cache service")
+              collection-uids (conj (cache/all-descendants-of cache-service collection-root-uid)
+                                    collection-root-uid)
+              _ (tap> {:msg "Getting collections for UIDs:" :res collection-uids})
               results (atom [])]
           (doseq [uid collection-uids]
-            (let [individuals (<! (fact/get-classified fact-service uid false))]
+            (let [individuals (<! (fact/get-classified fact-service uid true))]
+              (tap> (str "Got " (count individuals) " individuals for collection " uid))
               (when (seq individuals)
                 (doseq [f individuals]
                   (swap! results conj {:name (:lh_object_name f)
-                                     :uid (:lh_object_uid f)})))))
+                                       :uid (:lh_object_uid f)})))))
+          (tap> (str "Returning " (count @results) " collections"))
           @results)
         (catch Exception e
-          (log/error "Error getting collections:" e)
+          (tap>  "Error getting collections")
+          (tap> e)
           []))))
-  
+
   (get-entity-type [_ uid]
     (go
       (try
         (let [result (graph/exec-query graph-service
-                                      queries/get-entity-type
-                                      {:uid uid})]
+                                       queries/get-entity-type
+                                       {:uid uid})]
           (when-let [fact (first result)]
             (let [rel-type-uid (get-in fact [:r :properties :rel_type_uid])]
               (cond
@@ -74,7 +83,7 @@
     (go
       (let [collections (<! (get-collections test-service))]
         (println "Collections:" collections)))
-    
+
     (go
       (let [entity-type (<! (get-entity-type test-service 123))]
         (println "Entity type:" entity-type)))))

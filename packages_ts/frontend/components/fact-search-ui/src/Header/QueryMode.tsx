@@ -21,31 +21,32 @@ interface QueryModeProps {
   autoload?: boolean;
 }
 
+const emptyQueryResults = () => ({
+  facts: [],
+  groundingFacts: [],
+  vars: [],
+  totalCount: 0,
+});
+
 const QueryMode: React.FC<QueryModeProps> = observer(
   ({ readonly = false, autoload = false }) => {
     const rootStore = useStores();
     const pageSize = 50;
     const [queryTerm, setQueryTerm] = useState(
-      rootStore.initialQuery ||
-        '@intention="question"\n?12.foobar > 1190 > 1000000235\n?2.bazquux > 1190 > ?12.foobar'
+      rootStore.initialQuery || "" // '@intention="question"\n?12.foobar > 1190 > 1000000235\n?2.bazquux > 1190 > ?12.foobar'
     );
     const debouncedQueryTerm = useDebounce(queryTerm, 250);
     const [page, setPage] = useState(1);
 
     const {
-      data: { facts, groundingFacts, vars, totalCount } = {
-        groundingFacts: [],
-        facts: [],
-        vars: [],
-        totalCount: 0,
-      },
+      data: { facts, groundingFacts, vars, totalCount } = emptyQueryResults(),
     } = useQuery({
       queryKey: ["query", debouncedQueryTerm, page],
       queryFn: () => {
         if (queryTerm !== "") {
           return performQuery(debouncedQueryTerm, page, pageSize);
         }
-        return { facts: [], count: 0 };
+        return emptyQueryResults();
       },
       placeholderData: (previousData) => previousData,
     });
@@ -97,16 +98,16 @@ const QueryMode: React.FC<QueryModeProps> = observer(
       }
     };
 
-    console.log("QueryMode render");
-    console.log("QueryTerm:", queryTerm);
-    console.log("Facts:", facts);
-    console.log("Count:", totalCount);
-    console.log("Page:", page);
-    console.log("DebouncedQueryTerm:", debouncedQueryTerm);
-    console.log("Autoload:", autoload);
-    console.log("Readonly:", readonly);
-    console.log("RootStore:", rootStore);
-    console.log("-----------------");
+    // console.log("QueryMode render");
+    // console.log("QueryTerm:", queryTerm);
+    // console.log("Facts:", facts);
+    // console.log("Count:", totalCount);
+    // console.log("Page:", page);
+    // console.log("DebouncedQueryTerm:", debouncedQueryTerm);
+    // console.log("Autoload:", autoload);
+    // console.log("Readonly:", readonly);
+    // console.log("RootStore:", rootStore);
+    // console.log("-----------------");
     // console.log("RootStore FACTS:", rootStore.facts.length);
     return (
       <>

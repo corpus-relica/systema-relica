@@ -14,6 +14,7 @@
             [io.relica.archivist.services.concept-service :as concept-service]
             [io.relica.archivist.services.graph-service :as graph-service]
             [io.relica.archivist.services.entity-retrieval-service :as entity-retrieval-service]
+            [io.relica.archivist.services.general-search-service :as general-search-service]
             ;;
             )
   (:import (java.net URI)))
@@ -89,20 +90,6 @@
            (println "Stopping Kinds service...")
           (kind-service/stop)))
 
-;; ENTITY RETRIEVAL SERVICE
-
-(defstate entity-retrieval-service
-  :start (do
-           (println "Starting Entity Retrieval service...")
-           (entity-retrieval-service/start {:graph graph-service
-                                            :gellish-base gellish-base-service
-                                            :cache cache-service}))
-  :stop (do
-          (println "Stopping Entity Retrieval service...")
-          (entity-retrieval-service/stop)))
-
-
-
 ;; CONCEPT SERVICE
 
 (defstate concept-service
@@ -128,6 +115,29 @@
           (println "Stopping Fact service...")
           (fact-service/stop)))
 
+;; ENTITY RETRIEVAL SERVICE
+
+(defstate entity-retrieval-service
+  :start (do
+           (println "Starting Entity Retrieval service...")
+           (entity-retrieval-service/start {:graph graph-service
+                                            :fact fact-service
+                                            :cache cache-service}))
+  :stop (do
+          (println "Stopping Entity Retrieval service...")
+          (entity-retrieval-service/stop)))
+
+;; GENERAL SEARCH SERVICE
+
+(defstate general-search-service
+  :start (do
+           (println "Starting General Search service...")
+           (general-search-service/start {:graph graph-service
+                                          :cache cache-service}))
+  :stop (do
+          (println "Stopping General Search service...")
+          (general-search-service/stop)))
+
 ;; WEBSOCKET SERVER
 
 (defstate ws-server
@@ -140,6 +150,7 @@
            (ws-server/start {:gellish-base gellish-base-service
                              :kind kind-service
                              :entity-retrieval entity-retrieval-service
+                             :general-search general-search-service
                              :port server-port}))
   :stop (do
           (println "Stopping WebSocket server...")

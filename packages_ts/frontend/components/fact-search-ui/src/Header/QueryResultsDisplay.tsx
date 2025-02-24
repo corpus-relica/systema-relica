@@ -26,6 +26,7 @@ const QueryResultsDisplay: React.FC = observer(() => {
     groundingFacts: [],
     facts: [],
     vars: [],
+    totalCount: 0,
   };
 
   const getResolvedName = (uid: number): string => {

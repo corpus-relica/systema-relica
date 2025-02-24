@@ -10,6 +10,7 @@ export class RootStore {
     facts: [],
     vars: [],
     groundingFacts: [],
+    totalCount: 0,
   };
   mode: "search" | "query" = "search";
   constructor() {

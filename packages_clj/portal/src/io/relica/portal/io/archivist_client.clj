@@ -13,7 +13,8 @@
   (resolve-uids [this uids])
   (get-kinds [this opts])
   (get-collections [this])
-  (get-entity-type [this uid]))
+  (get-entity-type [this uid])
+  (text-search [this query]))
 
 (defprotocol ConnectionManagement
   (connect! [this])
@@ -54,6 +55,12 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :entity/type
                       {:uid uid}
+                      (:timeout options)))
+
+  (text-search [this query]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :general-search/text
+                      query
                       (:timeout options))))
 
 (defn create-client

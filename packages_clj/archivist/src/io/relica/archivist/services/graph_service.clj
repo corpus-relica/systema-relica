@@ -6,11 +6,7 @@
 
 (defprotocol GraphOperations
   (exec-query [this query params])
-  (exec-write-query [this query params])
-  (resolve-neo4j-int [this val])
-  (convert-neo4j-ints [this node])
-  (resolve-neo4j-date [this neo4j-date])
-  (transform-results [this results]))
+  (exec-write-query [this query params]))
 
 (defrecord GraphService [session-factory]
   GraphOperations
@@ -22,46 +18,13 @@
           (query session params)
           ;; If query is a raw string, pass it through with params
           (neo4j/execute session query params)))))
-
   (exec-write-query [this query params]
-    (exec-query this query params))
-
-  ;; (resolve-neo4j-int [_ val] (tap> {:msg "RESOLVING NEO4J INT"
-  ;;          :val val})
-  ;;   (cond
-  ;;     (instance? NumberValueAdapter val) (.asNumber val)
-  ;;     :else val))
-
-  ;; (convert-neo4j-ints [this node]
-  ;;   (try
-  ;;     (-> node
-  ;;         (update :identity #(resolve-neo4j-int this %))
-  ;;         (update :properties (fn [props]
-  ;;                               (->> props
-  ;;                                    (map (fn [[k v]] [k (resolve-neo4j-int this v)]))
-  ;;                                    (into {})))))
-  ;;     (catch Exception e
-  ;;       (throw e))))
-
-  ;; (resolve-neo4j-date [this neo4j-date]
-  ;;   (when neo4j-date
-  ;;     (let [year (resolve-neo4j-int this (.year neo4j-date))
-  ;;           month (resolve-neo4j-int this (.month neo4j-date))
-  ;;           day (resolve-neo4j-int this (.day neo4j-date))]
-  ;;       (java.util.Date. year (dec month) day))))
-
-  ;; (transform-results [this results]
-  ;;   (->> results
-  ;;        (map #(get-in % [:r :properties]))
-  ;;        (map #(into {} %))
-  ;;        (map #(update-vals % (fn [v] (resolve-neo4j-int this v))))))
-  )
+    (exec-query this query params)))
 
 
 (defn resolve-neo4j-int [val]
-
-  (tap> {:msg "RESOLVING NEO4J INT"
-         :val val})
+  ;; (tap> {:msg "RESOLVING NEO4J INT"
+  ;;        :val val})
   (cond
     (instance? NumberValueAdapter val) (.asNumber val)
     :else val))
@@ -77,18 +40,62 @@
     (catch Exception e
       (throw e))))
 
-(defn resolve-neo4j-date [neo4j-date]
-  (when neo4j-date
-    (let [year (resolve-neo4j-int (.year neo4j-date))
-          month (resolve-neo4j-int (.month neo4j-date))
-          day (resolve-neo4j-int (.day neo4j-date))]
-      (java.util.Date. year (dec month) day))))
+(defn format-date [date-value]
+  (cond
+    ;; Handle java.time.LocalDate objects
+    (instance? java.time.LocalDate date-value)
+    (let [year (.getYear date-value)
+          month (.getMonthValue date-value)
+          day (.getDayOfMonth date-value)]
+      (format "%04d-%02d-%02d" year month day))
+
+    ;; Handle strings that might already be dates
+    (and (string? date-value)
+         (re-matches #"\d{4}-\d{2}-\d{2}" date-value))
+    date-value
+
+    ;; Return other values unchanged
+    :else date-value))
+
+(defn ensure-integer [v]
+  (cond
+    ;; Already a number and is an integer value
+    (and (number? v) (= (Math/floor v) v))
+    (long v)
+
+    ;; String that can be parsed as a number
+    (string? v)
+    (try
+      (Long/parseLong v)
+      (catch Exception e
+        v))  ; Return original string if it can't be parsed
+
+    ;; For nil or any other type, just return it
+    :else v))
 
 (defn transform-results [results]
   (->> results
-       (map #(get-in % [:r :properties]))
+       (map #(get-in % [:r]))
        (map #(into {} %))
-       (map #(update-vals % (fn [v] (resolve-neo4j-int v))))))
+       (map (fn [entry]
+              (reduce-kv (fn [m k v]
+                           (assoc m k
+                                  (cond
+                                    ;; Handle date fields
+                                    (and (contains? #{:effective_from :latest_update} k)
+                                         (or (instance? java.time.LocalDate v)
+                                             (string? v)))
+                                    (format-date v)
+
+                                    ;; Ensure integer values when appropriate
+                                    (contains? #{:rel_type_uid :lh_object_uid :rh_object_uid
+                                                :fact_uid :collection_uid :language_uid} k)
+                                    (ensure-integer v)
+
+                                    ;; Handle Neo4j numeric values
+                                    :else (resolve-neo4j-int v))))
+                         {}
+                         entry)))))
 
 (defn create-graph-service [session-factory]
   (->GraphService session-factory))

@@ -40,7 +40,7 @@
   RETURN partial_definition, source_uid
   ORDER BY length(newPath)")
 
-(neo4j/defquery textSearchQuery
+(neo4j/defquery text-search
   "MATCH (kind:Entity)-->(r:Fact)-->(parent:Entity)
   WHERE r.rel_type_uid IN $relTypeUIDs
   AND
@@ -54,7 +54,7 @@
   ORDER BY r.lh_object_name
   SKIP $skip LIMIT $pageSize")
 
-(neo4j/defquery countTextSearchQuery
+(neo4j/defquery count-text-search
   "MATCH (kind:Entity)-->(r:Fact)-->(parent:Entity)
   WHERE r.rel_type_uid IN $relTypeUIDs
   AND
@@ -66,7 +66,7 @@
   AND ($filterUIDs IS NULL OR size($filterUIDs) = 0 OR kind.uid IN $filterUIDs)
   RETURN count(r) as total")
 
-(neo4j/defquery uidSearchQuery
+(neo4j/defquery uid-search
   "MATCH (kind:Entity)--(r:Fact)-->(parent:Entity)
   WHERE r.rel_type_uid IN $relTypeUIDs
   AND r.lh_object_uid = $searchTerm
@@ -75,7 +75,7 @@
   ORDER BY r.lh_object_name
   SKIP $skip LIMIT $pageSize")
 
-(neo4j/defquery countUIDSearchQuery
+(neo4j/defquery count-uid-search
   "MATCH (kind:Entity)-->(r:Fact)-->(parent:Entity)
   WHERE r.rel_type_uid IN $relTypeUIDs
   AND r.lh_object_uid = $searchTerm

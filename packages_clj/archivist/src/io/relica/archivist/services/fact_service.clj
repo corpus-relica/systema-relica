@@ -39,6 +39,8 @@
               direct-classified (if (empty? direct-results)
                                 []
                                 (graph/transform-results graph-service direct-results))]
+          (tap> (str "Direct classified: " direct-classified))
+          (tap> direct-results)
           (if-not recursive
             direct-classified
             (let [subtypes (<! (cache/all-descendants-of cache-service uid))
@@ -117,4 +119,14 @@
 (comment
   ;; Test operations
   (let [test-service (create-fact-service graph-service nil cache-service nil nil)]
-    (get-classified test-service 970178)))
+    (get-classified test-service 970178))
+
+  @fact-service
+
+  (go (let [xxx (<! (get-classified @fact-service 1000000061 true))]
+        (println "XXX")
+        (println xxx)
+        xxx))
+
+
+  )

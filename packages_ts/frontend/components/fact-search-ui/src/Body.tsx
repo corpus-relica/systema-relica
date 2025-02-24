@@ -16,8 +16,6 @@ const Body = observer((props: { callback: (fact: Fact) => void }) => {
   const rootStore: RootStore = useStores();
   const { facts } = rootStore;
 
-  console.log("BODY BODY BODY Body", facts.length);
-
   const [expandedUID, setExpandedUID] = useState<number | null>(null);
 
   const handleSelectClick = (row: Fact) => {

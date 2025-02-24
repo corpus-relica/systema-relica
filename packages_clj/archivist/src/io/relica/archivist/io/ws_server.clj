@@ -5,7 +5,8 @@
             [io.relica.common.websocket.server :as ws]
             [io.relica.archivist.services.gellish-base-service :as gellish-base-service]
             [io.relica.archivist.services.kind-service :as kind-service]
-            [io.relica.archivist.services.entity-retrieval-service :as entity]))
+            [io.relica.archivist.services.entity-retrieval-service :as entity]
+            [io.relica.archivist.services.general-search-service :as general-search]))
 
 (defprotocol WebSocketOperations
   (broadcast! [this message])
@@ -51,17 +52,20 @@
   :entity/collections
   [{:keys [?data ?reply-fn entity-s] :as msg}]
   (when ?reply-fn
-    (tap> (str "Getting collections"))
-    (go
-      (try
-        (let [collections (<! (entity/get-collections entity-s))]
-          (?reply-fn {:success true
-                     :collections collections})
-          (?reply-fn {:success true
-                     :collections collections}))
-        (catch Exception e
-          (log/error e "Failed to get collections")
-          (?reply-fn {:error "Failed to get collections"}))))))
+    (tap> {:event :websocket/getting-collections
+           :entity-service entity-s})
+    (if (nil? entity-s)
+      (?reply-fn {:success false
+                  :error "Entity service not initialized"})
+      (go
+        (try
+          (let [collections (<! (entity/get-collections entity-s))]
+            (?reply-fn {:success true
+                        :collections collections}))
+          (catch Exception e
+            (log/error e "Failed to get collections")
+            (?reply-fn {:success false
+                        :error "Failed to get collections"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :entity/type
@@ -72,11 +76,38 @@
       (try
         (if-let [entity-type (entity/get-entity-type entity-s (:uid ?data))]
           (?reply-fn {:success true
-                     :type entity-type})
+                      :type entity-type})
           (?reply-fn {:error "Entity type not found"}))
         (catch Exception e
           (log/error e "Failed to get entity type")
           (?reply-fn {:error "Failed to get entity type"}))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :general-search/text
+  [{:keys [?data ?reply-fn general-search-s] :as msg}]
+  (when ?reply-fn
+    (tap> {:event :websocket/text-search
+           :data ?data})
+    (if (nil? general-search-s)
+      (?reply-fn {:success false
+                  :error "General search service not initialized"})
+      (go
+        (try
+          (let [{:keys [searchTerm collectionUID page pageSize filter exactMatch]
+                 :or {page 1 pageSize 10 exactMatch false}} ?data
+                results (<! (general-search/get-text-search general-search-s
+                                                          searchTerm
+                                                          collectionUID
+                                                          page
+                                                          pageSize
+                                                          filter
+                                                          exactMatch))]
+            (?reply-fn {:success true
+                       :results results}))
+          (catch Exception e
+            (log/error e "Failed to execute text search")
+            (?reply-fn {:success false
+                       :error "Failed to execute text search"})))))))
 
 (defrecord WebSocketComponent [args]
   WebSocketOperations
@@ -98,17 +129,19 @@
 
 (defn create-event-handler [{:keys [gellish-base
                                     kind
-                                    entity-retrieval]}]
+                                    entity-retrieval
+                                    general-search]}]
   (fn [msg]
     (io.relica.common.websocket.server/handle-ws-message (assoc msg
                                                                 :gellish-base-s gellish-base
                                                                 :kind-s kind
-                                                                :entity-s entity-retrieval))))
+                                                                :entity-s entity-retrieval
+                                                                :general-search-s general-search))))
 
 (defn start [{:keys [port] :as args}]
   (tap> (str "!!! Starting WebSocket server on port" port))
   (let [server (ws/create-server {:port port
-                                 :event-msg-handler (create-event-handler args)})
+                                  :event-msg-handler (create-event-handler args)})
         component (->WebSocketComponent (assoc args :server server))]
     (ws/start! server)
     component))

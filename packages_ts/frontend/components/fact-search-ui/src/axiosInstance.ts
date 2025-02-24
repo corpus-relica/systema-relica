@@ -58,7 +58,6 @@ export const uidSearch = async (
 
 export const getCollections = async () => {
   try {
-    console.log("eat veggies!!!");
     const response = await axiosInstance.get(COLLECTIONS_ENDPOINT);
     const collections = response.data;
     return collections;

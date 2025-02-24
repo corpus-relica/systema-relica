@@ -16,35 +16,94 @@
                      generate-socket-token]]
             [io.relica.portal.handlers.websocket :refer [handle-ws-message]]))
 
+;; Common response helpers
+(def cors-headers
+  {"Access-Control-Allow-Origin" "*"
+   "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+   "Access-Control-Allow-Headers" "Content-Type, Authorization"})
 
-(defn handle-get-kinds [{:keys [params] :as req}]
-  (let [user-id (-> req :identity :user-id)
-        params {:sort (or (some-> params :sort read-string)
-                     ["name" "ASC"])
-           :range (or (some-> params :range read-string)
-                      [0 10])
-           :filter (or (some-> params :filter read-string)
-                       {})
-                ;;parse float
-           :user-id user-id}]
+(defn json-response [status body]
+  {:status status
+   :headers (merge {"Content-Type" "application/json"} cors-headers)
+   :body (json/generate-string body)})
+
+(defn success-response [data]
+  (json-response 200 data))
+
+(defn error-response
+  ([msg] (error-response 500 msg))
+  ([status msg]
+   (json-response status {:error msg})))
+
+(defn unauthorized-response [msg]
+  (error-response 401 msg))
+
+;; Common handler wrapper
+(defn wrap-handler-with-error [handler error-msg]
+  (fn [req]
+    (go
+      (try
+        (handler req)
+        (catch Exception e
+          (tap> (str error-msg ":" e))
+          (error-response error-msg))))))
+
+;; Parameter parsing helpers
+(defn parse-int-param [param default]
+  (try
+    (Integer/parseInt param)
+    (catch Exception _
+      default)))
+
+(defn parse-json-param [param default]
+  (try
+    (some-> param read-string)
+    (catch Exception _
+      default)))
+
+;; Handlers
+(defn handle-text-search [{:keys [params]}]
   (go
     (try
-      (let [result (<! (archivist/get-kinds
-                        archivist-client
-                        params))]
-        {:status 200
-         :headers {"Content-Type" "application/json"}
-         :body (json/generate-string (:data result))})
+      (let [{:keys [searchTerm collectionUID page pageSize filter exactMatch]
+             :or {page "1" pageSize "10" exactMatch false}} params
+            response (<! (archivist/text-search
+                          archivist-client
+                          {:searchTerm searchTerm
+                           :collectionUID collectionUID
+                           :page (parse-int-param page 1)
+                           :pageSize (parse-int-param pageSize 10)
+                           :filter filter
+                           :exactMatch exactMatch}))]
+        (if (:success response)
+          (success-response (:results response))
+          (error-response (or (:error response) "Unknown error"))))
       (catch Exception e
-        (tap> (str "Failed to fetch kinds:" e))
-        {:status 500
-         :headers {"Content-Type" "application/json"}
-         :body {:error "Failed to fetch kinds"
-                :message (.getMessage e)}})))))
+        (tap> (str "Error in text search handler: " e))
+        (error-response "Failed to execute text search")))))
 
+(defn handle-get-kinds [{:keys [params identity]}]
+  (go
+    (let [params {:sort (parse-json-param (:sort params) ["name" "ASC"])
+                  :range (parse-json-param (:range params) [0 10])
+                  :filter (parse-json-param (:filter params) {})
+                  :user-id (-> identity :user-id)}]
+      (try
+        (let [result (<! (archivist/get-kinds archivist-client params))]
+          (success-response (:data result)))
+        (catch Exception e
+          (error-response "Failed to fetch kinds"))))))
+
+(defn handle-ws-auth [{:keys [params]}]
+  (if-let [user-id (-> params :identity :user-id)]
+    (let [socket-token (generate-socket-token)]
+      (swap! socket-tokens assoc socket-token
+             {:user-id user-id
+              :created-at (System/currentTimeMillis)})
+      (success-response {:token socket-token}))
+    (unauthorized-response "Authentication failed")))
 
 (defn ws-handler [{:keys [params] :as request}]
-  (tap> "WS HANDLER START")
   (if-let [token (:token params)]
     (if-let [user-id (validate-socket-token token)]
       (http/with-channel request channel
@@ -52,37 +111,54 @@
           (swap! connected-clients assoc client-id {:channel channel :user-id user-id})
           (tap> "WS HANDLER MORE OR LESS COMPLETE")
           (http/on-close channel
-                        (fn [status]
-                          (swap! connected-clients dissoc client-id)
-                          (tap> (str "WebSocket closed:" status))))
+                         (fn [status]
+                           (swap! connected-clients dissoc client-id)
+                           (tap> (str "WebSocket closed:" status))))
           (http/on-receive channel
-                          (fn [data]
-                            (handle-ws-message channel data)))))
+                           (fn [data]
+                             (handle-ws-message channel data)))))
       {:status 401
        :headers {"Content-Type" "application/json"
-                "Access-Control-Allow-Origin" "*"
-                "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
-                "Access-Control-Allow-Headers" "Content-Type, Authorization"}
+                 "Access-Control-Allow-Origin" "*"
+                 "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+                 "Access-Control-Allow-Headers" "Content-Type, Authorization"}
        :body (json/generate-string {:error "Invalid token"})})
     {:status 401
      :headers {"Content-Type" "application/json"
-              "Access-Control-Allow-Origin" "*"
-              "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
-              "Access-Control-Allow-Headers" "Content-Type, Authorization"}
+               "Access-Control-Allow-Origin" "*"
+               "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+               "Access-Control-Allow-Headers" "Content-Type, Authorization"}
      :body (json/generate-string {:error "No token provided"})}))
 
+(defn handle-get-collections [req]
+  (go
+    (try
+      (let [result (<! (archivist/get-collections archivist-client))]
+        (success-response (:collections result)))
+      (catch Exception e
+        (error-response "Failed to fetch collections")))))
 
-(defn handle-ws-auth [request]
-  (if-let [user-id (-> request :identity :user-id)]
-    (let [socket-token (generate-socket-token)]
-      (swap! socket-tokens assoc socket-token
-             {:user-id user-id
-              :created-at (System/currentTimeMillis)})
-      {:status 200
-       :body {:token socket-token}})
-    {:status 401
-     :body {:error "Authentication failed"}}))
+(defn handle-get-entity-type [{:keys [params]}]
+  (go
+    (try
+      (let [uid (some-> params :uid parse-long)
+            response (<! (archivist/get-entity-type archivist-client uid))]
+        (if (:success response)
+          (success-response {:type (:type response)})
+          (error-response (or (:error response) "Unknown error"))))
+      (catch Exception e
+        (error-response "Failed to get entity type")))))
 
+(defn handle-get-environment [{:keys [identity]}]
+  (go
+    (try
+      (let [response (<! (aperture/get-environment
+                          aperture-client
+                          (:user-id identity)
+                          nil))]
+        (success-response (:environment response)))
+      (catch Exception e
+        (error-response "Failed to fetch environment")))))
 
 (defn handle-resolve-uids [{:keys [params body] :as request}]
   (let [uids (or (some-> params :uids read-string)  ; Handle query param array
@@ -93,67 +169,6 @@
         (let [result (<! (archivist/resolve-uids
                           archivist-client
                           uids))]
-          {:status 200
-           :headers {"Content-Type" "application/json"}
-           :body (json/generate-string (:data result))})
+          (success-response (:data result)))
         (catch Exception e
-          (tap> (str"Failed to resolve UIDs:" e))
-          {:status 500
-           :headers {"Content-Type" "application/json"}
-           :body {:error "Failed to resolve entities"
-                 :message (.getMessage e)}})))))
-
-(defn handle-get-environment [{:keys [identity]}]
-  (go
-    (try
-      (let [response (<! (aperture/get-environment
-                          aperture-client
-                          (:user-id identity)
-                          nil))]
-        {:status 200
-         :headers {"Content-Type" "application/json"}
-         :body (json/generate-string (:environment response))})
-      (catch Exception e
-        (tap> (str "Failed to fetch environment:" e))
-        {:error "Failed to fetch environment"}))))
-
-(defn handle-get-collections
-  "Handler for GET /retrieveEntity/collections"
-  [_]
-  (go
-    (try
-      (let [response (<! (archivist/get-collections archivist-client))]
-        (if (:success response)
-          {:status 200
-           :headers {"Content-Type" "application/json"}
-           :body (json/generate-string (:collections response))}
-          {:status 500
-           :headers {"Content-Type" "application/json"}
-           :body (json/generate-string {:error "Failed to get collections"})}))
-      (catch Exception e
-        (tap> e "Error getting collections")
-        {:status 500
-         :headers {"Content-Type" "application/json"}
-         :body (json/generate-string {:error "Internal server error"})}))))
-
-(handle-get-collections {:params {}})
-
-(defn handle-get-entity-type
-  "Handler for GET /retrieveEntity/type"
-  [req]
-  (go
-    (try
-      (let [uid (some-> req :params :uid parse-long)
-            response (<! (archivist/get-entity-type archivist-client uid))]
-        (if (:success response)
-          {:status 200
-           :headers {"Content-Type" "application/json"}
-           :body (json/generate-string {:type (:type response)})}
-          {:status 404
-           :headers {"Content-Type" "application/json"}
-           :body (json/generate-string {:error "Entity type not found"})}))
-      (catch Exception e
-        (tap> e "Error getting entity type")
-        {:status 500
-         :headers {"Content-Type" "application/json"}
-         :body (json/generate-string {:error "Internal server error"})}))))
+          (error-response "Failed to resolve entities"))))))
