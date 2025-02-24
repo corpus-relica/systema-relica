@@ -6,7 +6,9 @@
                                            handle-ws-auth
                                            handle-resolve-uids
                                            handle-get-environment
-                                           handle-get-kinds]]
+                                           handle-get-kinds
+                                           handle-get-collections
+                                           handle-get-entity-type]]
    [io.relica.portal.middleware :refer [wrap-jwt-auth
                                         wrap-async-handler]]))
 
@@ -31,8 +33,29 @@
                                   wrap-jwt-auth))  ; Support POST with body
   (GET "/environment/retrieve" [] (-> handle-get-environment
                                       wrap-async-handler
-                                      wrap-jwt-auth
-                                   ))
+                                      wrap-jwt-auth))
+  
+  ;; Entity retrieval routes
+  (OPTIONS "/retrieveEntity/collections" []
+           {:status 200
+            :headers {"Access-Control-Allow-Origin" "*"
+                     "Access-Control-Allow-Methods" "GET, OPTIONS"
+                     "Access-Control-Allow-Headers" "Content-Type, Authorization"
+                     "Access-Control-Max-Age" "3600"}})
+  (GET "/retrieveEntity/collections" [] (-> handle-get-collections
+                                          wrap-async-handler
+                                          wrap-jwt-auth))
+  
+  (OPTIONS "/retrieveEntity/type" []
+           {:status 200
+            :headers {"Access-Control-Allow-Origin" "*"
+                     "Access-Control-Allow-Methods" "GET, OPTIONS"
+                     "Access-Control-Allow-Headers" "Content-Type, Authorization"
+                     "Access-Control-Max-Age" "3600"}})
+  (GET "/retrieveEntity/type" [] (-> handle-get-entity-type
+                                   wrap-async-handler
+                                   wrap-jwt-auth))
+  
   (GET "/health" [] {:status 200 :body "healthy"})
   (OPTIONS "/*" [] {:status 200
                     :headers {"Access-Control-Allow-Origin" "*"

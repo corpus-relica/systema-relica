@@ -200,7 +200,7 @@
 ;; // fact_uids and concept uids separate but for now we are using the same range
 ;; // for both. We will need to update this query to account for that.
 
-(neo4j/defquery highestUID
+(neo4j/defquery highest-uid
   "MATCH (n)
   WITH
   CASE
@@ -210,7 +210,7 @@
   WHERE nodeID > $minThreshold AND nodeID < $maxThreshold
   RETURN max(nodeID) AS highestValue")
 
-(neo4j/defquery factsAboutIndividual
+(neo4j/defquery facts-about-individual
   "MATCH (a)--(r)-->(b)
   WHERE a.uid = $uid OR b.uid = $uid
   RETURN r")
@@ -252,11 +252,11 @@
 
 ;;/////////////////////////////////////////////////////////////
 
-(neo4j/defquery deleteFactQuery
+(neo4j/defquery delete-fact
   "MATCH (n:Fact {fact_uid: $uid})
   DETACH DELETE n")
 
-(neo4j/defquery deleteEntityQuery
+(neo4j/defquery delete-entity
   "MATCH (n:Entity {uid: $uid})
   DETACH DELETE n")
 
@@ -297,7 +297,13 @@
 (neo4j/defquery countKindsQuery
   "MATCH (a)--(r)-->()
   WHERE r.rel_type_uid = 1146 OR r.rel_type_uid = 1726
-  RETURN count(r) as total")`;
+  RETURN count(r) as total")
+
+(neo4j/defquery get-entity-type
+  "MATCH ()--(r)-->() 
+   WHERE r.lh_object_uid = $uid 
+   AND (r.rel_type_uid = 1146 OR r.rel_type_uid = 1726 OR r.rel_type_uid = 1225) 
+   RETURN r")
 
 (neo4j/defquery reparentKindQuery
   "MATCH (n:Entity {uid: $uid})
@@ -320,22 +326,22 @@
   DELETE r1, r2, r
   RETURN r")
 
-(neo4j/defquery allRelatedFactsQuery
+(neo4j/defquery all-related-facts
   "MATCH (start:Entity)--(r)-->(end:Entity)
   WHERE start.uid = $start_uid AND end.uid = $end_uid
   RETURN r")
 
-(neo4j/defquery allRelatedFactsQueryb
+(neo4j/defquery all-related-facts-b
   "MATCH (start:Entity)<--(r)--(end:Entity)
   WHERE start.uid = $start_uid AND end.uid = $end_uid
   RETURN r")
 
-(neo4j/defquery allRelatedFactsQueryc
+(neo4j/defquery all-related-facts-c
   "MATCH (start:Entity)--(r)-->(end:Entity)
   WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
   RETURN r")
 
-(neo4j/defquery allRelatedFactsQueryd
+(neo4j/defquery all-related-facts-d
   "MATCH (start:Entity)<--(r)--(end:Entity)
   WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
   RETURN r")

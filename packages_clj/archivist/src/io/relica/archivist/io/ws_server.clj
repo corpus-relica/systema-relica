@@ -3,8 +3,9 @@
             [clojure.tools.logging :as log]
             [clojure.core.async :as async :refer [<! go chan]]
             [io.relica.common.websocket.server :as ws]
-            [io.relica.archivist.gellish-base-service :as gellish-base-service]
-            [io.relica.archivist.kind-service :as kind-service]))
+            [io.relica.archivist.services.gellish-base-service :as gellish-base-service]
+            [io.relica.archivist.services.kind-service :as kind-service]
+            [io.relica.archivist.services.entity-retrieval-service :as entity]))
 
 (defprotocol WebSocketOperations
   (broadcast! [this message])
@@ -12,7 +13,6 @@
   (get-active-sessions [this])
   (disconnect-all! [this])
   (get-xxx [this]))
-
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :entities/resolve
@@ -47,35 +47,69 @@
                :error e})
         (?reply-fn {:resolved false :error e})))))
 
-(defrecord WebSocketComponent [xxx server]
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :entity/collections
+  [{:keys [?data ?reply-fn entity-s] :as msg}]
+  (when ?reply-fn
+    (tap> (str "Getting collections"))
+    (go
+      (try
+        (let [collections (<! (entity/get-collections entity-s))]
+          (?reply-fn {:success true
+                     :collections collections})
+          (?reply-fn {:success true
+                     :collections collections}))
+        (catch Exception e
+          (log/error e "Failed to get collections")
+          (?reply-fn {:error "Failed to get collections"}))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :entity/type
+  [{:keys [?data ?reply-fn entity-s] :as msg}]
+  (when ?reply-fn
+    (tap> (str "Getting entity type for uid:" (:uid ?data)))
+    (go
+      (try
+        (if-let [entity-type (entity/get-entity-type entity-s (:uid ?data))]
+          (?reply-fn {:success true
+                     :type entity-type})
+          (?reply-fn {:error "Entity type not found"}))
+        (catch Exception e
+          (log/error e "Failed to get entity type")
+          (?reply-fn {:error "Failed to get entity type"}))))))
+
+(defrecord WebSocketComponent [args]
   WebSocketOperations
   (broadcast! [_ message]
-    (broadcast! server message))
+    (broadcast! (:server args) message))
 
   (send-to-session! [_ client-id message]
-    (ws/send! server client-id message))
+    (ws/send! (:server args) client-id message))
 
   (get-active-sessions [_]
-    (when-let [connected-uids (:connected-uids @(:state server))]
+    (when-let [connected-uids (:connected-uids @(:state (:server args)))]
       (count (:any @connected-uids))))
 
   (disconnect-all! [_]
-    (ws/stop! server))
+    (ws/stop! (:server args)))
 
   (get-xxx [_]
-    xxx))
+    (:gellish-base args)))
 
-(defn create-event-handler [xxx ks]
+(defn create-event-handler [{:keys [gellish-base
+                                    kind
+                                    entity-retrieval]}]
   (fn [msg]
     (io.relica.common.websocket.server/handle-ws-message (assoc msg
-                                                                :gellish-base-s xxx
-                                                                :kind-s ks))))
+                                                                :gellish-base-s gellish-base
+                                                                :kind-s kind
+                                                                :entity-s entity-retrieval))))
 
-(defn start [xxx ks port]
+(defn start [{:keys [port] :as args}]
   (tap> (str "!!! Starting WebSocket server on port" port))
   (let [server (ws/create-server {:port port
-                                 :event-msg-handler (create-event-handler xxx ks)})
-        component (->WebSocketComponent xxx server)]
+                                 :event-msg-handler (create-event-handler args)})
+        component (->WebSocketComponent (assoc args :server server))]
     (ws/start! server)
     component))
 

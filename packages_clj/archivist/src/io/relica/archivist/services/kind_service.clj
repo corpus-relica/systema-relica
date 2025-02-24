@@ -1,10 +1,10 @@
-(ns io.relica.archivist.kind-service
+(ns io.relica.archivist.services.kind-service
   (:require [mount.core :refer [defstate]]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
             [io.relica.archivist.db.neo4j :as neo4j]
             [io.relica.archivist.db.queries :as queries]
-            [io.relica.archivist.cache-service :as cache]
+            [io.relica.archivist.services.cache-service :as cache]
             )
   (:import (java.net URI))
   (:gen-class))

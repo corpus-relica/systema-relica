@@ -108,10 +108,52 @@
     (try
       (let [response (<! (aperture/get-environment
                           aperture-client
-                          (:user-id identity)))]
+                          (:user-id identity)
+                          nil))]
         {:status 200
          :headers {"Content-Type" "application/json"}
          :body (json/generate-string (:environment response))})
       (catch Exception e
         (tap> (str "Failed to fetch environment:" e))
         {:error "Failed to fetch environment"}))))
+
+(defn handle-get-collections
+  "Handler for GET /retrieveEntity/collections"
+  [_]
+  (go
+    (try
+      (let [response (<! (archivist/get-collections archivist-client))]
+        (if (:success response)
+          {:status 200
+           :headers {"Content-Type" "application/json"}
+           :body (json/generate-string (:collections response))}
+          {:status 500
+           :headers {"Content-Type" "application/json"}
+           :body (json/generate-string {:error "Failed to get collections"})}))
+      (catch Exception e
+        (tap> e "Error getting collections")
+        {:status 500
+         :headers {"Content-Type" "application/json"}
+         :body (json/generate-string {:error "Internal server error"})}))))
+
+(handle-get-collections {:params {}})
+
+(defn handle-get-entity-type
+  "Handler for GET /retrieveEntity/type"
+  [req]
+  (go
+    (try
+      (let [uid (some-> req :params :uid parse-long)
+            response (<! (archivist/get-entity-type archivist-client uid))]
+        (if (:success response)
+          {:status 200
+           :headers {"Content-Type" "application/json"}
+           :body (json/generate-string {:type (:type response)})}
+          {:status 404
+           :headers {"Content-Type" "application/json"}
+           :body (json/generate-string {:error "Entity type not found"})}))
+      (catch Exception e
+        (tap> e "Error getting entity type")
+        {:status 500
+         :headers {"Content-Type" "application/json"}
+         :body (json/generate-string {:error "Internal server error"})}))))

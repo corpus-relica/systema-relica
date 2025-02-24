@@ -33,7 +33,7 @@
   (tap> message)
   (go
     (try
-      (let [result (<! (aperture/select-entity aperture-client (:user-id message) uid))]
+      (let [result (<! (aperture/select-entity aperture-client (:user-id message) nil uid))]
         {:success true
          :message "Entity selected"})
       (catch Exception e

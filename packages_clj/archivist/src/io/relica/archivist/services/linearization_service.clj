@@ -1,4 +1,4 @@
-(ns io.relica.archivist.linearization-service
+(ns io.relica.archivist.services.linearization-service
   (:require [mount.core :refer [defstate]]
             [clojure.set :as set]))
 

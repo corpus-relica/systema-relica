@@ -1,8 +1,8 @@
-(ns io.relica.archivist.cache-service
+(ns io.relica.archivist.services.cache-service
   (:require [mount.core :refer [defstate]]
             [taoensso.carmine :as car]
             [clojure.string :as str]
-            [io.relica.archivist.linearization-service :as lin]))
+            [io.relica.archivist.services.linearization-service :as lin]))
 
 (def redis-conn {:pool {} :spec {:uri "redis://localhost:6379"
                                  :username "default"

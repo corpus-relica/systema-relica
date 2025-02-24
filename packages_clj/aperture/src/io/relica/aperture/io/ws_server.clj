@@ -3,7 +3,6 @@
             [clojure.tools.logging :as log]
             [clojure.core.async :as async :refer [<! go chan]]
             [io.relica.common.websocket.server :as ws]
-            ;; [io.relica.archivist.gellish-base-service :as gellish-base-service]
             ))
 
 (defprotocol WebSocketOperations

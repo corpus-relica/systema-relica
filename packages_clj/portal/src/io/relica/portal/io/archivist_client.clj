@@ -12,22 +12,8 @@
 (defprotocol ArchivistOperations
   (resolve-uids [this uids])
   (get-kinds [this opts])
-  ;; (get-specialization-hierarchy [this uid])
-  ;; (get-collections [this uid])
-  ;; (get-definition [this uid])
-  ;; (uid-search [this search-term] [this search-term collection-uid])
-  ;; (text-search [this search-term] [this search-term page page-size])
-  ;; (get-entity-type [this uid])
-  ;; (get-all-related-facts [this uid] [this uid depth])
-  ;; (get-subtypes [this uid])
-  ;; (get-subtypes-cone [this uid])
-  ;; (get-classified [this uid])
-  ;; (get-classification-fact [this uid])
-  ;; (get-entity-prompt [this uid])
-  ;; (post-entity-prompt [this uid prompt])
-  ;; (validate-binary-fact [this fact])
-  ;; (submit-binary-fact [this fact])
-  )
+  (get-collections [this])
+  (get-entity-type [this uid]))
 
 (defprotocol ConnectionManagement
   (connect! [this])
@@ -37,8 +23,6 @@
 (defrecord ArchivistClient [client options]
   ConnectionManagement
   (connect! [_]
-    ;; (tap> {:event :archivist/connecting
-    ;;        :url (:url options)})
     (ws/connect! client))
 
   (disconnect! [_]
@@ -50,132 +34,27 @@
   ArchivistOperations
   (resolve-uids [this uids]
     (when-not (connected? this) (connect! this))
-    ;; (tap> {:event :archivist/resolve-uids
-    ;;       :uids uids
-    ;;        :client client})
-    (ws/send-message! client :entities/resolve {:uids uids} (:timeout options)))
+    (ws/send-message! client :entities/resolve
+                      {:uids uids}
+                      (:timeout options)))
 
-  (get-kinds [this {:keys [sort range filter user-id] :as conf}]
-    ;; (tap> {:event :archivist/get-kinds
-    ;;       :sort sort
-    ;;       :range range
-    ;;       :filter filter
-    ;;       :user-id user-id})
-    (ws/send-message! client :kinds/list {:data conf} (:timeout options)))
+  (get-kinds [this opts]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :kinds/get
+                      opts
+                      (:timeout options)))
+  
+  (get-collections [this]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :entity/collections
+                      {}
+                      (:timeout options)))
 
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :kinds/get
-  ;;                     {:sort sort
-  ;;                      :range range
-  ;;                      :filter filter
-  ;;                      :user-id user-id}
-  ;;                     (:timeout options)))
-
-  ;; (get-specialization-hierarchy [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :specialization/hierarchy-get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (get-collections [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :collections/get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (get-definition [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :definition/get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (uid-search [this search-term]
-  ;;   (uid-search this search-term ""))
-
-  ;; (uid-search [this search-term collection-uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :search/uid
-  ;;                     {:search-term search-term
-  ;;                      :collection-uid collection-uid}
-  ;;                     (:timeout options)))
-
-  ;; (text-search
-  ;;   ([this search-term]
-  ;;    (text-search this search-term 1 50))
-  ;;   ([this search-term page page-size]
-  ;;    (when-not (connected? this) (connect! this))
-  ;;    (ws/send-message! client :search/text
-  ;;                      {:search-term search-term
-  ;;                       :page page
-  ;;                       :page-size page-size
-  ;;                       :collection-uid ""}
-  ;;                      (:timeout options))))
-
-  ;; (get-entity-type [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :entity/type-get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (get-all-related-facts
-  ;;   ([this uid]
-  ;;    (get-all-related-facts this uid 1))
-  ;;   ([this uid depth]
-  ;;    (when-not (connected? this) (connect! this))
-  ;;    (ws/send-message! client :facts/related-get
-  ;;                      {:uid uid
-  ;;                       :depth depth}
-  ;;                      (:timeout options))))
-
-  ;; (get-subtypes [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :subtypes/get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (get-subtypes-cone [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :subtypes/cone-get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (get-classified [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :classified/get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (get-classification-fact [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :classification/fact-get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (get-entity-prompt [this uid]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :entity/prompt-get
-  ;;                     {:uid uid}
-  ;;                     (:timeout options)))
-
-  ;; (post-entity-prompt [this uid prompt]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :entity/prompt-submit
-  ;;                     {:uid uid
-  ;;                      :prompt prompt}
-  ;;                     (:timeout options)))
-
-  ;; (validate-binary-fact [this fact]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :facts/binary-validate
-  ;;                     fact
-  ;;                     (:timeout options)))
-
-  ;; (submit-binary-fact [this fact]
-  ;;   (when-not (connected? this) (connect! this))
-  ;;   (ws/send-message! client :facts/binary-submit
-  ;;                     fact
-  ;;                     (:timeout options)))
-                    )
+  (get-entity-type [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :entity/type
+                      {:uid uid}
+                      (:timeout options))))
 
 (defn create-client
   ([]
@@ -184,12 +63,8 @@
    (create-client url {}))
   ([url {:keys [timeout handlers] :or {timeout default-timeout} :as opts}]
    (let [default-handlers {:on-error (fn [e]
-                                      ;; (tap> {:event :archivist/websocket-error
-                                      ;;       :error e})
                                       (log/error "Archivist WS Error:" e))
                           :on-message (fn [msg]
-                                      ;; (tap> {:event :archivist/message-received
-                                      ;;       :message msg})
                                       (log/debug "Archivist message received:" msg))}
          merged-handlers (merge default-handlers handlers)
          client (ws/create-client url {:handlers merged-handlers})]
@@ -199,7 +74,8 @@
 
 ;; Singleton instance for backward compatibility
 (defonce archivist-client (create-client))
-(connect! archivist-client)
+
+;; (connect! archivist-client)
 
 ;; REPL testing helpers
 (comment
@@ -220,11 +96,19 @@
                                   :range [0 10]
                                   :filter {}
                                   :user-id "test-user"}))]
-      (tap> (str "Got kinds:" response))))
+      (log/info (str "Got kinds:" response))))
 
   (go
     (let [response (<! (resolve-uids test-client [1234 5678 1225 1146]))]
       (println "Resolved UIDs:" response)))
+
+  (go
+    (let [response (<! (get-collections test-client))]
+      (println "Collections:" response)))
+
+  (go
+    (let [response (<! (get-entity-type test-client 123))]
+      (println "Entity type:" response)))
 
   ;; Cleanup
   (disconnect! test-client)
