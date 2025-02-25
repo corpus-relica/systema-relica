@@ -10,8 +10,6 @@
             [ring.util.response :as response]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
-            [io.relica.portal.io.archivist-client :as archivist :refer [archivist-client]]
-            [io.relica.portal.io.aperture-client :as aperture :refer [aperture-client]]
             [io.relica.portal.config :as config]
             [io.relica.portal.routes :as routes]
             [io.relica.portal.middleware :as middleware]

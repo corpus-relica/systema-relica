@@ -16,8 +16,11 @@ import qs from "qs"; // You may need to install the 'qs' library
 
 // Create a function to initialize the axios instance with a token
 export const createAxiosInstance = (token?: string) => {
+  const url =
+    import.meta.env.VITE_RELICA_PORTAL_API_URL || "http://localhost:2174";
+
   const instance = axios.create({
-    baseURL: import.meta.env.VITE_RELICA_PORTAL_API_URL,
+    baseURL: url,
   });
 
   instance.interceptors.request.use((config) => {

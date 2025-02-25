@@ -76,12 +76,17 @@
 (defn update-user-environment!
   "Update specific fields in user's environment"
   [user-id env-id updates]
+  (tap> (str "Updating environment " env-id " for user:" user-id))
+  (tap> updates)
   (let [user-id (long user-id)
         ;; Verify user has write access to this environment
-        can-write? (:can_write (jdbc/execute-one! ds
-                                                  ["SELECT can_write FROM user_environments 
-                                 WHERE user_id = ? AND environment_id = ?"
-                                                   user-id env-id]))
+        ;; _ (tap> (str "CAN WRITE?" can-write?))
+        can-write-result (jdbc/execute-one! ds
+                                   ["SELECT can_write FROM user_environments
+                                     WHERE user_id = ? AND environment_id = ?"
+                                    user-id env-id])
+                _ (tap> (str "Can write result: " can-write-result))  ;; Debug log
+                can-write? (:user_environments/can_write can-write-result)
 
         ;; Build the update query for environments table
         set-clauses (remove nil?
@@ -99,6 +104,11 @@
                             (when (:selected_entity_id updates) (:selected_entity_id updates))
                             (when (:selected_entity_type updates) (name (:selected_entity_type updates)))])
 
+        _ (tap> (str "UPDATE environments SET "
+                                       (clojure.string/join ", " set-clauses)
+                                       " WHERE id = ? RETURNING *"))
+
+        _ (tap> (str "CAN WRITE?" can-write?))
         ;; Only proceed if we have write access and updates to make
         updated-env (when (and can-write? (seq set-clauses))
                       (let [query (str "UPDATE environments SET "
@@ -106,9 +116,19 @@
                                        " WHERE id = ? RETURNING *")
                             all-values (conj (vec set-values) env-id)]
                        ;; Update the environment
-                        (jdbc/execute-one! ds
-                                           (into [query] all-values)
-                                           {:builder-fn rs/as-unqualified-maps})))
+                        ;; (jdbc/execute-one! ds
+                        ;;                    (into [query] all-values)
+                        ;;                    {:builder-fn rs/as-unqualified-maps})
+(try
+(tap> {:query query
+       :values all-values})
+  (jdbc/execute-one! ds
+                     (into [query] all-values)
+                     {:builder-fn rs/as-unqualified-maps})
+  (catch Exception e
+    (tap> (str "SQL error: " (.getMessage e)))
+    nil))
+                        ))
 
         ;; Update last_accessed in user_environments
         _ (when can-write?

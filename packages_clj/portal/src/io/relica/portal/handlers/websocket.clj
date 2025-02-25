@@ -9,9 +9,8 @@
                      socket-tokens]]
             [io.relica.portal.handlers.core :as handlers]
             [io.relica.portal.auth.jwt :refer [validate-jwt]]
-            [io.relica.portal.io.aperture-client
-             :as aperture
-             :refer [aperture-client]]))
+            [io.relica.common.io.aperture-client :as aperture]
+            [io.relica.portal.io.client-instances :refer [aperture-client]]))
 
 (declare ws-handlers)
 
@@ -41,6 +40,20 @@
         {:error "Failed to select entity"}))
   ))
 
+(defn load-specialization-hierarchy [{:keys [uid] :as message}]
+  (tap> "LOADING SPECIALIZATION HIERARCHY")
+  (tap> uid)
+  (tap> message)
+  (go
+    (try
+      (let [result (<! (aperture/load-specialization-hierarchy aperture-client (:user-id message) uid))]
+        {:success true
+         :message "Specialization hierarchy loaded"
+         :hierarchy result})
+      (catch Exception e
+        (log/error "Failed to load specialization hierarchy:" e)
+        {:error "Failed to load specialization hierarchy"}))
+  ))
 
 (defn handle-ping [_]
   (tap> "PING")
@@ -92,4 +105,5 @@
    ;; "entities:resolve" handle-resolve-uids
    ;; "environment:get" handle-get-environment
    "ping" handle-ping
-   "selectEntity" handle-select-entity})
+   "selectEntity" handle-select-entity
+   "loadSpecializationHierarchy" load-specialization-hierarchy})

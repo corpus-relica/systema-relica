@@ -1,6 +1,6 @@
 (ns io.relica.archivist.core
   (:require [mount.core :as mount]
-            [io.relica.archivist.components :refer [neo4j-conn postgres-db]]))
+            [io.relica.archivist.components :refer [postgres-db]]))
 
 (defn start-app []
   (mount/start))

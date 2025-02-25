@@ -51,14 +51,14 @@
           (println "Stopping Cache service...")
           (cache-service/stop)))
 
-(defstate neo4j-conn
-  :start (let [{:keys [url user password]} (:neo4j db-config)
-               uri (URI. url)]
-           (println "Starting Neo4j connection...")
-           (neo4j/start uri user password))
-  :stop (do
-          (println "Stopping Neo4j connection...")
-          (neo4j/stop)))
+;; (defstate neo4j-conn
+;;   :start (let [{:keys [url user password]} (:neo4j db-config)
+;;                uri (URI. url)]
+;;            (println "Starting Neo4j connection...")
+;;            (neo4j/start uri user password))
+;;   :stop (do
+;;           (println "Stopping Neo4j connection...")
+;;           (neo4j/stop)))
 
 ;; POSTGRES CONNECTION
 
@@ -75,7 +75,7 @@
 (defstate gellish-base-service
   :start (do
            (println "Starting Gellish Base service...")
-           (gellish-base-service/start neo4j-conn cache-service))
+           (gellish-base-service/start graph-service cache-service))
   :stop (do
            (println "Stopping Gellish Base service...")
           (gellish-base-service/stop)))
@@ -85,7 +85,7 @@
 (defstate kind-service
   :start (do
            (println "Starting Kinds service...")
-           (kind-service/start neo4j-conn cache-service))
+           (kind-service/start graph-service cache-service))
   :stop (do
            (println "Stopping Kinds service...")
           (kind-service/stop)))

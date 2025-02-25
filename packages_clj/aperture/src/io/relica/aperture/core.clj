@@ -7,7 +7,10 @@
                                           update-user-environment! select-entity!
                                           get-default-environment create-user-environment!]]
             [clojure.core.async :as async :refer [go <! >! chan]]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [io.relica.common.io.archivist-client :as archivist]
+            [io.relica.aperture.io.client-instances :refer [archivist-client]]
+            ))
 
 ;; Server instance
 (defonce server-instance (atom nil))
@@ -66,6 +69,32 @@
           {:error "Failed to create environment"})))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-specialization
+  [{:keys [?data ?reply-fn] :as msg}]
+  ;; (tap> "LOADING SPECIALIZATION HIERARCHY")
+  ;; (tap> ?data)
+
+  (go
+    (try
+      (let [result (<! (archivist/get-specialization-hierarchy archivist-client (:user-id ?data) (:uid ?data)))
+            user-id (:user-id ?data)
+            env-id (or
+                    (:environment-id ?data)
+                    (:id (get-default-environment user-id)))
+            facts (get-in result [:hierarchy :facts])
+            env (when facts
+                  (update-user-environment! user-id env-id {:facts facts}))]
+        ;; (tap> "GOT SPECIALIZATION HIERARCHY RESULT:::::::::::::::::::")
+        ;; (tap> (str "User ID: " user-id " Environment ID: " env-id))
+        ;; (tap> foo)
+
+        (?reply-fn env))
+      (catch Exception e
+        (log/error e "Failed to load specialization hierarchy")
+        (?reply-fn {:error "Failed to load specialization hierarchy"}))))
+  )
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :entity/select
   [{:keys [?data ?reply-fn] :as msg}]
   (tap> (str "Handling entity/select"))
@@ -75,7 +104,8 @@
     (go
       (try
         (let [env-id (or (:environment-id ?data)
-                        (:environment_id (get-default-environment (:user-id ?data))))
+                        (:id (get-default-environment (:user-id ?data))))
+              _ (tap> (str "$$$$$$$$$$$$$$$ Selecting entity " (:entity-uid ?data) " in environment " env-id))
               updated (when env-id 
                        (select-entity! (:user-id ?data) env-id (:entity-uid ?data)))]
           (if updated

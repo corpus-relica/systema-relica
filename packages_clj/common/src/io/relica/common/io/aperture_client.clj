@@ -1,4 +1,4 @@
-(ns io.relica.portal.io.aperture-client
+(ns io.relica.common.io.aperture-client
   (:require [io.relica.common.websocket.client :as ws]
             [clojure.core.async :refer [go <!]]
             [clojure.tools.logging :as log]))
@@ -103,7 +103,7 @@
                                      :handlers merged-handlers)))))
 
 ;; Singleton instance for backward compatibility
-(defonce aperture-client (create-client))
+;; (defonce aperture-client (create-client))
 
 (comment
   ;; Test client

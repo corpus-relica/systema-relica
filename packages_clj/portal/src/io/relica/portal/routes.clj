@@ -17,7 +17,9 @@
 ;; Define routes with WebSocket support
 (defroutes app-routes
   (GET "/chsk" [] ws-handler)
-  (POST "/ws-auth" [] (wrap-jwt-auth handle-ws-auth))
+  (POST "/ws-auth" [] (
+                       wrap-jwt-auth
+                       handle-ws-auth))
   (GET "/kinds" [] (->  handle-get-kinds
                         wrap-async-handler
                         wrap-jwt-auth))
@@ -46,7 +48,7 @@
                "Access-Control-Max-Age" "3600"}})
   (GET "/retrieveEntity/collections" [] (-> handle-get-collections
                                             wrap-async-handler
-                                          ;; wrap-jwt-auth
+                                            wrap-jwt-auth
                                             ))
 
   (OPTIONS "/retrieveEntity/type" []
@@ -69,7 +71,7 @@
 
   (GET "/generalSearch/text" [] (-> handle-text-search
                                     wrap-async-handler
-                                    ;;wrap-jwt-auth
+                                    wrap-jwt-auth
                                     ))
 
   (GET "/health" [] {:status 200 :body "healthy"})

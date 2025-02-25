@@ -145,7 +145,7 @@ const Graph = observer(() => {
         >
           <FactTable
             token={token}
-            filter={{ type: "should't matter", uid: filter }}
+            filter={null}
             callback={(res: any) => {
               handleSearchUIClose(res);
             }}

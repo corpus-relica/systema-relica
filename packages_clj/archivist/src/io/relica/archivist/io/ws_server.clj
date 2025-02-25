@@ -109,6 +109,26 @@
             (?reply-fn {:success false
                        :error "Failed to execute text search"})))))))
 
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :specialization/hierarchy
+  [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
+  (when ?reply-fn
+    (tap> {:event :websocket/getting-specialization-hierarchy
+           :entity-service gellish-base-s})
+    (if (nil? gellish-base-s)
+      (?reply-fn {:success false
+                  :error "Entity service not initialized"})
+      (go
+        (try
+          (let [hierarchy (gellish-base-service/get-specialization-hierarchy gellish-base-s (:uid ?data))]
+            (?reply-fn {:success true
+                        :hierarchy hierarchy}))
+          (catch Exception e
+            (log/error e "Failed to get specialization hierarchy")
+            (?reply-fn {:success false
+                        :error "Failed to get specialization hierarchy"})))))))
+
+
 (defrecord WebSocketComponent [args]
   WebSocketOperations
   (broadcast! [_ message]

@@ -262,6 +262,7 @@ class PortalWebSocketClient extends EventEmitter {
     console.log(
       "!!!!!!!!!!!!!!!!!!!!!!! SEND MUTHERFUCKING SOCKET MESSAGE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
     );
+    console.log(type, payload)
     const id = Math.random().toString(36).substr(2, 9);
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const userID = user.id;

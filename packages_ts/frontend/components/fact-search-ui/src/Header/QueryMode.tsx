@@ -56,7 +56,7 @@ const QueryMode: React.FC<QueryModeProps> = observer(
     }, [facts]);
 
     useEffect(() => {
-      rootStore.queryResult = { facts, groundingFacts, vars };
+      rootStore.queryResult = { facts, groundingFacts, vars, totalCount };
     }, [facts, vars]);
 
     const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {

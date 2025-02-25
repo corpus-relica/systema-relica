@@ -2,9 +2,9 @@
   (:require [mount.core :refer [defstate]]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [io.relica.archivist.db.neo4j :as neo4j]
             [io.relica.archivist.db.queries :as queries]
             [io.relica.archivist.services.cache-service :as cache]
+            [io.relica.archivist.services.graph-service :as graph]
             )
   (:import (java.net URI))
   (:gen-class))
@@ -21,7 +21,7 @@
 (defprotocol KindServiceOperations
   (get-list [this conf]))
 
-(defrecord KindServiceComponent [neo4j-conn cache-service]
+(defrecord KindServiceComponent [graph-service cache-service]
   KindServiceOperations
 
   ;;   const result = await this.graphService.execQuery(getListOfKindsQuery, {
@@ -56,9 +56,9 @@
                            :skip (first (:range conf))
                            :pageSize (second (:range conf))}
             _ (tap> resolved-conf)
-            raw-result (neo4j/execute-query
-                        neo4j-conn
-                        queries/getListsOfKindsQuery  ; Use the predefined query
+            raw-result (graph/exec-query
+                        graph-service
+                        queries/get-lists-of-kinds  ; Use the predefined query
                         resolved-conf)
             _ (tap> raw-result)
             result (map (fn [record]
@@ -74,14 +74,14 @@
         nil)))
   )
 
-(defn create-gellish-base-service-component [neo4j-conn cache-service]
-  (->KindServiceComponent neo4j-conn cache-service))
+(defn create-gellish-base-service-component [graph-service cache-service]
+  (->KindServiceComponent graph-service cache-service))
 
 (defonce ks-comp (atom nil))
 
-(defn start [neo4j-conn cache-service]
+(defn start [graph-service cache-service]
   (println "Starting Gellish Base Service...")
-  (let [service (create-gellish-base-service-component neo4j-conn cache-service)]
+  (let [service (create-gellish-base-service-component graph-service cache-service)]
     (reset! ks-comp service)
     service))
 

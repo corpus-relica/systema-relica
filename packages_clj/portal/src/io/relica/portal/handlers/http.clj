@@ -2,12 +2,9 @@
   (:require [clojure.core.async :refer [go <!]]
             [org.httpkit.server :as http]
             [cheshire.core :as json]
-            [io.relica.portal.io.archivist-client
-             :as archivist
-             :refer [archivist-client]]
-            [io.relica.portal.io.aperture-client
-             :as aperture
-             :refer [aperture-client]]
+            [io.relica.common.io.aperture-client :as aperture]
+            [io.relica.common.io.archivist-client :as archivist]
+            [io.relica.portal.io.client-instances :refer [aperture-client archivist-client]]
             [io.relica.portal.auth.websocket
              :as ws-auth
              :refer [socket-tokens
@@ -94,8 +91,10 @@
         (catch Exception e
           (error-response "Failed to fetch kinds"))))))
 
-(defn handle-ws-auth [{:keys [params]}]
-  (if-let [user-id (-> params :identity :user-id)]
+(defn handle-ws-auth [{:keys [params] :as request}]
+  (tap> "############################################  HANDLING WS AUTH")
+  (tap> request)
+  (if-let [user-id (-> request :identity :user-id)]
     (let [socket-token (generate-socket-token)]
       (swap! socket-tokens assoc socket-token
              {:user-id user-id
