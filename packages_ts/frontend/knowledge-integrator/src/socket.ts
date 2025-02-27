@@ -79,29 +79,46 @@ class PortalWebSocketClient extends EventEmitter {
   private socketToken: string | null = null;
   private isConnecting: boolean = false;
   private pingInterval: number | null = null;
+  private clientId: string | null = null;
 
   constructor() {
     super();
     console.log("PortalWebSocketClient created");
   }
 
-  private async getSocketToken(): Promise<string> {
-    const response = await fetch(
-      `${import.meta.env.VITE_PORTAL_URL || "http://localhost:2174"}/ws-auth`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.jwtToken}`,
-        },
-      }
-    );
+  getClientId(): string | null {
+    return this.clientId;
+  }
 
-    if (!response.ok) {
-      throw new Error("Failed to get socket token");
+  onmessage(event: MessageEvent) {
+    try {
+      const message = JSON.parse(event.data);
+      console.log("Parsed message:", message);
+      // Let the event system handle all messages including client registration
+      this.emit(message.type, message.payload);
+    } catch (error) {
+      console.error("Error parsing WebSocket message:", error);
     }
+  }
 
-    const data = await response.json();
-    return data.token;
+  send(type: string, payload: any) {
+    const id = Math.random().toString(36).substr(2, 9);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userID = user.id;
+    const clientID = this.clientId;
+
+    if (this.ws?.readyState === WebSocket.OPEN && userID) {
+      const finalPayload = { ...payload, "user-id": userID, "client-id": clientID};
+      this.ws.send(
+        JSON.stringify({
+          id,
+          type,
+          payload: finalPayload,
+        })
+      );
+    } else {
+      console.warn("WebSocket not ready or user not authenticated");
+    }
   }
 
   async connect(jwtToken: string) {
@@ -150,40 +167,14 @@ class PortalWebSocketClient extends EventEmitter {
 
       this.ws.onopen = () => {
         console.log("WebSocket connection opened!");
-        // // Let's send an immediate test message
-        // const testMsg = {
-        //   type: "test",
-        //   data: "Testing connection",
-        // };
-        // console.log("Sending test message:", testMsg);
-        // this.ws?.send(JSON.stringify(testMsg));
-
-        console.log("WebSocket connection opened!");
         this.isConnecting = false;
         this.reconnectTimeout = 1000; // Reset backoff
         this.setupPing(); // Set up ping handling
+
+        this.emit("connect");
       };
 
-      this.ws.onmessage = (event) => {
-        console.log("WebSocket message received:", event.data);
-        // try {
-        //   const parsed = JSON.parse(event.data);
-        //   console.log("Parsed message:", parsed);
-        // } catch (e) {
-        //   console.error("Error parsing message:", e);
-        // }
-        try {
-          const message = JSON.parse(event.data);
-          console.log("Parsed message:", message);
-          this.emit(message.type, message.payload);
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-          console.error("Portal WebSocket connection error:", error);
-          this.cleanupPing();
-          this.isConnecting = false;
-          this.scheduleReconnect();
-        }
-      };
+      this.ws.onmessage = this.onmessage.bind(this);
 
       this.ws.onerror = (error) => {
         console.error("WebSocket error:", error);
@@ -198,17 +189,10 @@ class PortalWebSocketClient extends EventEmitter {
         });
         this.cleanupPing();
         this.scheduleReconnect();
+
+        this.emit("disconnect");
       };
 
-      // Test sending a message:
-      // this.ws.send(
-      //   JSON.stringify({
-      //     type: "test",
-      //     data: "Hello from the client!",
-      //   })
-      // );
-
-      //
     } catch (error) {
       console.error("Portal WebSocket connection error:", error);
       this.isConnecting = false;
@@ -258,29 +242,6 @@ class PortalWebSocketClient extends EventEmitter {
     }
   }
 
-  send(type: string, payload: any) {
-    console.log(
-      "!!!!!!!!!!!!!!!!!!!!!!! SEND MUTHERFUCKING SOCKET MESSAGE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
-    );
-    console.log(type, payload)
-    const id = Math.random().toString(36).substr(2, 9);
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const userID = user.id;
-    if (this.ws?.readyState === WebSocket.OPEN && userID) {
-      const finalPayload = { ...payload, "user-id": userID };
-      this.ws.send(JSON.stringify({ id, type, payload: finalPayload }));
-    }
-  }
-
-  // close() {
-  //   this.token = null;
-  //   this.cleanupPing();
-  //   if (this.ws) {
-  //     this.ws.close();
-  //     this.ws = null;
-  //   }
-  // }
-
   close() {
     this.cleanupPing();
     if (this.ws) {
@@ -295,11 +256,12 @@ class PortalWebSocketClient extends EventEmitter {
 export const portalWs = new PortalWebSocketClient();
 
 export const initializeWebSocket = async (token: string) => {
-  console.log(
-    "&&&&&&&&&&&&&&&&&&&&&  Initializing WebSocket with token  &&&&&&&&&&&&&&&&&&&:",
-    token
-  );
-  await portalWs.connect(token);
+  try {
+    await portalWs.connect(token);
+    console.log('WebSocket initialized');
+  } catch (error) {
+    console.error('Failed to initialize WebSocket:', error);
+  }
 };
 
 export const closeWebSocket = () => {
@@ -307,5 +269,9 @@ export const closeWebSocket = () => {
 };
 
 export const sendSocketMessage = (type: string, payload: any) => {
+  if (!portalWs.getClientId()) {
+    console.warn('Attempting to send message before client registration');
+    return;
+  }
   portalWs.send(type, payload);
 };

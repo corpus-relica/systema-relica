@@ -140,6 +140,8 @@
           ;; (tap> {:event :websocket/broadcast-to-user
           ;;        :uid uid})
           (chsk-send! uid [:broadcast/message message])))))
+          ;; (chsk-send! uid [:chsk/recv message])))))
+          ;; (chsk-send! uid [:chsk/recv message])))))
 
   (send! [this client-id message]
     ;; (tap> {:event :websocket/sending-to-client
@@ -153,3 +155,33 @@
   ;;        :port port
   ;;        :has-handler? (boolean event-msg-handler)})
   (->SenteServer options (atom nil)))
+
+;; ==========================================================================
+;; REPL Testing
+;; ==========================================================================
+(comment
+  ;; Create and start a test server on port 3000
+  (def test-server (create-server {:port 9030
+                                   :event-msg-handler handle-ws-message}))
+
+  (start! test-server)
+
+  ;; Check connected clients
+  (when-let [conn-uids (:connected-uids @(.state test-server))]
+    @conn-uids)
+
+  ;; Broadcast a test message to all connected clients
+  (broadcast! test-server {:type :test-broadcast
+                           :message "Hello from server!"
+                           :timestamp (java.util.Date.)})
+
+  ;; Send a message to a specific client (need client's UID)
+  (let [uid (first (:any @(:connected-uids @(.state test-server))))]
+    (send! test-server uid {:type :direct-message
+                            :message "This is a direct message"
+                            :timestamp (java.util.Date.)}))
+
+  ;; Stop the server
+  (stop! test-server)
+
+  )

@@ -86,6 +86,9 @@
 
   ArchivistOperations
   (resolve-uids [this uids]
+    (tap> (str "Resolving UIDs:" uids))
+    (tap> (connected? this))
+    (tap> "____________________________")
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :entities/resolve
                       {:uids uids}

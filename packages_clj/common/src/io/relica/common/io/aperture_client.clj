@@ -1,127 +1,153 @@
 (ns io.relica.common.io.aperture-client
   (:require [io.relica.common.websocket.client :as ws]
-            [clojure.core.async :refer [go <!]]
+            [clojure.core.async :as async :refer [go go-loop <! >! timeout chan]]
             [clojure.tools.logging :as log]))
 
-;; Configuration
-(def ^:private default-timeout 5000)
+;; Application-specific event handlers
+;; (defn handle-file-sync [payload]
+;;   (tap> {:event :app/file-sync-received
+;;          :files-count (count (:files payload))})
+;;   ;; Application-specific processing...
+;;   )
 
-(def ^:private default-ws-url
-  (or (System/getenv "APERTURE_WS_URL") "localhost:2175"))
+;; (defn handle-status-update [payload]
+;;   (tap> {:event :app/status-update-received
+;;          :status (:status payload)
+;;          :timestamp (:timestamp payload)})
+;;   ;; Application-specific processing...
+;;   )
 
+;; (defn handle-notification [payload]
+;;   (tap> {:event :app/notification-received
+;;          :message (:message payload)
+;;          :level (:level payload)})
+;;   ;; Application-specific processing...
+;;   )
+
+;; Custom client with application-specific behavior
 (defprotocol ApertureOperations
   (get-environment [this user-id env-id])
   (list-environments [this user-id])
   (create-environment [this user-id env-name])
   (load-specialization-hierarchy [this user-id uid])
   (update-environment! [this user-id env-id updates])
-  (select-entity [this user-id env-id entity-uid]))
+  (select-entity [this user-id env-id entity-uid])
+  (send-heartbeat! [this]))
 
-(defprotocol ConnectionManagement
-  (connect! [this])
-  (disconnect! [this])
-  (connected? [this]))
-
-(defrecord ApertureClient [client options]
-  ConnectionManagement
-  (connect! [_]
-    (tap> {:event :aperture/connecting
-           :url (:url options)})
-    (ws/connect! client))
-
-  (disconnect! [_]
-    (ws/disconnect! client))
-
-  (connected? [_]
-    (ws/connected? client))
-
+(defrecord ApertureClient [ws-client options]
   ApertureOperations
   (get-environment
     [this user-id env-id]
-     (when-not (connected? this)
-       (connect! this))
-     (ws/send-message! client :environment/get
-                       {:user-id user-id
-                        :environment-id env-id}
-                       (:timeout options)))
+    (tap> {:event :app/getting-environment})
+    (tap> (ws/connected? ws-client))
+    (when-not (ws/connected? ws-client)
+      (ws/connect! ws-client))
+    (tap> {:event :app/sending-get-environment})
+    (ws/send-message! ws-client :environment/get
+                      {:user-id user-id
+                       :environment-id env-id}
+                      (:timeout options)))
 
   (list-environments [this user-id]
-    (when-not (connected? this) (connect! this))
-    (ws/send-message! client :environment/list
-                           {:user-id user-id}
-                           (:timeout options)))
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/list
+                      {:user-id user-id}
+                      (:timeout options)))
 
   (create-environment [this user-id env-name]
-    (when-not (connected? this) (connect! this))
-    (ws/send-message! client :environment/create
-                           {:user-id user-id
-                            :name env-name}
-                           (:timeout options)))
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/create
+                      {:user-id user-id
+                       :name env-name}
+                      (:timeout options)))
 
   (load-specialization-hierarchy [this user-id uid]
-    (when-not (connected? this) (connect! this))
-    (ws/send-message! client :environment/load-specialization
-                           {:uid uid
-                            :user-id user-id}
-                           (:timeout options)))
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/load-specialization
+                      {:uid uid
+                       :user-id user-id}
+                      (:timeout options)))
 
   (update-environment! [this user-id env-id updates]
-    (when-not (connected? this) (connect! this))
-    (ws/send-message! client :environment/update
-                           {:user-id user-id
-                            :environment-id env-id
-                            :updates updates}
-                           (:timeout options)))
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/update
+                      {:user-id user-id
+                       :environment-id env-id
+                       :updates updates}
+                      (:timeout options)))
 
   (select-entity [this user-id env-id entity-uid]
-     (when-not (connected? this) (connect! this))
-     (ws/send-message! client :entity/select
-                            {:user-id user-id
-                             :environment-id env-id
-                             :entity-uid entity-uid}
-                            (:timeout options))))
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :entity/select
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uid entity-uid}
+                      (:timeout options)))
 
-(defn create-client
-  ([]
-   (create-client default-ws-url {}))
-  ([url]
-   (create-client url {}))
-  ([url {:keys [timeout handlers] :or {timeout default-timeout} :as opts}]
-   (let [default-handlers {:on-error (fn [e]
-                                       (tap> {:event :aperture/websocket-error
-                                              :error e})
-                                       (log/error "Aperture WS Error:" e))
-                           :on-message (fn [msg]
-                                         (tap> {:event :aperture/message-received
-                                                :message msg})
-                                         (log/debug "Aperture message received:" msg))}
-         merged-handlers (merge default-handlers handlers)
-         client (ws/create-client url {:handlers merged-handlers})]
-     (->ApertureClient client (assoc opts
-                                     :url url
-                                     :timeout timeout
-                                     :handlers merged-handlers)))))
+  (send-heartbeat! [this]
+    (tap> {:event :app/sending-heartbeat})
+    (ws/send-message! ws-client :app/heartbeat
+                            {:timestamp (System/currentTimeMillis)}
+                            3000)))
 
-;; Singleton instance for backward compatibility
-;; (defonce aperture-client (create-client))
+;; Heartbeat scheduler
+(defn start-heartbeat-scheduler! [aperture-client interval-ms]
+  (let [running (atom true)
+        scheduler (go-loop []
+                    (<! (timeout interval-ms))
+                    (when @running
+                      (send-heartbeat! aperture-client)
+                      (recur)))]
+    ;; Return a function that stops the scheduler
+    #(do (reset! running false)
+         (async/close! scheduler))))
 
+;; Factory function
+(defn create-client [server-uri opts]
+  (let [app-handlers (:handlers opts)
+        base-client (ws/create-client server-uri
+                                      {:handlers
+                                       {:on-connect #(tap> {:event :app/connected})
+                                        :on-disconnect #(tap> {:event :app/disconnected})
+                                        :on-message (fn [event-type payload]
+                                                      (tap> {:event :app/message-received
+                                                             :type event-type}))}})
+        aperture-client (->ApertureClient base-client {:timeout 5000})]
+
+    ;; Register application-specific event handlers
+    (ws/register-handler! base-client :entity/selected (:handle-entity-selected app-handlers))
+
+    ;; Connect to the server
+    (ws/connect! base-client)
+
+    ;; (tap> {:event :app/client-created
+    ;;        :client-id (ws/client-id base-client)})
+
+    (start-heartbeat-scheduler! aperture-client 30000)
+
+    aperture-client))
+
+
+;; ==========================================================================
+;; REPL Testing
+;; ==========================================================================
 (comment
-  ;; Test client
-  (def test-client (create-client))
+  ;; Create an application-specific client
+  (def app-client (create-app-client "localhost:3030"))
 
-  test-client
+  ;; Start heartbeat scheduler (every 30 seconds)
+  (def stop-heartbeat (start-heartbeat-scheduler! app-client 30000))
 
-  ;; Test connection
-  (connect! test-client)
+  ;; Send some test files
+  (sync-files! app-client [{:id "file1" :name "document.txt" :size 1024}
+                           {:id "file2" :name "image.jpg" :size 5242880}])
 
-  ;; Test operations
-  (go
-    (let [response (<! (get-environment test-client 7 1))]
-      (tap> (str "Got environment:" response))))
+  ;; Request current status
+  (def status-result (request-status! app-client))
 
-  (go
-    (let [response (<! (list-environments test-client 7))]
-      (tap> (str "Got environments:" response))))
+  (async/<!! status-result) ;; Wait for response
 
-  ;; Cleanup
-  (disconnect! test-client))
+  ;; Stop heartbeat and disconnect
+  (stop-heartbeat)
+  (ws-client/disconnect! (.-ws-client app-client))
+  )

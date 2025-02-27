@@ -49,17 +49,19 @@
   GellishBaseServiceOperations
 
   (get-entities [this uids]
-    (tap> "UIDS")
+    (tap> "GET ENTITIES UIDS")
     (tap> uids)
     (let [raw-result (graph/exec-query
                       graph-service
                       queries/entities  ; Use the predefined query
                       {:uids uids})
+          _ (tap> "RAW RESULT")
+          _ (tap> raw-result)
           result (map (fn [record]
-                        (let [entity (get record :n)
-                              uid (get-in entity [:properties :uid])
+                        (let [entity (:n record)
+                              uid (:uid entity)
                               descendants (cache/all-descendants-of cache-service uid)]
-                          (assoc (:properties entity) :descendants descendants)))
+                          (assoc entity :descendants descendants)))
                       raw-result)]
       (tap> {:event :get-entities-result
              :result result})

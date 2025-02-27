@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Layout, useRedirect, useStore } from "react-admin";
 import { Slide, IconButton } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
@@ -19,6 +19,7 @@ import { authProvider } from "./providers/AuthProvider.js";
 const cats = {
   730044: "Physical Object",
   193671: "Occurrence",
+  // xxxxx: "State",
   160170: "Role",
   790229: "Aspect",
   //970002: "Information",
@@ -35,17 +36,21 @@ export const MyLayout = (props) => {
 
   const [replOpen, setReplOpen] = useState(false);
 
-  const { addFacts, addConcepts, setCategories } = factDataStore;
+  const { addFacts, addConcepts, setCategories, categories } = factDataStore;
   // const [isConnected, setIsConnected] = useState(false);
 
   const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
+
+  const socketInitialized = React.useRef(false);
 
   const toggleRepl = () => {
     setReplOpen(!replOpen);
   };
 
   const establishCats = async () => {
+    if(categories.length > 0) return;
+
     console.log("vvvv - VULNERABLE II - vvvv");
     const concepts = await portalClient.resolveUIDs(
       Object.keys(cats).map((x) => parseInt(x))
@@ -63,36 +68,69 @@ export const MyLayout = (props) => {
     setCategories(newCats);
   };
 
+  const initializeSocketConnection = async () => {
+    return new Promise((resolve, reject) => {
+      const onPortalConnect = () => {
+        console.log("\\\\ CONNECTED SOCKET> PORTAL");
+      };
+
+      const onClientRegistered = (d) => {
+        console.log("CLIENT REGISTERED", d);
+        if (d.success && d.clientID) {
+          console.log("SETTING PORTALSWS CLIENT ID!!!!", d.clientID);
+          portalWs.clientId = d.clientID;
+          // Clean up the one-time listener
+          portalWs.off("system:clientRegistered", onClientRegistered);
+          resolve(d.clientID);
+        } else {
+          reject(new Error("Failed to register client"));
+        }
+      };
+
+      portalWs.on("connect", onPortalConnect);
+      portalWs.on("system:clientRegistered", onClientRegistered);
+
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        initializeWebSocket(token);
+      } else {
+        reject(new Error("No access token available"));
+      }
+    });
+  };
+
   useEffect(() => {
-    const retrieveEnv = async () => {
-      const foo = await authProvider.getIdentity();
-      console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:");
-      console.log(foo);
-      const env = await portalClient.retrieveEnvironment();
-      console.log("vvvv - ENVIRONMENT foo vvvv:");
-      console.log(env);
-      factDataStore.addFacts(env.facts);
-      // semanticModelStore.addModels(env.models);
-      // graphViewStore.selectedNode = env.selected_entity_id;
+
+    const initializeEnvironment = async () => {
+      try {
+        // First ensure socket connection and client registration
+        if (!socketInitialized.current) {
+          await initializeSocketConnection();
+          socketInitialized.current = true;
+        }
+
+        // Then proceed with environment setup
+        await establishCats();
+        const foo = await authProvider.getIdentity();
+        console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo);
+        
+        const env = await portalClient.retrieveEnvironment();
+        console.log("vvvv - ENVIRONMENT foo vvvv:", env);
+        factDataStore.addFacts(env.facts);
+        
+        console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
+      } catch (error) {
+        console.error("Failed to initialize environment:", error);
+      }
     };
 
-    const foobarbaz = async () => {
-      await establishCats();
-      await retrieveEnv();
-      console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
-    };
+    initializeEnvironment();
 
-    foobarbaz();
-  }, []);
+    // SOCKET CONNECTION
 
-  useEffect(() => {
     const onConnect = () => {
       // setIsConnected(true);
       console.log("//// CONNECTED SOCKET> CC");
-    };
-
-    const onPortalConnect = () => {
-      console.log("\\\\ CONNECTED SOCKET> PORTAL");
     };
 
     const onDisconnect = () => {
@@ -100,9 +138,7 @@ export const MyLayout = (props) => {
       console.log("//// DISCONNECTED SOCKET> CC");
     };
 
-    const onPortalDisconnect = () => {
-      console.log("\\\\ DISCONNECTED SOCKET> PORTAL");
-    };
+    // SELECTION
 
     const onSelectEntity = (d) => {
       console.log("SELECT ENTITY");
@@ -122,6 +158,16 @@ export const MyLayout = (props) => {
       // memStore.setItem("selectedEdge", d.uid);
     };
 
+    const onNoneSelected = () => {
+      console.log("SELECT NONE");
+      setSelectedNode(null);
+      setSelectedEdge(null);
+      // memStore.setItem("selectedNode", null);
+      // memStore.setItem("selectedEdge", null);
+    };
+
+    // FACTS
+
     const onAddFacts = (d) => {
       factDataStore.addFacts(d.facts);
     };
@@ -129,6 +175,8 @@ export const MyLayout = (props) => {
     const onRemFacts = (d) => {
       factDataStore.removeFacts(d.fact_uids);
     };
+
+    // MODELS
 
     const onAddModels = (d) => {
       d.models.forEach((model: any) => {
@@ -147,6 +195,8 @@ export const MyLayout = (props) => {
       });
     };
 
+    // ENTITIES
+
     const onEntitiesCleared = () => {
       factDataStore.clearFacts();
       // semanticModelStore.clearModels();
@@ -154,13 +204,7 @@ export const MyLayout = (props) => {
       setSelectedNode(null);
     };
 
-    const onNoneSelected = () => {
-      console.log("SELECT NONE");
-      setSelectedNode(null);
-      setSelectedEdge(null);
-      // memStore.setItem("selectedNode", null);
-      // memStore.setItem("selectedEdge", null);
-    };
+    // MODELLING STATE
 
     const onStateInitialized = (state: any) => {
       console.log("STATE INITIALIZED");
@@ -204,15 +248,7 @@ export const MyLayout = (props) => {
 
     // ------------------------------------------------------------- //
 
-    portalWs.on("connect", onPortalConnect);
-    portalWs.on("disconnect", onPortalDisconnect);
-
     portalWs.on("system:loadedFacts", onAddFacts);
-
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      initializeWebSocket(token);
-    }
 
     return () => {
       ccSocket.off("connect", onConnect);
@@ -233,11 +269,8 @@ export const MyLayout = (props) => {
 
       // ------------------------------------------------------------- //
 
-      portalWs.off("connect", onPortalConnect);
-      portalWs.off("disconnect", onPortalDisconnect);
-
-      portalWs.off("system:loadedFacts", onAddFacts);
     };
+
   }, []);
 
   return (

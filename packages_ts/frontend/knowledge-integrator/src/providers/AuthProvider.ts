@@ -70,7 +70,6 @@ export const authProvider: AuthProvider = {
 
   getIdentity: async () => {
     const token = localStorage.getItem("access_token");
-    console.log("Getting identity with token:", token);
 
     if (!token) {
       return Promise.reject();

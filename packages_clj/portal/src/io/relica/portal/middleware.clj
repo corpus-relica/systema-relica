@@ -9,8 +9,6 @@
     (http/with-channel request channel
       (take! (handler request)
              (fn [result]
-               (tap> "MMMMMMMMMMMMMMMMMMMMMMMMMMMMUTHTER FUCKER")
-               (tap> result)
                (http/send! channel
                           {:status (:status result 404)  ; Use result status or 404 as default
                            :headers {"Content-Type" "application/json"

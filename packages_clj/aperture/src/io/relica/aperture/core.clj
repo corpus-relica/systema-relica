@@ -2,7 +2,7 @@
 (ns io.relica.aperture.core
   (:require [clojure.tools.logging :as log]
             [io.relica.common.websocket.server :as common-ws]
-            [io.relica.aperture.io.ws-server :as ws]
+            [io.relica.aperture.io.ws-server-ii :as ws]
             [io.relica.aperture.env :refer [get-user-environment get-user-environments 
                                           update-user-environment! select-entity!
                                           get-default-environment create-user-environment!]]
@@ -109,8 +109,17 @@
               updated (when env-id 
                        (select-entity! (:user-id ?data) env-id (:entity-uid ?data)))]
           (if updated
-            (?reply-fn {:success true
-                       :selected-entity (:entity-uid ?data)})
+            (do
+              (?reply-fn {:success true
+                           :selected-entity (:entity-uid ?data)})
+              (tap> "%%%%%%%%%%%%%%%%%%%%% FUGGIN BROADCAST %%%%%%%%%%%%%%%%%%%%%%")
+              (ws/broadcast!
+               ;; @server-instance
+               {:type :entity/selected
+                :entity-uid (:entity-uid ?data)
+                :user-id (:user-id ?data)
+                :environment-id env-id}
+               10))
             (?reply-fn {:error "Failed to select entity"})))
         (catch Exception e
           (log/error e "Failed to select entity")
@@ -120,14 +129,14 @@
 (defn start! []
   (when-not @server-instance
     (let [port 2175
-          server (ws/start port)]
+          server (ws/start! port)]
       (reset! server-instance server)
       (tap> (str "Aperture WebSocket server started on port" port))
       server)))
 
 (defn stop! []
   (when-let [server @server-instance]
-    (ws/stop server)
+    (ws/stop! server)
     (reset! server-instance nil)
     (tap> "Aperture WebSocket server stopped")))
 

@@ -10,7 +10,8 @@
             [io.relica.portal.handlers.core :as handlers]
             [io.relica.portal.auth.jwt :refer [validate-jwt]]
             [io.relica.common.io.aperture-client :as aperture]
-            [io.relica.portal.io.client-instances :refer [aperture-client]]))
+            [io.relica.portal.io.client-instances :refer [aperture-client]]
+            [io.relica.portal.auth.websocket :refer [connected-clients]]))
 
 (declare ws-handlers)
 
@@ -26,13 +27,17 @@
          :user-id user-id})
       {:error "Invalid JWT"})))
 
-(defn handle-select-entity [{:keys [uid] :as message}]
+(defn handle-select-entity [{:keys [uid client-id] :as message}]
   (tap> "SELECT ENTITY")
   (tap> uid)
   (tap> message)
   (go
     (try
-      (let [result (<! (aperture/select-entity aperture-client (:user-id message) nil uid))]
+      (let [environment-id (get-in @connected-clients [client-id :environment-id])
+            _ (tap> "FOUND ENVIRONMENT ID")
+            _ (tap> environment-id)
+            _ (tap> @connected-clients)
+            result (<! (aperture/select-entity aperture-client (:user-id message) environment-id uid))]
         {:success true
          :message "Entity selected"})
       (catch Exception e

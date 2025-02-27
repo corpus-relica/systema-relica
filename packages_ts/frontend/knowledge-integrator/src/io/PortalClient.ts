@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { portalWs } from "../socket";
 
 import {
   ENTITY_TYPE_ENDPOINT,
@@ -14,8 +15,7 @@ class PortalClient {
   axiosInstance: AxiosInstance;
 
   constructor() {
-    const baseURL =
-      import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2174";
+    const baseURL = import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2174";
     this.axiosInstance = axios.create({
       baseURL,
     });
@@ -31,12 +31,14 @@ class PortalClient {
 
     this.axiosInstance.interceptors.request.use((config) => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const clientId = portalWs.getClientId();
 
       // Add user context to all requests
       if (user.id) {
         config.params = {
           ...config.params,
           userId: user.id,
+          clientId: clientId,
         };
       }
       return config;

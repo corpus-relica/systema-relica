@@ -108,11 +108,19 @@
       (http/with-channel request channel
         (let [client-id (str (random-uuid))]
           (swap! connected-clients assoc client-id {:channel channel :user-id user-id})
-          (tap> "WS HANDLER MORE OR LESS COMPLETE")
+          (tap> "WS HANDLER MORE OR LESS COMPLETE; CLIENT REGISTERED!")
+          (tap> client-id)
+          (http/send! channel (json/generate-string {:id "system"
+                                                     :type "system:clientRegistered"
+                                                     :payload {:success true
+                                                               :clientID client-id
+                                                               :message "Connection established"
+                                                               }}))
           (http/on-close channel
                          (fn [status]
                            (swap! connected-clients dissoc client-id)
-                           (tap> (str "WebSocket closed:" status))))
+                           (tap> (str "WebSocket " client-id " closed:" status))
+                           (tap> @connected-clients)))
           (http/on-receive channel
                            (fn [data]
                              (handle-ws-message channel data)))))
@@ -148,14 +156,22 @@
       (catch Exception e
         (error-response "Failed to get entity type")))))
 
-(defn handle-get-environment [{:keys [identity]}]
+(defn handle-get-environment [{:keys [identity params] :as request}]
+  (tap> "---------------------- GET ENVIRONMENT MUTHER FUCKING REQUEST BITCHES! ----------------------")
+  (tap> request)
   (go
     (try
       (let [response (<! (aperture/get-environment
                           aperture-client
                           (:user-id identity)
-                          nil))]
-        (success-response (:environment response)))
+                          nil))
+            env (:environment response)]
+        (tap> "---------------------- !! SUCKIT !! ----------------------")
+        (tap> request)
+        (tap> (:clientId params))
+        ;; (tap> response)
+        (swap! connected-clients update-in [(:clientId params)] assoc :environment-id (:id env))
+        (success-response env))
       (catch Exception e
         (error-response "Failed to fetch environment")))))
 

@@ -17,12 +17,13 @@
 ;; Define routes with WebSocket support
 (defroutes app-routes
   (GET "/chsk" [] ws-handler)
-  (POST "/ws-auth" [] (
-                       wrap-jwt-auth
+  (POST "/ws-auth" [] (wrap-jwt-auth
                        handle-ws-auth))
+
   (GET "/kinds" [] (->  handle-get-kinds
                         wrap-async-handler
                         wrap-jwt-auth))
+
   (OPTIONS "/concept/entities" []
     {:status 200
      :headers {"Access-Control-Allow-Origin" "*"
@@ -32,9 +33,11 @@
   (GET "/concept/entities" [] (-> handle-resolve-uids
                                   wrap-async-handler
                                   wrap-jwt-auth))  ; Support GET with query params
+
   (POST "/concept/entities" [] (-> handle-resolve-uids
                                    wrap-async-handler
                                    wrap-jwt-auth))  ; Support POST with body
+
   (GET "/environment/retrieve" [] (-> handle-get-environment
                                       wrap-async-handler
                                       wrap-jwt-auth))
@@ -48,8 +51,7 @@
                "Access-Control-Max-Age" "3600"}})
   (GET "/retrieveEntity/collections" [] (-> handle-get-collections
                                             wrap-async-handler
-                                            wrap-jwt-auth
-                                            ))
+                                            wrap-jwt-auth))
 
   (OPTIONS "/retrieveEntity/type" []
     {:status 200
@@ -68,11 +70,9 @@
                "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
                "Access-Control-Allow-Headers" "Content-Type, Authorization"
                "Access-Control-Max-Age" "3600"}})
-
   (GET "/generalSearch/text" [] (-> handle-text-search
                                     wrap-async-handler
-                                    wrap-jwt-auth
-                                    ))
+                                    wrap-jwt-auth))
 
   (GET "/health" [] {:status 200 :body "healthy"})
   (OPTIONS "/*" [] {:status 200

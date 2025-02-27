@@ -84,57 +84,11 @@ console.log(memStore);
 export const App = () => {
   const rootStore: any = useStores();
 
-  // console.log("vvvv - ROOT STORE vvvv:");
-  // console.log(rootStore);
   const { factDataStore } = rootStore;
 
   const { setCategories } = factDataStore;
-  // const [isConnected, setIsConnected] = useState(false);
 
-  // const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
-  // const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
-
-  const establishCats = async () => {
-    console.log("vvvv - VULNERABLE - vvvv");
-    // const concepts = await resolveUIDs(
-    //   Object.keys(cats).map((x) => parseInt(x))
-    // );
-    // console.log("vvvv - CONCEPTS vvvv:");
-    // console.log(concepts);
-    // const newCats = [];
-    // for (const [key, name] of Object.entries(cats)) {
-    //   const concept = concepts.find((c: any) => c.uid === parseInt(key));
-    //   const { uid, descendants } = concept;
-    //   newCats.push({ uid, name, descendants });
-    // }
-    // console.log("vvvv - CATEGORIES vvvv:");
-    // console.log(newCats);
-    // setCategories(newCats);
-  };
-
-  useEffect(() => {
-    //   const retrieveEnv = async () => {
-    //     const foo = await authProvider.getIdentity();
-
-    //     console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:");
-    //     console.log(foo);
-
-    //     const env = await retrieveEnvironment();
-    //     console.log("vvvv - ENVIRONMENT foo vvvv:");
-    //     console.log(env);
-    //     factDataStore.addFacts(env.facts);
-    //     // semanticModelStore.addModels(env.models);
-    //     // graphViewStore.selectedNode = env.selectedEntity;
-    //   };
-
-    const foobarbaz = async () => {
-      //     // await establishCats();
-      //     await retrieveEnv();
-      //     console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
-    };
-
-    foobarbaz();
-  }, []);
+  console.log ('WHAT THE FUCK APP')
 
   return (
     <QueryClientProvider client={queryClient}>
