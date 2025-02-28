@@ -141,10 +141,9 @@ export const MyLayout = (props) => {
     // SELECTION
 
     const onSelectEntity = (d) => {
-      console.log("SELECT ENTITY");
-      console.log(d.uid);
-      setSelectedNode(d.uid);
+      setSelectedNode(d.entity_uid);
       setSelectedEdge(null);
+
       // memStore.setItem("selectedNode", d.uid); //
       // memStore.setItem("selectedEdge", null);
     };
@@ -233,7 +232,7 @@ export const MyLayout = (props) => {
     ccSocket.on("connect", onConnect);
     ccSocket.on("disconnect", onDisconnect);
 
-    ccSocket.on("system:selectedEntity", onSelectEntity);
+    // ccSocket.on("system:selectedEntity", onSelectEntity);
     ccSocket.on("system:selectedFact", onSelectFact);
     ccSocket.on("system:selectedNone", onNoneSelected);
     ccSocket.on("system:loadedFacts", onAddFacts);
@@ -249,12 +248,13 @@ export const MyLayout = (props) => {
     // ------------------------------------------------------------- //
 
     portalWs.on("system:loadedFacts", onAddFacts);
+    portalWs.on("portal:entitySelected", onSelectEntity);
 
     return () => {
       ccSocket.off("connect", onConnect);
       ccSocket.off("disconnect", onDisconnect);
 
-      ccSocket.off("system:selectedEntity", onSelectEntity);
+      // ccSocket.off("system:selectedEntity", onSelectEntity);
       ccSocket.off("system:selectedFact", onSelectFact);
       ccSocket.off("system:selectedNone", onNoneSelected);
       ccSocket.off("system:loadedFacts", onAddFacts);
@@ -268,6 +268,9 @@ export const MyLayout = (props) => {
       ccSocket.off("system:stateChanged", onStateChange);
 
       // ------------------------------------------------------------- //
+
+      portalWs.off("system:loadedFacts", onSelectEntity);
+      portalWs.off("system/entitySelected", onSelectEntity);
 
     };
 

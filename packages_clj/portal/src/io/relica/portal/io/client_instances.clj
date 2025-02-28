@@ -2,6 +2,7 @@
   (:require [io.relica.common.io.archivist-client :as archivist]
             [io.relica.common.io.aperture-client :as aperture]
             [io.relica.common.websocket.client :as ws]
+            [io.relica.common.events.core :as events]
             [clojure.tools.logging :as log]
             ))
 
@@ -33,7 +34,9 @@
    ;;                        (tap> msg))
    :handle-entity-selected (fn [msg]
                             (tap> "Selected entity GGGGGGOOOOOOODDDDDDAAAAAAAMMMMMMMNNNNNNIIIIIITTTTT!!!!!:")
-                            (tap> msg))})
+                            (tap> msg)
+                            (events/publish-event {:type :entity-selected
+                                                   :payload msg}))})
 
 ;; Create Aperture client with handlers
 (defonce aperture-client (aperture/create-client
