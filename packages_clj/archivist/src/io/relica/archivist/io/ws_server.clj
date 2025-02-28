@@ -74,9 +74,10 @@
     (tap> (str "Getting entity type for uid:" (:uid ?data)))
     (go
       (try
-        (if-let [entity-type (entity/get-entity-type entity-s (:uid ?data))]
-          (?reply-fn {:success true
-                      :type entity-type})
+        (if-let [entity-type (<! (entity/get-entity-type entity-s (:uid ?data)))]
+          (do (tap> (str "found entity type for uid:" (:uid ?data) " " entity-type))
+              (?reply-fn {:success true
+                         :type entity-type}))
           (?reply-fn {:error "Entity type not found"}))
         (catch Exception e
           (log/error e "Failed to get entity type")

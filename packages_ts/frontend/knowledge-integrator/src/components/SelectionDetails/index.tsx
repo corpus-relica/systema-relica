@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
-import { getEntityType } from "../../io/ArchivistBaseClient.js";
+import { portalClient } from "../../io/PortalClient.js";
 import KindDetails from "./KindDetails.js";
 import IndividualDetails from "./IndividualDetails.js";
 
@@ -15,7 +15,7 @@ const SelectionDetails = () => {
     queryKey: ["entityType", selectedNode],
     queryFn: () =>
       selectedNode
-        ? getEntityType(selectedNode).then((res) => res)
+        ? portalClient.getEntityType(selectedNode).then((res) => res.type)
         : Promise.resolve(null),
     enabled: !!selectedNode && selectedNode < START_INT_UID_RANGE, // This disables the query if selectedNode is null
   });
