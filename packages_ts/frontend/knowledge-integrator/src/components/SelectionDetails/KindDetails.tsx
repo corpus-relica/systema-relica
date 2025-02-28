@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
-import { retrieveKindModel } from "../../io/CCBaseClient.js";
+
+import { portalClient } from "../../io/PortalClient.js";
+
 import { sockSendCC } from "../../socket";
 
 import Box from "@mui/material/Box";
@@ -31,7 +33,7 @@ const KindDetails: React.FC = () => {
     queryKey: ["kindModel", selectedNode],
     queryFn: () =>
       selectedNode
-        ? retrieveKindModel(selectedNode).then((res) => res)
+        ? portalClient.retrieveKindModel(selectedNode).then((res) => res)
         : Promise.resolve(null),
     enabled: !!selectedNode, // This disables the query if selectedNode is null
   });

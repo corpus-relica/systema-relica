@@ -1,5 +1,6 @@
 (ns io.relica.portal.auth.websocket
-  (:require [clojure.tools.logging :as log]))
+  (:require [clojure.tools.logging :as log]
+            [clojure.pprint :refer [pprint]]))
 
 (defonce socket-tokens (atom {}))
 (defonce connected-clients (atom {}))
@@ -12,3 +13,5 @@
     ;; Optional: Add token expiry check
     (when (< (- (System/currentTimeMillis) created-at) (* 24 60 60 1000))
       user-id)))
+
+(pprint @connected-clients)

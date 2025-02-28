@@ -1,28 +1,7 @@
 (ns io.relica.common.io.aperture-client
   (:require [io.relica.common.websocket.client :as ws]
-            [clojure.core.async :as async :refer [go go-loop <! >! timeout chan]]
+            [clojure.core.async :as async :refer [go-loop <! timeout]]
             [clojure.tools.logging :as log]))
-
-;; Application-specific event handlers
-;; (defn handle-file-sync [payload]
-;;   (tap> {:event :app/file-sync-received
-;;          :files-count (count (:files payload))})
-;;   ;; Application-specific processing...
-;;   )
-
-;; (defn handle-status-update [payload]
-;;   (tap> {:event :app/status-update-received
-;;          :status (:status payload)
-;;          :timestamp (:timestamp payload)})
-;;   ;; Application-specific processing...
-;;   )
-
-;; (defn handle-notification [payload]
-;;   (tap> {:event :app/notification-received
-;;          :message (:message payload)
-;;          :level (:level payload)})
-;;   ;; Application-specific processing...
-;;   )
 
 ;; Custom client with application-specific behavior
 (defprotocol ApertureOperations
@@ -88,7 +67,7 @@
     (tap> {:event :app/sending-heartbeat})
     (ws/send-message! ws-client :app/heartbeat
                             {:timestamp (System/currentTimeMillis)}
-                            3000)))
+                            30000)))
 
 ;; Heartbeat scheduler
 (defn start-heartbeat-scheduler! [aperture-client interval-ms]

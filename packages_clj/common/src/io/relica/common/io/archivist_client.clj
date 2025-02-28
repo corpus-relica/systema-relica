@@ -14,6 +14,7 @@
   (get-kinds [this opts])
   (get-collections [this])
   (get-entity-type [this uid])
+  (get-entity-category [this uid])
   (text-search [this query])
   ;; Aspect operations
   (get-aspects [this opts])
@@ -36,9 +37,11 @@
 
   ;; Fact operations
   (get-facts [this opts])
+  (get-all-related [this uid])
   (create-fact [this fact-data])
   (update-fact [this uid fact-data])
   (delete-fact [this uid])
+  (get-definitive-facts[this uid])
 
   ;; Individual operations
   (get-individual [this uid])
@@ -112,6 +115,12 @@
                       {:uid uid}
                       (:timeout options)))
 
+  (get-entity-category [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :entity/category
+                      {:uid uid}
+                      (:timeout options)))
+
   (text-search [this query]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :general-search/text
@@ -166,10 +175,16 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :definitions/update (assoc def-data :uid uid) (:timeout options)))
 
+
   ;; Fact operations
+
   (get-facts [this opts]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :facts/get opts (:timeout options)))
+
+  (get-all-related [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-all-related {:uid uid} (:timeout options)))
 
   (create-fact [this fact-data]
     (when-not (connected? this) (connect! this))
@@ -182,6 +197,10 @@
   (delete-fact [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :facts/delete {:uid uid} (:timeout options)))
+
+  (get-definitive-facts [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
 
   ;; Individual operations
   (get-individual [this uid]

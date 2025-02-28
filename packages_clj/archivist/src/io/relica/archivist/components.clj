@@ -151,7 +151,8 @@
                              :kind kind-service
                              :entity-retrieval entity-retrieval-service
                              :general-search general-search-service
-                             :port server-port}))
+                             :port server-port
+                             :fact-service fact-service}))
   :stop (do
           (println "Stopping WebSocket server...")
           (ws-server/stop ws-server)))

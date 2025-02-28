@@ -4,7 +4,10 @@
             [cheshire.core :as json]
             [io.relica.common.io.aperture-client :as aperture]
             [io.relica.common.io.archivist-client :as archivist]
-            [io.relica.portal.io.client-instances :refer [aperture-client archivist-client]]
+            [io.relica.common.io.clarity-client :as clarity]
+            [io.relica.portal.io.client-instances :refer [aperture-client
+                                                          archivist-client
+                                                          clarity-client]]
             [io.relica.portal.auth.websocket
              :as ws-auth
              :refer [socket-tokens
@@ -150,6 +153,8 @@
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (archivist/get-entity-type archivist-client uid))]
+        (tap> "---------------------- GET ENTITY TYPE RESPONSE MUTHER FUCKING REQUEST BITCHES! ----------------------")
+        (tap> response)
         (if (:success response)
           (success-response {:type (:type response)})
           (error-response (or (:error response) "Unknown error"))))
@@ -187,3 +192,33 @@
           (success-response (:data result)))
         (catch Exception e
           (error-response "Failed to resolve entities"))))))
+
+;; ---------------------------------------------------------------------------
+
+(defn handle-get-kind-model [{:keys [params]}]
+  (go
+    (tap> "---------------------- GET KIND MODEL")
+    (try
+      (let [uid (some-> params :uid parse-long)
+            response (<! (clarity/get-kind-model clarity-client uid))]
+        (tap> "---------------------- GET KIND MODEL RESPONSE")
+        (tap> response)
+        (if (:success response)
+          (success-response (:model response))
+          (error-response (or (:error response) "Unknown error"))))
+      (catch Exception e
+        (error-response "Failed to get kind model")))))
+
+(defn handle-get-individual-model [{:keys [params]}]
+  (go
+    (tap> "---------------------- GET INDIVIDUAL MODEL")
+    (try
+      (let [uid (some-> params :uid parse-long)
+            response (<! (clarity/get-individual-model clarity-client uid))]
+        (tap> "---------------------- GET INDIVIDUAL MODEL RESPONSE")
+        (tap> response)
+        (if (:success response)
+          (success-response (:model response))
+          (error-response (or (:error response) "Unknown error"))))
+      (catch Exception e
+        (error-response "Failed to get individual model")))))

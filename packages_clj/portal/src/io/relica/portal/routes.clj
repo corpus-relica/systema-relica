@@ -10,7 +10,9 @@
                                            handle-get-kinds
                                            handle-get-collections
                                            handle-get-entity-type
-                                           handle-text-search]]
+                                           handle-text-search
+                                           handle-get-kind-model
+                                           handle-get-individual-model]]
    [io.relica.portal.middleware :refer [wrap-jwt-auth
                                         wrap-async-handler]]))
 
@@ -63,6 +65,7 @@
                                      wrap-async-handler
                                      wrap-jwt-auth))
 
+  ;; General search routes
 
   (OPTIONS "/generalSearch/text" []
     {:status 200
@@ -73,6 +76,31 @@
   (GET "/generalSearch/text" [] (-> handle-text-search
                                     wrap-async-handler
                                     wrap-jwt-auth))
+  ;; Model routes
+
+  (OPTIONS "/model/kind" []
+    {:status 200
+     :headers {"Access-Control-Allow-Origin" "*"
+               "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+               "Access-Control-Allow-Headers" "Content-Type, Authorization"
+               "Access-Control-Max-Age" "3600"}})
+
+  (GET "/model/kind" [] (-> handle-get-kind-model
+                           wrap-async-handler
+                           wrap-jwt-auth))
+
+  (OPTIONS "/model/individual" []
+    {:status 200
+    :headers {"Access-Control-Allow-Origin" "*"
+              "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+              "Access-Control-Allow-Headers" "Content-Type, Authorization"
+              "Access-Control-Max-Age" "3600"}
+           })
+  (GET "/model/individual" [] (-> handle-get-individual-model
+                                  wrap-async-handler
+                                  wrap-jwt-auth))
+
+  ;;
 
   (GET "/health" [] {:status 200 :body "healthy"})
   (OPTIONS "/*" [] {:status 200

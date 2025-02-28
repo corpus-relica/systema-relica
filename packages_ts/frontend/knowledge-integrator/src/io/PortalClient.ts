@@ -157,6 +157,24 @@ class PortalClient {
     );
     return response.data;
   }
+
+  /////////////////////////// SEMANTIC MODELS ///////////////////////////
+
+  async retrieveKindModel(uid: number) {
+    if (!uid) return;
+    const response = await this.axiosInstance.get("/model/kind", {
+      params: { uid },
+    });
+    return response.data;
+  }
+
+  async retrieveIndividualModel(uid: number) {
+    if (!uid) return;
+    const response = await this.axiosInstance.get("/model/individual", {
+      params: { uid },
+    });
+    return response.data;
+  }
 }
 
 export const portalClient = new PortalClient();

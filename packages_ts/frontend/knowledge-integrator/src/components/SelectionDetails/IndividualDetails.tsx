@@ -17,7 +17,7 @@ import Definition from "./display/Definition";
 import WorkflowFactsVisualizer from "../../pages/Workflows/WorkflowFactsVisualizer";
 import Synonyms from "./display/Synonyms";
 
-import { retrieveIndividualModel } from "../../io/CCBaseClient.js";
+import { portalClient } from "../../io/PortalClient.js";
 
 const IndividualDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");
@@ -26,7 +26,7 @@ const IndividualDetails: React.FC = () => {
     queryKey: ["individualModel", selectedNode],
     queryFn: () =>
       selectedNode
-        ? retrieveIndividualModel(selectedNode).then((res) => res)
+        ? portalClient.retrieveIndividualModel(selectedNode).then((res) => res)
         : Promise.resolve(null),
     enabled: !!selectedNode, // This disables the query if selectedNode is null
   });

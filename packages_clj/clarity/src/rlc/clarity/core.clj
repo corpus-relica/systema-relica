@@ -1,60 +1,96 @@
 (ns rlc.clarity.core
-  (:require [io.pedestal.http :as http]
-            [io.pedestal.http.route :as route]
-            [clj-http.client :as client]
-            [rlc.clarity.service :as service]
-            [portal.api :as p]))
+  (:require
+   [io.relica.common.websocket.server :as common-ws]
+   [rlc.clarity.io.ws-server :as ws]
+   ;; [rlc.clarity.xxx :refer [xxx]]
+    [clojure.core.async :as async :refer [go <!]]
+    [cheshire.core :as json]
+    ;; [io.relica.common.io.archivist-client :as archivist]
+    ;; [rlc.clarity.io.client-instances :refer [archivist-client]]
+    [rlc.clarity.services.model-service :as model-service]
+   ;; [io.pedestal.http :as http]
+   ;; [io.pedestal.http.route :as route]
+   ;; [clj-http.client :as client]
+   ;; [rlc.clarity.service :as service]
+   ;; [portal.api :as p]
+    [clojure.tools.logging :as log]
+   ))
 
-(defonce server (atom nil))
+;; Server instance
+(defonce server-instance (atom nil))
 
-(defn start [service-map]
-  (println "Starting server on port 3002...")
-  (tap> "Starting server on port 3002...")
-  (try
-    (let [server-instance (-> service-map
-                             (assoc ::http/port 3002
-                                    ::http/host "0.0.0.0"
-                                    ::http/allowed-origins {:creds true
-                                                          :allowed-origins (constantly true)})
-                             http/create-server
-                             http/start)]
-      (println "Server configuration:" (select-keys service-map [::http/port ::http/host]))
-      (reset! server server-instance)
-      (.addShutdownHook (Runtime/getRuntime)
-                        (Thread. #(when @server (http/stop @server))))
-      (println "Server started successfully!"))
-    (catch Exception e
-      (println "Failed to start server:" (.getMessage e))
-      (println "Stack trace:" (ex-data e)))))
+;; (defmethod ....
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :get/kind-model
+  [{:keys [?data ?reply-fn] :as msg}]
+  (when ?reply-fn
+    (tap> (str "Getting kind for user:" (:user-id ?data)))
+    (go
+      (try
+        (let [kind-id (:kind-id ?data)
+              kind (<! (model-service/retrieve-kind-model kind-id))]
+          (log/info kind)
+          (if kind
+            (?reply-fn {:success true
+                        :model kind})
+            (?reply-fn {:success false
+                        :error "Kind not found"})))
+        (catch Exception e
+          (log/error e "Failed to get kind")
+          {:error "Failed to get kind"})))))
 
-(defn stop []
-  (println "Stopping server...")
-  (when @server
-    (try
-      (http/stop @server)
-      (reset! server nil)
-      (println "Server stopped successfully!")
-      (catch Exception e
-        (println "Failed to stop server:" (.getMessage e))))))
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :get/individual-model
+  [{:keys [?data ?reply-fn] :as msg}]
+  (when ?reply-fn
+    (tap> (str "Getting individual for user:" (:user-id ?data)))
+    (go
+      (try
+        (let [individual-id (:individual-id ?data)
+              individual (<! (model-service/retrieve-individual-model individual-id))]
+          (log/info individual)
+          (if individual
+            ;; Return a vector with an event ID and the data, not just a map
+            (?reply-fn {:success true
+                         :model individual})
+            (?reply-fn {:success false
+                        :error "Individual not found"})))
+        (catch Exception e
+          (log/error e "Failed to get individual")
+          ;; Make sure to return a vector here too if you're using the reply-fn inside the catch
+          (?reply-fn [:get/individual-model-response
+                      {:error "Failed to get individual"}]))))))
 
-(defn restart []
-  (stop)
-  (start service/service-map))
+;; Server management
+(defn start! []
+  (when-not @server-instance
+    (let [port 2176
+          server (ws/start! port)]
+      (reset! server-instance server)
+      (tap> (str "Clarity WebSocket server started on port" port))
+      server)))
+
+(defn stop! []
+  (when-let [server @server-instance]
+    (ws/stop! server)
+    (reset! server-instance nil)
+    (tap> "Clarity WebSocket server stopped")))
 
 (defn -main [& args]
-  (println "Starting Clarity CLJ service...")
-  (p/open {:port 5555
-           :host "0.0.0.0"
-           :launcher :web
-           :window false})
-  (add-tap #'p/submit)
-  (restart))
+  (start!))
 
+;; REPL helpers
 (comment
-  (restart)
+  ;; Start server
+  (def server (start!))
 
-  (start service/service-map)
-  (stop)
-  @server
-  (::http/service-fn @server)
-  (::http/server @server))
+  ;; Get active connections
+  (ws/get-active-sessions @server-instance)
+
+  ;; Test broadcast
+  (ws/broadcast! @server-instance
+                {:type "system-notification"
+                 :message "Test broadcast"})
+
+  ;; Stop server
+  (stop!))

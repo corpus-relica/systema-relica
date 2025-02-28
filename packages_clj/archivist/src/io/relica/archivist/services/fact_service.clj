@@ -59,12 +59,14 @@
            (map #(into {} %)))))
 
   (get-all-related-facts [_ uid]
+    (tap> "------------------- GET ALL RELATED FACTS -------------------")
+    (tap> cache-service)
     (go
       (try
         (let [;; Get all specialization subtypes to exclude
-              subtypes-1146 (set (<! (cache/all-descendants-of cache-service 1146)))
+              subtypes-1146 (cache/all-descendants-of cache-service 1146) ;;(set (<! (cache/all-descendants-of cache-service 1146)))
               ;; Get all fact types
-              subtypes-2850 (set (<! (cache/all-descendants-of cache-service 2850)))
+              subtypes-2850 (cache/all-descendants-of cache-service 2850) ;;(set (<! (cache/all-descendants-of cache-service 2850)))
               ;; Filter out specialization facts and their subtypes
               rel-type-uids (set (filter #(and (not (contains? subtypes-1146 %))
                                              (not= 1146 %))
@@ -75,14 +77,22 @@
                                      {:start_uid uid
                                       :rel_type_uids rel-type-uids})
               res-2850 (graph/transform-results results-2850)
+              _ (tap> res-2850)
               results-2850b (graph/exec-query
                              graph-service
                              queries/all-related-facts-d
                              {:start_uid uid
                               :rel_type_uids rel-type-uids}
                              )
-              res-2850b (graph/transform-results results-2850b)]
-          (concat res-2850 res-2850b))
+              res-2850b (graph/transform-results results-2850b)
+              ]
+          (tap> "------------------- GET ALL RELATED FACTS RESULT -------------------")
+          (tap> results-2850)
+          (tap> results-2850b)
+          (tap> res-2850)
+          (tap> (concat res-2850 res-2850b))
+          (concat res-2850 res-2850b)
+          )
         (catch Exception e
           (log/error "Error in get-all-related-facts:" (ex-message e))
           []))))
