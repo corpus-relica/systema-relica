@@ -9,6 +9,7 @@
   (list-environments [this user-id])
   (create-environment [this user-id env-name])
   (load-specialization-hierarchy [this user-id uid])
+  (clear-environment-entities [this user-id env-id])
   (update-environment! [this user-id env-id updates])
   (select-entity [this user-id env-id entity-uid])
   (select-entity-none [this user-id env-id])
@@ -46,6 +47,13 @@
     (ws/send-message! ws-client :environment/load-specialization
                       {:uid uid
                        :user-id user-id}
+                      (:timeout options)))
+
+  (clear-environment-entities [this user-id env-id]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/clear-entities
+                      {:user-id user-id
+                       :environment-id env-id}
                       (:timeout options)))
 
   (update-environment! [this user-id env-id updates]
@@ -102,6 +110,8 @@
         aperture-client (->ApertureClient base-client {:timeout 5000})]
 
     ;; Register application-specific event handlers
+    (ws/register-handler! base-client :facts/loaded (:handle-facts-loaded app-handlers))
+    (ws/register-handler! base-client :facts/unloaded (:handle-facts-unloaded app-handlers))
     (ws/register-handler! base-client :entity/selected (:handle-entity-selected app-handlers))
     (ws/register-handler! base-client :entity/selected-none (:handle-entity-selected-none app-handlers))
 

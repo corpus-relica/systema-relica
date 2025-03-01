@@ -84,18 +84,58 @@
             env-id (or
                     (:environment-id ?data)
                     (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
             facts (get-in result [:hierarchy :facts])
+            new-facts (concat old-facts facts)
             env (when facts
-                  (update-user-environment! user-id env-id {:facts facts}))]
+                  (update-user-environment! user-id env-id {:facts new-facts}))]
         ;; (tap> "GOT SPECIALIZATION HIERARCHY RESULT:::::::::::::::::::")
         ;; (tap> (str "User ID: " user-id " Environment ID: " env-id))
         ;; (tap> foo)
 
-        (?reply-fn env))
+        (?reply-fn env)
+        (ws/broadcast!
+         ;; @server-instance
+         {:type :facts/loaded
+          :facts (:facts env)
+          :user-id (:user-id ?data)
+          :environment-id env-id}
+         10))
       (catch Exception e
         (log/error e "Failed to load specialization hierarchy")
         (?reply-fn {:error "Failed to load specialization hierarchy"}))))
   )
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/clear-entities
+  [{:keys [?data ?reply-fn] :as msg}]
+  (tap> (str "Handling environment/clear-entities"))
+  (tap> ?data)
+  (when ?reply-fn
+    (tap> (str "Clearing entities for user:" (:user-id ?data)))
+    (go
+      (try
+        (let [env-id (or (:environment-id ?data)
+                        (:id (get-default-environment (:user-id ?data))))
+              environment (get-user-environment (:user-id ?data) env-id)
+              _ (tap> (str "$$$$$$$$$$$$$$$ Clearing entities in environment " env-id))
+              updated (when env-id
+                       (update-user-environment! (:user-id ?data) env-id {:facts []}))]
+          (if updated
+            (do
+              (?reply-fn {:success true})
+              (ws/broadcast!
+               ;; @server-instance
+               {:type :facts/unloaded
+                :fact-uids (map (fn [f] (:fact_uid f)) (:facts environment))
+                :user-id (:user-id ?data)
+                :environment-id env-id}
+               10))
+            (?reply-fn {:error "Failed to clear entities"})))
+        (catch Exception e
+          (log/error e "Failed to clear entities")
+          {:error "Failed to clear entities"})))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :entity/select

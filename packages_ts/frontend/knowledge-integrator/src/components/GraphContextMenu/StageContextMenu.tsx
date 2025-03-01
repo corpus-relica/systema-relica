@@ -13,10 +13,12 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import SearchIcon from "@mui/icons-material/Search";
 
-import { sockSendCC } from "../../socket";
+import { sockSendCC, sendSocketMessage } from "../../socket";
 
 const CLEAR_ALL = "Clear all";
 const SEARCH = "Search";
+
+const CLEAR_ENVIRONMENT_ENTITIES = "clearEnvironmentEntities";
 
 interface IndividualContextMenuProps {
   // uid: number;
@@ -44,7 +46,8 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     const value = e.currentTarget.getAttribute("value");
     switch (value) {
       case CLEAR_ALL:
-        sockSendCC("user", "clearEntities", {});
+        // sockSendCC("user", "clearEntities", {});
+        sendSocketMessage(CLEAR_ENVIRONMENT_ENTITIES, {});
         handleClose();
         break;
       case SEARCH:

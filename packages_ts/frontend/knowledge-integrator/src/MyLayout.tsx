@@ -247,7 +247,8 @@ export const MyLayout = (props) => {
 
     // ------------------------------------------------------------- //
 
-    portalWs.on("system:loadedFacts", onAddFacts);
+    portalWs.on("portal:factsLoaded", onAddFacts);
+    portalWs.on("portal:factsUnloaded", onRemFacts);
     portalWs.on("portal:entitySelected", onSelectEntity);
     portalWs.on("portal:entitySelectedNone", onNoneSelected);
 

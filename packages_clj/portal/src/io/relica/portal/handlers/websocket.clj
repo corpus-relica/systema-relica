@@ -16,6 +16,19 @@
 
 (declare ws-handlers)
 
+;; Helper functions
+
+(defn get-environment-id [client-id]
+  (get-in @connected-clients [client-id :environment-id]))
+
+(defn broadcast-to-environment [environment-id message]
+  (doseq [[client-id client-data] @connected-clients]
+    (when (= environment-id (:environment-id client-data))
+      (let [channel (:channel client-data)]
+        (http/send! channel (json/generate-string message))))))
+
+;; Message handlers
+
 (defn handle-auth [{:keys [jwt]}]
   (go
     (if-let [user-id (validate-jwt jwt)]
@@ -34,10 +47,10 @@
   (tap> message)
   (go
     (try
-      (let [environment-id (get-in @connected-clients [client-id :environment-id])
-            _ (tap> "FOUND ENVIRONMENT ID")
-            _ (tap> environment-id)
-            _ (tap> @connected-clients)
+      (let [environment-id (get-environment-id client-id)
+            ;; _ (tap> "FOUND ENVIRONMENT ID")
+            ;; _ (tap> environment-id)
+            ;; _ (tap> @connected-clients)
             result (<! (aperture/select-entity aperture-client (:user-id message) environment-id uid))]
         {:success true
          :message "Entity selected"})
@@ -50,10 +63,10 @@
   (tap> message)
   (go
     (try
-      (let [environment-id (get-in @connected-clients [client-id :environment-id])
-            _ (tap> "FOUND ENVIRONMENT ID")
-            _ (tap> environment-id)
-            _ (tap> @connected-clients)
+      (let [environment-id (get-environment-id client-id)
+            ;; _ (tap> "FOUND ENVIRONMENT ID")
+            ;; _ (tap> environment-id)
+            ;; _ (tap> @connected-clients)
             result (<! (aperture/select-entity-none aperture-client (:user-id message) environment-id))]
         {:success true
          :message "Entity deselected"})
@@ -61,49 +74,6 @@
         (log/error "Failed to deselect entity:" e)
         {:error "Failed to deselect entity"})))
   )
-
-(defn handle-entity-selected-event [payload]
-  ;; Your logic here with access to all websocket context
-  (tap> "ENTITY SELECTED EVENT")
-  (tap> payload)
-  (let [environment-id (:environment-id payload)]
-    (tap> (str "Looking for clients connected to environment-id: " environment-id))
-    (doseq [[client-id client-data] @connected-clients]
-      (when (= environment-id (:environment-id client-data))
-        (tap> (str "Found client " client-id " connected to environment " environment-id))
-        (let [channel (:channel client-data)
-              message {:id "system"
-                       :type "portal:entitySelected"
-                       :payload {
-                                 :type (:type payload)
-                                 :entity_uid (:entity-uid payload)
-                                 :user_id (:user-id payload)
-                                 :environment_id (:environment-id payload)
-                                 }}]
-          (tap> "Sending entity selected event to client")
-          (tap> message)
-          (http/send! channel (json/generate-string message)))))))
-
-(defn handle-entity-selected-none-event [payload]
-  ;; Your logic here with access to all websocket context
-  (tap> "ENTITY SELECTED NONE EVENT")
-  (tap> payload)
-  (let [environment-id (:environment-id payload)]
-    (tap> (str "Looking for clients connected to environment-id: " environment-id))
-    (doseq [[client-id client-data] @connected-clients]
-      (when (= environment-id (:environment-id client-data))
-        (tap> (str "Found client " client-id " connected to environment " environment-id))
-        (let [channel (:channel client-data)
-              message {:id "system"
-                       :type "portal:entitySelectedNone"
-                       :payload {
-                                 :type (:type payload)
-                                 :user_id (:user-id payload)
-                                 :environment_id (:environment-id payload)
-                                 }}]
-          (tap> "Sending entity selected none event to client")
-          (tap> message)
-          (http/send! channel (json/generate-string message)))))))
 
 (defn load-specialization-hierarchy [{:keys [uid] :as message}]
   (tap> "LOADING SPECIALIZATION HIERARCHY")
@@ -118,6 +88,85 @@
       (catch Exception e
         (log/error "Failed to load specialization hierarchy:" e)
         {:error "Failed to load specialization hierarchy"}))))
+
+
+(defn handle-clear-environment-entities [{:keys [client-id] :as message}]
+  (tap> "CLEARING ENVIRONMENT ENTITIES")
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            _ (tap> "FOUND ENVIRONMENT ID")
+            _ (tap> environment-id)
+            _ (tap> @connected-clients)
+            result (<! (aperture/clear-environment-entities aperture-client (:user-id message) environment-id))]
+        {:success true
+         :message "Environment entities cleared"})
+      (catch Exception e
+        (log/error "Failed to clear environment entities:" e)
+        {:error "Failed to clear environment entities"}))))
+
+;; Event handlers
+
+(defn handle-entity-selected-event [payload]
+  ;; Your logic here with access to all websocket context
+  ;; (tap> "ENTITY SELECTED EVENT")
+  ;; (tap> payload)
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:entitySelected"
+                               :payload {
+                                         :type (:type payload)
+                                         :entity_uid (:entity-uid payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+
+(defn handle-entity-selected-none-event [payload]
+  ;; Your logic here with access to all websocket context
+  ;; (tap> "ENTITY SELECTED NONE EVENT")
+  ;; (tap> payload)
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:entitySelectedNone"
+                               :payload {
+                                         :type (:type payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+
+(defn handle-facts-loaded-event [payload]
+  ;; Your logic here with access to all websocket context
+  (tap> "FACTS LOADED EVENT")
+  (tap> payload)
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:factsLoaded"
+                               :payload {
+                                         :type (:type payload)
+                                         :facts (:facts payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+
+(defn handle-facts-unloaded-event [payload]
+  ;; Your logic here with access to all websocket context
+  (tap> "FACTS UNLOADED EVENT")
+  (tap> payload)
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:factsUnloaded"
+                               :payload {
+                                         :type (:type payload)
+                                         :fact_uids (:fact-uids payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+;; Core
 
 (defn handle-ping [_]
   (tap> "PING")
@@ -161,6 +210,7 @@
                            {:type "error"
                             :error "Invalid message format"})))))
 
+;; Configuration
 
 (def ws-handlers
   {"auth" handle-auth
@@ -170,9 +220,11 @@
    "ping" handle-ping
    "selectEntity" handle-select-entity
    "selectNone" handle-select-entity-none
-   "loadSpecializationHierarchy" load-specialization-hierarchy})
+   "loadSpecializationHierarchy" load-specialization-hierarchy
+   "clearEnvironmentEntities"handle-clear-environment-entities})
 
 ;; Set up event listener
+
 (defonce event-listener
   (let [events-ch (events/subscribe)]
     (go-loop []
@@ -180,6 +232,8 @@
         (tap> "Received event in websocket handler:")
         (tap> event)
         (case (:type event)
+          :facts-loaded (handle-facts-loaded-event (:payload event))
+          :facts-unloaded (handle-facts-unloaded-event (:payload event))
           :entity-selected (handle-entity-selected-event (:payload event))
           :entity-selected-none (handle-entity-selected-none-event (:payload event))
           ;; other event types
