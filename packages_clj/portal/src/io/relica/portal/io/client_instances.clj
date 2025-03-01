@@ -25,7 +25,12 @@
                              (tap> "Selected entity GGGGGGOOOOOOODDDDDDAAAAAAAMMMMMMMNNNNNNIIIIIITTTTT!!!!!:")
                              (tap> msg)
                              (events/publish-event {:type :entity-selected
-                                                    :payload msg}))})
+                                                    :payload msg}))
+   :handle-entity-selected-none(fn [msg]
+                                  (tap> "Deselected entity GGGGGGOOOOOOODDDDDDAAAAAAAMMMMMMMNNNNNNIIIIIITTTTT!!!!!:")
+                                  (tap> msg)
+                                  (events/publish-event {:type :entity-selected-none
+                                                         :payload msg}))})
 
 ;; Create Aperture client with handlers
 (defonce aperture-client (aperture/create-client

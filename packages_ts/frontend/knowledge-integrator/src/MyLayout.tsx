@@ -249,6 +249,7 @@ export const MyLayout = (props) => {
 
     portalWs.on("system:loadedFacts", onAddFacts);
     portalWs.on("portal:entitySelected", onSelectEntity);
+    portalWs.on("portal:entitySelectedNone", onNoneSelected);
 
     return () => {
       ccSocket.off("connect", onConnect);
@@ -271,6 +272,7 @@ export const MyLayout = (props) => {
 
       portalWs.off("system:loadedFacts", onSelectEntity);
       portalWs.off("system/entitySelected", onSelectEntity);
+      portalWs.off("portal:entitySelectedNone", onNoneSelected);
 
     };
 

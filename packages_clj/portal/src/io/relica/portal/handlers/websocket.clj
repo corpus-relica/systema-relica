@@ -45,6 +45,23 @@
         (log/error "Failed to select entity:" e)
         {:error "Failed to select entity"}))))
 
+(defn handle-select-entity-none [{:keys [client-id] :as message}]
+  (tap> "SELECT NONE")
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-in @connected-clients [client-id :environment-id])
+            _ (tap> "FOUND ENVIRONMENT ID")
+            _ (tap> environment-id)
+            _ (tap> @connected-clients)
+            result (<! (aperture/select-entity-none aperture-client (:user-id message) environment-id))]
+        {:success true
+         :message "Entity deselected"})
+      (catch Exception e
+        (log/error "Failed to deselect entity:" e)
+        {:error "Failed to deselect entity"})))
+  )
+
 (defn handle-entity-selected-event [payload]
   ;; Your logic here with access to all websocket context
   (tap> "ENTITY SELECTED EVENT")
@@ -64,6 +81,27 @@
                                  :environment_id (:environment-id payload)
                                  }}]
           (tap> "Sending entity selected event to client")
+          (tap> message)
+          (http/send! channel (json/generate-string message)))))))
+
+(defn handle-entity-selected-none-event [payload]
+  ;; Your logic here with access to all websocket context
+  (tap> "ENTITY SELECTED NONE EVENT")
+  (tap> payload)
+  (let [environment-id (:environment-id payload)]
+    (tap> (str "Looking for clients connected to environment-id: " environment-id))
+    (doseq [[client-id client-data] @connected-clients]
+      (when (= environment-id (:environment-id client-data))
+        (tap> (str "Found client " client-id " connected to environment " environment-id))
+        (let [channel (:channel client-data)
+              message {:id "system"
+                       :type "portal:entitySelectedNone"
+                       :payload {
+                                 :type (:type payload)
+                                 :user_id (:user-id payload)
+                                 :environment_id (:environment-id payload)
+                                 }}]
+          (tap> "Sending entity selected none event to client")
           (tap> message)
           (http/send! channel (json/generate-string message)))))))
 
@@ -131,6 +169,7 @@
    ;; "environment:get" handle-get-environment
    "ping" handle-ping
    "selectEntity" handle-select-entity
+   "selectNone" handle-select-entity-none
    "loadSpecializationHierarchy" load-specialization-hierarchy})
 
 ;; Set up event listener
@@ -142,6 +181,7 @@
         (tap> event)
         (case (:type event)
           :entity-selected (handle-entity-selected-event (:payload event))
+          :entity-selected-none (handle-entity-selected-none-event (:payload event))
           ;; other event types
           (tap> "Unknown event type:" (:type event)))
         (recur)))))

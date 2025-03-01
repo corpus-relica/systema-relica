@@ -26,6 +26,7 @@ import { getAuthToken } from "../providers/AuthProvider.js";
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 const SELECT_ENTITY = "selectEntity";
+const SELECT_NONE = "selectNone";
 
 const Graph = observer(() => {
   const { factDataStore, colorPaletteStore } = useStores();
@@ -92,7 +93,8 @@ const Graph = observer(() => {
 
   const onStageClick = () => {
     setOpen(false);
-    sockSendCC(USER, "selectNone", {});
+
+    sendSocketMessage(SELECT_NONE, {});
   };
 
   const handleSearchUIClose = (res: any) => {

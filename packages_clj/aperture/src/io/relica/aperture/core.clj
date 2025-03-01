@@ -3,13 +3,16 @@
   (:require [clojure.tools.logging :as log]
             [io.relica.common.websocket.server :as common-ws]
             [io.relica.aperture.io.ws-server-ii :as ws]
-            [io.relica.aperture.env :refer [get-user-environment get-user-environments 
-                                          update-user-environment! select-entity!
-                                          get-default-environment create-user-environment!]]
+            [io.relica.aperture.env :refer [get-user-environment get-user-environments
+                                            update-user-environment! select-entity!
+                                            deselect-entity! get-default-environment
+                                            create-user-environment!]]
             [clojure.core.async :as async :refer [go <! >! chan]]
             [cheshire.core :as json]
             [io.relica.common.io.archivist-client :as archivist]
             [io.relica.aperture.io.client-instances :refer [archivist-client]]
+
+            ;; [io.relica.archivist.services.linearization-service :as lin]
             ))
 
 ;; Server instance
@@ -124,6 +127,37 @@
         (catch Exception e
           (log/error e "Failed to select entity")
           {:error "Failed to select entity"})))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :entity/select-none
+  [{:keys [?data ?reply-fn] :as msg}]
+  (tap> (str "Handling entity/select-none"))
+  (tap> ?data)
+  (when ?reply-fn
+    (tap> (str "deselecting entity for user:" (:user-id ?data)))
+    (go
+      (try
+        (let [env-id (or (:environment-id ?data)
+                        (:id (get-default-environment (:user-id ?data))))
+              _ (tap> (str "$$$$$$$$$$$$$$$ Deselecting entity in environment " env-id))
+              updated (when env-id
+                       (deselect-entity! (:user-id ?data) env-id))]
+          (if updated
+            (do
+              (?reply-fn {:success true})
+              (tap> "%%%%%%%%%%%%%%%%%%%%% FUGGIN BROADCAST %%%%%%%%%%%%%%%%%%%%%%")
+              (ws/broadcast!
+               ;; @server-instance
+               {:type :entity/selected-none
+                :user-id (:user-id ?data)
+                :environment-id env-id}
+               10))
+            (?reply-fn {:error "Failed to deselect entity"})))
+        (catch Exception e
+          (log/error e "Failed to deselect entity")
+          {:error "Failed to deselect entity"})))))
+
+
 
 ;; Server management
 (defn start! []

@@ -141,6 +141,43 @@
     (when updated-env
       (get-user-environment user-id env-id))))
 
+(defn deselect-entity!
+  "Clear the selected entity for a user's environment"
+  [user-id env-id]
+  (tap> (str "Deselecting entity in environment " env-id " for user:" user-id))
+  (let [user-id (long user-id)
+        ;; Verify user has write access to this environment
+        can-write-result (jdbc/execute-one! ds
+                               ["SELECT can_write FROM user_environments
+                                 WHERE user_id = ? AND environment_id = ?"
+                                user-id env-id])
+        _ (tap> (str "Can write result: " can-write-result))
+        can-write? (:user_environments/can_write can-write-result)
+
+        ;; Execute explicit NULL update
+        updated-env (when can-write?
+                      (try
+                        (tap> {:query "UPDATE environments SET selected_entity_id = NULL WHERE id = ? RETURNING *"
+                               :values [env-id]})
+                        (jdbc/execute-one! ds
+                                         ["UPDATE environments SET selected_entity_id = NULL WHERE id = ? RETURNING *"
+                                          env-id]
+                                         {:builder-fn rs/as-unqualified-maps})
+                        (catch Exception e
+                          (tap> (str "SQL error: " (.getMessage e)))
+                          nil)))
+
+        ;; Update last_accessed in user_environments
+        _ (when can-write?
+            (jdbc/execute-one! ds
+                             ["UPDATE user_environments SET last_accessed = CURRENT_TIMESTAMP
+                              WHERE user_id = ? AND environment_id = ?"
+                              user-id env-id]))]
+
+    ;; Return the full updated environment
+    (when updated-env
+      (get-user-environment user-id env-id))))
+
 (defn select-entity!
   [user-id env-id entity-uid]
   (update-user-environment! user-id env-id {:selected_entity_id entity-uid}))

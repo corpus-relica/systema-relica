@@ -11,6 +11,7 @@
   (load-specialization-hierarchy [this user-id uid])
   (update-environment! [this user-id env-id updates])
   (select-entity [this user-id env-id entity-uid])
+  (select-entity-none [this user-id env-id])
   (send-heartbeat! [this]))
 
 (defrecord ApertureClient [ws-client options]
@@ -63,6 +64,13 @@
                        :entity-uid entity-uid}
                       (:timeout options)))
 
+  (select-entity-none [this user-id env-id]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :entity/select-none
+                      {:user-id user-id
+                       :environment-id env-id}
+                      (:timeout options)))
+
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
     (ws/send-message! ws-client :app/heartbeat
@@ -95,6 +103,7 @@
 
     ;; Register application-specific event handlers
     (ws/register-handler! base-client :entity/selected (:handle-entity-selected app-handlers))
+    (ws/register-handler! base-client :entity/selected-none (:handle-entity-selected-none app-handlers))
 
     ;; Connect to the server
     (ws/connect! base-client)
