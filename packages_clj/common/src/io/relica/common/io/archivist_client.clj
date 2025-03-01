@@ -42,6 +42,7 @@
   (update-fact [this uid fact-data])
   (delete-fact [this uid])
   (get-definitive-facts[this uid])
+  (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
 
   ;; Individual operations
   (get-individual [this uid])
@@ -186,6 +187,12 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-all-related {:uid uid} (:timeout options)))
 
+  (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-related-on-uid-subtype-cone
+                      {:lh-object-uid lh-object-uid
+                       :rel-type-uid rel-type-uid} (:timeout options)))
+
   (create-fact [this fact-data]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :facts/create fact-data (:timeout options)))
@@ -202,7 +209,9 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
 
+
   ;; Individual operations
+
   (get-individual [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :individuals/get {:uid uid} (:timeout options)))

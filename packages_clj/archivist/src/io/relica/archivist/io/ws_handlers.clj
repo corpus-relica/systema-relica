@@ -45,14 +45,36 @@
       (go
         (try
           (let [facts (gellish-base-service/get-definitive-facts gellish-base-s (:uid ?data))]
-            (tap> "GOOOOOOOOOOOOT      DEEEEEEEEFFFFFFFIIIIIIIIIIIIINNNNNNNNIIIIIIIIITTTTTTTTTTIIIIIIIIIVVVVVVVVEEEEEEE")
-            (tap> facts)
             (?reply-fn {:success true
                         :facts facts}))
           (catch Exception e
             (log/error e "Failed to get definitive facts")
             (?reply-fn {:success false
                         :error "Failed to get definitive facts"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-related-on-uid-subtype-cone
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    ;; (tap> {:event :websocket/getting-related-on-uid-subtype-cone-facts
+    ;;        :entity-service fact-s})
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (<!(fact-service/get-related-on-uid-subtype-cone-facts
+                       fact-s
+                       (:lh-object-uid ?data)
+                       (:rel-type-uid ?data)))]
+            (tap> "GOOOOOOOOOOOOT      DEEEEEEEEFFFFFFFIIIIIIIIIIIIINNNNNNNNIIIIIIIIITTTTTTTTTTIIIIIIIIIVVVVVVVVEEEEEEE")
+            (tap> facts)
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get related on uid subtype cone facts")
+            (?reply-fn {:success false
+                        :error "Failed to get related on uid subtype cone facts"})))))))
 
 ;; ENTITY SERVICE
 

@@ -77,13 +77,22 @@
   ;;                     {:query-params {:uid uid}
   ;;                      :throw-exceptions false}))
 
-;; (defn get-related-on-uid-subtype-cone
-;;   "Get related entities on UID subtype cone"
-;;   [lh-object-uid rel-type-uid]
-;;   (client/make-request "/fact/relatedOnUIDSubtypeCone"
-;;                       {:query-params {:lh_object_uid lh-object-uid
-;;                                      :rel_type_uid rel-type-uid}
-;;                        :throw-exceptions false}))
+(defn get-related-on-uid-subtype-cone
+  "Get related entities on UID subtype cone"
+  [lh-object-uid rel-type-uid]
+  (go
+    (try
+      (let [response (<! (archivist/get-related-on-uid-subtype-cone
+                          archivist-client
+                          lh-object-uid
+                          rel-type-uid))]
+        (log/info (str "Response from get-related-on-uid-subtype-cone: " response))
+        (if (:success response)
+          (:facts response)
+          (or (:error response) "Unknown error")))
+      (catch Exception e
+        (tap> (str "Error in text search handler: " e))
+        "Failed to execute text search"))))
 
 ;; Model retrieval functions
 
@@ -120,14 +129,14 @@
     (let [category (<! (get-category uid))
           _ (log/info  (str "Category:" category))
           facts (<! (retrieve-all-facts uid))
-          definitive-facts (<! (get-definitive-facts uid))
-          ;; specialization (get-related-on-uid-subtype-cone uid 1146)
-          ;; classification (get-related-on-uid-subtype-cone uid 1225)
-          ;; synonyms (get-related-on-uid-subtype-cone uid 1981)
-          ;; inverses (get-related-on-uid-subtype-cone uid 1986)
-          ;; req-role1 (get-related-on-uid-subtype-cone uid 4731)
-          ;; req-role2 (get-related-on-uid-subtype-cone uid 4733)
-          ;; poss-roles (get-related-on-uid-subtype-cone uid 4714)
+          definitive-facts (vec (<! (get-definitive-facts uid)))
+          specialization (<! (get-related-on-uid-subtype-cone uid 1146))
+          classification (<! (get-related-on-uid-subtype-cone uid 1225))
+          synonyms (<! (get-related-on-uid-subtype-cone uid 1981))
+          inverses (<! (get-related-on-uid-subtype-cone uid 1986))
+          req-role1 (<! (get-related-on-uid-subtype-cone uid 4731))
+          req-role2 (<! (get-related-on-uid-subtype-cone uid 4733))
+          poss-roles (<! (get-related-on-uid-subtype-cone uid 4714))
           base-model (case category
                        "physical object" (get-physical-object-model uid)
                        "aspect" (get-aspect-model uid)
@@ -139,32 +148,29 @@
       (log/info "category:" category)
       (log/info "Base model:" base-model)
       (log/info "Facts:" facts)
-      ;; (when (seq definitive-facts)
-      (merge base-model
-             {:uid uid
-    ;;           :collection {:uid (get-in definitive-facts [0 :collection_uid])
-    ;;                       :name (get-in definitive-facts [0 :collection_name])}
-    ;;           :name (get-in definitive-facts [0 :lh_object_name])
-              :type "kind"
-              :category category
-              :definition (mapv (fn [x]
-                                 {:fact_uid (:fact_uid x)
-                                  :partial_definition (:partial_definition x)
-                                  :full_definition (:full_definition x)})
-                               definitive-facts)
-              :facts facts
-    ;;           ;; Relation UIDs as keys
-    ;;           1146 (mapv #(get % :rh_object_uid) specialization)
-    ;;           1225 (mapv #(get % :rh_object_uid) classification)
-    ;;           1981 (mapv #(get % :lh_object_name) synonyms)
-    ;;           1986 (mapv #(get % :lh_object_name) inverses)
-    ;;           4731 (mapv #(get % :rh_object_uid) req-role1)
-    ;;           4733 (mapv #(get % :rh_object_uid) req-role2)
-    ;;           4714 (mapv #(get % :rh_object_uid) poss-roles)
-              }
-             )
-    ;;           )
-    )))
+      (when (seq definitive-facts)
+        (merge base-model
+               {:uid uid
+                :collection {:uid (get-in definitive-facts [0 :collection_uid])
+                             :name (get-in definitive-facts [0 :collection_name])}
+                :name (get-in definitive-facts [0 :lh_object_name])
+                :type "kind"
+                :category category
+                :definition (mapv (fn [x]
+                                    {:fact_uid (:fact_uid x)
+                                     :partial_definition (:partial_definition x)
+                                     :full_definition (:full_definition x)})
+                                  definitive-facts)
+                :facts facts
+                ;; Relation UIDs as keys
+                1146 (mapv #(get % :rh_object_uid) specialization)
+                1225 (mapv #(get % :rh_object_uid) classification)
+                1981 (mapv #(get % :lh_object_name) synonyms)
+                1986 (mapv #(get % :lh_object_name) inverses)
+                4731 (mapv #(get % :rh_object_uid) req-role1)
+                4733 (mapv #(get % :rh_object_uid) req-role2)
+                4714 (mapv #(get % :rh_object_uid) poss-roles)
+              })))))
 
 (defn retrieve-individual-model
   "Retrieve individual model for a given UID"
@@ -173,37 +179,48 @@
   (go
     (let [category (<! (get-category uid))
           facts (<! (retrieve-all-facts uid))
-          definitive-facts (<! (get-definitive-facts uid))
-    ;;     classification (get-related-on-uid-subtype-cone uid 1225)
+          definitive-facts (vec (<! (get-definitive-facts uid)))
+          classification (<! (get-related-on-uid-subtype-cone uid 1225))
         ]
-    ;; (when (and (seq classification) (seq definitive-facts))
-      (let [base-obj {:uid uid
-    ;;                  :name (get-in classification [0 :lh_object_name])
-                      :collection {:uid 0 :name ""}
-    ;;                  :collection {:uid (get-in definitive-facts [0 :collection_uid])
-    ;;                              :name (get-in definitive-facts [0 :collection_name])}
-    ;;                  1225 (mapv #(get % :rh_object_uid) classification)
-                     :type "individual"
-                     :category category
-                     ;; :definition ["is an individual"]
-                     :definition (mapv (fn [x]
-                                        {:fact_uid (:fact_uid x)
-                                         :partial_definition (:partial_definition x)
-                                         :full_definition (:full_definition x)})
-                                      definitive-facts)
-                     :facts facts
-                     }
-    ;;         value (get-related-on-uid-subtype-cone uid 5025)
-                    ] ; 'has on scale a value equal to'
-    ;;     (if (seq value)
-    ;;       (let [val-fact (first value)
-    ;;             val (Integer/parseInt (:rh_object_name val-fact))
-    ;;             uom {:uid (:uom_uid val-fact) :name (:uom_name val-fact)}]
-    ;;         (assoc base-obj :value {:quant val :uom uom}))
-        base-obj
-        )
-    ;;       )
-      )))
+      (log/info "FOOOOBAAARRR BAAAZZ:" category)
+      (log/info "FOOOOBAAARRR QUUUUX:" classification)
+      (log/info "QUUUUUUUUUUU QUUUUX:" definitive-facts)
+      (when (and (seq classification) (seq definitive-facts))
+        (let [name (get-in definitive-facts [0 :lh_object_name])
+              _ (log/info "Name:" name)
+              collection-uid (get-in definitive-facts [0 :collection_uid])
+              collection-name (get-in definitive-facts [0 :collection_name])
+              _ (log/info "Collection UID:" collection-uid)
+              _ (log/info "Collection name:" collection-name)
+              _ (log/info "Classification:" classification)
+              classification-uids (mapv #(get % :rh_object_uid) classification)
+              _ (log/info "Classification UIDs:" classification-uids)
+              definition (mapv (fn [x]
+                                 {:fact_uid (:fact_uid x)
+                                  :partial_definition (:partial_definition x)
+                                  :full_definition (:full_definition x)})
+                               definitive-facts)
+              _ (log/info "Definition:" definition)
+              base-obj {:uid uid
+                        :name name
+                        :collection {:uid collection-uid
+                                     :name collection-name}
+                        1225 classification-uids
+                        :type "individual"
+                        :category category
+                        :definition definition
+                        :facts facts}
+            value (get-related-on-uid-subtype-cone uid 5025)] ; 'has on scale a value equal to'
+        (log/info "Value:" value)
+        (log/info "Base object:" base-obj)
+        ;; (if (seq value)
+        ;;   (let [val-fact (first value)
+        ;;         val (Integer/parseInt (:rh_object_name val-fact))
+        ;;         uom {:uid (:uom_uid val-fact) :name (:uom_name val-fact)}]
+        ;;     (assoc base-obj :value {:quant val :uom uom}))
+        base-obj)))))
+;;)
+
 
 ;; (defn retrieve-qualification-model
 ;;   "Retrieve qualification model for a given UID"
