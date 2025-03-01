@@ -19,7 +19,26 @@
 ;; Server instance
 (defonce server-instance (atom nil))
 
-;; (defmethod ....
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :get/model
+  [{:keys [?data ?reply-fn] :as msg}]
+  (when ?reply-fn
+    (log/info (str "*************************** Getting model for user:" ?data))
+    (go
+      (try
+        (let [model-id (:uid ?data)
+              _ (log/info model-id)
+              model (<! (model-service/retrieve-model model-id))]
+          (log/info model)
+          (if model
+            (?reply-fn {:success true
+                        :model model})
+            (?reply-fn {:success false
+                        :error "Model not found"})))
+        (catch Exception e
+          (log/error e "Failed to get model")
+          {:error "Failed to get model"})))))
+
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :get/kind-model
   [{:keys [?data ?reply-fn] :as msg}]

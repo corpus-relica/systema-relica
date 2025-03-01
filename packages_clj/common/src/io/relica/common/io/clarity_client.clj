@@ -5,12 +5,24 @@
 
 
 (defprotocol ClarityOperations
+  (get-model [this uid])
   (get-kind-model[this kind-id])
   (get-individual-model[this individual-id])
   (send-heartbeat! [this]))
 
 (defrecord ClarityClient [ws-client options]
   ClarityOperations
+
+  (get-model
+    [this uid]
+    (tap> {:event :app/getting-model})
+    (tap> (ws/connected? ws-client))
+    (when-not (ws/connected? ws-client)
+      (ws/connect! ws-client))
+    (tap> {:event :app/sending-get-model})
+    (ws/send-message! ws-client :get/model
+                      {:uid uid}
+                      (:timeout options)))
   (get-kind-model
     [this kind-id]
     (tap> {:event :app/getting-kind-model})

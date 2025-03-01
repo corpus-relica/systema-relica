@@ -40,7 +40,7 @@ export const dataProvider: DataProvider = {
 
   getOne: async (resource: string, params: any): Promise<any> => {
     try {
-      const response = await portalClient.retrieveModels([params.uid]);
+      const response = await portalClient.retrieveModels([parseInt(params.uid)]);
       return {
         data: { ...response, id: response.uid },
       };

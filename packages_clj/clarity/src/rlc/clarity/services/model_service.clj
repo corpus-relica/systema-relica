@@ -121,6 +121,7 @@
   [uid]
   {:aspects [] :involved []})
 
+
 (defn retrieve-kind-model
   "Retrieve kind model for a given UID"
   [uid]
@@ -219,7 +220,34 @@
         ;;         uom {:uid (:uom_uid val-fact) :name (:uom_name val-fact)}]
         ;;     (assoc base-obj :value {:quant val :uom uom}))
         base-obj)))))
-;;)
+
+
+(defn retrieve-model
+  [uid]
+  (go
+    (let [type-res (<! (archivist/get-entity-type archivist-client uid))
+          type (:type type-res)]
+      (log/info "Entity type:" type)
+      (cond
+        (= type "kind") (<! (retrieve-kind-model uid))
+        (= type "individual") (<! (retrieve-individual-model uid))
+        ;; (= type "qualification") (<! (retrieve-qualification-model uid))
+        (= uid 730000) {:uid uid
+                       :name "anything"
+                       :type "kind"
+                       :category "anything"
+                       :definition "is an anything"
+                       :facts []
+                       1146 []
+                       1225 []
+                       1981 []
+                       1986 []
+                       4731 []
+                       4733 []
+                       4714 []}
+        :else (do
+                (log/error "Unknown entity type for UID:" uid)
+                nil)))))
 
 
 ;; (defn retrieve-qualification-model

@@ -195,6 +195,22 @@
 
 ;; ---------------------------------------------------------------------------
 
+(defn handle-get-model [{:keys [params]}]
+  (go
+    (tap> "---------------------- GET MODEL")
+    (tap> params)
+    (try
+      (let [uids (:uids params)
+            uid (parse-long (first uids))
+            response (<! (clarity/get-model clarity-client uid))]
+        (tap> "---------------------- GET MODEL RESPONSE")
+        (tap> response)
+        (if (:success response)
+          (success-response (:model response))
+          (error-response (or (:error response) "Unknown error"))))
+      (catch Exception e
+        (error-response "Failed to get model")))))
+
 (defn handle-get-kind-model [{:keys [params]}]
   (go
     (tap> "---------------------- GET KIND MODEL")
@@ -222,3 +238,4 @@
           (error-response (or (:error response) "Unknown error"))))
       (catch Exception e
         (error-response "Failed to get individual model")))))
+

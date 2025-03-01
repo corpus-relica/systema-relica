@@ -11,6 +11,7 @@
                                            handle-get-collections
                                            handle-get-entity-type
                                            handle-text-search
+                                           handle-get-model
                                            handle-get-kind-model
                                            handle-get-individual-model]]
    [io.relica.portal.middleware :refer [wrap-jwt-auth
@@ -77,6 +78,17 @@
                                     wrap-async-handler
                                     wrap-jwt-auth))
   ;; Model routes
+
+  (OPTIONS "/model" []
+    {:status 200
+     :headers {"Access-Control-Allow-Origin" "*"
+               "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+               "Access-Control-Allow-Headers" "Content-Type, Authorization"
+               "Access-Control-Max-Age" "3600"}})
+
+  (GET "/model" [] (-> handle-get-model
+                       wrap-async-handler
+                       wrap-jwt-auth))
 
   (OPTIONS "/model/kind" []
     {:status 200
