@@ -15,7 +15,8 @@ import KindContextRoleSubmenu from "./submenu/Role";
 import KindContextRelationSubmenu from "./submenu/Relation";
 import KindContextOccurrenceSubmenu from "./submenu/Occurrence";
 
-import { sockSendCC } from "../../../socket";
+import { sockSendCC,
+         sendSocketMessage} from "../../../socket";
 
 import {
   getAllRelatedFacts,
@@ -80,7 +81,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       const value = e.currentTarget.getAttribute("value");
       switch (value) {
         case LOAD_SH:
-          sockSendCC("user", "loadSpecializationHierarchy", { uid });
+          sendSocketMessage("loadSpecializationHierarchy", { uid });
           handleClose();
           break;
         case LOAD_CLASSIFIED:
@@ -102,7 +103,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_ALL_RELATED:
-          sockSendCC("user", "loadAllRelatedFacts", { uid });
+          sendSocketMessage("loadAllRelatedFacts", { uid });
           handleClose();
           break;
         case LOAD_SUBTYPES:
@@ -124,15 +125,15 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_SUBTYPES_CONE:
-          sockSendCC("user", "loadSubtypesCone", { uid });
+          sendSocketMessage("loadSubtypesCone", { uid });
           handleClose();
           break;
         case UNLOAD_THIS:
-          sockSendCC("user", "unloadEntity", { uid });
+          sendSocketMessage("unloadEntity", { uid });
           handleClose();
           break;
         case UNLOAD_SUBTYPES_CONE:
-          sockSendCC("user", "unloadSubtypesCone", { uid });
+          sendSocketMessage("unloadSubtypesCone", { uid });
           handleClose();
           break;
         case DELETE_THIS:

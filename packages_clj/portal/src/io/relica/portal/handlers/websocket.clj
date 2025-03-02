@@ -19,6 +19,7 @@
 ;; Helper functions
 
 (defn get-environment-id [client-id]
+  (tap> @connected-clients)
   (get-in @connected-clients [client-id :environment-id]))
 
 (defn broadcast-to-environment [environment-id message]
@@ -105,6 +106,23 @@
       (catch Exception e
         (log/error "Failed to clear environment entities:" e)
         {:error "Failed to clear environment entities"}))))
+
+(defn handle-load-all-related-facts [{:keys [uid] :as message}]
+  (tap> "LOADING ALL RELATED FACTS")
+  (tap> uid)
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id (:client-id message))
+            _ (tap> "FOUND ENVIRONMENT ID")
+            _ (tap> environment-id)
+            result (<! (aperture/load-all-related-facts aperture-client (:user-id message) environment-id uid))]
+        {:success true
+         :message "All related facts loaded"
+         :facts result})
+      (catch Exception e
+        (log/error "Failed to load all related facts:" e)
+        {:error "Failed to load all related facts"}))))
 
 ;; Event handlers
 
@@ -221,7 +239,8 @@
    "selectEntity" handle-select-entity
    "selectNone" handle-select-entity-none
    "loadSpecializationHierarchy" load-specialization-hierarchy
-   "clearEnvironmentEntities"handle-clear-environment-entities})
+   "clearEnvironmentEntities"handle-clear-environment-entities
+   "loadAllRelatedFacts" handle-load-all-related-facts})
 
 ;; Set up event listener
 

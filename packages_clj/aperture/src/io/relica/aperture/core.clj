@@ -108,6 +108,38 @@
   )
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-all-related-facts
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (try
+      (let [result (<! (archivist/get-all-related archivist-client (:entity-uid ?data)))
+            _ (tap> "GOT ALL RELATED FACTS RESULT:::::::::::::::::::")
+            _ (tap> result)
+            _ (tap> ?data)
+            user-id (:user-id ?data)
+            env-id (:environment-id ?data)
+            env (get-user-environment user-id env-id)
+            _ (tap> "ENv")
+            _ (tap> env)
+            old-facts (:facts env)
+            facts (:facts result)
+            new-facts (concat old-facts facts)
+            env (when facts
+                  (update-user-environment! user-id env-id {:facts new-facts}))]
+        (?reply-fn env)
+        (ws/broadcast!
+         ;; @server-instance
+         {:type :facts/loaded
+          :facts (:facts env)
+          :user-id (:user-id ?data)
+          :environment-id env-id}
+         10))
+      (catch Exception e
+        (log/error e "Failed to load all related facts")
+        (?reply-fn {:error "Failed to load all related facts"}))))
+  )
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/clear-entities
   [{:keys [?data ?reply-fn] :as msg}]
   (tap> (str "Handling environment/clear-entities"))

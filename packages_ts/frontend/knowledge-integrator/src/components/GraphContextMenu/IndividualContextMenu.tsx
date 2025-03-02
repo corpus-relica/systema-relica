@@ -9,7 +9,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
-import { sockSendCC } from "../../socket";
+import { sendSocketMessage } from "../../socket";
 
 const SHOW_ALL = "show 'all'";
 const REM_THIS = "rem this";
@@ -43,11 +43,13 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       console.log(`Clicked item with value: ${value}`);
       switch (value) {
         case SHOW_ALL:
-          sockSendCC("user", "loadAllRelatedFacts", { uid });
+          // sockSendCC("user", "loadAllRelatedFacts", { uid });
+          sendSocketMessage("loadAllRelatedFacts", { uid });
           handleClose();
           break;
         case REM_THIS:
-          sockSendCC("user", "unloadEntity", { uid });
+          // sockSendCC("user", "unloadEntity", { uid });
+          sendSocketMessage("unloadEntity", { uid });
           handleClose();
           break;
         case DELETE_THIS:
