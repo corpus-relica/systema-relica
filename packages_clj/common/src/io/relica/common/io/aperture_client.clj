@@ -11,6 +11,7 @@
   (load-specialization-hierarchy [this user-id uid])
   (clear-environment-entities [this user-id env-id])
   (load-all-related-facts [this user-id env-id entity-uid])
+  (unload-entity [this user-id env-id entity-uid])
   (update-environment! [this user-id env-id updates])
   (select-entity [this user-id env-id entity-uid])
   (select-entity-none [this user-id env-id])
@@ -60,6 +61,14 @@
   (load-all-related-facts [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
     (ws/send-message! ws-client :environment/load-all-related-facts
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uid entity-uid}
+                      (:timeout options)))
+
+  (unload-entity [this user-id env-id entity-uid]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/unload-entity
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}

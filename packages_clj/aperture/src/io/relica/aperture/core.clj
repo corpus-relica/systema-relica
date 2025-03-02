@@ -140,6 +140,68 @@
   )
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/unload-entity
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (try
+      (let [env-id (:environment-id ?data)
+            user-id (:user-id ?data)
+            entity-uid (:entity-uid ?data)
+            env (get-user-environment user-id env-id)
+            facts (:facts env)
+            ;; Find facts to remove (those where the entity is on either side)
+            facts-to-remove (filter #(or (= entity-uid (:lh_object_uid %)) 
+                                         (= entity-uid (:rh_object_uid %))) 
+                                   facts)
+            ;; Find facts to keep
+            remaining-facts (remove #(or (= entity-uid (:lh_object_uid %)) 
+                                         (= entity-uid (:rh_object_uid %)))
+                                   facts)
+            ;; Get UIDs of facts to remove
+            fact-uids-to-remove (mapv :fact_uid facts-to-remove)
+            
+            ;; Find candidate model UIDs to remove
+            ;; These are models that might need to be removed if they're not referenced by remaining facts
+            candidate-model-uids-to-remove (-> #{}
+                                              (into (map :lh_object_uid facts-to-remove))
+                                              (into (map :rh_object_uid facts-to-remove)))
+            
+            ;; Remove models from candidates if they're still referenced in remaining facts
+            final-model-uids-to-remove (loop [models candidate-model-uids-to-remove
+                                             remaining remaining-facts]
+                                        (if (empty? remaining)
+                                          models
+                                          (let [fact (first remaining)
+                                                lh-uid (:lh_object_uid fact)
+                                                rh-uid (:rh_object_uid fact)
+                                                models (cond-> models
+                                                         (contains? models lh-uid) (disj lh-uid)
+                                                         (contains? models rh-uid) (disj rh-uid))]
+                                            (recur models (rest remaining)))))
+            
+            ;; Update environment with remaining facts
+            updated (when env
+                     (update-user-environment! user-id env-id {:facts remaining-facts}))]
+        
+        (tap> (str "Unloaded entity " entity-uid " from environment " env-id))
+        (tap> (str "Removed " (count facts-to-remove) " facts and " (count final-model-uids-to-remove) " models"))
+        (tap> ?data)
+        
+        (?reply-fn updated)
+        (ws/broadcast!
+         ;; @server-instance
+         {:type :facts/unloaded
+          :fact-uids fact-uids-to-remove
+          :model-uids (vec final-model-uids-to-remove)
+          :user-id (:user-id ?data)
+          :environment-id env-id}
+         10))
+      (catch Exception e
+        (log/error e "Failed to unload entity")
+        (?reply-fn {:error "Failed to unload entity"}))))
+  )
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/clear-entities
   [{:keys [?data ?reply-fn] :as msg}]
   (tap> (str "Handling environment/clear-entities"))

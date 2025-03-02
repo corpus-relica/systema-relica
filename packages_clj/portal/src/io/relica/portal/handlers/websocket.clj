@@ -184,6 +184,24 @@
                                          :user_id (:user-id payload)
                                          :environment_id (:environment-id payload)
                                          }})))
+
+(defn handle-unload-entity [{:keys [uid client-id] :as message}]
+  (tap> "UNLOAD ENTITY")
+  (tap> uid)
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            ;; _ (tap> "FOUND ENVIRONMENT ID")
+            ;; _ (tap> environment-id)
+            ;; _ (tap> @connected-clients)
+            result (<! (aperture/unload-entity aperture-client (:user-id message) environment-id uid))]
+        {:success true
+         :message "Entity unloaded"})
+      (catch Exception e
+        (log/error "Failed to unload entity:" e)
+        {:error "Failed to unload entity"}))))
+
 ;; Core
 
 (defn handle-ping [_]
@@ -240,7 +258,8 @@
    "selectNone" handle-select-entity-none
    "loadSpecializationHierarchy" load-specialization-hierarchy
    "clearEnvironmentEntities"handle-clear-environment-entities
-   "loadAllRelatedFacts" handle-load-all-related-facts})
+   "loadAllRelatedFacts" handle-load-all-related-facts
+   "unloadEntity" handle-unload-entity})
 
 ;; Set up event listener
 
