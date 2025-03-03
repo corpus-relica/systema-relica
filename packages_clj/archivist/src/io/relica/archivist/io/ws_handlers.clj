@@ -53,6 +53,23 @@
                         :error "Failed to get definitive facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-relating-entities
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                 :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (<! (fact-service/get-facts-relating-entities fact-s (:uid1 ?data) (:uid2 ?data)))]
+            (?reply-fn {:success true
+                       :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get facts relating entities")
+            (?reply-fn {:success false
+                       :error "Failed to get facts relating entities"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :fact/get-related-on-uid-subtype-cone
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn

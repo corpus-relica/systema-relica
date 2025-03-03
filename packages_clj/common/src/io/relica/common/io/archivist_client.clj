@@ -42,6 +42,7 @@
   (update-fact [this uid fact-data])
   (delete-fact [this uid])
   (get-definitive-facts[this uid])
+  (get-facts-relating-entities [this uid1 uid2])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
   (get-classified [this uid])
 
@@ -209,6 +210,10 @@
   (get-definitive-facts [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
+
+  (get-facts-relating-entities [this uid1 uid2]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-relating-entities {:uid1 uid1 :uid2 uid2} (:timeout options)))
 
   (get-classified [this uid]
     (when-not (connected? this) (connect! this))

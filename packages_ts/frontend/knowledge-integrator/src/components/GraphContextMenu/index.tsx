@@ -7,7 +7,7 @@ import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
 import DeleteFactDialogue from "./DeleteFactDialogue";
-import { portalSocket } from "../../socket";
+import { sendSocketMessage } from "../../socket";
 
 interface GraphContextMenuProps {
   open: boolean;
@@ -161,8 +161,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           handleOk={(selected: number[], notSelected: number[]) => {
             setSubtypesDialogueIsOpen(false);
 
-            portalSocket.sendSocketMessage("loadEntities", { uids: selected });
-            portalSocket.sendSocketMessage("unloadEntities", { uids: notSelected });
+            sendSocketMessage("loadEntities", { uids: selected });
+            sendSocketMessage("unloadEntities", { uids: notSelected });
 
           }}
         />
@@ -179,8 +179,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           handleOk={(selected: number[], notSelected: number[]) => {
             setClassifiedDialogueIsOpen(false);
 
-            portalSocket.sendSocketMessage("loadEntities", { uids: selected });
-            portalSocket.sendSocketMessage("unloadEntities", { uids: notSelected });
+            sendSocketMessage("loadEntities", { uids: selected });
+            sendSocketMessage("unloadEntities", { uids: notSelected });
 
           }}
         />
