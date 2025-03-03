@@ -12,6 +12,8 @@
   (clear-environment-entities [this user-id env-id])
   (load-all-related-facts [this user-id env-id entity-uid])
   (unload-entity [this user-id env-id entity-uid])
+  (load-entitites [this user-id env-id entity-uids])
+  (unload-entities [this user-id env-id entity-uids])
   (update-environment! [this user-id env-id updates])
   (select-entity [this user-id env-id entity-uid])
   (select-entity-none [this user-id env-id])
@@ -72,6 +74,22 @@
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
+                      (:timeout options)))
+
+  (load-entitites [this user-id env-id entity-uids]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/load-entities
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uids entity-uids}
+                      (:timeout options)))
+
+  (unload-entities [this user-id env-id entity-uids]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/unload-entities
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uids entity-uids}
                       (:timeout options)))
 
   (update-environment! [this user-id env-id updates]

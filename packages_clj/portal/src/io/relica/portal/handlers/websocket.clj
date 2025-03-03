@@ -185,6 +185,8 @@
                                          :environment_id (:environment-id payload)
                                          }})))
 
+(defn handle-load-entity [{:keys [uid client-id] :as message}])
+
 (defn handle-unload-entity [{:keys [uid client-id] :as message}]
   (tap> "UNLOAD ENTITY")
   (tap> uid)
@@ -201,6 +203,40 @@
       (catch Exception e
         (log/error "Failed to unload entity:" e)
         {:error "Failed to unload entity"}))))
+
+(defn handle-load-entities [{:keys [uids client-id] :as message}]
+  (tap> "LOAD ENTITIES")
+  (tap> uids)
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            ;; _ (tap> "FOUND ENVIRONMENT ID")
+            ;; _ (tap> environment-id)
+            ;; _ (tap> @connected-clients)
+            result (<! (aperture/load-entities aperture-client (:user-id message) environment-id uids))]
+        {:success true
+         :message "Entities loaded"})
+      (catch Exception e
+        (log/error "Failed to load entities:" e)
+        {:error "Failed to load entities"}))))
+
+(defn handle-unload-entities [{:keys [uids client-id] :as message}]
+  (tap> "UNLOAD ENTITIES")
+  (tap> uids)
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            ;; _ (tap> "FOUND ENVIRONMENT ID")
+            ;; _ (tap> environment-id)
+            ;; _ (tap> @connected-clients)
+            result (<! (aperture/unload-entities aperture-client (:user-id message) environment-id uids))]
+        {:success true
+         :message "Entities unloaded"})
+      (catch Exception e
+        (log/error "Failed to unload entities:" e)
+        {:error "Failed to unload entities"}))))
 
 ;; Core
 
@@ -259,7 +295,10 @@
    "loadSpecializationHierarchy" load-specialization-hierarchy
    "clearEnvironmentEntities"handle-clear-environment-entities
    "loadAllRelatedFacts" handle-load-all-related-facts
-   "unloadEntity" handle-unload-entity})
+   "unloadEntity" handle-unload-entity
+   "loadEntities"handle-load-entities
+   "unloadEntities"handle-unload-entities
+   })
 
 ;; Set up event listener
 

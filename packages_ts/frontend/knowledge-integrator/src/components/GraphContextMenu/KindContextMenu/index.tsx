@@ -22,9 +22,12 @@ import {
   getAllRelatedFacts,
   getSubtypes,
   getSubtypesCone,
-  getClassified,
   getSpecializationHierarchy,
 } from "../../../io/ArchivistBaseClient.js";
+
+import {
+  portalClient
+} from "../../../io/PortalClient.js";
 
 import { useStores } from "../../../context/RootStoreContext";
 import { Fact } from "../../../types";
@@ -85,7 +88,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_CLASSIFIED:
-          const classified = await getClassified(uid);
+          const classified = await portalClient.getClassified(uid);
           const existingClassified = classified
             .filter((individual: any) => {
               const foo = factDataStore.findDefinitiveFacts(

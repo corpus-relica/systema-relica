@@ -239,3 +239,16 @@
       (catch Exception e
         (error-response "Failed to get individual model")))))
 
+(defn handle-get-classified[{:keys [params]}]
+  (go
+    (tap> "---------------------- GET CLASSIFIED")
+    (try
+      (let [uid (some-> params :uid parse-long)
+            response (<! (archivist/get-classified archivist-client uid))]
+        (tap> "---------------------- GET CLASSIFIED RESPONSE")
+        (tap> response)
+        (if (:success response)
+          (success-response (:facts response))
+          (error-response (or (:error response) "Unknown error"))))
+      (catch Exception e
+        (error-response "Failed to get classified")))))

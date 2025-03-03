@@ -43,6 +43,7 @@
   (delete-fact [this uid])
   (get-definitive-facts[this uid])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
+  (get-classified [this uid])
 
   ;; Individual operations
   (get-individual [this uid])
@@ -209,6 +210,9 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
 
+  (get-classified [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-classified {:uid uid} (:timeout options)))
 
   ;; Individual operations
 

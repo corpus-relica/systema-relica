@@ -7,6 +7,7 @@ import {
   GET_DEFINITION_ENDPOINT,
   ALL_RELATED_FACTS_ENDPOINT,
   SUBMIT_BINARY_FACT_ENDPOINT,
+  CLASSIFIED_ENDPOINT,
 } from "@relica/constants";
 
 console.log("Creating PortalClient instance...");
@@ -155,6 +156,13 @@ class PortalClient {
       SUBMIT_BINARY_FACT_ENDPOINT,
       fact
     );
+    return response.data;
+  }
+
+  async getClassified(uid: number) {
+    const response = await this.axiosInstance.get(CLASSIFIED_ENDPOINT, {
+      params: { uid },
+    });
     return response.data;
   }
 

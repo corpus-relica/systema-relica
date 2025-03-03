@@ -45,14 +45,19 @@
         (flatten facts))))
 
   (get-classified [this uid recursive]
+    (tap> "------------------- GET CLASSIFIED -------------------")
+    (tap> uid)
+    (tap> recursive)
     (go
       (try
         (let [direct-results (graph/exec-query graph-service
                                                queries/classified
                                                {:uid uid})
+              _ (tap> "------------------- GET CLASSIFIED -------------------")
+              _ (tap> direct-results)
               direct-classified (if (empty? direct-results)
                                   []
-                                  (graph/transform-results graph-service direct-results))]
+                                  (graph/transform-results direct-results))]
           (tap> (str "Direct classified: " direct-classified))
           (tap> direct-results)
           (if-not recursive

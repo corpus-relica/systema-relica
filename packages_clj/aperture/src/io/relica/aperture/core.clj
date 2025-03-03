@@ -140,6 +140,36 @@
   )
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-entity
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (try
+      (let [
+            result (<! (archivist/get-entity archivist-client (:entity-uid ?data)))
+            user-id (:user-id ?data)
+            env-id (or
+                    (:environment-id ?data)
+                    (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            new-facts (concat old-facts facts)
+            env (when facts
+                  (update-user-environment! user-id env-id {:facts new-facts}))]
+        (?reply-fn env)
+        (ws/broadcast!
+         ;; @server-instance
+         {:type :facts/loaded
+          :facts (:facts env)
+          :user-id (:user-id ?data)
+          :environment-id env-id}
+         10))
+      (catch Exception e
+        (log/error e "Failed to load entity")
+        (?reply-fn {:error "Failed to load entity"}))))
+  )
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/unload-entity
   [{:keys [?data ?reply-fn] :as msg}]
   (go
@@ -200,6 +230,40 @@
         (log/error e "Failed to unload entity")
         (?reply-fn {:error "Failed to unload entity"}))))
   )
+
+    ;; replEnv.set(
+    ;;   MalSymbol.get('loadEntities'),
+    ;;   MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+    ;;     if (!(arg instanceof MalVector)) {
+    ;;       throw new Error('loadEntities: expected vector argument');
+    ;;     }
+    ;;     let facts: Fact[] = [];
+    ;;     let models: any[] = [];
+    ;;     const entityIds = malToJs(arg);
+    ;;     for (let i = 0; i < entityIds.length; i++) {
+    ;;       const payload = await this.environment.loadEntity(entityIds[i]);
+    ;;       facts = facts.concat(payload.facts);
+    ;;       models = models.concat(payload.models);
+    ;;     }
+    ;;     return jsToMal({ facts, models });
+    ;;   }),
+    ;; );
+
+    ;; replEnv.set(
+    ;;   MalSymbol.get('unloadEntities'),
+    ;;   MalFunction.fromBootstrap(async (arg: MalType): Promise<MalType> => {
+    ;;     if (!(arg instanceof MalVector)) {
+    ;;       throw new Error('unloadEntities: expected vector argument');
+    ;;     }
+    ;;     console.log('unloadEntities', malToJs(arg));
+    ;;     const removedFacts = await this.environment.removeEntities(
+    ;;       malToJs(arg),
+    ;;     );
+    ;;     return jsToMal(removedFacts);
+    ;;   }),
+    ;; );
+
+
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/clear-entities

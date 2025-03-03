@@ -13,7 +13,8 @@
                                            handle-text-search
                                            handle-get-model
                                            handle-get-kind-model
-                                           handle-get-individual-model]]
+                                           handle-get-individual-model
+                                           handle-get-classified]]
    [io.relica.portal.middleware :refer [wrap-jwt-auth
                                         wrap-async-handler]]))
 
@@ -109,6 +110,18 @@
               "Access-Control-Max-Age" "3600"}
            })
   (GET "/model/individual" [] (-> handle-get-individual-model
+                                  wrap-async-handler
+                                  wrap-jwt-auth))
+
+
+  (OPTIONS "/fact/classified" []
+    {:status 200
+    :headers {"Access-Control-Allow-Origin" "*"
+              "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+              "Access-Control-Allow-Headers" "Content-Type, Authorization"
+              "Access-Control-Max-Age" "3600"}
+           })
+  (GET "/fact/classified" [] (-> handle-get-classified
                                   wrap-async-handler
                                   wrap-jwt-auth))
 

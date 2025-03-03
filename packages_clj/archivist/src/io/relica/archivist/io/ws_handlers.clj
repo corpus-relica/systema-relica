@@ -67,7 +67,6 @@
                        fact-s
                        (:lh-object-uid ?data)
                        (:rel-type-uid ?data)))]
-            (tap> "GOOOOOOOOOOOOT      DEEEEEEEEFFFFFFFIIIIIIIIIIIIINNNNNNNNIIIIIIIIITTTTTTTTTTIIIIIIIIIVVVVVVVVEEEEEEE")
             (tap> facts)
             (?reply-fn {:success true
                         :facts facts}))
@@ -75,6 +74,27 @@
             (log/error e "Failed to get related on uid subtype cone facts")
             (?reply-fn {:success false
                         :error "Failed to get related on uid subtype cone facts"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-classified
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (tap> {:event :websocket/getting-classified-facts
+           :entity-service fact-s})
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (<! (fact-service/get-classified fact-s (:uid ?data) (or (:recursive ?data) false)))]
+            (tap> "GOOOOOOOOOOOOT      DEEEEEEEEFFFFFFFIIIIIIIIIIIIINNNNNNNNIIIIIIIIITTTTTTTTTTIIIIIIIIIVVVVVVVVEEEEEEE")
+            (tap> facts)
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get classified facts")
+            (?reply-fn {:success false
+                        :error "Failed to get classified facts"})))))))
 
 ;; ENTITY SERVICE
 
