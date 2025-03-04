@@ -33,33 +33,44 @@
 (defrecord FactService [graph-service gellish-base-service cache-service concept-service uid-service]
   FactOperations
   (get-subtypes [_ uid]
-    (let [result (graph/exec-query graph-service queries/subtypes {:uid uid})]
-      (->> result
-           (map #(get-in % [:r :properties]))
-           (map #(into {} %)))))
+    (let [result (graph/exec-query graph-service queries/subtypes {:uid uid})
+          transformed-result (graph/transform-results result)]
+      (tap> "TF???????????????????????????????????????")
+      (tap> transformed-result)
+      transformed-result))
 
   (get-subtypes-cone [this uid]
+    (tap> "------------------- GET SUBTYPES CONE DAMNIT! -------------------")
+    (tap> uid)
     (go
-      (let [subtypes (<! (cache/all-descendants-of cache-service uid))
-            facts (map #(get-subtypes this %) subtypes)]
-        (flatten facts))))
+      (let [;; Get all descendants
+            subtypes (cache/all-descendants-of cache-service uid)
+            _ (tap> "------------------- GET SUBTYPES CONE -------------------")
+            _ (tap> subtypes)
+            
+            ;; Get facts about the root entity itself to ensure the connection
+            root-facts (get-subtypes this uid)
+            _ (tap> "------------------- ROOT ENTITY SUBTYPES -------------------")
+            _ (tap> root-facts)
+            
+            ;; Get facts about all descendants
+            descendant-facts (map #(get-subtypes this %) subtypes)
+            _ (tap> "------------------- GET SUBTYPES CONE FACTS -------------------")
+            _ (tap> descendant-facts)
+            
+            ;; Combine root facts with descendant facts
+            all-facts (cons root-facts descendant-facts)]
+        (flatten all-facts))))
 
   (get-classified [this uid recursive]
-    (tap> "------------------- GET CLASSIFIED -------------------")
-    (tap> uid)
-    (tap> recursive)
     (go
       (try
         (let [direct-results (graph/exec-query graph-service
                                                queries/classified
                                                {:uid uid})
-              _ (tap> "------------------- GET CLASSIFIED -------------------")
-              _ (tap> direct-results)
               direct-classified (if (empty? direct-results)
                                   []
                                   (graph/transform-results direct-results))]
-          (tap> (str "Direct classified: " direct-classified))
-          (tap> direct-results)
           (if-not recursive
             direct-classified
             (let [subtypes (<! (cache/all-descendants-of cache-service uid))
@@ -78,8 +89,6 @@
            (map #(into {} %)))))
 
   (get-all-related-facts [_ uid]
-    (tap> "------------------- GET ALL RELATED FACTS -------------------")
-    (tap> cache-service)
     (go
       (try
         (let [;; Get all specialization subtypes to exclude
@@ -96,18 +105,12 @@
                                              {:start_uid uid
                                               :rel_type_uids rel-type-uids})
               res-2850 (graph/transform-results results-2850)
-              _ (tap> res-2850)
               results-2850b (graph/exec-query
                              graph-service
                              queries/all-related-facts-d
                              {:start_uid uid
                               :rel_type_uids rel-type-uids})
               res-2850b (graph/transform-results results-2850b)]
-          (tap> "------------------- GET ALL RELATED FACTS RESULT -------------------")
-          (tap> results-2850)
-          (tap> results-2850b)
-          (tap> res-2850)
-          (tap> (concat res-2850 res-2850b))
           (concat res-2850 res-2850b))
         (catch Exception e
           (log/error "Error in get-all-related-facts:" (ex-message e))
@@ -153,15 +156,11 @@
           []))))
 
   (get-related-on-uid-subtype-cone [_ lh-object-uid rel-type-uid]
-    (tap> "------------------- GET RELATED ON UID SUBTYPE CONE -------------------")
     (go
       (try
         (let [;; Get all subtypes of the relation type
               subtypes-of-rel-type (cache/all-descendants-of cache-service rel-type-uid)
               all-rel-types (conj subtypes-of-rel-type rel-type-uid)
-
-              _ (tap> "------------------- GET RELATED ON UID SUBTYPE CONE SUBTYPES -------------------")
-              _ (tap> all-rel-types)
 
               ;; Get all facts involving the entity with the specified relation types
               results (graph/exec-query graph-service
@@ -169,10 +168,6 @@
                                         {:start_uid lh-object-uid
                                          :rel_type_uids all-rel-types})
               res (graph/transform-results results)
-
-              _ (tap> "------------------- GET RELATED ON UID SUBTYPE CONE RESULTS -------------------")
-              _ (tap> results)
-              _ (tap> res)
 
               ;; Filter out duplicates
               unique-results (filter (fn [item]
@@ -188,8 +183,6 @@
                                               (fn [idx _] idx)
                                               (filter #(= (:fact_uid %) (:fact_uid item)) res))))))
                                      res)]
-          (tap> "------------------- GET RELATED ON UID SUBTYPE CONE UNIQUE RESULTS -------------------")
-          (tap> unique-results)
           unique-results)
         (catch Exception e
           (log/error "Error in get-related-on-uid-subtype-cone:" (ex-message e))

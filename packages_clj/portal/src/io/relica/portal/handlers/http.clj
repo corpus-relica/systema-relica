@@ -196,12 +196,9 @@
 
 (defn handle-get-kind-model [{:keys [params]}]
   (go
-    (tap> "---------------------- GET KIND MODEL")
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (clarity/get-kind-model clarity-client uid))]
-        (tap> "---------------------- GET KIND MODEL RESPONSE")
-        (tap> response)
         (if (:success response)
           (success-response (:model response))
           (error-response (or (:error response) "Unknown error"))))
@@ -210,12 +207,9 @@
 
 (defn handle-get-individual-model [{:keys [params]}]
   (go
-    (tap> "---------------------- GET INDIVIDUAL MODEL")
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (clarity/get-individual-model clarity-client uid))]
-        (tap> "---------------------- GET INDIVIDUAL MODEL RESPONSE")
-        (tap> response)
         (if (:success response)
           (success-response (:model response))
           (error-response (or (:error response) "Unknown error"))))
@@ -224,14 +218,35 @@
 
 (defn handle-get-classified[{:keys [params]}]
   (go
-    (tap> "---------------------- GET CLASSIFIED")
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (archivist/get-classified archivist-client uid))]
-        (tap> "---------------------- GET CLASSIFIED RESPONSE")
-        (tap> response)
         (if (:success response)
           (success-response (:facts response))
           (error-response (or (:error response) "Unknown error"))))
       (catch Exception e
         (error-response "Failed to get classified")))))
+
+(defn handle-get-subtypes[{:keys [params]}]
+  (go
+    (try
+      (let [uid (some-> params :uid parse-long)
+            response (<! (archivist/get-subtypes archivist-client uid))]
+        (tap> "SUKKH MAH DICK")
+        (tap> response)
+        (if (:success response)
+          (success-response (:facts response))
+          (error-response (or (:error response) "Unknown error"))))
+      (catch Exception e
+        (error-response "Failed to get subtypes")))))
+
+(defn handle-get-subtypes-cone[{:keys [params]}]
+  (go
+    (try
+      (let [uid (some-> params :uid parse-long)
+            response (<! (archivist/get-subtypes-cone archivist-client uid))]
+        (if (:success response)
+          (success-response (:facts response))
+          (error-response (or (:error response) "Unknown error"))))
+      (catch Exception e
+        (error-response "Failed to get subtypes cone")))))

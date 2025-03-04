@@ -84,7 +84,6 @@
                        fact-s
                        (:lh-object-uid ?data)
                        (:rel-type-uid ?data)))]
-            (tap> facts)
             (?reply-fn {:success true
                         :facts facts}))
           (catch Exception e
@@ -96,16 +95,12 @@
   :fact/get-classified
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
-    (tap> {:event :websocket/getting-classified-facts
-           :entity-service fact-s})
     (if (nil? fact-s)
       (?reply-fn {:success false
                   :error "fact service not initialized"})
       (go
         (try
           (let [facts (<! (fact-service/get-classified fact-s (:uid ?data) (or (:recursive ?data) false)))]
-            (tap> "GOOOOOOOOOOOOT      DEEEEEEEEFFFFFFFIIIIIIIIIIIIINNNNNNNNIIIIIIIIITTTTTTTTTTIIIIIIIIIVVVVVVVVEEEEEEE")
-            (tap> facts)
             (?reply-fn {:success true
                         :facts facts}))
           (catch Exception e
@@ -113,34 +108,63 @@
             (?reply-fn {:success false
                         :error "Failed to get classified facts"})))))))
 
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-subtypes
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (fact-service/get-subtypes fact-s (:uid ?data))]
+    ;; (tap> {:event :websocket/getting-subtypes-facts
+    ;;        :facts facts})
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get subtypes facts")
+            (?reply-fn {:success false
+                        :error "Failed to get subtypes facts"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-subtypes-cone
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (<! (fact-service/get-subtypes-cone fact-s (:uid ?data)))]
+            (tap> "______________________________________________________")
+            (tap> facts)
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get subtypes cone facts")
+            (?reply-fn {:success false
+                        :error "Failed to get subtypes cone facts"})))))))
+
 ;; ENTITY SERVICE
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :entities/resolve
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
-  (tap> {:event :websocket/handling-entities-resolve
-         :data ?data
-         :full-msg msg})
   (when ?reply-fn
     (let [result (gellish-base-service/get-entities gellish-base-s (:uids ?data))]
-      (tap> {:event :websocket/sending-resolve-response
-             :result result})
       (?reply-fn {:resolved true :data result}))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :entity/category
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
-    (tap> {:event :websocket/getting-entity-category
-           :entity-service gellish-base-s})
     (if (nil? gellish-base-s)
       (?reply-fn {:success false
                   :error "Entity service not initialized"})
       (go
         (try
           (let [category (gellish-base-service/get-entity-category gellish-base-s (:uid ?data))]
-            (tap> "Got entity category !!!!!!!!!!!1")
-            (tap> category)
             (?reply-fn {:success true
                         :category category}))
           (catch Exception e
@@ -152,8 +176,6 @@
   :entity/collections
   [{:keys [?data ?reply-fn entity-s] :as msg}]
   (when ?reply-fn
-    (tap> {:event :websocket/getting-collections
-           :entity-service entity-s})
     (if (nil? entity-s)
       (?reply-fn {:success false
                   :error "Entity service not initialized"})
@@ -171,13 +193,11 @@
   :entity/type
   [{:keys [?data ?reply-fn entity-s] :as msg}]
   (when ?reply-fn
-    (tap> (str "Getting entity type for uid:" (:uid ?data)))
     (go
       (try
         (if-let [entity-type (<! (entity/get-entity-type entity-s (:uid ?data)))]
-          (do (tap> (str "found entity type for uid:" (:uid ?data) " " entity-type))
-              (?reply-fn {:success true
-                         :type entity-type}))
+          (?reply-fn {:success true
+                     :type entity-type})
           (?reply-fn {:error "Entity type not found"}))
         (catch Exception e
           (log/error e "Failed to get entity type")
@@ -188,18 +208,10 @@
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :kinds/list
   [{:keys [?data ?reply-fn kind-s] :as msg}]
-  (tap> {:event :websocket/handling-kinds-list
-         :data ?data
-         :full-msg msg})
   (when ?reply-fn
     (try
       (let [result "SUCKIT FOOL!"
             res-too (kind-service/get-list kind-s (:data ?data))];;(kind-service/get-list xxx ?data)]
-        (tap> {:event :websocket/sending-kinds-list-response
-               :result result})
-        (tap> {:event :websocket/sending-kinds-list-response
-               :result res-too})
-        (tap> ?reply-fn)
         (?reply-fn {:resolved true :data res-too}))
       (catch Exception e
         (tap> {:event :websocket/sending-kinds-list-response
@@ -212,8 +224,6 @@
   :general-search/text
   [{:keys [?data ?reply-fn general-search-s] :as msg}]
   (when ?reply-fn
-    (tap> {:event :websocket/text-search
-           :data ?data})
     (if (nil? general-search-s)
       (?reply-fn {:success false
                   :error "General search service not initialized"})

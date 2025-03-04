@@ -8,6 +8,8 @@ import {
   ALL_RELATED_FACTS_ENDPOINT,
   SUBMIT_BINARY_FACT_ENDPOINT,
   CLASSIFIED_ENDPOINT,
+  SUBTYPES_ENDPOINT,
+  SUBTYPES_CONE_ENDPOINT,
 } from "@relica/constants";
 
 console.log("Creating PortalClient instance...");
@@ -161,6 +163,20 @@ class PortalClient {
 
   async getClassified(uid: number) {
     const response = await this.axiosInstance.get(CLASSIFIED_ENDPOINT, {
+      params: { uid },
+    });
+    return response.data;
+  }
+
+  async getSubtypes(uid: number) {
+    const response = await this.axiosInstance.get(SUBTYPES_ENDPOINT, {
+      params: { uid },
+    });
+    return response.data;
+  }
+
+  async getSubtypesCone(uid: number) {
+    const response = await this.axiosInstance.get(SUBTYPES_CONE_ENDPOINT, {
       params: { uid },
     });
     return response.data;

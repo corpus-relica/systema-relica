@@ -23,19 +23,15 @@
         (when (nil? fact-service)
           (throw (ex-info "Fact service not initialized" {:service :fact})))
 
-        (let [_ (tap> "Fetching collection descendants from cache service")
-              collection-uids (conj (cache/all-descendants-of cache-service collection-root-uid)
+        (let [collection-uids (conj (cache/all-descendants-of cache-service collection-root-uid)
                                     collection-root-uid)
-              _ (tap> {:msg "Getting collections for UIDs:" :res collection-uids})
               results (atom [])]
           (doseq [uid collection-uids]
             (let [individuals (<! (fact/get-classified fact-service uid true))]
-              (tap> (str "Got " (count individuals) " individuals for collection " uid))
               (when (seq individuals)
                 (doseq [f individuals]
                   (swap! results conj {:name (:lh_object_name f)
                                        :uid (:lh_object_uid f)})))))
-          (tap> (str "Returning " (count @results) " collections"))
           @results)
         (catch Exception e
           (tap>  "Error getting collections")
@@ -48,14 +44,12 @@
         (let [result (graph/exec-query graph-service
                                        queries/get-entity-type
                                        {:uid uid})]
-          (tap> (str "Got entity type result:" (:r (first result))))
           (when-let [fact (first result)]
             (let [rel-type-uid (get-in fact [:r :rel_type_uid])
                   rel-type-uid (cond
                                  (float? rel-type-uid) (int rel-type-uid)
                                  (string? rel-type-uid) (Integer/parseInt rel-type-uid)
                                  :else rel-type-uid)]
-              (tap> (str "Got rel_type_uid:" rel-type-uid))
               (cond
                 (= rel-type-uid 1146) "kind"
                 (= rel-type-uid 1726) "qualification"  ; subtype of kind

@@ -48,8 +48,6 @@
   ;;   };
   ;;
   (get-list [this conf]
-    (tap> "get list conf")
-    (tap> conf)
     (try
       (let [resolved-conf {:sortField (first (:sort conf))
                            :sortOrder (second (:sort conf))
@@ -60,13 +58,10 @@
                         graph-service
                         queries/get-lists-of-kinds  ; Use the predefined query
                         resolved-conf)
-            _ (tap> raw-result)
             result (map (fn [record]
                           (serialize-record (:r record)))
                         raw-result)
             ]
-        (tap> {:event :get-kinds-list-result
-               :result result})
         result)
       (catch Exception e
         (tap> {:event :get-kinds-list-error

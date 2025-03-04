@@ -86,16 +86,18 @@
   (all-descendants-of [this uid]
     (try
       (let [cached-descendants (get @descendants-cache uid)]
-        (if cached-descendants
-          cached-descendants
+        ;; (if cached-descendants
+        ;;   cached-descendants
           (let [descendants-key (str "rlc:db:YYYY:entity:" uid ":descendants")
                 descendants (wcar* (car/smembers descendants-key))
                 parsed-descendants (mapv #(Integer/parseInt %) descendants)]
             (when (seq parsed-descendants)
               (swap! descendants-cache assoc uid parsed-descendants))
-            parsed-descendants)))
+            parsed-descendants))
+        ;;)
       (catch Exception e
-        (log/error e "Failed to get descendants for" uid)
+        (tap> {:error e
+              :message (str "Failed to get descendants for" uid)})
         [])))
 
   (update-descendants-cache [this uid]

@@ -19,13 +19,6 @@ import { sockSendCC,
          sendSocketMessage} from "../../../socket";
 
 import {
-  getAllRelatedFacts,
-  getSubtypes,
-  getSubtypesCone,
-  getSpecializationHierarchy,
-} from "../../../io/ArchivistBaseClient.js";
-
-import {
   portalClient
 } from "../../../io/PortalClient.js";
 
@@ -110,7 +103,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_SUBTYPES:
-          const subtypes = await getSubtypes(uid);
+          const subtypes = await portalClient.getSubtypes(uid);
           const existingSubtypes = subtypes
             .filter((subtype) => {
               const foo = factDataStore.findDefinitiveFacts(

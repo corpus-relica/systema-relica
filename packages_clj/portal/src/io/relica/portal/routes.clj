@@ -13,7 +13,10 @@
                                            handle-get-model
                                            handle-get-kind-model
                                            handle-get-individual-model
-                                           handle-get-classified]]
+                                           handle-get-classified
+                                           handle-get-subtypes
+                                           handle-get-subtypes-cone
+                                           ]]
    [io.relica.portal.middleware :refer [wrap-jwt-auth
                                         wrap-async-handler]]))
 
@@ -124,6 +127,28 @@
                                   wrap-async-handler
                                   wrap-jwt-auth))
 
+
+  (OPTIONS "/fact/subtypes"[]
+    {:status 200
+    :headers {"Access-Control-Allow-Origin" "*"
+              "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+              "Access-Control-Allow-Headers" "Content-Type, Authorization"
+              "Access-Control-Max-Age" "3600"}
+           })
+  (GET "/fact/subtypes" [] (-> handle-get-subtypes
+                                  wrap-async-handler
+                                  wrap-jwt-auth))
+
+  (OPTIONS "/fact/subtypes-cone" []
+    {:status 200
+    :headers {"Access-Control-Allow-Origin" "*"
+              "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
+              "Access-Control-Allow-Headers" "Content-Type, Authorization"
+              "Access-Control-Max-Age" "3600"}
+           })
+  (GET "/fact/subtypes-cone" [] (-> handle-get-subtypes-cone
+                                  wrap-async-handler
+                                  wrap-jwt-auth))
   ;;
 
   (GET "/health" [] {:status 200 :body "healthy"})

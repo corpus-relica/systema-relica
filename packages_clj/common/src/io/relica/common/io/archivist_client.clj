@@ -45,6 +45,8 @@
   (get-facts-relating-entities [this uid1 uid2])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
   (get-classified [this uid])
+  (get-subtypes [this uid])
+  (get-subtypes-cone [this uid])
 
   ;; Individual operations
   (get-individual [this uid])
@@ -218,6 +220,14 @@
   (get-classified [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-classified {:uid uid} (:timeout options)))
+
+  (get-subtypes [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-subtypes {:uid uid} (:timeout options)))
+
+  (get-subtypes-cone [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-subtypes-cone {:uid uid} (:timeout options)))
 
   ;; Individual operations
 

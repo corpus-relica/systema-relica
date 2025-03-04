@@ -31,6 +31,7 @@
   (unload-entity [this user-id entity-uid env-id])
   (load-entities [this user-id env-id entity-uids])
   (unload-entities [this user-id env-id entity-uids])
+  (load-subtypes-cone [this user-id entity-uid env-id])
   (clear-entities [this user-id env-id])
   
   ;; Entity selection
@@ -314,7 +315,38 @@
         (catch Exception e
           (log/error e "Failed to unload entities")
           {:error "Failed to unload entities"}))))
-  
+
+  ;; async loadSubtypesCone(uid: number) {
+  ;;   const result = await this.archivistService.getSubtypesCone(uid);
+  ;;   const models = await this.modelsFromFacts(result);
+  ;;   this.insertFacts(result);
+  ;;   this.insertModels(models);
+  ;;   const payload = { facts: result, models };
+  ;;   return payload;
+  ;; }
+  (load-subtypes-cone [this user-id env-id entity-uid ]
+    (go
+      (try
+        (let [result (<! (archivist/get-subtypes-cone archivist-client entity-uid))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              _ (tap> "FUCKING SUBTYPES CONE")
+              _ (tap> facts)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with subtypes cone"}))
+        (catch Exception e
+          (log/error e "Failed to load subtypes cone")
+          {:error "Failed to load subtypes cone"}))))
+
   (clear-entities [this user-id env-id]
     (go
       (try

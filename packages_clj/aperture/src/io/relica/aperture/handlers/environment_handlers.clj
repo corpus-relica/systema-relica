@@ -155,6 +155,24 @@
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-subtypes-cone
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (let [result (<! (env-service/load-subtypes-cone
+                     @environment-service
+                     (:user-id ?data)
+                     (:environment-id ?data)
+                     (:entity-uid ?data)))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/loaded
+          :facts (:facts result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/clear-entities
   [{:keys [?data ?reply-fn] :as msg}]
   (tap> (str "Handling environment/clear-entities"))

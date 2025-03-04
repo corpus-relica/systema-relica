@@ -42,15 +42,9 @@
       {:error "Invalid JWT"})))
 
 (defn handle-select-entity [{:keys [uid client-id] :as message}]
-  ;; (tap> "SELECT ENTITY")
-  ;; (tap> uid)
-  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
-            ;; _ (tap> "FOUND ENVIRONMENT ID")
-            ;; _ (tap> environment-id)
-            ;; _ (tap> @connected-clients)
             result (<! (aperture/select-entity aperture-client (:user-id message) environment-id uid))]
         {:success true
          :message "Entity selected"})
@@ -59,8 +53,6 @@
         {:error "Failed to select entity"}))))
 
 (defn handle-select-entity-none [{:keys [client-id] :as message}]
-  ;; (tap> "SELECT NONE")
-  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
@@ -76,9 +68,6 @@
   )
 
 (defn load-specialization-hierarchy [{:keys [uid] :as message}]
-  ;; (tap> "LOADING SPECIALIZATION HIERARCHY")
-  ;; (tap> uid)
-  ;; (tap> message)
   (go
     (try
       (let [result (<! (aperture/load-specialization-hierarchy aperture-client (:user-id message) uid))]
@@ -91,8 +80,6 @@
 
 
 (defn handle-clear-environment-entities [{:keys [client-id] :as message}]
-  ;; (tap> "CLEARING ENVIRONMENT ENTITIES")
-  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
@@ -107,14 +94,9 @@
         {:error "Failed to clear environment entities"}))))
 
 (defn handle-load-all-related-facts [{:keys [uid] :as message}]
-  ;; (tap> "LOADING ALL RELATED FACTS")
-  ;; (tap> uid)
-  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id (:client-id message))
-            ;; _ (tap> "FOUND ENVIRONMENT ID")
-            ;; _ (tap> environment-id)
             result (<! (aperture/load-all-related-facts aperture-client (:user-id message) environment-id uid))]
         {:success true
          :message "All related facts loaded"
@@ -126,9 +108,6 @@
 ;; Event handlers
 
 (defn handle-entity-selected-event [payload]
-  ;; Your logic here with access to all websocket context
-  ;; (tap> "ENTITY SELECTED EVENT")
-  ;; (tap> payload)
   (let [environment-id (:environment-id payload)]
     (broadcast-to-environment environment-id
                               {:id "system"
@@ -141,9 +120,6 @@
                                          }})))
 
 (defn handle-entity-selected-none-event [payload]
-  ;; Your logic here with access to all websocket context
-  ;; (tap> "ENTITY SELECTED NONE EVENT")
-  ;; (tap> payload)
   (let [environment-id (:environment-id payload)]
     (broadcast-to-environment environment-id
                               {:id "system"
@@ -155,9 +131,6 @@
                                          }})))
 
 (defn handle-facts-loaded-event [payload]
-  ;; Your logic here with access to all websocket context
-  (tap> "FACTS LOADED EVENT")
-  (tap> payload)
   (let [environment-id (:environment-id payload)]
     (broadcast-to-environment environment-id
                               {:id "system"
@@ -170,9 +143,6 @@
                                          }})))
 
 (defn handle-facts-unloaded-event [payload]
-  ;; Your logic here with access to all websocket context
-  (tap> "FACTS UNLOADED EVENT")
-  (tap> payload)
   (let [environment-id (:environment-id payload)]
     (broadcast-to-environment environment-id
                               {:id "system"
@@ -187,9 +157,6 @@
 (defn handle-load-entity [{:keys [uid client-id] :as message}])
 
 (defn handle-unload-entity [{:keys [uid client-id] :as message}]
-  (tap> "UNLOAD ENTITY")
-  (tap> uid)
-  (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
@@ -201,9 +168,6 @@
         {:error "Failed to unload entity"}))))
 
 (defn handle-load-entities [{:keys [uids client-id] :as message}]
-  (tap> "LOAD ENTITIES")
-  (tap> uids)
-  (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
@@ -215,9 +179,6 @@
         {:error "Failed to load entities"}))))
 
 (defn handle-unload-entities [{:keys [uids client-id] :as message}]
-  (tap> "UNLOAD ENTITIES")
-  (tap> uids)
-  (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
@@ -227,6 +188,21 @@
       (catch Exception e
         (log/error "Failed to unload entities:" e)
         {:error "Failed to unload entities"}))))
+
+(defn handle-load-subtypes-cone[{:keys [uid client-id] :as message}]
+  (tap> "LOAD SUBTYPES CONE")
+  (tap> uid)
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            result (<! (aperture/load-subtypes-cone aperture-client (:user-id message) environment-id uid))]
+        {:success true
+         :message "Subtypes cone loaded"
+         :subtypes result})
+      (catch Exception e
+        (log/error "Failed to load subtypes cone:" e)
+        {:error "Failed to load subtypes cone"}))))
 
 ;; Core
 
@@ -285,8 +261,9 @@
    "clearEnvironmentEntities"handle-clear-environment-entities
    "loadAllRelatedFacts" handle-load-all-related-facts
    "unloadEntity" handle-unload-entity
-   "loadEntities"handle-load-entities
-   "unloadEntities"handle-unload-entities
+   "loadEntities" handle-load-entities
+   "unloadEntities" handle-unload-entities
+   "loadSubtypesCone" handle-load-subtypes-cone
    })
 
 ;; Set up event listener

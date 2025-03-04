@@ -49,22 +49,16 @@
   GellishBaseServiceOperations
 
   (get-entities [this uids]
-    (tap> "GET ENTITIES UIDS")
-    (tap> uids)
     (let [raw-result (graph/exec-query
                       graph-service
                       queries/entities  ; Use the predefined query
                       {:uids uids})
-          _ (tap> "RAW RESULT")
-          _ (tap> raw-result)
           result (map (fn [record]
                         (let [entity (:n record)
                               uid (:uid entity)
                               descendants (cache/all-descendants-of cache-service uid)]
                           (assoc entity :descendants descendants)))
                       raw-result)]
-      (tap> {:event :get-entities-result
-             :result result})
       result))
 
   (get-fact [this fact-uid]
@@ -93,31 +87,20 @@
         nil)))
 
   (get-specialization-hierarchy [this uid]
-    (tap> (str "Getting SH for, foobar!!!:" uid))
     (try
       (let [class-fact (get-classification-fact this uid)
-            _ (tap> "classification fact")
-            _ (tap> class-fact)
             uid (if (seq class-fact)
                   (get-in (first class-fact) [:rh_object_uid])
                   uid)
-            _ (tap> "uid")
-            _ (tap> uid)
             concepts-set (atom #{})
             concepts (atom [])
             lineage (cache/lineage-of cache-service uid)
-            _ (tap> "lineage")
-            _ (tap> lineage)
             facts (atom [])]
           ;; Get all specialization facts for the lineage
         (doseq [uid lineage]
           (let [spec-facts (get-specialization-fact this uid)]
-            (tap> (str "spec-facts for " uid))
-            (tap> spec-facts)
               ;; Use into to ensure we maintain a vector
             (swap! facts into spec-facts)))
-        (tap> "facts")
-        (tap> @facts)
           ;; Add classification fact if it exists
         (when (seq class-fact)
             ;; Use into or vec/concat to ensure the class-fact is added to the end
@@ -172,9 +155,6 @@
                               (:language_uid r) (update :language_uid graph/ensure-integer)
                               )))
                         result))]
-        (tap> "SPEC FACT RESULT:::::::")
-        (tap> result)
-        (tap> res)
         res
         )
       (catch Exception e
@@ -214,9 +194,6 @@
                     graph-service
                     queries/classification-fact
                     {:uid uid})]
-        ;; (tap> "CLASS FACT RESULT:::::::")
-        ;; (tap> uid)
-        ;; (tap> (if(not-empty result) (graph/transform-results result) []))
         (if (empty? result)
           []
           (graph/transform-results result)))
@@ -234,31 +211,16 @@
         [])))
 
   (get-entity-category [this uid]
-    (tap> "GET CATEGORY")
     (try
       (let [class-fact (get-classification-fact this uid)
-            _ (tap> "classification fact")
-            _ (tap> class-fact)
             uid (if (seq class-fact)
                   (get-in (first class-fact) [:rh_object_uid])
                   uid)
-            _ (tap> "uid")
-            _ (tap> uid)
             physical-object-subtypes (cache/all-descendants-of cache-service physical-object-uid)
-            _(tap> "physical-object-subtypes")
-            _(tap> physical-object-subtypes)
             role-subtypes (cache/all-descendants-of cache-service role-uid)
-            _ (tap> "role-subtypes")
-            _ (tap> role-subtypes)
             aspect-subtypes (cache/all-descendants-of cache-service aspect-uid)
-            _ (tap> "aspect-subtypes")
-            _ (tap> aspect-subtypes)
             relation-subtypes (cache/all-descendants-of cache-service relation-uid)
-            _ (tap> "relation-subtypes")
-            _ (tap> relation-subtypes)
             occurrence-subtypes (cache/all-descendants-of cache-service occurrence-uid)
-            _ (tap> "occurrence-subtypes")
-            _ (tap> occurrence-subtypes)
             res (cond
                   ((set physical-object-subtypes) uid) "physical object"
                   ((set role-subtypes) uid) "role"
@@ -266,10 +228,6 @@
                   ((set occurrence-subtypes) uid) "occurrence"
                   ((set relation-subtypes) uid) "relation"
                   :else "anything")]
-
-        (tap> "GET CATEGORY 2")
-        (tap> res)
-
         res)
       (catch Exception e
         (log/error "Error getting category:" e)
@@ -427,14 +385,6 @@
                   (not-empty class-fact) class-fact
                   (not-empty qual-fact) qual-fact
                   :else [])]
-        (tap> "SPEC FACT")
-        (tap> spec-fact)
-        (tap> "CLASS FACT")
-        (tap> class-fact)
-        (tap> "QUAL FACT")
-        (tap> qual-fact)
-        (tap> "RES")
-        (tap> res)
         res
         )
       (catch Exception e
