@@ -118,17 +118,13 @@
   (swap! app-state dissoc :server))
 
 (defn broadcast! [message level]
-  (tap> "crashout")
-  (tap> @app-state)
   (when-let [server (:server @app-state)]
-    (tap> "Broadcasting message")
-    (tap> server)
     (let [notification {:message message
                        :level level
                        :timestamp (System/currentTimeMillis)}]
-      (tap> {:event :app/sending-notification
-             :message message
-             :level level})
+      ;; (tap> {:event :app/sending-notification
+      ;;        :message message
+      ;;        :level level})
       (ws-server/broadcast! server message))))
       ;; (ws-server/broadcast! server {:type :app/notification
       ;;                               :event-type :app/notification

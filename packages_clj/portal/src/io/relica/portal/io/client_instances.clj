@@ -22,23 +22,19 @@
 
 (def aperture-handlers
   {:handle-facts-loaded (fn [msg]
-                          (tap> "Facts loaded GGGGGGOOOOOOODDDDDDAAAAAAAMMMMMMMNNNNNNIIIIIITTTTT!!!!!:")
+                          (tap> "Facts loaded:")
                           (tap> msg)
                           (events/publish-event {:type :facts-loaded
                                                  :payload msg}))
    :handle-facts-unloaded (fn [msg]
-                            (tap> "Facts unloaded GGGGGGOOOOOOODDDDDDAAAAAAAMMMMMMMNNNNNNIIIIIITTTTT!!!!!:")
+                            (tap> "Facts unloaded:")
                             (tap> msg)
                             (events/publish-event {:type :facts-unloaded
                                                    :payload msg}))
    :handle-entity-selected (fn [msg]
-                             ;; (tap> "Selected entity GGGGGGOOOOOOODDDDDDAAAAAAAMMMMMMMNNNNNNIIIIIITTTTT!!!!!:")
-                             ;; (tap> msg)
                              (events/publish-event {:type :entity-selected
                                                     :payload msg}))
    :handle-entity-selected-none(fn [msg]
-                                  ;; (tap> "Deselected entity GGGGGGOOOOOOODDDDDDAAAAAAAMMMMMMMNNNNNNIIIIIITTTTT!!!!!:")
-                                  ;; (tap> msg)
                                   (events/publish-event {:type :entity-selected-none
                                                          :payload msg}))})
 

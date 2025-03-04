@@ -8,7 +8,6 @@
              :refer [generate-socket-token
                      socket-tokens
                      connected-clients]]
-            [io.relica.portal.handlers.core :as handlers]
             [io.relica.portal.auth.jwt :refer [validate-jwt]]
             [io.relica.common.io.aperture-client :as aperture]
             [io.relica.portal.io.client-instances :refer [aperture-client]]
@@ -43,9 +42,9 @@
       {:error "Invalid JWT"})))
 
 (defn handle-select-entity [{:keys [uid client-id] :as message}]
-  (tap> "SELECT ENTITY")
-  (tap> uid)
-  (tap> message)
+  ;; (tap> "SELECT ENTITY")
+  ;; (tap> uid)
+  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
@@ -60,8 +59,8 @@
         {:error "Failed to select entity"}))))
 
 (defn handle-select-entity-none [{:keys [client-id] :as message}]
-  (tap> "SELECT NONE")
-  (tap> message)
+  ;; (tap> "SELECT NONE")
+  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
@@ -77,9 +76,9 @@
   )
 
 (defn load-specialization-hierarchy [{:keys [uid] :as message}]
-  (tap> "LOADING SPECIALIZATION HIERARCHY")
-  (tap> uid)
-  (tap> message)
+  ;; (tap> "LOADING SPECIALIZATION HIERARCHY")
+  ;; (tap> uid)
+  ;; (tap> message)
   (go
     (try
       (let [result (<! (aperture/load-specialization-hierarchy aperture-client (:user-id message) uid))]
@@ -92,14 +91,14 @@
 
 
 (defn handle-clear-environment-entities [{:keys [client-id] :as message}]
-  (tap> "CLEARING ENVIRONMENT ENTITIES")
-  (tap> message)
+  ;; (tap> "CLEARING ENVIRONMENT ENTITIES")
+  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id client-id)
-            _ (tap> "FOUND ENVIRONMENT ID")
-            _ (tap> environment-id)
-            _ (tap> @connected-clients)
+            ;; _ (tap> "FOUND ENVIRONMENT ID")
+            ;; _ (tap> environment-id)
+            ;; _ (tap> @connected-clients)
             result (<! (aperture/clear-environment-entities aperture-client (:user-id message) environment-id))]
         {:success true
          :message "Environment entities cleared"})
@@ -108,14 +107,14 @@
         {:error "Failed to clear environment entities"}))))
 
 (defn handle-load-all-related-facts [{:keys [uid] :as message}]
-  (tap> "LOADING ALL RELATED FACTS")
-  (tap> uid)
-  (tap> message)
+  ;; (tap> "LOADING ALL RELATED FACTS")
+  ;; (tap> uid)
+  ;; (tap> message)
   (go
     (try
       (let [environment-id (get-environment-id (:client-id message))
-            _ (tap> "FOUND ENVIRONMENT ID")
-            _ (tap> environment-id)
+            ;; _ (tap> "FOUND ENVIRONMENT ID")
+            ;; _ (tap> environment-id)
             result (<! (aperture/load-all-related-facts aperture-client (:user-id message) environment-id uid))]
         {:success true
          :message "All related facts loaded"
@@ -194,9 +193,6 @@
   (go
     (try
       (let [environment-id (get-environment-id client-id)
-            ;; _ (tap> "FOUND ENVIRONMENT ID")
-            ;; _ (tap> environment-id)
-            ;; _ (tap> @connected-clients)
             result (<! (aperture/unload-entity aperture-client (:user-id message) environment-id uid))]
         {:success true
          :message "Entity unloaded"})
@@ -211,9 +207,6 @@
   (go
     (try
       (let [environment-id (get-environment-id client-id)
-            ;; _ (tap> "FOUND ENVIRONMENT ID")
-            ;; _ (tap> environment-id)
-            ;; _ (tap> @connected-clients)
             result (<! (aperture/load-entities aperture-client (:user-id message) environment-id uids))]
         {:success true
          :message "Entities loaded"})
@@ -228,9 +221,6 @@
   (go
     (try
       (let [environment-id (get-environment-id client-id)
-            ;; _ (tap> "FOUND ENVIRONMENT ID")
-            ;; _ (tap> environment-id)
-            ;; _ (tap> @connected-clients)
             result (<! (aperture/unload-entities aperture-client (:user-id message) environment-id uids))]
         {:success true
          :message "Entities unloaded"})
@@ -241,14 +231,13 @@
 ;; Core
 
 (defn handle-ping [_]
-  (tap> "PING")
   (go
     {:success true
      :message "Pong"}))
 
 (defn handle-ws-message [channel data]
-  (tap> "HANDLING MESSAGE !")
-  (tap> data)
+  ;; (tap> "HANDLING MESSAGE !")
+  ;; (tap> data)
   (try
     (let [message (json/parse-string data true)
           {:keys [id user-id type payload]} message
@@ -261,8 +250,8 @@
                   response {:id id
                             :type "response"
                             :payload result}]
-              (tap> "SENDING RESPONSE !!!!!!!!!!!!!!!!!!!!!!!!!!11")
-              (tap> response)
+              ;; (tap> "SENDING RESPONSE !!!!!!!!!!!!!!!!!!!!!!!!!!11")
+              ;; (tap> response)
               (http/send! channel (json/generate-string response)))
             (catch Exception e
               (log/error "Error processing message:" e)

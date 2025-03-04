@@ -179,8 +179,11 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           handleOk={(selected: number[], notSelected: number[]) => {
             setClassifiedDialogueIsOpen(false);
 
-            sendSocketMessage("loadEntities", { uids: selected });
+            console.log("selected:", selected);
+            console.log("notSelected:", notSelected);
+
             sendSocketMessage("unloadEntities", { uids: notSelected });
+            sendSocketMessage("loadEntities", { uids: selected });
 
           }}
         />

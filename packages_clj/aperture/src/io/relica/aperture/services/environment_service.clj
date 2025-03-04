@@ -8,6 +8,15 @@
             [cheshire.core :as json]
             [io.relica.common.io.archivist-client :as archivist]))
 
+;; Helper function to deduplicate facts by fact_uid
+(defn- deduplicate-facts
+  "Remove duplicate facts based on fact_uid"
+  [facts]
+  (->> facts
+       (group-by :fact_uid)
+       vals
+       (map first)))
+
 ;; Protocol for environment service operations
 (defprotocol EnvironmentOperations
   ;; Environment management
@@ -75,7 +84,8 @@
               env (get-user-environment user-id env-id)
               old-facts (:facts env)
               facts (get-in result [:hierarchy :facts])
-              new-facts (concat old-facts facts)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
               updated-env (when facts
                            (update-user-environment! user-id env-id {:facts new-facts}))]
           (if updated-env
@@ -94,7 +104,8 @@
               env (get-user-environment user-id env-id)
               old-facts (:facts env)
               facts (:facts result)
-              new-facts (concat old-facts facts)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
               updated-env (when facts
                            (update-user-environment! user-id env-id {:facts new-facts}))]
           (if updated-env
@@ -116,7 +127,7 @@
               ;; Get definitive facts for the entity
               def-result (<! (archivist/get-definitive-facts archivist-client entity-uid))
               definitive-facts (:facts def-result)
-              
+
               ;; If there's a selected entity, get facts relating it to our entity
               rel-result (if selected-entity
                            (<! (archivist/get-facts-relating-entities archivist-client 
@@ -124,26 +135,28 @@
                                                                       selected-entity))
                            {:facts []})
               relating-facts (:facts rel-result)
-              
-              ;; Combine both sets of facts
-              all-facts (concat definitive-facts relating-facts)
+
+              ;; Combine both sets of facts from this operation
+              all-new-facts (concat definitive-facts relating-facts)
+              ;; Deduplicate only the new facts
+              unique-new-facts (deduplicate-facts all-new-facts)
               
               ;; Check if there are already existing facts in the environment
               old-facts (:facts env)
               
-              ;; Combine with existing facts
-              new-facts (concat old-facts all-facts)
-              
+              ;; Combine with existing facts and deduplicate for storing in environment
+              combined-facts (concat old-facts unique-new-facts)
+              deduplicated-env-facts (deduplicate-facts combined-facts)
+
               ;; Models could be implemented here if needed
               
-              ;; Update the environment
-              updated-env (when (seq all-facts)
-                           (update-user-environment! user-id env-id {:facts new-facts}))]
-          
+              ;; Update the environment - only when we have new facts to add
+              updated-env (when (seq unique-new-facts)
+                           (update-user-environment! user-id env-id {:facts deduplicated-env-facts}))]          
           (if updated-env
             {:success true
              :environment updated-env
-             :facts new-facts}
+             :facts unique-new-facts}
             {:error "Failed to update environment with entity"}))
         (catch Exception e
           (log/error e "Failed to load entity")
@@ -201,30 +214,39 @@
   (load-entities [this user-id env-id entity-uids]
     (go
       (try
-        (let [;; Process each entity sequentially and collect the results
-              all-facts (atom [])
+        (let [;; Track only the newly loaded facts from this operation
+              new-facts-only (atom [])
               ;; Models could be added here if needed
-              all-models (atom [])
+              new-models-only (atom [])
               env (get-user-environment user-id env-id)
               old-facts (:facts env)]
               
-          ;; Process each entity and collect facts
+          ;; Process each entity and collect ONLY the new facts
           (doseq [entity-uid entity-uids]
             (let [result (<! (load-entity this user-id entity-uid env-id))
-                  facts (:facts result)]
-              (when (and (:success result) (seq facts))
-                (swap! all-facts concat facts)
+                  ;; Only take facts that were newly loaded for this entity
+                  entity-facts (if (:success result)
+                                  (:facts result)
+                                  [])]
+              (when (seq entity-facts)
+                (swap! new-facts-only concat entity-facts)
                 ;; If we had models, we would add them here
                 )))
+
+          (tap> @new-facts-only)
           
-          ;; Update environment with all collected facts
-          (let [new-facts (concat old-facts @all-facts)
-                updated-env (update-user-environment! user-id env-id {:facts new-facts})]
+          ;; Get only unique facts to add to the environment
+          (let [unique-new-facts (deduplicate-facts @new-facts-only)
+                ;; Deduplicate when combining with existing facts
+                combined-facts (concat old-facts unique-new-facts)
+                deduplicated-facts (deduplicate-facts combined-facts)
+                ;; Update environment with the combined deduplicated facts
+                updated-env (update-user-environment! user-id env-id {:facts deduplicated-facts})]
             (if updated-env
               {:success true
                :environment updated-env
-               :facts new-facts
-               :models @all-models}
+               :facts unique-new-facts
+               :models @new-models-only}
               {:error "Failed to load entities"})))
         (catch Exception e
           (log/error e "Failed to load entities")

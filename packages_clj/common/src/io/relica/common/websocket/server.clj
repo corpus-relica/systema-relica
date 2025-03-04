@@ -67,7 +67,7 @@
      :connected-uids connected-uids}))
 
 (defn create-routes [sente-fns]
-  (tap> {:event :websocket/creating-routes})
+  ;; (tap> {:event :websocket/creating-routes})
   (defroutes routes
     (GET "/chsk" req
       ;; (tap> {:event :websocket/handling-get

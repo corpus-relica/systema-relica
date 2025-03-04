@@ -22,7 +22,6 @@
 (defn get-user-environments
   "Retrieve all environments for a user"
   [user-id]
-  (tap> (str "Getting all environments for user:" user-id))
   (let [envs (jdbc/execute! ds
                             ["SELECT e.*, ue.is_owner, ue.can_write, ue.last_accessed
                  FROM environments e
@@ -37,7 +36,6 @@
 (defn get-user-environment
   "Retrieve specific environment by user-id and env-id"
   [user-id env-id]
-  (tap> (str "Getting environment " env-id " for user:" user-id))
   (when-let [user-env (jdbc/execute-one! ds
                                          ["SELECT e.*, ue.is_owner, ue.can_write, ue.last_accessed
                           FROM environments e
@@ -47,8 +45,6 @@
     (let [parsed-env (-> user-env
                          (update :facts #(json/parse-string (.getValue %) true))
                          (update :models #(json/parse-string (.getValue %) true)))]
-      (tap> (str "Parsed environment:"))
-      (tap> parsed-env)
       parsed-env)))
 
 (defn create-environment!
@@ -76,16 +72,12 @@
 (defn update-user-environment!
   "Update specific fields in user's environment"
   [user-id env-id updates]
-  (tap> (str "Updating environment " env-id " for user:" user-id))
-  (tap> updates)
   (let [user-id (long user-id)
         ;; Verify user has write access to this environment
-        ;; _ (tap> (str "CAN WRITE?" can-write?))
         can-write-result (jdbc/execute-one! ds
                                    ["SELECT can_write FROM user_environments
                                      WHERE user_id = ? AND environment_id = ?"
                                     user-id env-id])
-                _ (tap> (str "Can write result: " can-write-result))  ;; Debug log
                 can-write? (:user_environments/can_write can-write-result)
 
         ;; Build the update query for environments table
@@ -104,11 +96,6 @@
                             (when (:selected_entity_id updates) (:selected_entity_id updates))
                             (when (:selected_entity_type updates) (name (:selected_entity_type updates)))])
 
-        _ (tap> (str "UPDATE environments SET "
-                                       (clojure.string/join ", " set-clauses)
-                                       " WHERE id = ? RETURNING *"))
-
-        _ (tap> (str "CAN WRITE?" can-write?))
         ;; Only proceed if we have write access and updates to make
         updated-env (when (and can-write? (seq set-clauses))
                       (let [query (str "UPDATE environments SET "
@@ -120,8 +107,6 @@
                         ;;                    (into [query] all-values)
                         ;;                    {:builder-fn rs/as-unqualified-maps})
 (try
-(tap> {:query query
-       :values all-values})
   (jdbc/execute-one! ds
                      (into [query] all-values)
                      {:builder-fn rs/as-unqualified-maps})
@@ -144,21 +129,19 @@
 (defn deselect-entity!
   "Clear the selected entity for a user's environment"
   [user-id env-id]
-  (tap> (str "Deselecting entity in environment " env-id " for user:" user-id))
   (let [user-id (long user-id)
         ;; Verify user has write access to this environment
         can-write-result (jdbc/execute-one! ds
                                ["SELECT can_write FROM user_environments
                                  WHERE user_id = ? AND environment_id = ?"
                                 user-id env-id])
-        _ (tap> (str "Can write result: " can-write-result))
         can-write? (:user_environments/can_write can-write-result)
 
         ;; Execute explicit NULL update
         updated-env (when can-write?
                       (try
-                        (tap> {:query "UPDATE environments SET selected_entity_id = NULL WHERE id = ? RETURNING *"
-                               :values [env-id]})
+                        ;; (tap> {:query "UPDATE environments SET selected_entity_id = NULL WHERE id = ? RETURNING *"
+                        ;;        :values [env-id]})
                         (jdbc/execute-one! ds
                                          ["UPDATE environments SET selected_entity_id = NULL WHERE id = ? RETURNING *"
                                           env-id]
@@ -185,7 +168,6 @@
 (defn get-default-environment
   "Get the most recently accessed environment for a user"
   [user-id]
-  (tap> {:msg "Getting default environment" :user-id user-id})
   (let [user-id (if (string? user-id) (parse-long user-id) user-id)
         env-query ["SELECT environment_id 
                     FROM user_environments 
@@ -193,12 +175,8 @@
                     ORDER BY last_accessed DESC 
                     LIMIT 1" user-id]
         env-id  (:user_environments/environment_id (jdbc/execute-one! ds env-query))]
-    (tap> {:msg "Found default environment" :env-id env-id})
-    (tap> (jdbc/execute-one! ds env-query))
     (if env-id
-      (do
-        (tap> {:msg "Found default environment" :env-id env-id})
-        (get-user-environment user-id env-id))
+      (get-user-environment user-id env-id)
       (do
         (tap> {:msg "No default environment found" :user-id user-id})
         nil))))

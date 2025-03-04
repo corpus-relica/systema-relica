@@ -65,8 +65,6 @@
     (tap> handlers)
     (go-loop []
       (when-let [{:keys [event] :as msg} (<! ch-recv)]
-        (tap> {:type :websocket/received-message-NUKKAH
-               :event event})
         (let [[ev-id ev-data] event]
           (case ev-id
             :chsk/state (let [{:keys [first-open? open?]} ev-data]
@@ -76,19 +74,11 @@
 
             :chsk/recv (let [event-type (first ev-data)
                              payload (second ev-data)]
-                         ;; (tap> {:event :websocket/received
-                         ;;        :event-type event-type
-                         ;;        :payload payload})
                          (if-let [specific-handler (get @event-handlers event-type)]
                            (specific-handler payload)
                            (when on-message (on-message event-type payload))))
             :broadcast/message (let [payload ev-data
                                      type (get-in payload [:type])]
-                                ;; (tap> {:event :websocket/received
-                                ;;        :event-type :broadcast/message
-                                ;;        :payload payload
-                                ;;        :type type})
-                                ;; (tap> @event-handlers)
                                 (if-let [specific-handler (get @event-handlers type)]
                                   (specific-handler payload)
                                   (when on-message (:broadcast/message payload))))
@@ -106,30 +96,32 @@
     (with-error-handling :connect
       (fn []
         (let [[valid? current-state] (check-state state :connect)]
-          (tap> {:event :websocket/connect-attempt
-                 :has-socket? (and valid? (boolean (:socket current-state)))})
+          ;; (tap> {:event :websocket/connect-attempt
+          ;;        :has-socket? (and valid? (boolean (:socket current-state)))})
 
           (when (or (not valid?) (not (:socket current-state)))
-            (let [_ (tap> "~~~~~~~~~~~~~ CONNECTING ~~~~~~~~~~~~~")
-                  _ (tap> current-state)
-                  _ (tap> state)
-                  _ (tap> options)
+            (let [
+                  ;; _ (tap> "~~~~~~~~~~~~~ CONNECTING ~~~~~~~~~~~~~")
+                  ;; _ (tap> current-state)
+                  ;; _ (tap> state)
+                  ;; _ (tap> options)
                   event-handlers (atom (:event-handlers current-state))
                   handlers (assoc (:handlers options) :event-handlers event-handlers)
-                  - (tap> "~~~~~~~~~~~~~ HANDLERS ~~~~~~~~~~~~~")
-                  - (tap> handlers)
-                  _ (tap> {:event :websocket/creating-sente-client
-                           :uri uri})
+                  ;; - (tap> "~~~~~~~~~~~~~ HANDLERS ~~~~~~~~~~~~~")
+                  ;; - (tap> handlers)
+                  ;; _ (tap> {:event :websocket/creating-sente-client
+                  ;;          :uri uri})
                   sente-client (create-sente-client uri handlers)
-                  _ (tap> {:event :websocket/sente-client-created
-                           :has-chsk? (boolean (:chsk sente-client))
-                           :has-ch-recv? (boolean (:ch-recv sente-client))})
+                  ;; _ (tap> {:event :websocket/sente-client-created
+                  ;;          :has-chsk? (boolean (:chsk sente-client))
+                  ;;          :has-ch-recv? (boolean (:ch-recv sente-client))})
                   router (start-client-router! (:ch-recv sente-client) handlers)]
               (reset! state (assoc sente-client
                                   :router router
                                   :event-handlers event-handlers))
-              (tap> {:event :websocket/client-connected
-                     :state-keys (keys @state)}))))))
+              ;; (tap> {:event :websocket/client-connected
+              ;;        :state-keys (keys @state)})
+              )))))
     this)
 
   (disconnect! [this]
@@ -141,9 +133,9 @@
           (if valid?
             (let [chsk (:chsk state-val)
                   router (:router state-val)]
-              (tap> {:event :websocket/disconnecting
-                     :has-chsk? (boolean chsk)
-                     :has-router? (boolean router)})
+              ;; (tap> {:event :websocket/disconnecting
+              ;;        :has-chsk? (boolean chsk)
+              ;;        :has-router? (boolean router)})
 
               (when chsk
                 (try
@@ -188,25 +180,25 @@
   (register-handler! [this event-type handler-fn]
     (with-error-handling :register-handler
       (fn []
-        (tap> {:event :websocket/register-handler-attempt
-               :event-type event-type
-               :handler-fn handler-fn})
-        (tap> state)
-        (tap> (check-state state :register-handler))
+        ;; (tap> {:event :websocket/register-handler-attempt
+        ;;        :event-type event-type
+        ;;        :handler-fn handler-fn})
+        ;; (tap> state)
+        ;; (tap> (check-state state :register-handler))
         (let [[valid? state-val] (check-state state :register-handler)]
           (if valid?
             (if-let [event-handlers (:event-handlers state-val)]
               (let [new-event-handlers (assoc event-handlers event-type handler-fn)]
 
                 (swap! state assoc :event-handlers new-event-handlers)
-                (tap> {:event :websocket/handler-registered
-                       :event-type event-type})
+                ;; (tap> {:event :websocket/handler-registered
+                ;;        :event-type event-type})
                 true)
               (do
-                (tap> {:event :websocket/register-handler
-                       :status :error
-                       :reason :no-event-handlers
-                       :event-type event-type})
+                ;; (tap> {:event :websocket/register-handler
+                ;;        :status :error
+                ;;        :reason :no-event-handlers
+                ;;        :event-type event-type})
                 false))
             false)))))
 
@@ -218,21 +210,21 @@
             (if-let [event-handlers (:event-handlers state-val)]
               (do
                 (swap! event-handlers dissoc event-type)
-                (tap> {:event :websocket/handler-unregistered
-                       :event-type event-type})
+                ;; (tap> {:event :websocket/handler-unregistered
+                ;;        :event-type event-type})
                 true)
               (do
-                (tap> {:event :websocket/unregister-handler
-                       :status :error
-                       :reason :no-event-handlers
-                       :event-type event-type})
+                ;; (tap> {:event :websocket/unregister-handler
+                ;;        :status :error
+                ;;        :reason :no-event-handlers
+                ;;        :event-type event-type})
                 false))
             false)))))
 
   (send-message! [this event-type payload timeout-ms]
-    (tap> {:event :websocket/send-attempt
-           :event-type event-type
-           :payload payload})
+    ;; (tap> {:event :websocket/send-attempt
+    ;;        :event-type event-type
+    ;;        :payload payload})
 
     (let [result-ch (chan)]
       (with-error-handling :send-message
@@ -243,24 +235,24 @@
                 (if valid?
                   (if-let [send-fn (:send-fn state-val)]
                     (do
-                      (tap> {:event :websocket/pre-send
-                             :using-send-fn? true})
+                      ;; (tap> {:event :websocket/pre-send
+                      ;;        :using-send-fn? true})
                       ;; Format event properly for Sente
                       (let [formatted-event (if (keyword? event-type)
                                               event-type
                                               (keyword "client" (name event-type)))]
-                        (tap> {:event :websocket/sending
-                               :formatted-event [formatted-event payload]})
+                        ;; (tap> {:event :websocket/sending
+                        ;;        :formatted-event [formatted-event payload]})
                         (send-fn [formatted-event payload]
                                 timeout-ms
                                 (fn [reply]
-                                  (tap> {:event :websocket/reply-received
-                                         :reply reply})
+                                  ;; (tap> {:event :websocket/reply-received
+                                  ;;        :reply reply})
                                   (go (>! result-ch reply))))))
                     (do
-                      (tap> {:event :websocket/send-message
-                             :status :error
-                             :reason :no-send-fn})
+                      ;; (tap> {:event :websocket/send-message
+                      ;;        :status :error
+                      ;;        :reason :no-send-fn})
                       (go (>! result-ch {:error "Send function not available"}))))
                   (go (>! result-ch {:error "Client state not initialized"}))))
               (do

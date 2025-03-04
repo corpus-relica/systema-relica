@@ -95,8 +95,6 @@
           (error-response "Failed to fetch kinds"))))))
 
 (defn handle-ws-auth [{:keys [params] :as request}]
-  (tap> "############################################  HANDLING WS AUTH")
-  (tap> request)
   (if-let [user-id (-> request :identity :user-id)]
     (let [socket-token (generate-socket-token)]
       (swap! socket-tokens assoc socket-token
@@ -111,8 +109,6 @@
       (http/with-channel request channel
         (let [client-id (str (random-uuid))]
           (swap! connected-clients assoc client-id {:channel channel :user-id user-id})
-          (tap> "WS HANDLER MORE OR LESS COMPLETE; CLIENT REGISTERED!")
-          (tap> client-id)
           (http/send! channel (json/generate-string {:id "system"
                                                      :type "system:clientRegistered"
                                                      :payload {:success true
@@ -122,8 +118,7 @@
           (http/on-close channel
                          (fn [status]
                            (swap! connected-clients dissoc client-id)
-                           (tap> (str "WebSocket " client-id " closed:" status))
-                           (tap> @connected-clients)))
+                           ))
           (http/on-receive channel
                            (fn [data]
                              (handle-ws-message channel data)))))
@@ -153,8 +148,6 @@
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (archivist/get-entity-type archivist-client uid))]
-        (tap> "---------------------- GET ENTITY TYPE RESPONSE MUTHER FUCKING REQUEST BITCHES! ----------------------")
-        (tap> response)
         (if (:success response)
           (success-response {:type (:type response)})
           (error-response (or (:error response) "Unknown error"))))
@@ -162,8 +155,6 @@
         (error-response "Failed to get entity type")))))
 
 (defn handle-get-environment [{:keys [identity params] :as request}]
-  (tap> "---------------------- GET ENVIRONMENT MUTHER FUCKING REQUEST BITCHES! ----------------------")
-  (tap> request)
   (go
     (try
       (let [response (<! (aperture/get-environment
@@ -171,10 +162,6 @@
                           (:user-id identity)
                           nil))
             env (:environment response)]
-        (tap> "---------------------- !! SUCKIT !! ----------------------")
-        (tap> request)
-        (tap> (:clientId params))
-        ;; (tap> response)
         (swap! connected-clients update-in [(:clientId params)] assoc :environment-id (:id env))
         (success-response env))
       (catch Exception e
@@ -197,14 +184,10 @@
 
 (defn handle-get-model [{:keys [params]}]
   (go
-    (tap> "---------------------- GET MODEL")
-    (tap> params)
     (try
       (let [uids (:uids params)
             uid (parse-long (first uids))
             response (<! (clarity/get-model clarity-client uid))]
-        (tap> "---------------------- GET MODEL RESPONSE")
-        (tap> response)
         (if (:success response)
           (success-response (:model response))
           (error-response (or (:error response) "Unknown error"))))
