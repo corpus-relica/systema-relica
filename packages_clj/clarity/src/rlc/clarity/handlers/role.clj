@@ -1,43 +1,68 @@
 (ns rlc.clarity.handlers.role
   (:require [clojure.spec.alpha :as s]
+            [expound.alpha :as expound]
             [rlc.clarity.handlers.base :as base]))
 
-(s/def ::requiring-relation
+
+;; (s/def ::role-player
+;;   (s/or :uid :rlc.clarity.handlers.base/uid
+;;         :entity :rlc.clarity.handlers.base/entity-kind))
+
+;; (s/def ::role-players
+;;   (s/coll-of ::role-player :kind vector? :min-count 1))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
+
+;; relation
+
+(s/def ::kind-of-requiring-relation
   (s/or :uid :rlc.clarity.handlers.base/uid
         :entity #(do (require '[rlc.clarity.handlers.relation])
-                     (s/valid? :rlc.clarity.handlers.relation/relation-kind %))))
+                     (s/valid? :rlc.clarity.handlers.relation/kind-of-relation %))))
 
-(s/def :rlc.clarity.handlers.role/requiring-relations
-  (s/coll-of ::requiring-relation :kind vector? :min-count 1))
+(s/def ::requiring-kinds-of-relations
+  (s/coll-of ::kind-of-requiring-relation :kind vector? :min-count 1))
 
-(s/def ::role-player
+;; roll-player
+
+(s/def ::kind-of-role-player
   (s/or :uid :rlc.clarity.handlers.base/uid
-        :entity :rlc.clarity.handlers.base/entity-kind))
+        :entity :rlc.clarity.handlers.base/kind-of-entity))
 
-(s/def :rlc.clarity.handlers.role/role-players
-  (s/coll-of ::role-player :kind vector? :min-count 1))
+(s/def ::possible-kinds-of-role-players
+  (s/coll-of ::kind-of-role-player :kind vector? :min-count 1))
 
-(s/def :rlc.clarity.handlers.role/role-kind
-  (s/merge :rlc.clarity.handlers.base/entity-kind
-           (s/keys :req-un [::requiring-relations
-                            ::role-players])))
+;;
+
+(s/def ::kind-of-role
+  (s/merge :rlc.clarity.handlers.base/kind-of-entity
+           (s/keys :req-un [
+                            ;; might also want to know in what position the role is in the relation
+                            ::requiring-kinds-of-relations
+                            ::possible-kinds-of-role-players
+                            ])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; INDIVIDUAL ;;
+
+;; role is not to be instantiated directly,
+;; instantiation is implied an individuals involved in a relation
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
 
-  (def some-role-kind
+  (def some-kind-of-role
     {:uid 1
      :name "some kind of role"
      :nature :kind
-     :definition "some definition"
-     :requiring-relations [{:uid 1
-                            :name "some relation"
-                            :nature :kind
-                            :definition "some definition"
-                            :required-role-1 9876
-                            :required-role-2 12345}
-                           12345]
-     :role-players [67890]})
+     :definitions ["some definition"]
+     :supertypes [1]
+     :possible-kinds-of-role-players [1 2 3]
+     :requiring-kinds-of-relations [1 2 3]})
 
-  (s/explain :rlc.clarity.handlers.role/role-kind some-role-kind))
+  (expound/expound ::kind-of-role some-kind-of-role)
+
+  )

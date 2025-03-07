@@ -4,7 +4,11 @@
             [rlc.clarity.handlers.occurrence :as occurrence]
             [rlc.clarity.handlers.state :as state]
             [rlc.clarity.handlers.base :as base]
-            [rlc.clarity.io.archivist-api :as api]
+            ;; [rlc.clarity.io.archivist-api :as api]
+
+            [io.relica.common.io.archivist-client :as api]
+            [rlc.clarity.io.client-instances :refer [archivist-client]]
+
             [ring.util.response :as response]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MODEL
@@ -20,10 +24,11 @@
 (defn get-all [request]
   (tap> "GETTING ALL EVENTS, FOO' !!!!!!!")
   (let [token (clojure.core/get request :auth-token)
-        response (api/get-classified-facts
-                  {:uid "1000000395"
-                   :recursive false}
-                  token)
+        response (api/get-classified archivist-client "1000000395" )
+        ;; response (api/get-classified-facts
+        ;;           {:uid "1000000395"
+        ;;            :recursive false}
+        ;;           token)
         _ (tap> "MUTHERFUCKING RESPONSE!! SUCKAH!")
         _ (tap> response)
         ;; is response a vector?
@@ -50,7 +55,7 @@
         token (clojure.core/get request :auth-token)
         _ (tap> uid)
         _ (tap> token)
-        response (api/get-classification-fact uid token)]
+        response (api/get-classification-fact archivist-client uid)]
     (if (:error response)
       (response/status 500 {:error "Failed to fetch event data"})
       (let [body (first response)
@@ -69,40 +74,34 @@
 (defn get-time-value [request]
   (let [uid (get-in request [:path-params :uid])
         token (clojure.core/get request :auth-token)
-        result (api/execute-query
-                (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
-                (fn [facts]
-                  (let [time (:rh_object_name (second facts))]
-                    (tap> "TIME ------->")
-                    (tap> facts)
-                    (tap> time)
-                    time))
-                token)]
+        query-res (api/execute-query archivist-client
+                                     (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
+                                     {})
+        time (:rh_object_name (second query-res))]
     (tap> "TIME VALUE RESULT ------->")
-    (tap> result)
-    result))
+    (tap> time)
+    time))
 
 (defn get-time [request]
   (let [uid (get-in request [:path-params :uid])
-        token (clojure.core/get request :auth-token)]
-    (api/execute-query
-     (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
-     (fn [facts]
-       (tap> "TIME FACTS ------->")
-       (tap> facts)
-       (if (empty? facts)
-         nil
-         (first facts)))
-     token)))
+        token (clojure.core/get request :auth-token)
+        query-res (api/execute-query archivist-client
+                               (str uid " > 1785 > ?1.what\n?1.what > 5025 > ?2.value")
+                               {})
+        res (if (empty? query-res)
+                []
+                (first query-res))]
+    res))
 
 (defn get-participants [request]
   (let [uid (get-in request [:path-params :uid])
-        token (clojure.core/get request :auth-token)]
-    (api/execute-query
-     (str uid " > 5644 > ?10.who")
-     (fn [facts]
-       (map :rh_object_uid facts))
-     token)))
+        token (clojure.core/get request :auth-token)
+        query-res (api/execute-query archivist-client
+                                     (str uid " > 5644 > ?10.who")
+                                     {})
+        facts (map :rh_object_uid query-res)
+        ]
+    facts))
 
 ;; (defn get-event-note-value [token uid]
 ;;   (tap> "GETTING EVENT NOTE")

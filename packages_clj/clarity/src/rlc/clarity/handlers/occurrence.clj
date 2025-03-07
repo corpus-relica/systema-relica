@@ -1,128 +1,157 @@
 (ns rlc.clarity.handlers.occurrence
   (:require [clojure.spec.alpha :as s]
+            [expound.alpha :as expound]
             [rlc.clarity.handlers.base :as base]
             [rlc.clarity.handlers.state :as state]
             [rlc.clarity.handlers.aspect :as aspect]))
 
-(s/def ::occurrence-type #{:activity :process :event :deed})
-(s/def ::state #{:new :in-progress :completed :terminated})
-(s/def ::timestamp inst?)
-(s/def ::place-of-begin ::base/kind-ref)
-(s/def ::place-of-end ::base/kind-ref)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
-(s/def ::involvement-type
+;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
+
+;; ASPECT
+
+(s/def ::kinds-of-aspects
+  (s/coll-of (s/or :uid :rlc.clarity.handlers.base/uid
+                   :entity #(do (require '[rlc.clarity.handlers.aspect])
+                               (s/valid? :rlc.clarity.handlers.aspect/kind-of-aspect %)))))
+
+(s/def ::definitive-kinds-of-aspects
+  ::kinds-of-aspects)
+
+(s/def ::possible-kinds-of-aspects
+  ::kinds-of-aspects)
+
+(s/def ::required-kinds-of-aspects
+  ::kinds-of-aspects)
+
+;; INVOLVEMENT
+
+;; (s/def ::kinds-of-involvements
+;;   (s/coll-of (s/or :uid :rlc.clarity.handlers.base/uid
+;;                    :entity #(do (require '[rlc.clarity.handlers.relation])
+;;                                (s/valid? :rlc.clarity.handlers.relation/relation-kind %)))))
+
+(s/def ::kind-of-involvement
   (s/or :uid :rlc.clarity.handlers.base/uid
         :entity #(do (require '[rlc.clarity.handlers.relation])
-                     (s/valid? :rlc.clarity.handlers.relation/relation-kind %))))
+                     (s/valid? :rlc.clarity.handlers.relation/kind-of-relation %))))
 
-(s/def ::involved-individual
+(s/def ::kind-of-involved
   (s/or :uid int?
-        :entity :rlc.clarity.handlers.base/entity))
+        :entity :rlc.clarity.handlers.base/kind-of-entity))
 
-(s/def ::involvement-tuple
-  (s/tuple ::involvement-type ::involved-individual))
+(s/def ::kind-of-involvement-tuple
+  (s/tuple ::kind-of-involvement ::kind-of-involved))
 
-(s/def ::involved
-  (s/coll-of ::involvement-tuple :kind vector? :min-count 1))
+(s/def ::definitive-kinds-of-involvement
+  (s/coll-of ::kind-of-involvement-tuple :kind vector? :min-count 1))
 
-(s/def :rlc.clarity.handlers.occurrence/occurrence-kind
+(s/def ::possible-kinds-of-involvement
+  (s/coll-of ::kind-of-involvement-tuple :kind vector? :min-count 1))
+
+(s/def ::required-kinds-of-involvement
+  (s/coll-of ::kind-of-involvement-tuple :kind vector? :min-count 1))
+
+;; DEFINITION
+
+(s/def ::kind-of-occurrence
   (s/merge
-    :rlc.clarity.handlers.base/entity-kind))
+    :rlc.clarity.handlers.state/kind-of-state
+    (s/keys :opt-un [
+                     ::definitive-kinds-of-aspects
+                     ::possible-kinds-of-aspects
+                     ::required-kinds-of-aspects
 
-(s/def :rlc.clarity.handlers.occurrence/happens-during ::aspect/period-in-time)
+                     ;; relations where this is the involving occurrence
+                     ::definitive-kinds-of-involvement
+                     ::possible-kinds-of-involvement
+                     ::required-kinds-of-involvement
 
-(s/def :rlc.clarity.handlers.occurrence/happens-within ::aspect/period-in-time)
+                     ])))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; INDIVIDUAL ;;
 
-(s/def :rlc.clarity.handlers.occurrence/occurrence
-  (s/merge :rlc.clarity.handlers.state/state
+;; ASPECT
+
+(s/def ::aspects
+  (s/coll-of (s/or :uid :rlc.clarity.handlers.base/uid
+                   :entity #(do (require '[rlc.clarity.handlers.aspect])
+                               (s/valid? :rlc.clarity.handlers.aspect/individual-aspect %)))))
+
+;; INVOLVEMENT
+
+(s/def ::individual-involvement
+  (s/or :uid int?
+        :entity :rlc.clarity.handlers.relation/individual-relation))
+
+(s/def ::individual-involved
+  (s/or :uid int?
+        :entity :rlc.clarity.handlers.base/individual-entity))
+
+(s/def ::individual-involvement-tuple
+  (s/tuple ::individual-involvement ::individual-involved))
+
+(s/def ::involvements
+  (s/coll-of ::individual-involvement-tuple :kind vector? :min-count 1))
+
+(s/def ::occurrence-type #{:activity :process :event :deed})
+
+(s/def :rlc.clarity.handlers.occurrence/individual-occurrence
+  (s/merge :rlc.clarity.handlers.state/individual-state
            (s/keys :req-un [::occurrence-type]
-                   :opt-un [::happens-during
-                            ::happens-within
-                            ::place-of-begin
-                            ::place-of-end
-                            ::involved])))
+                   :opt-un [
+
+                            ::aspects
+                            ::involvements
+
+                            ;; ::happens-during
+                            ;; ::happens-within
+                            ;; ::place-of-begin
+                            ;; ::place-of-end
+                            ;; ::involved
+
+                            ])))
+
+;; (s/def ::state #{:new :in-progress :completed :terminated})
+;; (s/def ::timestamp inst?)
+;; (s/def ::place-of-begin ::base/kind-ref)
+;; (s/def ::place-of-end ::base/kind-ref)
+
+
+;; (s/def :rlc.clarity.handlers.occurrence/happens-during ::aspect/period-in-time)
+
+;; (s/def :rlc.clarity.handlers.occurrence/happens-within ::aspect/period-in-time)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; TEST ;;
 
 (comment
-  (def occurrence-kind
+  (def test-kind-of-occurrence
     {:uid 1
-     :name "some kind of occurrence"
+     :name "test kind of occurrence"
      :nature :kind
-     :definition "some definition"})
-
-  (s/explain ::occurrence-kind occurrence-kind)
-
-  (def individual-occurrence
-    {:uid 1
-     :name "some individual occurrence"
-     :nature :individual
-     :kind-ref 1
-     :occurrence-type :activity
-     :happens-during {:uid 12
-                       :name "some period of time"
-                       :nature :individual
-                       :kind-ref 1000
-                       :begin-time 730000
-                       :end-time 730000}
-     :involved [[12345 12]
-                [{:uid 43892
-                  :name "Test Relation Kind"
-                  :nature :kind
-                  :definition "some definition"
-                  :required-role-1 12345
-                  :required-role-2 89076
-                  }
-                 {:uid 1
-                  :name "Test individual physical object"
-                  :nature :individual
-                  :kind-ref 1
-                  :aspects [123 456]
-                  :state :new}]]
+     :definitions ["some definition" "some other definition" "yet another definition"]
+     :supertypes [1 2 3]
+     :definitive-kinds-of-aspects [1 2 3]
+     :possible-kinds-of-aspects [1 2 3]
+     :required-kinds-of-aspects [1 2 3]
+     :definitive-kinds-of-involvement [[1 2]]
+     :possible-kinds-of-involvement [[1 2]]
+     :required-kinds-of-involvement [[1 2]]
      })
 
-  ;; (s/explain ::involvements [[:participant 12]])
+  (expound/expound ::kind-of-occurrence test-kind-of-occurrence)
 
-  (s/explain ::occurrence individual-occurrence)
+  (def test-individual-occurrence
+    {:uid 1
+     :name "test individual occurrence"
+     :nature :individual
+     :classifiers [1 2 3]
+     :occurrence-type :activity
+     :aspects [1 2 3]
+     :involvements [[1 2]]
+     })
 
-  (def test-occurrence
-   {:uid 1
-                     :name "some occurrence"
-                     :nature :individual
-                     :kind-ref 1
-                     :occurrence-type :activity
-                     :happens-during {:uid 12
-                                      :name "some period of time"
-                                      :nature :individual
-                                      :aspect-nature :quantitative
-                                      :kind-ref 1000
-                                      :begin-time 1234
-                                      :end-time {:uid 8432
-                                                 :name "some point in timne"
-                                                 :nature :individual
-                                                 :kind-ref 1243
-                                                 :aspect-nature :quantitative
-                                                 :possessor 43423
-                                                 :value (java.util.Date.)
-                                                 :uom :iso8601}}} )
-
-  (s/explain ::occurrence test-occurrence)
+  (expound/expound ::individual-occurrence test-individual-occurrence)
 
   )
-
-
-;; (defn foo
-;;   "I don't do a whole lot ... yet."
-;;   []
-;;   (println "Hello, World! Bar!"))
-
-;; (defn create-occurrence
-;;   [occurrence]
-;;   (println occurrence))
-
-;; (defn get-occurrence
-;;   [uid]
-;;   (println id))
-
-;; (defn destroy-occurrence
-;;   [uid]
-;;   (println uid))

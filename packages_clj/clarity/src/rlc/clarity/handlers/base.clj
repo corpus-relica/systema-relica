@@ -1,74 +1,122 @@
 (ns rlc.clarity.handlers.base
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [expound.alpha :as expound]))
 
 ;; Core specs
-(s/def :rlc.clarity.handlers.base/uid int?)
-(s/def :rlc.clarity.handlers.base/name string?)
-(s/def :rlc.clarity.handlers.base/definition string?)
-(s/def :rlc.clarity.handlers.base/nature #{:kind :individual})
-(s/def :rlc.clarity.handlers.base/kind-ref :rlc.clarity.handlers.base/uid)
+(s/def ::uid int?)
+(s/def ::name string?)
+(s/def ::definition string?)
+(s/def ::definitions (s/coll-of ::definition :kind vector? :min-count 1))
+(s/def ::nature #{:kind
+                  :individual
+                  :qualification})
+(s/def ::kind-ref ::uid)
+(s/def ::supertypes (s/coll-of ::kind-ref :kind vector? :min-count 1))
+(s/def ::classifiers (s/coll-of ::kind-ref :kind vector? :min-count 1))
 
-(s/def :rlc.clarity.handlers.base/entity-base
-  (s/keys :req-un [:rlc.clarity.handlers.base/uid
-                   :rlc.clarity.handlers.base/name
-                   :rlc.clarity.handlers.base/nature]))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
-(s/def :rlc.clarity.handlers.base/entity-kind
-  (s/and :rlc.clarity.handlers.base/entity-base
-         (s/keys :req-un [:rlc.clarity.handlers.base/definition])
-         #(= (:nature %) :kind)))
+(s/def ::entity-base
+  (s/keys :req-un [::uid
+                   ::name
+                   ::nature]))
 
-(s/def :rlc.clarity.handlers.base/involver-occurrence
-  (s/or :uid :rlc.clarity.handlers.base/uid
-        :entity #(do (require '[rlc.clarity.occurrence])
-                     (s/valid? :rlc.clarity.handlers.occurrence/occurrence %))))
+;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
 
-(s/def :rlc.clarity.handlers.base/involving-relation
-  (s/or :uid :rlc.clarity.handlers.base/uid
-        :entity #(do (require '[rlc.clarity.relation])
-                     (s/valid? :rlc.clarity.handlers.relation/relation-kind %))))
+(s/def ::kind-of-entity
+  (s/and ::entity-base
+         #(= (:nature %) :kind)
+         (s/keys :req-un [::definitions ::supertypes])
+         #(= (count (:definitions %)) (count (:supertypes %)))))
 
-(s/def :rlc.clarity.handlers.base/involvement-tuple
-  (s/tuple :rlc.clarity.handlers.base/involving-relation
-           :rlc.clarity.handlers.base/involver-occurrence))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; INDIVIDUAL ;;
 
-(s/def :rlc.clarity.handlers.base/involvers
-  (s/coll-of :rlc.clarity.handlers.base/involvement-tuple :kind vector? :min-count 1))
+(s/def ::individual-entity
+  (s/and ::entity-base
+         #(= (:nature %) :individual)
+         (s/keys :req-un [::classifiers])))
 
-(s/def :rlc.clarity.handlers.base/entity
-  (s/and :rlc.clarity.handlers.base/entity-base
-         (s/keys :req-un [:rlc.clarity.handlers.base/kind-ref]
-                 :opt-un [:rlc.clarity.handlers.base/involvers])
-         #(= (:nature %) :individual)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; QUALIFICATION ;;
+
+(s/def ::qualified-entity
+  (s/or :uid ::uid
+        :entity ::kind-of-entity))
+
+(s/def ::qualification-entity
+  (s/and ::entity-base
+         #(= (:nature %) :qualification)
+         (s/keys :req-un [::qualified-entity])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; GENERIC ;;
+
+(s/def ::entity
+  (s/or :kind ::kind-of-entity
+        :individual ::individual-entity))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; TEST ;;
 
 (comment
 
   (def some-entity
     {:uid 1
-     :name "some entity"
-     :nature :individual
-     :kind-ref 1
-     :involvers [[1 1]
-                 [{:uid 1234
-                   :name "some relation"
-                   :nature :kind
-                   :definition "some definition"
-                   :required-role-1 9876
-                   :required-role-2 12345}
-                  {:uid 1
-                   :name "some individual occurrence"
-                   :nature :individual
-                   :kind-ref 4567
-                   :occurrence-type :activity
-                   :happens-during {:uid 12
-                                    :name "some period of time"
-                                    :nature :individual
-                                    :kind-ref 1000
-                                    :begin-time 730000
-                                    :end-time 730000}
-                   :involvements [[1234 1]]}
-                  ]]})
+     :name "some kind of occurrence"
+     :nature :kind
+     :definitions ["some definition" "some other definition" "yet another definition"]
+     :supertypes [1 2 3]
+     })
 
-  (s/explain :rlc.clarity.handlers.base/entity some-entity)
+  (expound/expound :rlc.clarity.handlers.base/entity some-entity)
+
+  (def some-other-entity
+    {:uid 2
+     :name "some other kind of occurrence"
+     :nature :individual
+     :classifiers [1 2 3]
+     })
+
+  (expound/expound :rlc.clarity.handlers.base/entity some-other-entity)
+
+  ;; Valid example
+  (def valid-kind
+    {:uid 1
+     :name "Valid Kind"
+     :nature :kind
+     :definitions ["Def 1" "Def 2"]
+     :supertypes [100 200]})
+
+  ;; Invalid example (count mismatch)
+  (def invalid-kind
+    {:uid 2
+     :name "Invalid Kind"
+     :nature :kind
+     :definitions ["Only one definition"]
+     :supertypes [300 400 500]})
+
+  ;; Test validation
+  (s/valid? ::kind-of-entity valid-kind)   ;; should return true
+
+  (s/valid? ::kind-of-entity invalid-kind) ;; should return false
+
+  (expound/expound ::kind-of-entity invalid-kind)
+
+  (def some-qualified-entity
+    {:uid 3
+     :name "some qualified entity"
+     :nature :qualification
+     :qualified-entity {:uid 1
+                        :name "some kind of occurrence"
+                        :nature :kind
+                        :definitions ["some definition"]
+                        :supertypes [1]}})
+
+  (def some-qualified-entity-too
+    {:uid 3
+     :name "some qualified entity"
+     :nature :qualification
+     :qualified-entity 1})
+
+  (expound/expound ::qualification-entity some-qualified-entity)
+
+  (expound/expound ::qualification-entity some-qualified-entity-too)
 
   )

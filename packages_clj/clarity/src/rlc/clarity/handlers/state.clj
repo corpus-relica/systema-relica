@@ -3,48 +3,64 @@
             [rlc.clarity.handlers.base :as base]
             [rlc.clarity.handlers.aspect :as aspect]))
 
-(s/def :rlc.clarity.handlers.state/state-kind
-  (s/merge :rlc.clarity.handlers.base/entity-kind))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
-(s/def :rlc.clarity.handlers.state/cause
-  (s/or :uid :rlc.clarity.handlers.base/uid
-        :entity #(do (require '[rlc.clarity.occurrence :as o])
-                     (s/valid? :rlc.clarity.handlers.occurrence/occurrence %))))
+;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
 
-(s/def :rlc.clarity.handlers.state/cause-of-begin ::cause)
+(s/def ::kind-of-state
+  :rlc.clarity.handlers.base/kind-of-entity)
 
-(s/def :rlc.clarity.handlers.state/cause-of-end ::cause)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; INDIVIDUAL ;;
 
-(s/def :rlc.clarity.handlers.state/adopter
-  (s/or :uid :rlc.clarity.handlers.base/uid
-        :entity #(do (require '[rlc.clarity.physical-object :as po])
-                     (s/valid? :rlc.clarity.handlers.physical-object/physical-object %))))
+(s/def ::individual-state
+  (s/merge :rlc.clarity.handlers.base/individual-entity
+           (s/keys :opt-un [
+                            ;; ::involved
+                            ;; ::aspects
 
-(s/def :rlc.clarity.handlers.state/begin-time ::aspect/point-in-time)
+                            ;; ::cause-of-begin
+                            ;; ::cause-of-end
+                            ;; ::begin-time
+                            ;; ::end-time
+                            ;; ::duration
+                            ;; ::adopter
+                            ;; ::prestate
+                            ;; ::poststate
+                            ;; ::is-the-case-at
 
-(s/def :rlc.clarity.handlers.state/end-time ::aspect/point-in-time)
+                            ])))
 
-(s/def :rlc.clarity.handlers.state/is-the-case-at ::aspect/point-in-time)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;o
 
-(s/def :rlc.clarity.handlers.state/state
-  (s/merge :rlc.clarity.handlers.base/entity
-           (s/keys :opt-un [::cause-of-begin
-                            ::cause-of-end
-                            ::begin-time
-                            ::end-time
-                            ::duration
-                            ::adopter
-                            ::prestate
-                            ::poststate
-                            ::is-the-case-at])))
 
-(s/def :rlc.clarity.handlers.state/prestate
-  (s/or :uid :rlc.clarity.base/uid
-        :entity ::state))
+;; (s/def ::cause
+;;   (s/or :uid :rlc.clarity.handlers.base/uid
+;;         :entity #(do (require '[rlc.clarity.occurrence :as o])
+;;                      (s/valid? :rlc.clarity.handlers.occurrence/occurrence %))))
 
-(s/def :rlc.clarity.handlers.state/poststate
-  (s/or :uid :rlc.clarity.base/uid
-        :entity ::state))
+;; (s/def ::cause-of-begin ::cause)
+
+;; (s/def ::cause-of-end ::cause)
+
+;; (s/def ::adopter
+;;   (s/or :uid :rlc.clarity.handlers.base/uid
+;;         :entity #(do (require '[rlc.clarity.physical-object :as po])
+;;                      (s/valid? :rlc.clarity.handlers.physical-object/physical-object %))))
+
+;; (s/def ::begin-time ::aspect/point-in-time)
+
+;; (s/def ::end-time ::aspect/point-in-time)
+
+;; (s/def ::is-the-case-at ::aspect/point-in-time)
+
+
+;; (s/def ::prestate
+;;   (s/or :uid :rlc.clarity.base/uid
+;;         :entity ::state))
+
+;; (s/def ::poststate
+;;   (s/or :uid :rlc.clarity.base/uid
+;;         :entity ::state))
 
 (comment
 
