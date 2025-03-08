@@ -31,6 +31,7 @@ const IndividualDetails: React.FC = () => {
     enabled: !!selectedNode, // This disables the query if selectedNode is null
   });
 
+  return <div>UNDER CONSTZRUCTION</div>
   if (isLoading || !selectedNode) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 

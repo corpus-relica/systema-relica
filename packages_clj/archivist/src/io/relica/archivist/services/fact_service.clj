@@ -1,6 +1,7 @@
 (ns io.relica.archivist.services.fact-service
   (:require [clojure.tools.logging :as log]
             [clojure.core.async :refer [<! go]]
+            [io.relica.archivist.services.gellish-base-service :as gellish]
             [io.relica.archivist.services.graph-service :as graph]
             [io.relica.archivist.services.cache-service :as cache]
             [io.relica.archivist.services.concept-service :as concept]
@@ -21,10 +22,13 @@
   (get-subtypes-cone [this uid])
   (get-classified [this uid recursive])
   (get-facts-about-individual [this uid])
+  (get-related-facts [this uid rel-type-uid])
   (get-all-related-facts [this uid])
   (get-all-related-facts-recursive [this uid depth])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
+  (get-inherited-relation [this uid rel-type-uid])
   (get-facts-relating-entities [this uid1 uid2])
+  (get-related-to [this uid rel-type-uid])
   (confirm-fact [this fact])
   (confirm-fact-in-relation-cone [this lh-object-uids rel-type-uids rh-object-uids])
   (delete-fact [this uid])
@@ -87,6 +91,19 @@
       (->> result
            (map #(get-in % [:r :properties]))
            (map #(into {} %)))))
+
+  (get-related-facts [_ uid rel-type-uid]
+    (go
+      (try
+        (let [results (graph/exec-query graph-service
+                                        queries/related-facts
+                                        {:start_uid uid
+                                         :rel_type_uid rel-type-uid})
+              res (graph/transform-results results)]
+          res)
+        (catch Exception e
+          (log/error "Error in get-related-facts:" (ex-message e))
+          []))))
 
   (get-all-related-facts [_ uid]
     (go
@@ -188,6 +205,34 @@
           (log/error "Error in get-related-on-uid-subtype-cone:" (ex-message e))
           []))))
 
+  (get-inherited-relation [this uid rel-type-uid]
+    (go
+      (try
+        (let [rel (<! (get-related-facts this uid rel-type-uid))]
+          (if (not (empty? rel))
+            rel
+            (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
+                  spec-facts (reverse (:facts spec-h))
+                  _ (tap> "------------------- GET INHERITED RELATION -------------------")]
+              (tap> spec-facts)
+              ;; Process the specialization hierarchy sequentially, returning first non-empty result
+              (loop [items spec-facts]
+                (if (empty? items)
+                  nil  ;; No matching results found in hierarchy
+                  (let [item (first items)
+                        related-facts-chan (get-related-facts this (:lh_object_uid item) rel-type-uid)
+                        facts (<! related-facts-chan)]
+                    (tap> {:lh (:lh_object_uid item)
+                           :rh (:rh_object_uid item)})
+                    (tap> "------------------- GET INHERITED RELATION FACTS -------------------")
+                    (tap> facts)
+                    (if (seq facts)
+                      facts  ;; Return first non-empty result
+                      (recur (rest items)))))))))
+        (catch Exception e
+          (log/error "Error in get-inherited-relation:" (ex-message e))
+          []))))
+
   (get-facts-relating-entities [_ uid1 uid2]
     (go
       (try
@@ -223,6 +268,25 @@
           unique-results)
         (catch Exception e
           (log/error "Error in get-facts-relating-entities:" (ex-message e))
+          []))))
+
+  (get-related-to [_ uid rel-type-uid]
+    (go
+      (try
+        (if (and (not (nil? uid)) (nil? rel-type-uid))
+          (let [results (graph/exec-query graph-service
+                                          queries/any-related-to
+                                          {:uid uid})
+                res (graph/transform-results results)]
+            res)
+            (let [results (graph/exec-query graph-service
+                                            queries/related-to
+                                            {:uid uid
+                                             :rel_type_uid rel-type-uid})
+                  res (graph/transform-results results)]
+              res))
+        (catch Exception e
+          (log/error "Error in get-related-to:" (ex-message e))
           []))))
 
   (confirm-fact [_ fact]

@@ -9,7 +9,9 @@
   (exec-write-query [this query params]))
 
 (defrecord GraphService [session-factory]
+
   GraphOperations
+
   (exec-query [_ query params]
     (with-open [session (session-factory)]
       (vec
@@ -18,6 +20,7 @@
           (query session params)
           ;; If query is a raw string, pass it through with params
           (neo4j/execute session query params)))))
+
   (exec-write-query [this query params]
     (exec-query this query params)))
 

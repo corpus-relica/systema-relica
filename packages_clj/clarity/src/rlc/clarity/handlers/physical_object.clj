@@ -6,7 +6,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
 
 
@@ -47,7 +46,8 @@
 
 (s/def ::kind-of-physical-object
   (s/and :rlc.clarity.handlers.base/kind-of-entity
-         (s/keys :opt-un [::definitive-kinds-of-aspects
+         (s/keys :opt-un [
+                          ::definitive-kinds-of-aspects
                           ::possible-kinds-of-aspects
                           ::required-kinds-of-aspects
 

@@ -222,11 +222,16 @@
             relation-subtypes (cache/all-descendants-of cache-service relation-uid)
             occurrence-subtypes (cache/all-descendants-of cache-service occurrence-uid)
             res (cond
-                  ((set physical-object-subtypes) uid) "physical object"
-                  ((set role-subtypes) uid) "role"
-                  ((set aspect-subtypes) uid) "aspect"
-                  ((set occurrence-subtypes) uid) "occurrence"
-                  ((set relation-subtypes) uid) "relation"
+                  (or (= uid physical-object-uid)
+                      ((set physical-object-subtypes) uid)) "physical object"
+                  (or (= uid role-uid)
+                      ((set role-subtypes) uid)) "role"
+                  (or (= uid aspect-uid)
+                      ((set aspect-subtypes) uid)) "aspect"
+                  (or (= uid occurrence-uid)
+                      ((set occurrence-subtypes) uid)) "occurrence"
+                  (or (= uid relation-uid)
+                      ((set relation-subtypes) uid)) "relation"
                   :else "anything")]
         res)
       (catch Exception e

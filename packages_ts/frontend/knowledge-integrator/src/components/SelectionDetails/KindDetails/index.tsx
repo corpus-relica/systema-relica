@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
 
-import { portalClient } from "../../io/PortalClient.js";
+import { portalClient } from "../../../io/PortalClient.js";
 
-import { sockSendCC } from "../../socket";
+import { sockSendCC } from "../../../socket.js";
 
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
@@ -20,11 +20,17 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 
-import Specialization from "./display/Specialization";
-import Definition from "./display/Definition";
-import PossibleRole from "./display/PossibleRole";
-import WorkflowFactsVisualizer from "../../pages/Workflows/WorkflowFactsVisualizer";
-import Synonyms from "./display/Synonyms";
+import Specialization from "../display/Specialization.js";
+import Definition from "../display/Definition.js";
+import PossibleRole from "../display/PossibleRole.js";
+import WorkflowFactsVisualizer from "../../../pages/Workflows/WorkflowFactsVisualizer.js";
+import Synonyms from "../display/Synonyms.js";
+
+import PhysicalObjectKindDetails from "./PhysicalObject.js"
+import AspectKindDetails from "./Aspect.js"
+import RoleKindDetails from "./Role.js"
+import RelationKindDetails from "./Relation.js"
+import OccurrenceKindDetails from "./Occurrence.js"
 
 const KindDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");
@@ -42,49 +48,93 @@ const KindDetails: React.FC = () => {
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  const { uid, type, category, name, definition, facts, collection } = data;
+  const { uid, name, nature, category, supertypes, definitions } = data;
 
-  const synFacts = facts.filter((fact) => fact.rel_type_uid === 1981);
+  const tempDefs = definitions.map((def)=>({full_definition:def, partial_definition:""}))
+  const defsComp = <Definition definitions={tempDefs} />
+  const specComp = <Specialization uids={supertypes} childUID={uid}/>
 
-  const specialization = data[1146];
-  const synonyms = data[1981];
-  const inverses = data[1986];
-  const reqRole1 = data[4731];
-  const reqRole2 = data[4733];
-  const possRoles = data[4714];
+  let catComp;
+  switch(category){
+      case "physical object":
+        catComp = <PhysicalObjectKindDetails {...data}/>
+      break;
+      case "aspect":
+        catComp = <AspectKindDetails {...data}/>
+      break;
+      case "role":
+        catComp = <RoleKindDetails {...data}/>
+      break;
+      case "relation":
+        catComp = <RelationKindDetails {...data}/>
+      break;
+      case "occurrence":
+        catComp = <OccurrenceKindDetails {...data}/>
+      break;
+      default:
+        catComp = <div>Unknown Entity Category: {category}</div>
+      break;
+  }
 
-  const loadAllPossRoles = (uid) => {
-    possRoles.forEach((possRole) => {
-      sockSendCC("user", "loadEntity", { uid: possRole });
-    });
-  };
+        // <Typography size="18px" style={{ fontWeight: 800, color: "black" }}>
+        //   {category}
+        // </Typography>
 
-  const pushDataToClipboard = async () => {
-    await window.navigator.clipboard.writeText(JSON.stringify(data));
-  };
+  // const synFacts = facts.filter((fact) => fact.rel_type_uid === 1981);
 
-  const text = `${uid} (${type}) :: ${name}`;
-  const factTableRows = facts.map((fact) => {
-    return (
-      <TableRow>
-        <TableCell>
-          <Typography size="10px">{fact.lh_object_name}</Typography>
-        </TableCell>
-        <TableCell>
-          <Typography size="10px">{fact.rel_type_name}</Typography>
-        </TableCell>
-        <TableCell>
-          <Typography size="10px">{fact.rh_object_name}</Typography>
-        </TableCell>
-      </TableRow>
-    );
-  });
+  // const specialization = data[1146];
+  // const synonyms = data[1981];
+  // const inverses = data[1986];
+  // const reqRole1 = data[4731];
+  // const reqRole2 = data[4733];
+  // const possRoles = data[4714];
 
-  console.log("data: ", data);
+  // const loadAllPossRoles = (uid) => {
+  //   possRoles.forEach((possRole) => {
+  //     sockSendCC("user", "loadEntity", { uid: possRole });
+  //   });
+  // };
+
+  // const pushDataToClipboard = async () => {
+  //   await window.navigator.clipboard.writeText(JSON.stringify(data));
+  // };
+
+  // const text = `${uid} (${type}) :: ${name}`;
+  // const factTableRows = facts.map((fact) => {
+  //   return (
+  //     <TableRow>
+  //       <TableCell>
+  //         <Typography size="10px">{fact.lh_object_name}</Typography>
+  //       </TableCell>
+  //       <TableCell>
+  //         <Typography size="10px">{fact.rel_type_name}</Typography>
+  //       </TableCell>
+  //       <TableCell>
+  //         <Typography size="10px">{fact.rh_object_name}</Typography>
+  //       </TableCell>
+  //     </TableRow>
+  //   );
+  // });
+
+  // console.log("data: ", data);
 
   return (
     <Stack direction="column" spacing="1">
       <Box>
+        <Typography size="18px" style={{ fontWeight: 800, color: "black" }}>
+          {uid}:{name}
+        </Typography>
+      </Box>
+      {specComp}
+      {defsComp}
+      {catComp}
+    </Stack>
+  );
+};
+
+export default KindDetails;
+
+      {/*<Box>
         <Stack direction="row" spacing="1">
           <Box>
             <Typography size="18px" style={{ fontWeight: 800, color: "black" }}>
@@ -165,12 +215,7 @@ const KindDetails: React.FC = () => {
                 <TableBody>{factTableRows}</TableBody>
               </Table>
             </TableContainer>*/}
-            <WorkflowFactsVisualizer facts={facts} sparse={true} />
-          </Box>
-        )}
-      </Box>
-    </Stack>
-  );
-};
-
-export default KindDetails;
+      //       <WorkflowFactsVisualizer facts={facts} sparse={true} />
+      //     </Box>
+      //   )}
+      // </Box>*/}

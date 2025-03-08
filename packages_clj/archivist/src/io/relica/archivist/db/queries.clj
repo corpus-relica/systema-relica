@@ -326,6 +326,11 @@
   DELETE r1, r2, r
   RETURN r")
 
+(neo4j/defquery related-facts
+  "MATCH (start:Entity)--(r)-->(end:Entity)
+  WHERE start.uid = $start_uid AND r.rel_type_uid = $rel_type_uid
+  RETURN r")
+
 (neo4j/defquery all-related-facts
   "MATCH (start:Entity)--(r)-->(end:Entity)
   WHERE start.uid = $start_uid AND end.uid = $end_uid
@@ -344,4 +349,14 @@
 (neo4j/defquery all-related-facts-d
   "MATCH (start:Entity)<--(r)--(end:Entity)
   WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
+  RETURN r")
+
+(neo4j/defquery related-to
+  "MATCH (start:Entity)--(r)-->(end:Entity)
+  WHERE end.uid = $uid AND r.rel_type_uid = $rel_type_uid
+  RETURN r")
+
+(neo4j/defquery any-related-to
+  "MATCH (start:Entity)--(r)-->(end:Entity)
+  WHERE end.uid = $uid
   RETURN r")

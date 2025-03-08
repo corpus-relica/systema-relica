@@ -47,11 +47,13 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
     const foo = async () => {
       if (uid) {
         if (type === "entity") {
+          console.log("TYPE EQUALS ENTITY")
           const result = await dataProvider.getOne("env/", {
             uid: uid,
           });
+          console.log("RESULT: ", result)
           const model = result.data;
-          if (model.type === "kind") {
+          if (model.nature === "kind") {
             setMenu(
               <KindContextMenu
                 uid={uid}
@@ -70,7 +72,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 setWarnIsOpen={setWarnIsOpen}
               />
             );
-          } else if (model.type === "individual") {
+          } else if (model.nature === "individual") {
             setMenu(
               <IndividualContextMenu
                 uid={uid}

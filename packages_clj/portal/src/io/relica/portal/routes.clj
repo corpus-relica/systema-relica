@@ -21,6 +21,7 @@
                                         wrap-async-handler]]))
 
 ;; Define routes with WebSocket support
+
 (defroutes app-routes
   (GET "/chsk" [] ws-handler)
   (POST "/ws-auth" [] (wrap-jwt-auth
@@ -49,6 +50,7 @@
                                       wrap-jwt-auth))
 
   ;; Entity retrieval routes
+
   (OPTIONS "/retrieveEntity/collections" []
     {:status 200
      :headers {"Access-Control-Allow-Origin" "*"
@@ -80,6 +82,7 @@
   (GET "/generalSearch/text" [] (-> handle-text-search
                                     wrap-async-handler
                                     wrap-jwt-auth))
+
   ;; Model routes
 
   (OPTIONS "/model" []
@@ -88,7 +91,6 @@
                "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
                "Access-Control-Allow-Headers" "Content-Type, Authorization"
                "Access-Control-Max-Age" "3600"}})
-
   (GET "/model" [] (-> handle-get-model
                        wrap-async-handler
                        wrap-jwt-auth))
@@ -99,7 +101,6 @@
                "Access-Control-Allow-Methods" "GET, POST, OPTIONS"
                "Access-Control-Allow-Headers" "Content-Type, Authorization"
                "Access-Control-Max-Age" "3600"}})
-
   (GET "/model/kind" [] (-> handle-get-kind-model
                            wrap-async-handler
                            wrap-jwt-auth))
@@ -115,6 +116,7 @@
                                   wrap-async-handler
                                   wrap-jwt-auth))
 
+  ;; Fact routes
 
   (OPTIONS "/fact/classified" []
     {:status 200
@@ -126,7 +128,6 @@
   (GET "/fact/classified" [] (-> handle-get-classified
                                   wrap-async-handler
                                   wrap-jwt-auth))
-
 
   (OPTIONS "/fact/subtypes"[]
     {:status 200
@@ -149,6 +150,7 @@
   (GET "/fact/subtypes-cone" [] (-> handle-get-subtypes-cone
                                   wrap-async-handler
                                   wrap-jwt-auth))
+
   ;;
 
   (GET "/health" [] {:status 200 :body "healthy"})

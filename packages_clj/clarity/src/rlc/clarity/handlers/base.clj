@@ -10,6 +10,13 @@
 (s/def ::nature #{:kind
                   :individual
                   :qualification})
+(s/def ::category #{:physical-object
+                    :aspect
+                    :role
+                    :relation
+                    :state
+                    :occurrence
+                    :anything})
 (s/def ::kind-ref ::uid)
 (s/def ::supertypes (s/coll-of ::kind-ref :kind vector? :min-count 1))
 (s/def ::classifiers (s/coll-of ::kind-ref :kind vector? :min-count 1))
@@ -19,7 +26,8 @@
 (s/def ::entity-base
   (s/keys :req-un [::uid
                    ::name
-                   ::nature]))
+                   ::nature
+                   ::category]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
 

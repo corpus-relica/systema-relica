@@ -7,13 +7,13 @@
     [cheshire.core :as json]
     ;; [io.relica.common.io.archivist-client :as archivist]
     ;; [rlc.clarity.io.client-instances :refer [archivist-client]]
-    [rlc.clarity.services.model-service :as model-service]
+    [rlc.clarity.services.semantic-model-service :as sms]
    ;; [io.pedestal.http :as http]
    ;; [io.pedestal.http.route :as route]
    ;; [clj-http.client :as client]
-   ;; [rlc.clarity.service :as service]
    ;; [portal.api :as p]
     [clojure.tools.logging :as log]
+    [clojure.pprint :as pprint]
    ))
 
 ;; Server instance
@@ -28,11 +28,12 @@
       (try
         (let [model-id (:uid ?data)
               _ (log/info model-id)
-              model (<! (model-service/retrieve-model model-id))]
-          (log/info model)
-          (if model
+              sm (<! (sms/retrieve-semantic-model model-id))]
+          ;; (log/info model)
+          (pprint/pprint sm)
+          (if sm
             (?reply-fn {:success true
-                        :model model})
+                        :model sm})
             (?reply-fn {:success false
                         :error "Model not found"})))
         (catch Exception e
@@ -43,12 +44,13 @@
   :get/kind-model
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
-    (tap> (str "Getting kind for user:" (:user-id ?data)))
+    (log/info (str "Getting kind for user:" ?data))
     (go
       (try
         (let [kind-id (:kind-id ?data)
-              kind (<! (model-service/retrieve-kind-model kind-id))]
-          (log/info kind)
+              kind (<! (sms/retrieve-semantic-model kind-id))]
+          ;; (log/info kind)
+          (pprint/pprint kind)
           (if kind
             (?reply-fn {:success true
                         :model kind})
@@ -62,12 +64,13 @@
   :get/individual-model
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
-    (tap> (str "Getting individual for user:" (:user-id ?data)))
+    (log/info (str "Getting individual for user:" (:user-id ?data)))
     (go
       (try
         (let [individual-id (:individual-id ?data)
-              individual (<! (model-service/retrieve-individual-model individual-id))]
-          (log/info individual)
+              individual (<! (sms/retrieve-semantic-model individual-id))]
+          ;; (log/info individual)
+          (pprint/pprint individual)
           (if individual
             ;; Return a vector with an event ID and the data, not just a map
             (?reply-fn {:success true
@@ -86,7 +89,7 @@
     (let [port 2176
           server (ws/start! port)]
       (reset! server-instance server)
-      (tap> (str "Clarity WebSocket server started on port" port))
+      (log/info (str "Clarity WebSocket server started on port" port))
       server)))
 
 (defn stop! []
@@ -112,4 +115,6 @@
                  :message "Test broadcast"})
 
   ;; Stop server
-  (stop!))
+  (stop!)
+
+  )

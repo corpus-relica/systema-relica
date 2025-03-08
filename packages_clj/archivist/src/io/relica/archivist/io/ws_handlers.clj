@@ -7,8 +7,28 @@
             [io.relica.archivist.services.kind-service :as kind-service]
             [io.relica.archivist.services.entity-retrieval-service :as entity]
             [io.relica.archivist.services.general-search-service :as general-search]
-            [io.relica.archivist.services.fact-service :as fact-service]))
+            [io.relica.archivist.services.fact-service :as fact-service]
+            [io.relica.archivist.services.graph-service :as graph-service]))
 
+
+;; GRAPH SERVICE
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :graph/execute-query
+  [{:keys [?data ?reply-fn graph-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? graph-s)
+      (?reply-fn {:success false
+                  :error "Graph service not initialized"})
+      (go
+        (try
+          (let [result (<! (graph-service/exec-query graph-s (:query ?data) (:params ?data)))]
+            (?reply-fn {:success true
+                        :result result}))
+          (catch Exception e
+            (log/error e "Failed to execute query")
+            (?reply-fn {:success false
+                        :error "Failed to execute query"})))))))
 
 ;; FACT SERVICE
 
@@ -53,6 +73,25 @@
                         :error "Failed to get definitive facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-classification-fact
+  [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
+  (when ?reply-fn
+    ;; (tap> {:event :websocket/getting-classification-fact
+    ;;        :entity-service fact-s})
+    (if (nil? gellish-base-s)
+      (?reply-fn {:success false
+                  :error "gellish base service not initialized"})
+      (go
+        (try
+          (let [facts (<! (gellish-base-service/get-classification-fact gellish-base-s (:uid ?data)))]
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get classification fact")
+            (?reply-fn {:success false
+                        :error "Failed to get classification fact"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :fact/get-relating-entities
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
@@ -90,6 +129,40 @@
             (log/error e "Failed to get related on uid subtype cone facts")
             (?reply-fn {:success false
                         :error "Failed to get related on uid subtype cone facts"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-inherited-relation
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [fact (<! (fact-service/get-inherited-relation fact-s (:uid ?data) (:rel-type-uid ?data)))]
+            (?reply-fn {:success true
+                        :fact fact}))
+          (catch Exception e
+            (log/error e "Failed to get inherited relation")
+            (?reply-fn {:success false
+                        :error "Failed to get inherited relation"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-related-to
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (<! (fact-service/get-related-to fact-s (:uid ?data) (:rel-type-uid ?data)))]
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get related to facts")
+            (?reply-fn {:success false
+                        :error "Failed to get related to facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :fact/get-classified

@@ -152,7 +152,8 @@
                              :entity-retrieval entity-retrieval-service
                              :general-search general-search-service
                              :port server-port
-                             :fact-service fact-service}))
+                             :fact-service fact-service
+                             :graph-service graph-service}))
   :stop (do
           (println "Stopping WebSocket server...")
           (ws-server/stop ws-server)))

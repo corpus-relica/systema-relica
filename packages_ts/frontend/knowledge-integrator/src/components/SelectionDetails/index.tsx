@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
 import { portalClient } from "../../io/PortalClient.js";
-import KindDetails from "./KindDetails.js";
+import KindDetails from "./KindDetails/index.js";
 import IndividualDetails from "./IndividualDetails.js";
 
 const START_INT_UID_RANGE = 5000000000;
@@ -39,6 +39,7 @@ const SelectionDetails = () => {
   }
 
   return comp;
+
 };
 
 export default SelectionDetails;

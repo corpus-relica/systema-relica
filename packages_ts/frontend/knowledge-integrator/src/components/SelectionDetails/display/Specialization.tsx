@@ -1,13 +1,11 @@
 import React, { useContext } from "react";
-// import { FormDown, FormNext } from "grommet-icons";
-// import { Box, Button, Text } from "grommet";
-// import { observer } from "mobx-react";
-// import RootStoreContext from "../../../context/RootStoreContext";
 import { toJS } from "mobx";
 import { sockSendCC } from "../../../socket";
 import { useStore } from "react-admin";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import { useQuery } from "@tanstack/react-query";
+import { portalClient } from "../../../io/PortalClient.js";
 
 interface SpecializationProps {
   uids: number[]; // specify the correct type instead of any if possible
@@ -15,29 +13,55 @@ interface SpecializationProps {
 }
 
 const Specialization: React.FC<SpecializationProps> = ({ uids, childUID }) => {
-  console.log("SPECIALIZATION");
+  console.log("SPECIALIZATION", uids, childUID);
+
+  // Query for all UIDs in the array
+  const modelsQuery = useQuery({
+    queryKey: ["kindModels", uids],
+    queryFn: () =>
+      uids && uids.length > 0
+        ? Promise.all(
+            uids.map((uid) =>
+              portalClient.retrieveKindModel(uid).then((res) => ({
+                uid,
+                ...res
+              }))
+            )
+          )
+        : Promise.resolve([]),
+    enabled: !!uids && uids.length > 0
+  });
 
   const handleUIDClick = (uid: number) => {
     sockSendCC("user", "loadEntity", { uid: uid });
     sockSendCC("user", "loadEntity", { uid: childUID });
   };
 
+  if (modelsQuery.isLoading) return <Typography>Loading...</Typography>;
+  if (modelsQuery.error) return <Typography color="error">Error loading models</Typography>;
+
+  const modelsData = modelsQuery.data || [];
+
   const ui = uids.map((uid, index) => {
-    const [model] = useStore("model:" + uids[0]);
-    console.log(model);
-    if (model) {
-      return <Typography variant="h6">{model.name}</Typography>;
-    } else {
-      return (
-        <Typography
-          variant="h6"
-          sx={{ cursor: "pointer" }}
-          onClick={handleUIDClick.bind(this, uid)}
-        >
-          {uid}
-        </Typography>
-      );
-    }
+    // Find the model for this UID
+    const model = modelsData.find(m => m.uid === uid);
+    
+    return (
+      <Typography
+        key={uid}
+        variant="h6"
+        sx={{ 
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 1
+        }}
+        onClick={handleUIDClick.bind(this, uid)}
+      >
+        <span>{uid}</span>
+        {model && <span> - {model.name}</span>}
+      </Typography>
+    );
   });
 
   return (

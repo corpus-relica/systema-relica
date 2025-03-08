@@ -35,14 +35,16 @@
                                     kind
                                     entity-retrieval
                                     general-search
-                                    fact-service]}]
+                                    fact-service
+                                    graph-service]}]
   (fn [msg]
     (io.relica.common.websocket.server/handle-ws-message (assoc msg
                                                                 :gellish-base-s gellish-base
                                                                 :kind-s kind
                                                                 :entity-s entity-retrieval
                                                                 :general-search-s general-search
-                                                                :fact-s fact-service))))
+                                                                :fact-s fact-service
+                                                                :graph-s  graph-service))))
 
 (defn start [{:keys [port] :as args}]
   (tap> (str "!!! Starting WebSocket server on port" port))

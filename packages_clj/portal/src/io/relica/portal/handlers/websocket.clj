@@ -78,7 +78,6 @@
         (log/error "Failed to load specialization hierarchy:" e)
         {:error "Failed to load specialization hierarchy"}))))
 
-
 (defn handle-clear-environment-entities [{:keys [client-id] :as message}]
   (go
     (try

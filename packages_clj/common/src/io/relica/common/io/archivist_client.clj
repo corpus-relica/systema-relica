@@ -10,12 +10,14 @@
   (or (System/getenv "ARCHIVIST_WS_URL") "localhost:3000"))
 
 (defprotocol ArchivistOperations
+  (execute-query [this query params])
   (resolve-uids [this uids])
   (get-kinds [this opts])
   (get-collections [this])
   (get-entity-type [this uid])
   (get-entity-category [this uid])
   (text-search [this query])
+
   ;; Aspect operations
   (get-aspects [this opts])
   (create-aspect [this aspect-data])
@@ -44,7 +46,10 @@
   (get-definitive-facts[this uid])
   (get-facts-relating-entities [this uid1 uid2])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
+  (get-inherited-relation [this uid rel-type-uid])
+  (get-related-to [this uid rel-type-uid])
   (get-classified [this uid])
+  (get-classification-fact [this uid])
   (get-subtypes [this uid])
   (get-subtypes-cone [this uid])
 
@@ -93,10 +98,13 @@
     (ws/connected? client))
 
   ArchivistOperations
+  (execute-query [this query params]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :graph/execute-query
+                      {:query query}
+                      (:timeout options)))
+
   (resolve-uids [this uids]
-    (tap> (str "Resolving UIDs:" uids))
-    (tap> (connected? this))
-    (tap> "____________________________")
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :entities/resolve
                       {:uids uids}
@@ -133,6 +141,7 @@
                       (:timeout options)))
 
   ;; Aspect operations
+
   (get-aspects [this opts]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :aspects/get opts (:timeout options)))
@@ -150,11 +159,13 @@
     (ws/send-message! client :aspects/delete {:uid uid} (:timeout options)))
 
   ;; Completion operations
+
   (get-completions [this query]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :completions/get query (:timeout options)))
 
   ;; Concept operations
+
   (get-concept [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :concepts/get {:uid uid} (:timeout options)))
@@ -168,6 +179,7 @@
     (ws/send-message! client :concepts/update (assoc concept-data :uid uid) (:timeout options)))
 
   ;; Definition operations
+
   (get-definition [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :definitions/get {:uid uid} (:timeout options)))
@@ -179,7 +191,6 @@
   (update-definition [this uid def-data]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :definitions/update (assoc def-data :uid uid) (:timeout options)))
-
 
   ;; Fact operations
 
@@ -195,6 +206,12 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-related-on-uid-subtype-cone
                       {:lh-object-uid lh-object-uid
+                       :rel-type-uid rel-type-uid} (:timeout options)))
+
+  (get-inherited-relation [this uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-inherited-relation
+                      {:uid uid
                        :rel-type-uid rel-type-uid} (:timeout options)))
 
   (create-fact [this fact-data]
@@ -213,9 +230,19 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
 
+  ;; *************************
+  (get-classification-fact [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-classification-fact {:uid uid} (:timeout options)))
+  ;; *************************
+
   (get-facts-relating-entities [this uid1 uid2]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-relating-entities {:uid1 uid1 :uid2 uid2} (:timeout options)))
+
+  (get-related-to [this uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-related-to {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-classified [this uid]
     (when-not (connected? this) (connect! this))
@@ -244,6 +271,7 @@
     (ws/send-message! client :individuals/update (assoc individual-data :uid uid) (:timeout options)))
 
   ;; Kind operations
+
   (get-kind [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :kinds/get-one {:uid uid} (:timeout options)))
@@ -261,6 +289,7 @@
     (ws/send-message! client :kinds/delete {:uid uid} (:timeout options)))
 
   ;; Search operations
+
   (uid-search [this query]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :general-search/uid query (:timeout options)))
@@ -274,11 +303,13 @@
     (ws/send-message! client :kind-search/get query (:timeout options)))
 
   ;; Specialization operations
+
   (get-specialization-hierarchy [this user-id uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :specialization/hierarchy {:user-id user-id :uid uid} (:timeout options)))
 
   ;; Transaction operations
+
   (get-transaction [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :transactions/get {:uid uid} (:timeout options)))
@@ -296,6 +327,7 @@
     (ws/send-message! client :transactions/rollback {:uid uid} (:timeout options)))
 
   ;; Validation operations
+
   (validate-entity [this entity-data]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :validation/validate entity-data (:timeout options))))

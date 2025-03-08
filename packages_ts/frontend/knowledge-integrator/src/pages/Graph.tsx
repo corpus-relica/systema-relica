@@ -50,8 +50,6 @@ const Graph = observer(() => {
   const [relType, setRelType] = useState(0);
 
   const selectNode = (id: number) => {
-    console.log("!!!!!!!!!!!!!! SELECT NODE", id);
-    // sendSocketMessage(LOAD_SPECIALIZATION_HIERARCHY, { uid: lh_object_uid });
     sendSocketMessage(SELECT_ENTITY, { uid: id });
   };
 
@@ -80,7 +78,6 @@ const Graph = observer(() => {
     // const fact = factDataStore.facts.find((fact) => fact.fact_uid === uid);
     // const uid2 = fact?.rel_type_uid;
     // graphViewStore.hoveredLinkType = uid2;
-    console.log("EDGE ROLLOVER:", uid);
   };
 
   const handleEdgeRollOut = useCallback((uid: number) => {
@@ -93,23 +90,14 @@ const Graph = observer(() => {
 
   const onStageClick = () => {
     setOpen(false);
-
     sendSocketMessage(SELECT_NONE, {});
   };
 
   const handleSearchUIClose = (res: any) => {
     setSearchUIOpen(false);
-
     if (!res) return;
-
     const { lh_object_uid } = res;
-
-    // sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
-    //   uid: lh_object_uid,
-    // });
-
     sendSocketMessage(LOAD_SPECIALIZATION_HIERARCHY, { uid: lh_object_uid });
-
     selectNode(lh_object_uid);
   };
 
