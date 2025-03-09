@@ -50,6 +50,7 @@
   (get-core-sample [this uid rel-type-uid])
   (get-core-sample-rh [this uid rel-type-uid])
   (get-related-to [this uid rel-type-uid])
+  (get-related-to-subtype-cone [this uid rel-type-uid])
   (get-classification-fact [this uid])
   (get-classified [this uid])
   (get-subtypes [this uid])
@@ -253,6 +254,10 @@
   (get-related-to [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-related-to {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
+
+  (get-related-to-subtype-cone [this uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-related-to-subtype-cone {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-classified [this uid]
     (when-not (connected? this) (connect! this))

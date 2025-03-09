@@ -31,6 +31,7 @@
   (get-core-sample-rh [this uid rel-type-uid])
   (get-facts-relating-entities [this uid1 uid2])
   (get-related-to [this uid rel-type-uid])
+  (get-related-to-subtype-cone [this lh-object-uid rel-type-uid])
   (confirm-fact [this fact])
   (confirm-fact-in-relation-cone [this lh-object-uids rel-type-uids rh-object-uids])
   (delete-fact [this uid])
@@ -156,19 +157,24 @@
               prelim-result (<! (recurse uid 0))
 
               ;; Filter out duplicates
-              unique-results (filter (fn [item]
-                                       (let [index-of-first-occurrence
-                                             (first
-                                              (keep-indexed
-                                               (fn [idx itm]
-                                                 (when (= (:fact_uid itm) (:fact_uid item)) idx))
-                                               prelim-result))]
-                                         (= index-of-first-occurrence
-                                            (first
-                                             (keep-indexed
-                                              (fn [idx _] idx)
-                                              (filter #(= (:fact_uid %) (:fact_uid item)) prelim-result))))))
-                                     prelim-result)]
+              unique-results (vals (reduce (fn [acc item]
+                                      (assoc acc (:fact_uid item) item))
+                                    {}
+                                    prelim-result))
+              ;; unique-results (filter (fn [item]
+              ;;                          (let [index-of-first-occurrence
+              ;;                                (first
+              ;;                                 (keep-indexed
+              ;;                                  (fn [idx itm]
+              ;;                                    (when (= (:fact_uid itm) (:fact_uid item)) idx))
+              ;;                                  prelim-result))]
+              ;;                            (= index-of-first-occurrence
+              ;;                               (first
+              ;;                                (keep-indexed
+              ;;                                 (fn [idx _] idx)
+              ;;                                 (filter #(= (:fact_uid %) (:fact_uid item)) prelim-result))))))
+              ;;                        prelim-result)
+              ]
           unique-results)
         (catch Exception e
           (log/error "Error in get-all-related-facts-recursive:" (ex-message e))
@@ -188,20 +194,30 @@
                                          :rel_type_uids all-rel-types})
               res (graph/transform-results results)
 
+              _ (tap> "------------------- GET RELATED ON UID SUBTYPE CONE -------------------")
+              _ (tap> res)
+
+              unique-results (vals (reduce (fn [acc item]
+                                      (assoc acc (:fact_uid item) item))
+                                    {}
+                                    res))
               ;; Filter out duplicates
-              unique-results (filter (fn [item]
-                                       (let [index-of-first-occurrence
-                                             (first
-                                              (keep-indexed
-                                               (fn [idx itm]
-                                                 (when (= (:fact_uid itm) (:fact_uid item)) idx))
-                                               res))]
-                                         (= index-of-first-occurrence
-                                            (first
-                                             (keep-indexed
-                                              (fn [idx _] idx)
-                                              (filter #(= (:fact_uid %) (:fact_uid item)) res))))))
-                                     res)]
+              ;; unique-results (filter (fn [item]
+              ;;                          (let [index-of-first-occurrence
+              ;;                                (first
+              ;;                                 (keep-indexed
+              ;;                                  (fn [idx itm]
+              ;;                                    (when (= (:fact_uid itm) (:fact_uid item)) idx))
+              ;;                                  res))]
+              ;;                            (= index-of-first-occurrence
+              ;;                               (first
+              ;;                                (keep-indexed
+              ;;                                 (fn [idx _] idx)
+              ;;                                 (filter #(= (:fact_uid %) (:fact_uid item)) res))))))
+              ;;                        res)
+              ]
+          (tap> "------------------- GET RELATED ON UID SUBTYPE CONE UNIQUE -------------------")
+          (tap> unique-results)
           unique-results)
         (catch Exception e
           (log/error "Error in get-related-on-uid-subtype-cone:" (ex-message e))
@@ -214,8 +230,7 @@
           (if (not (empty? rel))
             rel
             (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
-                  spec-facts (reverse (:facts spec-h))
-                  _ (tap> "------------------- GET INHERITED RELATION -------------------")]
+                  spec-facts (reverse (:facts spec-h))]
               (tap> spec-facts)
               ;; Process the specialization hierarchy sequentially, returning first non-empty result
               (loop [items spec-facts]
@@ -224,10 +239,6 @@
                   (let [item (first items)
                         related-facts-chan (get-related-facts this (:lh_object_uid item) rel-type-uid)
                         facts (<! related-facts-chan)]
-                    (tap> {:lh (:lh_object_uid item)
-                           :rh (:rh_object_uid item)})
-                    (tap> "------------------- GET INHERITED RELATION FACTS -------------------")
-                    (tap> facts)
                     (if (seq facts)
                       facts  ;; Return first non-empty result
                       (recur (rest items)))))))))
@@ -240,9 +251,7 @@
       (try
         (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
               spec-facts (reverse (:facts spec-h))  ;; Reverse to get subject-centric order
-              _ (tap> "------------------- GET CORE SAMPLE -------------------")
-              _ (tap> {:uid uid :rel-type-uid rel-type-uid})
-              
+
               ;; Function to get related facts based on match-on parameter
               get-facts-fn (fn [hierarchy-uid]
                              (get-related-facts this hierarchy-uid rel-type-uid))
@@ -257,12 +266,9 @@
                                       hierarchy-uid (:lh_object_uid item)
                                       facts-chan (get-facts-fn hierarchy-uid)
                                       facts (<! facts-chan)]
-                                  (tap> {:level hierarchy-uid :facts-count (count facts)})
                                   ;; Continue with next item, adding facts to result vector
                                   (recur (rest items) (conj result-vec facts)))))))]
           
-          (tap> "------------------- CORE SAMPLE RESULTS -------------------")
-          (tap> {:levels (count results) :results results})
           results)
         (catch Exception e
           (log/error e "Error in get-core-sample:" (ex-message e))
@@ -273,8 +279,6 @@
       (try
         (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
               spec-facts (reverse (:facts spec-h))  ;; Reverse to get subject-centric order
-              _ (tap> "------------------- GET CORE SAMPLE -------------------")
-              _ (tap> {:uid uid :rel-type-uid rel-type-uid})
 
               ;; Function to get related facts based on match-on parameter
               get-facts-fn (fn [hierarchy-uid]
@@ -290,12 +294,9 @@
                                       hierarchy-uid (:lh_object_uid item)
                                       facts-chan (get-facts-fn hierarchy-uid)
                                       facts (<! facts-chan)]
-                                  (tap> {:level hierarchy-uid :facts-count (count facts)})
                                   ;; Continue with next item, adding facts to result vector
                                   (recur (rest items) (conj result-vec facts)))))))]
 
-          (tap> "------------------- CORE SAMPLE RESULTS -------------------")
-          (tap> {:levels (count results) :results results})
           results)
         (catch Exception e
           (log/error e "Error in get-core-sample:" (ex-message e))
@@ -350,11 +351,35 @@
             (let [results (graph/exec-query graph-service
                                             queries/related-to
                                             {:uid uid
-                                             :rel_type_uid rel-type-uid})
+                                             :rel_type_uids [rel-type-uid]})
                   res (graph/transform-results results)]
               res))
         (catch Exception e
           (log/error "Error in get-related-to:" (ex-message e))
+          []))))
+
+  (get-related-to-subtype-cone [_ lh-object-uid rel-type-uid]
+    (go
+      (try
+        (let [;; Get all subtypes of the relation type
+              subtypes-of-rel-type (cache/all-descendants-of cache-service rel-type-uid)
+              all-rel-types (conj subtypes-of-rel-type rel-type-uid)
+
+              ;; Get all facts involving the entity with the specified relation types
+              results (graph/exec-query graph-service
+                                        queries/related-to
+                                        {:uid lh-object-uid
+                                         :rel_type_uids all-rel-types})
+
+              res (graph/transform-results results)
+
+              unique-results (vals (reduce (fn [acc item]
+                                      (assoc acc (:fact_uid item) item))
+                                    {}
+                                    res))]
+          unique-results)
+        (catch Exception e
+          (log/error "Error in get-related-to-subtype-cone:" (ex-message e))
           []))))
 
   (confirm-fact [_ fact]

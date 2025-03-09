@@ -89,16 +89,16 @@
     (try
       (let [base-model (<! (e-ms/retrieve-individual-entity-model uid))
 
-            aspects-result (<! (archivist-api/get-related-facts-by-relation uid aspect-uid))
-            aspects (map :rh_object_uid aspects-result)
+            ;; aspects-result (<! (archivist-api/get-related-facts-by-relation uid aspect-uid))
+            ;; aspects (map :rh_object_uid aspects-result)
 
-            involvements-result (<! (archivist-api/get-related-facts-by-relation uid involvement-uid))
-            involvements (map :rh_object_uid involvements-result)
+            ;; involvements-result (<! (archivist-api/get-related-facts-by-relation uid involvement-uid))
+            ;; involvements (map :rh_object_uid involvements-result)
 
             totalities-result (<! (archivist-api/get-related-facts-by-relation uid is-part-of-uid))
             totalities (map :rh_object_uid totalities-result)
 
-            parts-result (<! (archivist-api/get-related-to uid is-part-of-uid)) ;; TODO we actually want to do this on the subtype cone
+            parts-result (<! (archivist-api/get-related-to-subtype-cone uid is-part-of-uid)) ;; TODO we actually want to do this on the subtype cone
             parts (map :lh_object_uid parts-result)
 
             connected-to-result (<! (archivist-api/get-related-to uid connection-uid)) ;; TODO we actually want to do this on the subtype cone
@@ -110,8 +110,8 @@
         (log/info "Base model:" parts)
         (merge base-model
                {:category "physical object"
-                :aspects aspects
-                :involvements involvements
+                ;; :aspects aspects
+                ;; :involvements involvements
                 :totalities totalities
                 :parts parts
                 :connected-to connected-to

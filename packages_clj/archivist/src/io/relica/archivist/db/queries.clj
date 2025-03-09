@@ -353,7 +353,7 @@
 
 (neo4j/defquery related-to
   "MATCH (start:Entity)--(r)-->(end:Entity)
-  WHERE end.uid = $uid AND r.rel_type_uid = $rel_type_uid
+  WHERE end.uid = $uid AND r.rel_type_uid IN $rel_type_uids
   RETURN r")
 
 (neo4j/defquery any-related-to

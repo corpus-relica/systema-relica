@@ -86,6 +86,19 @@
         (log/error e "Failed to get related facts by relation")
         []))))
 
+(defn get-related-to-subtype-cone
+  "Get related facts by relation type subtype cone"
+  [uid rel-type-uid]
+  (go
+    (try
+      (let [response (<! (archivist/get-related-to-subtype-cone archivist-client uid rel-type-uid))]
+        (if (:success response)
+          (:facts response)
+          []))
+      (catch Exception e
+        (log/error e "Failed to get related facts by relation")
+        []))))
+
 (defn get-core-sample
   "Get core sample for a UID"
   [uid rel-type-uid]
