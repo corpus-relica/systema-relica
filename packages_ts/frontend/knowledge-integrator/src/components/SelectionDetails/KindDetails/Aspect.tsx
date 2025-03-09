@@ -5,7 +5,7 @@ const AspectKindDetails: React.FC = (data) => {
 
   console.log("AspectKindDetails", data)
   
-  return <div>Aspect</div>;
+  return <div>UNDER SONCTION Aspect</div>;
 };
 
 export default AspectKindDetails;

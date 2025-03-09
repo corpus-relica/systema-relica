@@ -74,3 +74,18 @@
       (catch Exception e))))
 
 ;; --------------------------------------------------------------- IDNIVIDUAL --
+
+(defn retrieve-individual-relation-model
+  "Retrieve and transform a physical object entity to its semantic model representation"
+  [uid]
+  (go
+    (log/info "Retrieving individual relation model" uid)
+    (try
+      (let [base-model (<! (e-ms/retrieve-individual-entity-model uid))
+            ]
+        (merge base-model
+               {:category "relation"}
+               ;;:rh_object
+               ;;:lh_object
+               ))
+      (catch Exception e))))

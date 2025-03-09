@@ -64,7 +64,7 @@
   :get/individual-model
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
-    (log/info (str "Getting individual for user:" (:user-id ?data)))
+    (log/info (str "Getting individual for user: " ?data))
     (go
       (try
         (let [individual-id (:individual-id ?data)

@@ -30,8 +30,6 @@ const RelationKindDetails: React.FC = (data) => {
 
   console.log("RelationKindDetails", reqRole1Data, reqRole2Data)
   return <div>
-    <div>Relation</div>
-    <hr/>
     <div>Required Role 1: {reqRole1} - {reqRole1Data.name}</div>
     <div>Required Role 2: {reqRole2} - {reqRole2Data.name}</div>
     </div>;

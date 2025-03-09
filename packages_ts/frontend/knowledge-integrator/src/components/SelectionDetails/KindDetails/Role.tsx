@@ -55,8 +55,6 @@ const RoleKindDetails: React.FC = (data) => {
   
   return (
     <div>
-      <div>Role</div>
-      <hr/>
       <div>
         <h4>Possible Kinds of Role Players:</h4>
         {possRolePlayersData.length > 0 ? (

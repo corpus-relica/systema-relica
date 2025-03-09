@@ -5,7 +5,7 @@ const PhysicalObjectKindDetails: React.FC = (data) => {
 
   console.log("PhysicalObjectKindDetails", data)
   
-  return <div>Physical Object</div>;
+  return <div>UNDER CONSTRUCTION</div>;
 };
 
 export default PhysicalObjectKindDetails;

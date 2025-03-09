@@ -31,3 +31,17 @@
 
 
 ;; --------------------------------------------------------------- IDNIVIDUAL --
+
+
+(defn retrieve-individual-aspect-model
+  "Retrieve and transform a physical object entity to its semantic model representation"
+  [uid]
+  (go
+    (log/info "Retrieving individual aspect model" uid)
+    (try
+      (let [base-model (<! (e-ms/retrieve-individual-entity-model uid))
+            ]
+        (merge base-model
+               {:category "aspect"}
+               ))
+      (catch Exception e))))

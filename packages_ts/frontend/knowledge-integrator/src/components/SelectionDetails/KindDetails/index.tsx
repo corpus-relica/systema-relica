@@ -120,12 +120,13 @@ const KindDetails: React.FC = () => {
 
   return (
     <Stack direction="column" spacing="1">
+      {category}
+      {specComp}
       <Box>
         <Typography size="18px" style={{ fontWeight: 800, color: "black" }}>
           {uid}:{name}
         </Typography>
       </Box>
-      {specComp}
       {defsComp}
       {catComp}
     </Stack>

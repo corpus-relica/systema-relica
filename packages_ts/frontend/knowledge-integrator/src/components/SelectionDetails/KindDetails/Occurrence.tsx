@@ -5,7 +5,7 @@ const OccurrenceKindDetails: React.FC = (data) => {
 
   console.log("OccurrenceKindDetails", data)
 
-  return <div>Occurrence</div>;
+  return <div>UNDER CONSTRUCTION O</div>;
 };
 
 export default OccurrenceKindDetails;

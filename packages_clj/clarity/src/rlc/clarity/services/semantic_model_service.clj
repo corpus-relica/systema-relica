@@ -116,7 +116,15 @@
             "anything" (<! (e-ms/retrieve-kind-of-entity-model uid))
             {})
           "individual"
-          ()
+          (case category
+            "physical object" (<! (po-ms/retrieve-individual-physical-object-model uid))
+            "aspect" (<! (asp-ms/retrieve-individual-aspect-model uid))
+            ;; "role" (<! (rol-ms/retrieve-individual-of-role-model uid)) INTENTIONALLY OMITTED
+            "relation" (<! (rel-ms/retrieve-individual-relation-model uid))
+            "occurrence" (<! (occ-ms/retrieve-individual-occurrence-model uid))
+            ;; "state" (retrieve-individual-of-state-model uid) TODO
+            ;; "anything" (<! (e-ms/retrieve-individual-of-entity-model uid))
+            {})
           {}))
 
       (catch Exception e

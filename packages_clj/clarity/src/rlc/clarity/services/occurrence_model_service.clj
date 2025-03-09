@@ -34,5 +34,21 @@
                 }))
       (catch Exception e))))
 
-
 ;; --------------------------------------------------------------- IDNIVIDUAL --
+
+(defn retrieve-individual-occurrence-model
+  "Retrieve and transform a physical object entity to its semantic model representation"
+  [uid]
+  (go
+    (log/info "Retrieving individual occurrence model" uid)
+    (try
+      (let [base-model (<! (e-ms/retrieve-individual-entity-model uid))
+            ;; aspects (<! (po/get-definitive-aspects uid))
+            ;; involvements (<! (po/get-definitive-involvements uid))
+            ]
+        (merge base-model
+               {:category "occurrence"}
+               ;; {:aspects aspects
+               ;;  :involvements involvements
+               ))
+      (catch Exception e))))

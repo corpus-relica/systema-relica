@@ -22,6 +22,17 @@
         (log/error e "Failed to retrieve supertypes and definitions")
         {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
 
+(defn retrieve-classifiers [uid]
+  "Retrieve classifiers for an individual entity"
+  (go
+    (try
+      (let [classifiers (<! (archivist-api/get-definitive-facts uid))]
+        (log/info "Classifiers: " classifiers)
+        classifiers)
+      (catch Exception e
+        (log/error e "Failed to retrieve classifiers")
+        {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
+
 ;; --------------------------------------------------------------------- KIND --
 
 (defn retrieve-kind-of-entity-model
@@ -43,3 +54,18 @@
         {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
 
 ;; --------------------------------------------------------------- IDNIVIDUAL --
+
+(defn retrieve-individual-entity-model
+  "Retrieve and transform an entity object to its semantic model representation"
+  [uid]
+  (go
+    (try
+      (let [classifiers (<! (retrieve-classifiers uid))]
+        (log/info "Classifiers:" (count classifiers))
+        {:uid uid
+         :name (:lh_object_name (first classifiers))
+         :nature :individual
+         :classifiers (map #(:rh_object_uid %) classifiers)})
+      (catch Exception e
+        (log/error e "Failed to retrieve entity individual model")
+        {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
