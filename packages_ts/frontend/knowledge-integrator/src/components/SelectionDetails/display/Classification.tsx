@@ -14,7 +14,6 @@ const Classification: React.FC<ClassificationProps> = ({
   uids,
   individualUID,
 }) => {
-  console.log("CLASSIFICATION", uids, individualUID);
 
   // Query for all UIDs in the array
   const modelsQuery = useQuery({

@@ -59,16 +59,59 @@
 ;;         (log/error e "Failed to get all related facts")
 ;;         []))))
 
-;; (defn get-related-facts-by-relation
-;;   "Get related facts by relation type"
-;;   [uid rel-type-uid]
-;;   (go
-;;     (try
-;;       (let [response (<! (archivist/get-related-on-uid-subtype-cone
-;;                           archivist-client uid rel-type-uid))]
-;;         (if (:success response)
-;;           (:facts response)
-;;           []))
-;;       (catch Exception e
-;;         (log/error e "Failed to get related facts by relation")
-;;         []))))
+(defn get-related-facts-by-relation
+  "Get related facts by relation type"
+  [uid rel-type-uid]
+  (go
+    (try
+      (let [response (<! (archivist/get-related-on-uid-subtype-cone
+                          archivist-client uid rel-type-uid))]
+        (if (:success response)
+          (:facts response)
+          []))
+      (catch Exception e
+        (log/error e "Failed to get related facts by relation")
+        []))))
+
+(defn get-related-to
+  "Get related facts by relation type"
+  [uid rel-type-uid]
+  (go
+    (try
+      (let [response (<! (archivist/get-related-to archivist-client uid rel-type-uid))]
+        (if (:success response)
+          (:facts response)
+          []))
+      (catch Exception e
+        (log/error e "Failed to get related facts by relation")
+        []))))
+
+(defn get-core-sample
+  "Get core sample for a UID"
+  [uid rel-type-uid]
+  (go
+    (try
+      (let [response (<! (archivist/get-core-sample
+                          archivist-client uid rel-type-uid))]
+        (log/info "get  core campe Response: " response)
+        (if (:success response)
+          (:results response)
+          []))
+      (catch Exception e
+        (log/error e "Failed to get related facts by relation")
+        []))))
+
+(defn get-core-sample-rh
+  "Get core sample for a UID"
+  [uid rel-type-uid]
+  (go
+    (try
+      (let [response (<! (archivist/get-core-sample-rh
+                          archivist-client uid rel-type-uid))]
+        (log/info "get  core campe Response RIEHGT HAND: " response)
+        (if (:success response)
+          (:facts response)
+          []))
+      (catch Exception e
+        (log/error e "Failed to get related facts by relation")
+        []))))

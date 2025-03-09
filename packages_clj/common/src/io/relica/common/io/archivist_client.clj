@@ -43,13 +43,15 @@
   (create-fact [this fact-data])
   (update-fact [this uid fact-data])
   (delete-fact [this uid])
-  (get-definitive-facts[this uid])
+  (get-definitive-facts [this uid])
   (get-facts-relating-entities [this uid1 uid2])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
   (get-inherited-relation [this uid rel-type-uid])
+  (get-core-sample [this uid rel-type-uid])
+  (get-core-sample-rh [this uid rel-type-uid])
   (get-related-to [this uid rel-type-uid])
-  (get-classified [this uid])
   (get-classification-fact [this uid])
+  (get-classified [this uid])
   (get-subtypes [this uid])
   (get-subtypes-cone [this uid])
 
@@ -229,6 +231,14 @@
   (get-definitive-facts [this uid]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
+
+  (get-core-sample [this uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-core-sample {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
+
+  (get-core-sample-rh [this uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-core-sample-rh {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
 
   ;; *************************
   (get-classification-fact [this uid]

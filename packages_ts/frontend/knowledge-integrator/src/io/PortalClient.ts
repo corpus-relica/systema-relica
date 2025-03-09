@@ -199,6 +199,14 @@ class PortalClient {
     });
     return response.data;
   }
+
+  async retrieveEntityModel(uid: number) {
+    if (!uid) return;
+    const response = await this.axiosInstance.get("/model/entity", {
+      params: { uid },
+    });
+    return response.data;
+  }
 }
 
 export const portalClient = new PortalClient();

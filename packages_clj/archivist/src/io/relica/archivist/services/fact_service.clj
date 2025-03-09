@@ -27,6 +27,8 @@
   (get-all-related-facts-recursive [this uid depth])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
   (get-inherited-relation [this uid rel-type-uid])
+  (get-core-sample [this uid rel-type-uid])
+  (get-core-sample-rh [this uid rel-type-uid])
   (get-facts-relating-entities [this uid1 uid2])
   (get-related-to [this uid rel-type-uid])
   (confirm-fact [this fact])
@@ -231,6 +233,72 @@
                       (recur (rest items)))))))))
         (catch Exception e
           (log/error "Error in get-inherited-relation:" (ex-message e))
+          []))))
+
+  (get-core-sample [this uid rel-type-uid]
+    (go
+      (try
+        (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
+              spec-facts (reverse (:facts spec-h))  ;; Reverse to get subject-centric order
+              _ (tap> "------------------- GET CORE SAMPLE -------------------")
+              _ (tap> {:uid uid :rel-type-uid rel-type-uid})
+              
+              ;; Function to get related facts based on match-on parameter
+              get-facts-fn (fn [hierarchy-uid]
+                             (get-related-facts this hierarchy-uid rel-type-uid))
+              
+              ;; Process each level in the hierarchy and collect results
+              results (<! (go
+                            (loop [items spec-facts
+                                   result-vec []]
+                              (if (empty? items)
+                                result-vec  ;; Return collected results
+                                (let [item (first items)
+                                      hierarchy-uid (:lh_object_uid item)
+                                      facts-chan (get-facts-fn hierarchy-uid)
+                                      facts (<! facts-chan)]
+                                  (tap> {:level hierarchy-uid :facts-count (count facts)})
+                                  ;; Continue with next item, adding facts to result vector
+                                  (recur (rest items) (conj result-vec facts)))))))]
+          
+          (tap> "------------------- CORE SAMPLE RESULTS -------------------")
+          (tap> {:levels (count results) :results results})
+          results)
+        (catch Exception e
+          (log/error e "Error in get-core-sample:" (ex-message e))
+          []))))
+
+  (get-core-sample-rh [this uid rel-type-uid]
+    (go
+      (try
+        (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
+              spec-facts (reverse (:facts spec-h))  ;; Reverse to get subject-centric order
+              _ (tap> "------------------- GET CORE SAMPLE -------------------")
+              _ (tap> {:uid uid :rel-type-uid rel-type-uid})
+
+              ;; Function to get related facts based on match-on parameter
+              get-facts-fn (fn [hierarchy-uid]
+                             (get-related-to this hierarchy-uid rel-type-uid))
+
+              ;; Process each level in the hierarchy and collect results
+              results (<! (go
+                            (loop [items spec-facts
+                                   result-vec []]
+                              (if (empty? items)
+                                result-vec  ;; Return collected results
+                                (let [item (first items)
+                                      hierarchy-uid (:lh_object_uid item)
+                                      facts-chan (get-facts-fn hierarchy-uid)
+                                      facts (<! facts-chan)]
+                                  (tap> {:level hierarchy-uid :facts-count (count facts)})
+                                  ;; Continue with next item, adding facts to result vector
+                                  (recur (rest items) (conj result-vec facts)))))))]
+
+          (tap> "------------------- CORE SAMPLE RESULTS -------------------")
+          (tap> {:levels (count results) :results results})
+          results)
+        (catch Exception e
+          (log/error e "Error in get-core-sample:" (ex-message e))
           []))))
 
   (get-facts-relating-entities [_ uid1 uid2]

@@ -219,7 +219,51 @@
             (?reply-fn {:success false
                         :error "Failed to get subtypes cone facts"})))))))
 
-;; ENTITY SERVICE
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-core-sample
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [match-on (if (contains? ?data :match-on)
+                           (keyword (:match-on ?data))
+                           :lh)
+                results (<! (fact-service/get-core-sample 
+                             fact-s 
+                             (:uid ?data) 
+                             (:rel-type-uid ?data)))]
+            (?reply-fn {:success true
+                        :results results}))
+          (catch Exception e
+            (log/error e "Failed to get core sample")
+            (?reply-fn {:success false
+                        :error "Failed to get core sample"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-core-sample-rh
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [match-on (if (contains? ?data :match-on)
+                           (keyword (:match-on ?data))
+                           :lh)
+                results (<! (fact-service/get-core-sample-rh
+                             fact-s
+                             (:uid ?data)
+                             (:rel-type-uid ?data)))]
+            (?reply-fn {:success true
+                        :results results}))
+          (catch Exception e
+            (log/error e "Failed to get core sample")
+            (?reply-fn {:success false
+                        :error "Failed to get core sample"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :entities/resolve
@@ -291,6 +335,18 @@
                :error e})
         (?reply-fn {:resolved false :error e})))))
 
+;; (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+;;   :kinds/get
+;;   [{:keys [?data ?reply-fn kind-s] :as msg}]
+;;   (when ?reply-fn
+;;     (try
+;;       (let [result (kind-service/get kind-s (:uid ?data))]
+;;         (?reply-fn {:resolved true :data result}))
+;;       (catch Exception e
+;;         (tap> {:event :websocket/sending-kind-response
+;;                :error e})
+;;         (?reply-fn {:resolved false :error e})))))
+
 ;; SEARCH SERVICE
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
@@ -316,7 +372,7 @@
           (catch Exception e
             (log/error e "Failed to execute text search")
             (?reply-fn {:success false
-                       :error "Failed to execute text search"})))))))
+                        :error "Failed to execute text search"})))))))
 
 ;; SPECIALIZATION HIERARCHY
 
