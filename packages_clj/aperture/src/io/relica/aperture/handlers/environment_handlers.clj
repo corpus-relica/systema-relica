@@ -19,6 +19,8 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
     (go
+      (tap> "FUGGING GETTING ENVIRONMENT")
+      (tap> ?data)
       (let [result (<! (env-service/get-environment @environment-service 
                                                   (:user-id ?data) 
                                                   (:environment-id ?data)))]

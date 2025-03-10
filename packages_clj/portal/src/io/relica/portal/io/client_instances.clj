@@ -2,6 +2,7 @@
   (:require [io.relica.common.io.archivist-client :as archivist]
             [io.relica.common.io.clarity-client :as clarity]
             [io.relica.common.io.aperture-client :as aperture]
+            [io.relica.common.io.nous-client :as nous]
             ;; [io.relica.common.websocket.client :as ws]
             [io.relica.common.events.core :as events]
             [clojure.tools.logging :as log]
@@ -48,3 +49,18 @@
 ;; (ws/register-handler! aperture-client :entity/selected (fn [msg]
 ;;                                                               (tap> "Selected MUTHER FUCKING entity:")
 ;;                                                                (tap> msg)))
+
+
+;; NOUS
+(defonce nous-client (nous/create-client
+                      "http://localhost:2204"
+                      {:handlers {:on-connect (fn []
+                                                (tap> "Connected to NOUS")
+                                                (events/publish-event {:type :nous-connected}))
+                                  :on-disconnect (fn []
+                                                   (tap> "Disconnected from NOUS")
+                                                   (events/publish-event {:type :nous-disconnected}))
+                                  :on-message (fn [event-type payload]
+                                                (tap> "Received message from NOUS")
+                                                (events/publish-event {:type :nous-message-received
+                                                                       :payload payload}))}}))
