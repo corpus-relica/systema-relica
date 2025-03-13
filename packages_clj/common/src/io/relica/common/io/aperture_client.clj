@@ -145,8 +145,9 @@
 ;; Factory function
 (defn create-client [server-uri opts]
   (let [app-handlers (:handlers opts)
-        base-client (ws/create-client server-uri
-                                      {:handlers
+        base-client (ws/create-client
+                                      {:uri server-uri
+                                       :handlers
                                        {:on-connect #(tap> {:event :app/connected})
                                         :on-disconnect #(tap> {:event :app/disconnected})
                                         :on-message (fn [event-type payload]

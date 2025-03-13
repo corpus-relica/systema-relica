@@ -57,14 +57,16 @@
   :fact/get-definitive-facts
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
-    ;; (tap> {:event :websocket/getting-definitive-facts
-    ;;        :entity-service fact-s})
+    (println "Getting definitive facts")
+    (println ?data)
     (if (nil? gellish-base-s)
       (?reply-fn {:success false
                   :error "gellish base service not initialized"})
       (go
         (try
           (let [facts (gellish-base-service/get-definitive-facts gellish-base-s (:uid ?data))]
+            (println "Facts: " facts)
+            (println ?reply-fn)
             (?reply-fn {:success true
                         :facts facts}))
           (catch Exception e

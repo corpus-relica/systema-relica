@@ -1,4 +1,4 @@
-from src.relica_nous_langchain.services.BrowserComms import browserComms
+# from src.relica_nous_langchain.services.NOUSServer import nous_server
 
 class SemanticModel:
     def __init__(self) -> None:
@@ -30,7 +30,7 @@ class SemanticModel:
 
     @property
     def semanticContext(self):
-        selectedNode = browserComms.selectedNode
+        # selectedNode = nous_server.selectedNode
         return "foo"
 
     #################################

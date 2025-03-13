@@ -47,7 +47,7 @@
                                                                 :graph-s  graph-service))))
 
 (defn start [{:keys [port] :as args}]
-  (tap> (str "!!! Starting WebSocket server on port" port))
+  (tap> (str "!!! Starting WebSocket server on port " port))
   (let [server (ws/create-server {:port port
                                   :event-msg-handler (create-event-handler args)})
         component (->WebSocketComponent (assoc args :server server))]

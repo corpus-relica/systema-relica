@@ -89,3 +89,10 @@
                ;;:lh_object
                ))
       (catch Exception e))))
+
+(comment
+
+  (go (let[model (<! (retrieve-kind-of-relation-model 1146))]
+        (println model)))
+
+)

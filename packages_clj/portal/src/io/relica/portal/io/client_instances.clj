@@ -16,7 +16,7 @@
 ;; CLARITY
 
 (defonce clarity-client (clarity/create-client
-                         "http://localhost:2176"
+                         "ws://localhost:2176/ws"
                          {}))
 
 ;; APERTURE
@@ -30,18 +30,14 @@
    :handle-facts-unloaded (fn [msg]
                             (tap> "Facts unloaded:")
                             (tap> msg)
-                            (events/publish-event {:type :facts-unloaded
-                                                   :payload msg}))
-   :handle-entity-selected (fn [msg]
-                             (events/publish-event {:type :entity-selected
-                                                    :payload msg}))
+                            (events/publish-event {:type :facts-unloaded :payload msg})) :handle-entity-selected (fn [msg] (events/publish-event {:type :entity-selected :payload msg}))
    :handle-entity-selected-none(fn [msg]
                                   (events/publish-event {:type :entity-selected-none
                                                          :payload msg}))})
 
 ;; Create Aperture client with handlers
 (defonce aperture-client (aperture/create-client
-                          "http://localhost:2175"
+                          "ws://localhost:2175/ws"
                           {:handlers aperture-handlers}))
 
 ;; (ws/connect! aperture-client)
@@ -53,7 +49,7 @@
 
 ;; NOUS
 (defonce nous-client (nous/create-client
-                      "http://localhost:2204"
+                      "ws://localhost:2204/ws"
                       {:handlers {:on-connect (fn []
                                                 (tap> "Connected to NOUS")
                                                 (events/publish-event {:type :nous-connected}))

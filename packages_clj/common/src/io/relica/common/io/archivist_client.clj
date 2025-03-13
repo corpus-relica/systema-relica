@@ -230,6 +230,8 @@
     (ws/send-message! client :facts/delete {:uid uid} (:timeout options)))
 
   (get-definitive-facts [this uid]
+    (println "get-definitive-facts" uid)
+    (println "connected?" (connected? this))
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
 
@@ -358,7 +360,8 @@
                            :on-message (fn [msg]
                                          (log/debug "Archivist message received:" msg))}
          merged-handlers (merge default-handlers handlers)
-         client (ws/create-client url {:handlers merged-handlers})]
+         ;; client (ws/create-client {:uri url :handlers merged-handlers})]
+         client (ws/create-client {:port 3000 :uri "ws://localhost:3000/ws" :handlers merged-handlers})]
      (->ArchivistClient client {:url url
                                 :timeout timeout
                                 :handlers merged-handlers}))))

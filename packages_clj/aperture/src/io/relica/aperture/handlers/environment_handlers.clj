@@ -19,11 +19,14 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
     (go
-      (tap> "FUGGING GETTING ENVIRONMENT")
-      (tap> ?data)
+      (println "FUGGING GETTING ENVIRONMENT")
+      (println ?data)
+      (println (type (:user-id ?data)))
       (let [result (<! (env-service/get-environment @environment-service 
                                                   (:user-id ?data) 
                                                   (:environment-id ?data)))]
+        (println "RESULT")
+        (println result)
         (?reply-fn result)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -213,7 +216,7 @@
                     {:success true :selected-entity (:entity-uid ?data)} 
                     {:error "Failed to select entity"}))
         (when (:success result)
-          (tap> "%%%%%%%%%%%%%%%%%%%%% BROADCASTING ENTITY SELECTION %%%%%%%%%%%%%%%%%%%%%%")
+          (println "%%%%%%%%%%%%%%%%%%%%% BROADCASTING ENTITY SELECTION %%%%%%%%%%%%%%%%%%%%%%")
           (ws/broadcast!
            {:type :entity/selected
             :entity-uid (:entity-uid ?data)

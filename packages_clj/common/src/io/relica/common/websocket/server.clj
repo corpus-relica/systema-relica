@@ -1,187 +1,290 @@
+
 (ns io.relica.common.websocket.server
   (:require [org.httpkit.server :as http-kit]
-            [compojure.core :refer [GET POST defroutes]]
+            [compojure.core :refer [GET defroutes]]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
-            [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
-            [clojure.core.async :as async :refer [go go-loop <! >!]]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [clojure.core.async :refer [go go-loop <! >! timeout chan close!]]
+            [io.relica.common.websocket.format :as format]))
 
+;; Store connected clients
+(defonce connected-clients (atom {}))
 
+;; Store connected UIDs for Sente-like API compatibility
+(defonce connected-uids (atom {:ws #{}, :ajax #{}, :any #{}}))
+
+;; Message handlers
+(defonce message-handlers (atom {}))
+
+;; Define multimethod for handling WebSocket messages
 (defmulti handle-ws-message :id)
 
-;; System message handlers with low priority
-(defmethod ^{:priority -1} handle-ws-message :chsk/uidport-open
-  [{:keys [uid] :as msg}]
-  (tap> {:event :websocket/client-connected
-         :uid uid}))
+;; Default handler for unknown message types
+(defmethod handle-ws-message :default [message]
+  (log/warn "No handler found for message type:" (:id message))
+  (go {:error (str "No handler found for message type: " (:id message))}))
 
-(defmethod ^{:priority -1} handle-ws-message :chsk/uidport-close
-  [{:keys [uid] :as msg}]
-  (tap> {:event :websocket/client-disconnected
-         :uid uid}))
+;; Default handler for messages with no registered handler
+(defn default-handler [message]
+  (log/warn "No handler registered for message type:" (:type message))
+  (go {:error (str "No handler registered for message type: " (:type message))}))
 
-(defmethod ^{:priority -1} handle-ws-message :chsk/ws-ping
-  [_]
-  nil)
-
-(defmethod ^{:priority -1} handle-ws-message :chsk/ws-pong
-  [_]
-  nil)
-
-;; Default handler with lowest priority
-(defmethod ^{:priority -100} handle-ws-message :default
-  [{:keys [event id] :as msg}]
-  (tap> {:event :websocket/unknown-message-type
-         :message-id id
-         :event-type event}))
-
-(defprotocol WebSocketServer
+;; Protocol for WebSocket server
+(defprotocol WebSocketServerProtocol
   (start! [this])
   (stop! [this])
+  (send! [this client-id message])
   (broadcast! [this message])
-  (send! [this client-id message]))
+  (get-connected-client-ids [this])
+  (get-client-info [this client-id])
+  (count-connected-clients [this])
+  (register-handler! [this msg-type handler-fn])
+  (unregister-handler! [this msg-type]))
 
-(defn create-sente-setup [options]
-  (tap> {:event :websocket/creating-sente-setup
-         :options options})
-  (let [{:keys [ch-recv send-fn connected-uids ajax-post-fn ajax-get-or-ws-handshake-fn]}
-        (sente/make-channel-socket! (get-sch-adapter)
-                                   {:packer :edn
-                                    :csrf-token-fn nil
-                                    :user-id-fn (fn [ring-req]
-                                                ;; (tap> {:event :websocket/generating-user-id
-                                                ;;       :req ring-req})
-                                                (let [uid (java.util.UUID/randomUUID)]
-                                                  ;; (tap> {:event :websocket/generated-user-id
-                                                  ;;       :uid uid})
-                                                  uid))})]
-    ;; (tap> {:event :websocket/sente-setup-complete
-    ;;        :connected-uids @connected-uids})
-    {:ring-ajax-post ajax-post-fn
-     :ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn
-     :ch-chsk ch-recv
-     :chsk-send! send-fn
-     :connected-uids connected-uids}))
+;; Handle ping messages immediately without going through the handler system
+(defn- handle-ping [channel client-data message]
+  (let [response {:id (:id message)
+                  :type "pong"
+                  :payload {:server-time (System/currentTimeMillis)
+                            :received-at (System/currentTimeMillis)}}
+        response-str (format/serialize-message client-data response)]
+    (http-kit/send! channel response-str)))
 
-(defn create-routes [sente-fns]
-  ;; (tap> {:event :websocket/creating-routes})
-  (defroutes routes
-    (GET "/chsk" req
-      ;; (tap> {:event :websocket/handling-get
-      ;;        :uri (:uri req)
-      ;;        :params (:params req)
-      ;;        :headers (:headers req)})
-      ((:ring-ajax-get-or-ws-handshake sente-fns) req))
-    (POST "/chsk" req
-      ;; (tap> {:event :websocket/handling-post
-      ;;        :uri (:uri req)
-      ;;        :params (:params req)
-      ;;        :body (:body req)})
-      ((:ring-ajax-post sente-fns) req))
+;; WebSocket handler function
+(defn ws-handler [req]
+  (http-kit/with-channel req channel
+    (let [client-id (str (java.util.UUID/randomUUID))
+          ;; Extract format preferences from query params or headers
+          client-format (or (get-in req [:params :format])
+                            (get-in req [:headers "x-ws-format"])
+                            "json")
+          client-language (or (get-in req [:params :language])
+                              (get-in req [:headers "x-ws-language"])
+                              "unknown")
+          client-data {:channel channel
+                       :connected-at (System/currentTimeMillis)
+                       :format client-format
+                       :language client-language}
+          event-msg-handler (get-in req [:ws-server :event-msg-handler])]
+
+      ;; Store client information
+      (swap! connected-clients assoc client-id client-data)
+
+      ;; Update connected UIDs (for Sente-like API compatibility)
+      (swap! connected-uids update-in [:ws] conj client-id)
+      (swap! connected-uids update-in [:any] conj client-id)
+
+      ;; Log connection
+      (println "Client connected:" client-id "format:" client-format "language:" client-language)
+
+      (http-kit/send! channel (format/serialize-message client-data {:id "12345"
+                                                                     :type "system:clientRegistered"
+                                                                     :payload {:client-id client-id}}))
+      ;; Handle incoming messages
+      (http-kit/on-receive channel
+                           (fn [data]
+                             (try
+                               ;; Parse the message using client's preferred format
+                               (let [message (format/deserialize-message
+                                              (get @connected-clients client-id)
+                                              data)
+                                     msg-type (:type message)
+                                     msg-id (:id message)]
+
+                                 (log/debug "Received message:" message)
+
+                                 (cond
+                                   ;; Handle ping messages immediately
+                                   (= msg-type "ping")
+                                   (handle-ping channel (get @connected-clients client-id) message)
+
+                                   ;; Use custom event handler if provided
+                                   event-msg-handler
+                                   (let [event-msg {:id (keyword msg-type)
+                                                    :?data (:payload message)
+                                                    :client-id client-id
+                                                    :?reply-fn (fn [response]
+                                                                 (let [resp {:id msg-id
+                                                                             :type "response"
+                                                                             :payload response}
+                                                                       _ (println "!!!!!! Response:" resp)
+                                                                       resp-str (format/serialize-message
+                                                                                 (get @connected-clients client-id)
+                                                                                 resp)]
+                                                                   (println "!!!!!! client-id:" client-id)
+                                                                   (println "!!!!!! Response string:" resp-str)
+                                                                   (http-kit/send! channel resp-str)))}]
+                                     (event-msg-handler event-msg))
+
+                                   ;; Try multimethod dispatch
+                                   :else
+                                   (let [;; Prepare message for multimethod dispatch
+                                         multimethod-msg {:id (keyword msg-type)
+                                                          :?data (:payload message)
+                                                          :client-id client-id
+                                                          :?reply-fn (fn [response]
+                                                                       (let [resp {:id msg-id
+                                                                                   :type "response"
+                                                                                   :payload response}
+                                                                             _ (println "@@@@@@ Response, nukkah:" resp)
+                                                                             resp-str (format/serialize-message
+                                                                                       (get @connected-clients client-id)
+                                                                                       resp)]
+                                                                         (println "@@@@@@ client-id, nukkah:" client-id)
+                                                                         (println "@@@@@@ Response string, nukkah:" resp-str)
+                                                                         (http-kit/send! channel resp-str)))}]
+                                     ;; Check if there's a multimethod handler for this message type
+                                     (if (get (methods handle-ws-message) (keyword msg-type))
+                                       ;; Use multimethod dispatch
+                                       (handle-ws-message multimethod-msg)
+
+                                       ;; Fall back to registered handler
+                                       (if-let [handler (get @message-handlers msg-type)]
+                                         ;; Handler exists, process message
+                                         (go
+                                           (try
+                                             (let [result (<! (handler message))]
+                                               ;; Send response if there's a result
+                                               (when result
+                                                 (let [response {:id msg-id
+                                                                 :type "response"
+                                                                 :payload result}
+                                                       response-str (format/serialize-message
+                                                                     (get @connected-clients client-id)
+                                                                     response)]
+                                                   (http-kit/send! channel response-str))))
+                                             (catch Exception e
+                                               (log/error "Error processing message:" (.getMessage e))
+                                               (let [error-resp {:id msg-id
+                                                                 :type "error"
+                                                                 :payload {:error (str "Error processing message: " (.getMessage e))}}
+                                                     error-str (format/serialize-message
+                                                                (get @connected-clients client-id)
+                                                                error-resp)]
+                                                 (http-kit/send! channel error-str)))))
+                                         ;; No handler found, use default handler
+                                         (go
+                                           (let [result (<! (default-handler message))]
+                                             (when result
+                                               (let [response {:id msg-id
+                                                               :type "response"
+                                                               :payload result}
+                                                     response-str (format/serialize-message
+                                                                   (get @connected-clients client-id)
+                                                                   response)]
+                                                 (http-kit/send! channel response-str))))))))))
+                               (catch Exception e
+                                 (log/error "Error parsing message:" (.getMessage e))
+                                 (let [error-resp {:id "server"
+                                                   :type "error"
+                                                   :payload {:error (str "Error parsing message: " (.getMessage e))}}
+                                       error-str (format/serialize-message
+                                                  (get @connected-clients client-id)
+                                                  error-resp)]
+                                   (http-kit/send! channel error-str))))))
+
+      ;; Client disconnect handler
+      (http-kit/on-close channel
+                         (fn [status]
+                           (println "Client disconnected:" client-id "status:" status)
+                           (swap! connected-clients dissoc client-id)
+                           ;; Update connected UIDs (for Sente-like API compatibility)
+                           (swap! connected-uids update-in [:ws] disj client-id)
+                           (swap! connected-uids update-in [:any] disj client-id))))))
+
+;; Routes for the WebSocket server
+(defn create-routes [path event-msg-handler]
+  (defroutes app-routes
+    (GET path request
+      (-> request
+          (assoc-in [:ws-server :event-msg-handler] event-msg-handler)
+          ws-handler))
     (route/not-found "404")))
 
-(defn create-handler [routes]
-  ;; (tap> {:event :websocket/creating-handler})
-  (-> routes
-      wrap-keyword-params
-      wrap-params))
+;; WebSocket server implementation
+(defrecord WebSocketServer [server-atom state options]
+  WebSocketServerProtocol
 
-(defn start-router! [ch-chsk event-msg-handler]
-  ;; (tap> {:event :websocket/starting-router})
-  (go-loop []
-    (when-let [{:keys [id event ?data ring-req] :as msg} (<! ch-chsk)]
-      ;; (tap> {:event-foo :websocket/router-received
-      ;;        :msg-id id
-      ;;        :event event
-      ;;        :data ?data
-      ;;        :ring-req (select-keys ring-req [:uri :request-method])
-      ;;        :full-msg msg})
-      (event-msg-handler msg)
-      (recur))))
-
-(defrecord SenteServer [options state]
-  WebSocketServer
   (start! [this]
-    ;; (tap> {:event :websocket/server-starting
-    ;;        :options options})
-    (let [sente-fns (create-sente-setup options)
-          routes (create-routes sente-fns)
-          handler (create-handler routes)
-          stop-fn (http-kit/run-server handler {:port (:port options)})
-          router (when-let [handler (:event-msg-handler options)]
-                  (start-router! (:ch-chsk sente-fns) handler))]
-      ;; (tap> {:event :websocket/server-started
-      ;;        :port (:port options)
-      ;;        :connected-uids @(:connected-uids sente-fns)})
-      (reset! state (assoc sente-fns
-                          :stop-fn stop-fn
-                          :router router))
-      this))
+    (let [{:keys [port path event-msg-handler]
+           :or {port 3000 path "/ws"}} options]
+      (println "Starting WebSocket server on port" port)
+      (let [routes (create-routes path event-msg-handler)
+            wrapped-routes (-> routes
+                               wrap-keyword-params
+                               wrap-params)
+            server (http-kit/run-server wrapped-routes {:port port})]
+        (reset! server-atom server)
+        (println "WebSocket server started")
+        this)))
 
   (stop! [this]
-    ;; (tap> {:event :websocket/server-stopping})
-    (when-let [stop-fn (:stop-fn @state)]
-      (stop-fn)
-      (reset! state nil)
-      ;; (tap> {:event :websocket/server-stopped})
-      ))
-
-  (broadcast! [this message]
-    ;; (tap> {:event :websocket/broadcasting
-    ;;        :message message})
-    (when-let [{:keys [chsk-send! connected-uids]} @state]
-      (let [connected @connected-uids]
-        ;; (tap> {:event :websocket/broadcast-targeting
-        ;;        :connected-uids connected})
-        (doseq [uid (:any connected)]
-          ;; (tap> {:event :websocket/broadcast-to-user
-          ;;        :uid uid})
-          (chsk-send! uid [:broadcast/message message])))))
-          ;; (chsk-send! uid [:chsk/recv message])))))
-          ;; (chsk-send! uid [:chsk/recv message])))))
+    (when-let [server @server-atom]
+      (println "Stopping WebSocket server")
+      (server)
+      (reset! server-atom nil)
+      (reset! connected-clients {})
+      (reset! connected-uids {:ws #{}, :ajax #{}, :any #{}})
+      (println "WebSocket server stopped")
+      this))
 
   (send! [this client-id message]
-    ;; (tap> {:event :websocket/sending-to-client
-    ;;        :client-id client-id
-    ;;        :message message})
-    (when-let [{:keys [chsk-send!]} @state]
-      (chsk-send! client-id [:response/message message]))))
+    (if-let [client (get @connected-clients client-id)]
+      (let [channel (:channel client)
+            message-str (format/serialize-message client message)]
+        (http-kit/send! channel message-str)
+        true)
+      (do
+        (log/warn "Client not found:" client-id)
+        false)))
 
-(defn create-server [{:keys [port event-msg-handler] :as options}]
-  ;; (tap> {:event :websocket/creating-server
-  ;;        :port port
-  ;;        :has-handler? (boolean event-msg-handler)})
-  (->SenteServer options (atom nil)))
+  (broadcast! [this message]
+    (let [client-count (count @connected-clients)]
+      (println "Broadcasting message to" client-count "clients: type=" (:type message) ", payload=" (:payload message))
+      (doseq [[client-id client] @connected-clients]
+        (let [channel (:channel client)
+              message-str (format/serialize-message client message)]
+          (println "Sending message to client:" client-id)
+          (println "Message:" message-str)
+          (http-kit/send! channel message-str)))
+      client-count))
 
-;; ==========================================================================
-;; REPL Testing
-;; ==========================================================================
-(comment
-  ;; Create and start a test server on port 3000
-  (def test-server (create-server {:port 9030
-                                   :event-msg-handler handle-ws-message}))
+  (get-connected-client-ids [this]
+    (keys @connected-clients))
 
-  (start! test-server)
+  (get-client-info [this client-id]
+    (when-let [client (get @connected-clients client-id)]
+      (dissoc client :channel)))
 
-  ;; Check connected clients
-  (when-let [conn-uids (:connected-uids @(.state test-server))]
-    @conn-uids)
+  (count-connected-clients [this]
+    (count @connected-clients))
 
-  ;; Broadcast a test message to all connected clients
-  (broadcast! test-server {:type :test-broadcast
-                           :message "Hello from server!"
-                           :timestamp (java.util.Date.)})
+  (register-handler! [this msg-type handler-fn]
+    (swap! message-handlers assoc msg-type handler-fn)
+    this)
 
-  ;; Send a message to a specific client (need client's UID)
-  (let [uid (first (:any @(:connected-uids @(.state test-server))))]
-    (send! test-server uid {:type :direct-message
-                            :message "This is a direct message"
-                            :timestamp (java.util.Date.)}))
+  (unregister-handler! [this msg-type]
+    (swap! message-handlers dissoc msg-type)
+    this))
 
-  ;; Stop the server
-  (stop! test-server)
+;; Constructor function
+(defn create-server
+  ([]
+   (create-server {}))
+  ([options]
+   (->WebSocketServer (atom nil)
+                      (atom {:connected-uids connected-uids})
+                      options)))
 
-  )
+;; Helper functions
+(defn get-connected-client-ids []
+  (keys @connected-clients))
+
+(defn get-client-info [client-id]
+  (when-let [client (get @connected-clients client-id)]
+    (dissoc client :channel)))
+
+(defn count-connected-clients [server]
+  (count-connected-clients server))

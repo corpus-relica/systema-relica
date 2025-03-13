@@ -15,7 +15,9 @@ from src.relica_nous_langchain.agent.Tools import (
     tool_descriptions,
     tool_names,
     )
-from src.relica_nous_langchain.services.CCComms import ccComms
+
+# from src.relica_nous_langchain.services.CCComms import ccComms
+
 from src.relica_nous_langchain.SemanticModel import semanticModel
 
 
@@ -53,7 +55,8 @@ def thought(state):
 
     prompt = FULL_TEMPLATES["thought"].format(
         curr_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-        semantic_model=semanticModel.getModelRepresentation(ccComms.selectedEntity),
+        # semantic_model=semanticModel.getModelRepresentation(ccComms.selectedEntity),
+        semantic_model=semanticModel.getModelRepresentation(None),
         context=semanticModel.context,
         tools=converted_tools,
         tool_descriptions=tool_descriptions,

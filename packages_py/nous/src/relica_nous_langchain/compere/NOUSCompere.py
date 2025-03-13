@@ -14,7 +14,10 @@ from langchain_openai import ChatOpenAI
 from src.relica_nous_langchain.compere.Templates import prefix, template, final_answer_template
 
 from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
-from src.relica_nous_langchain.services.CCComms import ccComms
+
+# from src.relica_nous_langchain.services.CCComms import ccComms
+from src.relica_nous_langchain.services.clarity_client import clarity_client
+
 from src.relica_nous_langchain.SemanticModel import semanticModel
 
 # from src.relica_nous_langchain.compere.Tools import askAgent

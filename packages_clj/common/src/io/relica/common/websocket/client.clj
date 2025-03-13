@@ -1,323 +1,355 @@
-
 (ns io.relica.common.websocket.client
-  (:require [taoensso.sente :as sente]
-            [clojure.core.async :as async :refer [go go-loop <! >! timeout chan]]
-            [clojure.tools.logging :as log]))
+  (:require [org.httpkit.client :as http]
+            [clojure.core.async :refer [go go-loop <! >! timeout chan close! put! alt!]]
+            [clojure.tools.logging :as log]
+            [cheshire.core :as json]
+            [io.relica.common.websocket.format :as format])
+  (:import [java.net URI]
+           [java.util UUID]
+           [org.java_websocket.client WebSocketClient]
+           [org.java_websocket.handshake ServerHandshake]))
 
-;; Helper functions for state validation and error handling
-(defn- check-state
-  "Checks if the state atom contains valid data. Returns [valid? state-val]"
-  [state event-name]
-  (try
-    (if-let [state-val @state]
-      [true state-val]
-      (do
-        (tap> {:event (keyword "websocket" (name event-name))
-               :status :error
-               :reason :empty-state})
-        [false nil]))
-    (catch Exception e
-      (tap> {:event (keyword "websocket" (name event-name))
-             :status :error
-             :reason :exception
-             :message (.getMessage e)})
-      [false nil])))
+;; Client state
+(defonce ^:dynamic *message-handlers* (atom {}))
+(defonce message-id-counter (atom 0))
 
-(defn- with-error-handling
-  "Executes a function with standard error handling and tap> reporting"
-  [event-name f]
-  (try
-    (f)
-    (catch Exception e
-      (tap> {:event (keyword "websocket" (name event-name))
-             :status :error
-             :reason :exception
-             :message (.getMessage e)})
-      nil)))
+;; Response handlers for request-response pattern
+(defonce response-handlers (atom {}))
 
-(defprotocol WebSocketClient
+;; Constants for connection health monitoring
+(def ^:private ping-interval 15000)  ; Send ping every 15 seconds
+(def ^:private pong-timeout 5000)    ; Wait 5 seconds for pong response
+(def ^:private max-missed-pongs 3)   ; Disconnect after 3 missed pongs
+
+;; Protocol for WebSocket client
+(defprotocol WebSocketClientProtocol
   (connect! [this])
   (disconnect! [this])
-  (send-message! [this event-type payload timeout])
-  (connected? [this])
-  (register-handler! [this event-type handler-fn])
-  (unregister-handler! [this event-type]))
+  (send-message! [this type payload timeout-ms])
+  (register-handler! [this msg-type handler-fn])
+  (unregister-handler! [this msg-type])
+  (connected? [this]))
 
-(defn create-sente-client [{:keys [host port] :as uri} handlers]
-  (let [{:keys [chsk ch-recv send-fn state] :as socket}
-        (sente/make-channel-socket-client!
-         "/chsk" nil
-         {:type :ws
-          :host (str host ":" port)
-          :packer :edn})]
-    {:socket socket
-     :chsk chsk
-     :ch-recv ch-recv
-     :send-fn send-fn
-     :state state}))
+;; Default handler for unknown message types
+(defn default-handler [message client-state]
+  (log/warn "No handler found for message type:" (:type message))
+  nil)
 
-(defn start-client-router! [ch-recv handlers]
-  (let [event-handlers (:event-handlers handlers)
-        on-connect (:on-connect handlers)
-        on-disconnect (:on-disconnect handlers)
-        on-message (:on-message handlers)]
-    (tap> " START CLIENT ROUTER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!1 SKULLS AND CROSSBONES ")
-    (tap> handlers)
-    (go-loop []
-      (when-let [{:keys [event] :as msg} (<! ch-recv)]
-        (let [[ev-id ev-data] event]
-          (case ev-id
-            :chsk/state (let [{:keys [first-open? open?]} ev-data]
-                          (cond
-                            first-open? (when on-connect (on-connect))
-                            (not open?) (when on-disconnect (on-disconnect))))
+;; Generate a new message ID
+(defn new-message-id []
+  (swap! message-id-counter inc)
+  (str (UUID/randomUUID)))
 
-            :chsk/recv (let [event-type (first ev-data)
-                             payload (second ev-data)]
-                         (if-let [specific-handler (get @event-handlers event-type)]
-                           (specific-handler payload)
-                           (when on-message (on-message event-type payload))))
-            :broadcast/message (let [payload ev-data
-                                     type (get-in payload [:type])]
-                                (if-let [specific-handler (get @event-handlers type)]
-                                  (specific-handler payload)
-                                  (when on-message (:broadcast/message payload))))
-            nil))
-        (recur)))))
+;; Helper to create a URI with format query parameter
+(defn create-uri-with-format [uri-str format language]
+  (let [base-uri (URI. uri-str)
+        query (or (.getQuery base-uri) "")
+        query-with-format (if (empty? query)
+                            (str "format=" format "&language=" language)
+                            (str query "&format=" format "&language=" language))
+        path (.getPath base-uri)
+        uri-with-format (URI. (.getScheme base-uri)
+                              (.getAuthority base-uri)
+                              path
+                              query-with-format
+                              (.getFragment base-uri))]
+    uri-with-format))
 
-(defn format-event [event-type payload]
-  (if (keyword? event-type)
-    [event-type payload]
-    [(keyword (str "client/" (name event-type))) payload]))
+;; Start ping/pong monitoring
+(defn- start-ping-monitor! [client state]
+  (let [ping-task (go
+                    (loop []
+                      (<! (timeout ping-interval))
+                      (when (:connected @state)
+                        (try
+                          (let [ping-id (new-message-id)
+                                pong-chan (chan)]
+                            ;; Store pong handler
+                            (swap! response-handlers assoc ping-id {:channel pong-chan
+                                                                    :created (System/currentTimeMillis)})
+                            ;; Send ping
+                            (.send (:client @state)
+                                   (format/serialize-message
+                                    {:format (:format (:options @state) "edn")
+                                     :language (:language (:options @state) "clojure")}
+                                    {:id ping-id
+                                     :type "ping"
+                                     :payload {:timestamp (System/currentTimeMillis)}}))
 
-(defrecord SenteClient [uri options state]
-  WebSocketClient
+                            ;; Wait for pong with timeout
+                            (let [result (alt!
+                                           pong-chan ([_] :pong-received)
+                                           (timeout pong-timeout) ([_] :timeout))]
+                              (swap! response-handlers dissoc ping-id)
+                              (close! pong-chan)
+
+                              (if (= result :timeout)
+                                (let [missed (swap! state update :missed-pongs (fnil inc 0))]
+                                  (log/warn "Missed pong response. Count:" missed)
+                                  (when (>= missed max-missed-pongs)
+                                    (log/error "Too many missed pongs. Disconnecting.")
+                                    (disconnect! client)))
+                                (swap! state assoc :missed-pongs 0))))
+                          (catch Exception e
+                            (log/error "Error in ping monitor:" (.getMessage e)))))
+                      (recur)))]
+    ;; Store task for cleanup
+    (swap! state assoc :ping-task ping-task)))
+
+;; Create a WebSocket client implementation
+(defrecord JsonWebSocketClient [options state]
+
+  WebSocketClientProtocol
+
   (connect! [this]
-    (with-error-handling :connect
-      (fn []
-        (let [[valid? current-state] (check-state state :connect)]
-          ;; (tap> {:event :websocket/connect-attempt
-          ;;        :has-socket? (and valid? (boolean (:socket current-state)))})
+    (when-not (:client @state)
+      (println "Connecting to WebSocket server at" (:uri options))
 
-          (when (or (not valid?) (not (:socket current-state)))
-            (let [
-                  ;; _ (tap> "~~~~~~~~~~~~~ CONNECTING ~~~~~~~~~~~~~")
-                  ;; _ (tap> current-state)
-                  ;; _ (tap> state)
-                  ;; _ (tap> options)
-                  event-handlers (atom (:event-handlers current-state))
-                  handlers (assoc (:handlers options) :event-handlers event-handlers)
-                  ;; - (tap> "~~~~~~~~~~~~~ HANDLERS ~~~~~~~~~~~~~")
-                  ;; - (tap> handlers)
-                  ;; _ (tap> {:event :websocket/creating-sente-client
-                  ;;          :uri uri})
-                  sente-client (create-sente-client uri handlers)
-                  ;; _ (tap> {:event :websocket/sente-client-created
-                  ;;          :has-chsk? (boolean (:chsk sente-client))
-                  ;;          :has-ch-recv? (boolean (:ch-recv sente-client))})
-                  router (start-client-router! (:ch-recv sente-client) handlers)]
-              (reset! state (assoc sente-client
-                                  :router router
-                                  :event-handlers event-handlers))
-              ;; (tap> {:event :websocket/client-connected
-              ;;        :state-keys (keys @state)})
-              )))))
-    this)
+      (let [handlers (or (:handlers options) {})
+            format (or (:format options) "edn")
+            language (or (:language options) "clojure")
+            client-info {:format format :language language}
+            base-uri (URI. (:uri options))
+            uri (create-uri-with-format (:uri options) format language)
+            client-id (atom nil)
+            outer-this this  ;; Capture the outer this reference
+            ws-client
+            (proxy [WebSocketClient] [uri]
+              (onOpen [^ServerHandshake handshake]
+                (println "Connected to WebSocket server")
+                (swap! state assoc :connected true)
+
+                ;; Mark as no longer reconnecting
+                (swap! state dissoc :reconnecting)
+
+                ;; Clean up reconnection task if it exists
+                (when-let [reconnect-task (:reconnect-task @state)]
+                  (close! reconnect-task)
+                  (swap! state dissoc :reconnect-task))
+
+                ;; Start ping monitoring
+                (start-ping-monitor! outer-this state))  ;; Use outer-this here too
+
+              (onClose [code reason remote]
+                (println "Disconnected from WebSocket server:" reason)
+                (swap! state assoc :connected false)
+                (swap! state dissoc :client-id :client)
+
+                ;; Clean up ping monitor
+                (when-let [ping-task (:ping-task @state)]
+                  (close! ping-task))
+                (swap! state dissoc :ping-task :missed-pongs)
+
+                ;; If auto-reconnect is enabled and we're not already reconnecting
+                (when (and (:auto-reconnect options) (not (:reconnecting @state)))
+                  (let [reconnect-delay (or (:reconnect-delay options) 5000)]
+                    (println "Starting reconnection process with delay of" (/ reconnect-delay 1000) "seconds")
+                    ;; Mark that we're in reconnection mode
+                    (swap! state assoc :reconnecting true)
+
+                    (let [reconnect-task
+                          (go-loop [attempts 1]
+                            (when (:reconnecting @state) ;; Check if we should still be reconnecting
+                              (<! (timeout reconnect-delay))
+                              (println "Reconnection attempt" attempts)
+                              ;;(try
+                                ;; Attempt reconnection
+                              (when-not (:client @state) ;; Only if we don't already have a client
+                                (connect! outer-this))
+
+                                ;; Check if connection was successful
+                              (if (connected? outer-this)
+                                (do
+                                  (println "Successfully reconnected after" attempts "attempts")
+                                  (swap! state dissoc :reconnecting)
+                                  true) ;; Exit loop on success
+                                (do
+                                  (println "Reconnection failed, will retry in" (/ reconnect-delay 1000) "seconds")
+                                  (recur (inc attempts))))
+                                ;;(catch Exception e
+                                ;;  (log/error "Error during reconnection attempt:" (.getMessage e))
+                                ;;  (recur (inc attempts))))
+                              ))]
+
+                      ;; Store reconnection task for cleanup
+                      (swap! state assoc :reconnect-task reconnect-task)))))
+
+              (onMessage [message]
+                (try
+                  (let [parsed (format/deserialize-message client-info message)]
+                    (log/debug "Received message:" parsed)
+
+                    (cond
+                      ;; Client registration
+                      (= (:type parsed) "system:clientRegistered")
+                      (let [client-id (get-in parsed [:payload :client-id])]
+                        (println "Registered with client ID:" client-id)
+                        (swap! state assoc :client-id client-id)
+                        (when-let [on-connect (:on-connect options)]
+                          (on-connect client-id)))
+
+                      ;; Response to a request
+                      (= (:type parsed) "response")
+                      (when-let [handler (get @response-handlers (:id parsed))]
+                        (put! (:channel handler) (:payload parsed))
+                        (swap! response-handlers dissoc (:id parsed)))
+
+                      ;; Pong response
+                      (= (:type parsed) "pong")
+                      (when-let [handler (get @response-handlers (:id parsed))]
+                        (put! (:channel handler) (:payload parsed))
+                        (swap! response-handlers dissoc (:id parsed)))
+
+                      ;; Error response
+                      (= (:type parsed) "error")
+                      (if-let [handler (get @response-handlers (:id parsed))]
+                        (do
+                          (put! (:channel handler) (:payload parsed))
+                          (swap! response-handlers dissoc (:id parsed)))
+                        (log/error "Error from server:" (:payload parsed)))
+
+                      ;; Regular message
+                      :else
+                      (if-let [handler (get @*message-handlers* (:type parsed))]
+                        ;; (handler parsed outer-this)  ;; Use outer-this here too
+                        (handler parsed)
+                        (default-handler parsed @state))))
+                  (catch Exception e
+                    (log/error "Error processing message:" (.getMessage e)))))
+
+              (onError [e]
+                (log/error "WebSocket error:" (.getMessage e))))]
+
+        ;; Store initial handlers
+        (doseq [[type handler] handlers]
+          (register-handler! outer-this type handler))  ;; Use outer-this here too
+
+        ;; Connect the client
+        (doto ws-client
+          (.setConnectionLostTimeout 0) ; Disable automatic ping
+          (.connect))
+
+        ;; Store the client
+        (swap! state assoc
+               :client ws-client
+               :options options)
+
+        true)))
 
   (disconnect! [this]
-    (with-error-handling :disconnect
-      (fn []
-        (tap> {:event :websocket/disconnect-attempt})
+    (when-let [client (:client @state)]
+      (println "Disconnecting from WebSocket server")
+      (.close client)
+      (swap! state dissoc :client :client-id)
+      (swap! state assoc :connected false)
 
-        (let [[valid? state-val] (check-state state :disconnect)]
-          (if valid?
-            (let [chsk (:chsk state-val)
-                  router (:router state-val)]
-              ;; (tap> {:event :websocket/disconnecting
-              ;;        :has-chsk? (boolean chsk)
-              ;;        :has-router? (boolean router)})
+      ;; First, stop reconnection attempts
+      (swap! state dissoc :reconnecting)
 
-              (when chsk
-                (try
-                  (.close chsk)
-                  (tap> {:event :websocket/chsk-closed})
-                  (catch Exception e
-                    (tap> {:event :websocket/chsk-close
-                           :status :error
-                           :message (.getMessage e)}))))
+      ;; Clean up ping monitor
+      (when-let [ping-task (:ping-task @state)]
+        (close! ping-task))
+      (swap! state dissoc :ping-task :missed-pongs)
 
-              (when router
-                (try
-                  (async/close! router)
-                  (tap> {:event :websocket/router-closed})
-                  (catch Exception e
-                    (tap> {:event :websocket/router-close
-                           :status :error
-                           :message (.getMessage e)}))))
+      ;; Clean up reconnection task
+      (when-let [reconnect-task (:reconnect-task @state)]
+        (close! reconnect-task))
+      (swap! state dissoc :reconnect-task)
 
-              (reset! state nil)
-              (tap> {:event :websocket/disconnected})
-              true)
-            false)))))
+      ;; Clean up response handlers
+      (doseq [[_ handler] @response-handlers]
+        (close! (:channel handler)))
+      (reset! response-handlers {})
+
+      true))
+
+  (send-message! [this type payload timeout-ms]
+    (let [result-chan (chan 1)
+          message-id (new-message-id)]
+
+      ;; Register response handler
+      (swap! response-handlers assoc message-id {:channel result-chan
+                                                 :created (System/currentTimeMillis)})
+
+      ;; Send the request
+      (if-let [client (:client @state)]
+        (let [message {:id message-id
+                       :type type
+                       :payload payload}
+              client-info {:format (:format options "edn")
+                           :language (:language options "clojure")}
+              message-str (format/serialize-message client-info message)]
+          (log/debug "Sending request:" message)
+          (.send client message-str)
+
+          ;; Wait for response with timeout
+          (go
+            (alt!
+              result-chan ([result] result)
+              (timeout timeout-ms)
+              ([_]
+               (do
+                 (swap! response-handlers dissoc message-id)
+                 {:error "Request timed out"
+                  :request {:type type
+                            :payload payload}})))))
+
+        ;; Not connected
+        (do
+          (close! result-chan)
+          (go {:error "Not connected to server"})))))
+
+  (register-handler! [this msg-type handler-fn]
+    (swap! *message-handlers* assoc msg-type handler-fn)
+    this)
+
+  (unregister-handler! [this msg-type]
+    (swap! *message-handlers* dissoc msg-type)
+    this)
 
   (connected? [this]
-    (with-error-handling :connection-status
-      (fn []
-        (let [[valid? state-val] (check-state state :connection-status)]
-          (if valid?
-            (if-let [state-atom (:state state-val)]
-              (let [connection-state @state-atom]
-                (tap> {:event :websocket/connection-status
-                       :open? (:open? connection-state)})
-                (:open? connection-state))
-              (do
-                (tap> {:event :websocket/connection-status
-                       :status :error
-                       :reason :no-state-atom})
-                false))
-            false)))))
+    (and (:client @state)
+         (:connected @state))))
 
-  (register-handler! [this event-type handler-fn]
-    (with-error-handling :register-handler
-      (fn []
-        ;; (tap> {:event :websocket/register-handler-attempt
-        ;;        :event-type event-type
-        ;;        :handler-fn handler-fn})
-        ;; (tap> state)
-        ;; (tap> (check-state state :register-handler))
-        (let [[valid? state-val] (check-state state :register-handler)]
-          (if valid?
-            (if-let [event-handlers (:event-handlers state-val)]
-              (let [new-event-handlers (assoc event-handlers event-type handler-fn)]
+;; Constructor function
+(defn create-client
+  "Create a new JSON WebSocket client.
 
-                (swap! state assoc :event-handlers new-event-handlers)
-                ;; (tap> {:event :websocket/handler-registered
-                ;;        :event-type event-type})
-                true)
-              (do
-                ;; (tap> {:event :websocket/register-handler
-                ;;        :status :error
-                ;;        :reason :no-event-handlers
-                ;;        :event-type event-type})
-                false))
-            false)))))
+   Options:
+   - :uri              - WebSocket server URI (e.g., \"ws://localhost:3000/ws\")
+   - :auto-reconnect   - Whether to automatically reconnect (default: true)
+   - :reconnect-delay  - Delay before reconnecting in ms (default: 5000)
+   - :heartbeat        - Whether to send heartbeat messages (default: true)
+   - :heartbeat-interval - Interval between heartbeats in ms (default: 30000)
+   - :handlers         - Map of message type to handler functions
+   - :on-connect       - Function to call when client is registered with client-id
+   - :format           - Message format to use: \"edn\" or \"json\" (default: \"edn\")
+   - :language         - Client language identifier (default: \"clojure\")"
+  [options]
+  (let [default-options {:auto-reconnect true
+                         :reconnect-delay 5000
+                         :heartbeat true
+                         :heartbeat-interval 30000
+                         :format "edn"
+                         :language "clojure"}
+        full-options (merge default-options options)]
+    (->JsonWebSocketClient full-options (atom {:connected false}))))
 
-  (unregister-handler! [this event-type]
-    (with-error-handling :unregister-handler
-      (fn []
-        (let [[valid? state-val] (check-state state :unregister-handler)]
-          (if valid?
-            (if-let [event-handlers (:event-handlers state-val)]
-              (do
-                (swap! event-handlers dissoc event-type)
-                ;; (tap> {:event :websocket/handler-unregistered
-                ;;        :event-type event-type})
-                true)
-              (do
-                ;; (tap> {:event :websocket/unregister-handler
-                ;;        :status :error
-                ;;        :reason :no-event-handlers
-                ;;        :event-type event-type})
-                false))
-            false)))))
+;; Helper functions
+(defn get-client-id [client]
+  (:client-id @(:state client)))
 
-  (send-message! [this event-type payload timeout-ms]
-    ;; (tap> {:event :websocket/send-attempt
-    ;;        :event-type event-type
-    ;;        :payload payload})
+;; Convenience macro for with-client
+(defmacro with-client
+  "Create, connect, and use a client, then disconnect when done.
 
-    (let [result-ch (chan)]
-      (with-error-handling :send-message
-        (fn []
-          (let [connected (connected? this)]
-            (if connected
-              (let [[valid? state-val] (check-state state :send-message)]
-                (if valid?
-                  (if-let [send-fn (:send-fn state-val)]
-                    (do
-                      ;; (tap> {:event :websocket/pre-send
-                      ;;        :using-send-fn? true})
-                      ;; Format event properly for Sente
-                      (let [formatted-event (if (keyword? event-type)
-                                              event-type
-                                              (keyword "client" (name event-type)))]
-                        ;; (tap> {:event :websocket/sending
-                        ;;        :formatted-event [formatted-event payload]})
-                        (send-fn [formatted-event payload]
-                                timeout-ms
-                                (fn [reply]
-                                  ;; (tap> {:event :websocket/reply-received
-                                  ;;        :reply reply})
-                                  (go (>! result-ch reply))))))
-                    (do
-                      ;; (tap> {:event :websocket/send-message
-                      ;;        :status :error
-                      ;;        :reason :no-send-fn})
-                      (go (>! result-ch {:error "Send function not available"}))))
-                  (go (>! result-ch {:error "Client state not initialized"}))))
-              (do
-                (tap> {:event :websocket/send-message
-                       :status :error
-                       :reason :not-connected})
-                (go (>! result-ch {:error "Not connected"})))))))
-
-      ;; Always return the channel, even if error occurred
-      result-ch)))
-
-(defn parse-uri [uri]
-  (if-let [[_ host port] (re-matches #"(?:https?://|ws://)?([^:/]+)(?::(\d+))?" uri)]
-    {:host host
-     :port (Integer/parseInt (or port "3000"))}
-    (throw (ex-info "Invalid URI format" {:uri uri}))))
-
-(defn create-client [uri options]
-  (tap> "CREATE CLIENT")
-  (tap> options)
-  (let [parsed-uri (parse-uri uri)
-        state (atom {:event-handlers (:handlers options)})]
-    (->SenteClient parsed-uri options state)))
-
-;; ==========================================================================
-;; REPL Testing
-;; ==========================================================================
-(comment
-  ;; Create a client that connects to localhost:3000
-  (def test-client (create-client "localhost:3000"
-                                 {:handlers
-                                  {:on-connect #(tap> {:event :test-client/connected})
-                                   :on-disconnect #(tap> {:event :test-client/disconnected})
-                                   :on-message (fn [event-type payload]
-                                                (tap> {:event :test-client/received-message
-                                                       :type event-type
-                                                       :payload payload}))}}))
-
-  ;; Connect to the server
-  (connect! test-client)
-
-  ;; Check connection status - should give detailed diagnostics now
-  (connected? test-client)
-
-  ;; Inspect the client state
-  @(.state test-client)
-
-  ;; Debug connection
-  (when-let [state-atom (:state @(.state test-client))]
-    (tap> {:debug/connection-state @state-atom}))
-
-  ;; Register a specific handler for broadcast messages
-  (register-handler! test-client :broadcast/message
-                     (fn [payload]
-                       (tap> {:event :test-client/broadcast-received
-                              :payload payload})))
-
-  ;; Attempt sending even if not connected - will give helpful errors now
-  (def result-ch (send-message! test-client :test/ping "Are you there?" 5000))
-  (async/<!! result-ch) ;; Wait for response, should have error details if failed
-
-  ;; Disconnect from server
-  (disconnect! test-client)
-
-  ;; Reconnection test
-  (connect! test-client)
-  (send-message! test-client :test/reconnect "Back again!" 5000)
-  )
+   Example:
+   (with-client [client {:uri \"ws://localhost:3000/ws\"}]
+     (send-message! client \"status\" {:query \"status\"}))"
+  [[binding-name options] & body]
+  `(let [~binding-name (create-client ~options)]
+     (try
+       (connect! ~binding-name)
+       ~@body
+       (finally
+         (disconnect! ~binding-name)))))
