@@ -177,7 +177,10 @@
               (onMessage [message]
                 (try
                   (let [parsed (format/deserialize-message client-info message)]
-                    (log/debug "Received message:" parsed)
+                    (log/debug "Received message: " parsed)
+                    (log/debug "Message type: " (:type parsed))
+                    (log/debug "Message type type: " (type (:type parsed)))
+                    (log/debug "Message handlers: " @*message-handlers*)
 
                     (cond
                       ;; Client registration

@@ -48,15 +48,37 @@
 
 
 ;; NOUS
+
+(def nous-handlers
+  {:handle-final-answer (fn [msg]
+                          (println "Final answer:")
+                          (println msg)
+                          (events/publish-event {:type :final-answer
+                                                 :payload msg}))
+   ;; "heartbeat" (fn [msg]
+   ;;              (tap> "Heartbeat:")
+   ;;              (tap> msg)
+   ;;              (events/publish-event {:type :heartbeat
+   ;;                                     :payload msg}))
+   ;; "question" (fn [msg]
+   ;;             (tap> "Question:")
+   ;;             (tap> msg)
+   ;;             (events/publish-event {:type :question
+   ;;                                    :payload msg}))
+   }
+  )
+
 (defonce nous-client (nous/create-client
                       "ws://localhost:2204/ws"
-                      {:handlers {:on-connect (fn []
-                                                (tap> "Connected to NOUS")
-                                                (events/publish-event {:type :nous-connected}))
-                                  :on-disconnect (fn []
-                                                   (tap> "Disconnected from NOUS")
-                                                   (events/publish-event {:type :nous-disconnected}))
-                                  :on-message (fn [event-type payload]
-                                                (tap> "Received message from NOUS")
-                                                (events/publish-event {:type :nous-message-received
-                                                                       :payload payload}))}}))
+                      {:handlers (merge
+                                  nous-handlers
+                                  {:on-connect (fn []
+                                                 (tap> "Connected to NOUS")
+                                                 (events/publish-event {:type :nous-connected}))
+                                   :on-disconnect (fn []
+                                                    (tap> "Disconnected from NOUS")
+                                                    (events/publish-event {:type :nous-disconnected}))
+                                   :on-message (fn [event-type payload]
+                                                 (tap> "Received message from NOUS")
+                                                 (events/publish-event {:type :nous-message-received
+                                                                        :payload payload}))})}))

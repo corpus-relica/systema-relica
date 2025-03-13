@@ -1,18 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Layout, useRedirect, useStore } from "react-admin";
-import { Slide, IconButton } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Drawer, IconButton, Paper, Slide } from "@mui/material";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ExpandLess,
+  ExpandMore,
+} from "@mui/icons-material";
 import { MyMenu } from "./MyMenu.js";
 import { MyAppBar } from "./MyAppBar.js";
 import LispREPL from "./LispREPL.js";
 import { useStores } from "./context/RootStoreContext.js";
-
-const replHeight = "40vh"; // Adjust as needed
-
 import { ccSocket, portalWs, initializeWebSocket } from "./socket.js";
-
 import { portalClient } from "./io/PortalClient.js";
 import { authProvider } from "./providers/AuthProvider.js";
+import Chat, { Message } from "./components/Chat/index.js";
+
+import "./style.css";
 
 // const memStore = localStorageStore();
 
@@ -35,6 +39,7 @@ export const MyLayout = (props) => {
   const { factDataStore } = rootStore;
 
   const [replOpen, setReplOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
 
   const { addFacts, addConcepts, setCategories, categories } = factDataStore;
   // const [isConnected, setIsConnected] = useState(false);
@@ -44,12 +49,21 @@ export const MyLayout = (props) => {
 
   const socketInitialized = React.useRef(false);
 
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  /*
+    const messages = [
+    { role: 'user', content: 'Explain quantum computing in simple terms' },
+    { role: 'assistant', content: 'Quantum computing is a new type of computing that relies on the principles of quantum physics. Traditional computers, like the one you might be using right now, use bits to store and process information. These bits can represent either a 0 or a 1. In contrast, quantum computers use quantum bits, or qubits.\n\nUnlike bits, qubits can represent not only a 0 or a 1 but also a superposition of both states simultaneously. This means that a qubit can be in multiple states at once, which allows quantum computers to perform certain calculations much faster and more efficiently' },
+    { role: 'user', content: 'What are three great applications of quantum computing?' },
+    { role: 'assistant', content: 'Three great applications of quantum computing are: Optimization of complex problems, Drug Discovery and Cryptography.' }
+  ];*/
+
   const toggleRepl = () => {
     setReplOpen(!replOpen);
   };
 
   const establishCats = async () => {
-    if(categories.length > 0) return;
+    if (categories.length > 0) return;
 
     console.log("vvvv - VULNERABLE II - vvvv");
     const concepts = await portalClient.resolveUIDs(
@@ -99,32 +113,6 @@ export const MyLayout = (props) => {
     });
   };
 
-  useEffect(() => {
-
-    const initializeEnvironment = async () => {
-      try {
-        // First ensure socket connection and client registration
-        if (!socketInitialized.current) {
-          await initializeSocketConnection();
-          socketInitialized.current = true;
-        }
-
-        // Then proceed with environment setup
-        await establishCats();
-        const foo = await authProvider.getIdentity();
-        console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo);
-        
-        const env = await portalClient.retrieveEnvironment();
-        console.log("vvvv - ENVIRONMENT foo vvvv:", env);
-        factDataStore.addFacts(env.facts);
-        
-        console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
-      } catch (error) {
-        console.error("Failed to initialize environment:", error);
-      }
-    };
-
-    initializeEnvironment();
 
     // SOCKET CONNECTION
 
@@ -229,118 +217,183 @@ export const MyLayout = (props) => {
       }
     };
 
+    const onFinalAnswer = (d) => {
+      console.log("FINAL ANSWER");
+      console.log(d);
+      setMessages(prevMessages => [...prevMessages, { role: 'assistant', content: d.answer }]);
+    }
+
+  useEffect(() => {
+
+    const initializeEnvironment = async () => {
+      try {
+        // First ensure socket connection and client registration
+        if (!socketInitialized.current) {
+          await initializeSocketConnection();
+          socketInitialized.current = true;
+        }
+
+        // Then proceed with environment setup
+        await establishCats();
+        const foo = await authProvider.getIdentity();
+        console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo);
+
+        const env = await portalClient.retrieveEnvironment();
+        console.log("vvvv - ENVIRONMENT foo vvvv:", env);
+        factDataStore.addFacts(env.facts);
+
+        console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
+      } catch (error) {
+        console.error("Failed to initialize environment:", error);
+      }
+    };
+
+    initializeEnvironment();
+
     ccSocket.on("connect", onConnect);
     ccSocket.on("disconnect", onDisconnect);
-
-    // ccSocket.on("system:selectedEntity", onSelectEntity);
-    ccSocket.on("system:selectedFact", onSelectFact);
-    ccSocket.on("system:selectedNone", onNoneSelected);
-    ccSocket.on("system:loadedFacts", onAddFacts);
-    ccSocket.on("system:unloadedFacts", onRemFacts);
-    ccSocket.on("system:loadedModels", onAddModels);
-    ccSocket.on("system:unloadedModels", onRemModels);
-    // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);
-    ccSocket.on("system:entitiesCleared", onEntitiesCleared);
-
-    ccSocket.on("system:stateInitialized", onStateInitialized);
-    ccSocket.on("system:stateChanged", onStateChange);
-
-    // ------------------------------------------------------------- //
-
-    portalWs.on("portal:factsLoaded", onAddFacts);
-    portalWs.on("portal:factsUnloaded", onRemFacts);
-    portalWs.on("portal:entitySelected", onSelectEntity);
-    portalWs.on("portal:entitySelectedNone", onNoneSelected);
+    ccSocket.on("system:finalAnswer", onFinalAnswer);
+    portalWs.on("portal:finalAnswer", onFinalAnswer);
 
     return () => {
       ccSocket.off("connect", onConnect);
       ccSocket.off("disconnect", onDisconnect);
-
-      // ccSocket.off("system:selectedEntity", onSelectEntity);
-      ccSocket.off("system:selectedFact", onSelectFact);
-      ccSocket.off("system:selectedNone", onNoneSelected);
-      ccSocket.off("system:loadedFacts", onAddFacts);
-      ccSocket.off("system:unloadedFacts", onRemFacts);
-      // ccSocket.off("system:updateCategoryDescendantsCache", establishCats);
-      ccSocket.off("system:entitiesCleared", onEntitiesCleared);
-      ccSocket.off("system:loadedModels", onAddModels);
-      ccSocket.off("system:unloadedModels", onRemModels);
-
-      ccSocket.off("system:stateInitialized", onStateInitialized);
-      ccSocket.off("system:stateChanged", onStateChange);
-
-      // ------------------------------------------------------------- //
-
-      portalWs.off("system:loadedFacts", onSelectEntity);
-      portalWs.off("system/entitySelected", onSelectEntity);
-      portalWs.off("portal:entitySelectedNone", onNoneSelected);
-
+      ccSocket.off("system:finalAnswer", onFinalAnswer);
+      portalWs.off("portal:finalAnswer", onFinalAnswer);
     };
-
   }, []);
 
+  const onUserInputSubmit = (message: string) => {
+    console.log(message);
+    setMessages(prevMessages => [...prevMessages, { role: 'user', content: message }]);
+    portalWs.send("chatUserInput", { message });
+  };
+
+  const replHeight = "40vh"; // Adjust as needed
+
+
+
   return (
-    <Layout {...props} appBar={MyAppBar} menu={MyMenu}>
-      <div
-        style={{
-          position: "relative",
-          minHeight: "calc(100vh - 64px)",
+    <Layout
+      {...props}
+      menu={MyMenu}
+      appBar={MyAppBar}
+      sx={{
+        "& .RaLayout-content": {
+          paddingRight: chatOpen ? "400px" : 0,
+          transition: "padding-right 0.3s ease",
+        },
+      }}
+    >
+      {props.children}
+      <Drawer
+        variant="permanent"
+        anchor="right"
+        open={chatOpen}
+        sx={{
+          width: chatOpen ? 400 : 400,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: 400,
+            position: "fixed",
+            height: "calc(100vh - 64px)",
+            top: 64,
+            borderLeft: "1px solid rgba(0, 0, 0, 0.12)",
+            transition: "transform 0.3s ease",
+            transform: chatOpen ? "translateX(0)" : "translateX(380px)",
+          },
         }}
       >
-        {props.children}
-        <Slide direction="up" in={replOpen} mountOnEnter unmountOnExit>
-          <div
-            style={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: replHeight,
-              backgroundColor: "rgba(0, 0, 0, 0.8)", // Semi-transparent background
-              backdropFilter: "blur(5px)", // Adds a blur effect to the background
-              display: "flex",
-              flexDirection: "column",
-              zIndex: 1300, // Ensure it's above other content
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "8px",
-                color: "white",
-              }}
-            >
-              <span>Lisp REPL</span>
-              <IconButton onClick={toggleRepl} color="inherit">
-                <ExpandMore />
-              </IconButton>
-            </div>
-            <div style={{ flexGrow: 1, overflow: "auto" }}>
-              <LispREPL />
-            </div>
-          </div>
-        </Slide>
         <IconButton
-          color="primary"
-          aria-label="open repl"
-          onClick={toggleRepl}
+          onClick={() => setChatOpen(!chatOpen)}
           sx={{
-            position: "fixed",
-            left: "50%",
-            bottom: replOpen ? replHeight : 0,
-            transform: "translateX(-50%)",
-            zIndex: 1301,
-            backgroundColor: (theme) => theme.palette.background.paper,
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: "24px",
+            borderRadius: 0,
+            borderRight: "1px solid rgba(0, 0, 0, 0.12)",
+            backgroundColor: "background.paper",
             "&:hover": {
-              backgroundColor: (theme) => theme.palette.action.hover,
+              backgroundColor: "action.hover",
             },
           }}
         >
-          {replOpen ? <ExpandMore /> : <ExpandLess />}
+          {chatOpen ? <ChevronRight /> : <ChevronLeft />}
         </IconButton>
-      </div>
+        <Paper
+          elevation={0}
+          sx={{
+            ml: 3,
+            height: "100%",
+            p: 2,
+          }}
+        >
+          <div
+            style={{
+              height: "calc(100% - 40px)",
+              backgroundColor: "rgba(0, 0, 0, 0.04)",
+              borderRadius: 1,
+              padding: 2,
+            }}
+          >
+            <Chat messages={messages} onSubmit={onUserInputSubmit} />
+          </div>
+        </Paper>
+      </Drawer>
+      <Slide direction="up" in={replOpen} mountOnEnter unmountOnExit>
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: replHeight,
+            backgroundColor: "rgba(0, 0, 0, 0.8)", // Semi-transparent background
+            backdropFilter: "blur(5px)", // Adds a blur effect to the background
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 1300, // Ensure it's above other content
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "8px",
+              color: "white",
+            }}
+          >
+            <span>Lisp REPL</span>
+            <IconButton onClick={toggleRepl} color="inherit">
+              <ExpandMore />
+            </IconButton>
+          </div>
+          <div style={{ flexGrow: 1, overflow: "auto" }}>
+            <LispREPL />
+          </div>
+        </div>
+      </Slide>
+      <IconButton
+        color="primary"
+        aria-label="open repl"
+        onClick={toggleRepl}
+        sx={{
+          position: "fixed",
+          left: "50%",
+          bottom: replOpen ? replHeight : 0,
+          transform: "translateX(-50%)",
+          zIndex: 1301,
+          backgroundColor: (theme) => theme.palette.background.paper,
+          "&:hover": {
+            backgroundColor: (theme) => theme.palette.action.hover,
+          },
+        }}
+      >
+        {replOpen ? <ExpandMore /> : <ExpandLess />}
+      </IconButton>
     </Layout>
   );
 };

@@ -100,7 +100,7 @@ from src.relica_nous_langchain.services.clarity_client import clarity_client
 
 from src.meridian.server import WebSocketServer, app
 
-from src.relica_nous_langchain.test_agent import graph
+from src.relica_nous_langchain.test_agent import graph, get_response
 # from src.relica_nous_langchain.compere.NOUSCompere import nousCompere
 # from src.relica_nous_langchain.SemanticModel import semanticModel
 
@@ -140,8 +140,11 @@ async def main():
             print(f"Error retrieving environment: {e}")
             return None
 
-    async def handle_user_input(input):
-        print(f"Processing user input: {input}")
+    async def handle_user_input(input: str):
+        print(f"Processing user input NUKKAH: {input}")
+        foo = await get_response(input)
+        print(f"RESPONSE: {foo}")
+        await nous_server.send_final_answer({'message': foo})
 #     async def handleUserInput(input: str):
 #         res = await nousCompere.handleInput(input)
 #         return res

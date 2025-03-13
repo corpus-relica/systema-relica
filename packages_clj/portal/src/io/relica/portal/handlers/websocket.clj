@@ -10,7 +10,8 @@
                      connected-clients]]
             [io.relica.portal.auth.jwt :refer [validate-jwt]]
             [io.relica.common.io.aperture-client :as aperture]
-            [io.relica.portal.io.client-instances :refer [aperture-client]]
+            [io.relica.common.io.nous-client :as nous]
+            [io.relica.portal.io.client-instances :refer [aperture-client nous-client]]
             [io.relica.common.events.core :as events]))
 
 (declare ws-handlers)
@@ -104,55 +105,6 @@
         (log/error "Failed to load all related facts:" e)
         {:error "Failed to load all related facts"}))))
 
-;; Event handlers
-
-(defn handle-entity-selected-event [payload]
-  (let [environment-id (:environment-id payload)]
-    (broadcast-to-environment environment-id
-                              {:id "system"
-                               :type "portal:entitySelected"
-                               :payload {
-                                         :type (:type payload)
-                                         :entity_uid (:entity-uid payload)
-                                         :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
-
-(defn handle-entity-selected-none-event [payload]
-  (let [environment-id (:environment-id payload)]
-    (broadcast-to-environment environment-id
-                              {:id "system"
-                               :type "portal:entitySelectedNone"
-                               :payload {
-                                         :type (:type payload)
-                                         :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
-
-(defn handle-facts-loaded-event [payload]
-  (let [environment-id (:environment-id payload)]
-    (broadcast-to-environment environment-id
-                              {:id "system"
-                               :type "portal:factsLoaded"
-                               :payload {
-                                         :type (:type payload)
-                                         :facts (:facts payload)
-                                         :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
-
-(defn handle-facts-unloaded-event [payload]
-  (let [environment-id (:environment-id payload)]
-    (broadcast-to-environment environment-id
-                              {:id "system"
-                               :type "portal:factsUnloaded"
-                               :payload {
-                                         :type (:type payload)
-                                         :fact_uids (:fact-uids payload)
-                                         :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
-
 (defn handle-load-entity [{:keys [uid client-id] :as message}])
 
 (defn handle-unload-entity [{:keys [uid client-id] :as message}]
@@ -202,6 +154,80 @@
       (catch Exception e
         (log/error "Failed to load subtypes cone:" e)
         {:error "Failed to load subtypes cone"}))))
+
+(defn handle-chat-user-input [{:keys [client-id message user-id]}]
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            result (<! (nous/user-input nous-client user-id environment-id message))]
+        {:success true
+         :message "Chat user input processed"
+         :response result})
+      (catch Exception e
+        (log/error "Failed to process chat user input:" e)
+        {:error "Failed to process chat user input"}))))
+;; Event handlers
+
+(defn handle-entity-selected-event [payload]
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:entitySelected"
+                               :payload {
+                                         :type (:type payload)
+                                         :entity_uid (:entity-uid payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+
+(defn handle-entity-selected-none-event [payload]
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:entitySelectedNone"
+                               :payload {
+                                         :type (:type payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+
+(defn handle-facts-loaded-event [payload]
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:factsLoaded"
+                               :payload {
+                                         :type (:type payload)
+                                         :facts (:facts payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+
+(defn handle-facts-unloaded-event [payload]
+  (let [environment-id (:environment-id payload)]
+    (broadcast-to-environment environment-id
+                              {:id "system"
+                               :type "portal:factsUnloaded"
+                               :payload {
+                                         :type (:type payload)
+                                         :fact_uids (:fact-uids payload)
+                                         :user_id (:user-id payload)
+                                         :environment_id (:environment-id payload)
+                                         }})))
+
+(defn handle-final-answer-event [payload]
+  (let [environment-id (:environment-id payload)]
+    (println "FINAL ANSWER EVENT")
+    (println payload)
+    (broadcast-to-environment 1 ;;environment-id
+                              {:id "system"
+                               :type "portal:finalAnswer"
+                               :payload {
+                                         :type (:type payload)
+                                         :answer (:message (:payload payload))
+                                         :user_id 7
+                                         :environment_id 1
+                                         }})))
 
 ;; Core
 
@@ -263,6 +289,9 @@
    "loadEntities" handle-load-entities
    "unloadEntities" handle-unload-entities
    "loadSubtypesCone" handle-load-subtypes-cone
+
+   "chatUserInput" handle-chat-user-input
+
    })
 
 ;; Set up event listener
@@ -279,5 +308,7 @@
           :entity-selected (handle-entity-selected-event (:payload event))
           :entity-selected-none (handle-entity-selected-none-event (:payload event))
           ;; other event types
+          :final-answer (handle-final-answer-event (:payload event))
+          ;; finally
           (tap> "Unknown event type:" (:type event)))
         (recur)))))

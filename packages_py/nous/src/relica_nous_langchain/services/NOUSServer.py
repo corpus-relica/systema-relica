@@ -14,13 +14,15 @@ class NOUSServer:
     WebSocket server for browser connections to NOUS system
     """
     def __init__(self):
-        self.handle_user_input = None
+        self.handle_user_input_func = None
+
+
         logger.info("Initialized NOUSServer")
 
     def init(self, handle_user_input_func):
         """Initialize the server with handler for user input"""
         logger.info("Initializing NOUSServer")
-        self.handle_user_input = handle_user_input_func
+        self.handle_user_input_func = handle_user_input_func
         return self
 
     async def start_server(self):
@@ -29,6 +31,18 @@ class NOUSServer:
         # The server actually starts when uvicorn runs the FastAPI app
         # We just need to create a never-ending task to keep the script running
         await asyncio.Future()  # Run foreverport asyncio
+
+    async def handle_user_input(self, payload, client_id):
+        """Handle user input message from browser client"""
+        logger.info(f"!!!!!!!!!!!!!1111 Received user input: {payload}")
+        logger.info(f"!!!!!!!!!!!!!1111 Client ID: {client_id}")
+        # Call the provided handler with the input
+        if self.handle_user_input_func:
+            await self.handle_user_input_func(payload['message'])
+
+    async def heartbeat(self, message, client_id):
+        """Handle heartbeat message from browser client"""
+        logger.info(f"Heartbeat received: {message}")
 
     async def send_chat_history(self, chat_history):
         """Send chat history to all browser clients"""
@@ -52,7 +66,8 @@ class NOUSServer:
         # Create the message in the format expected by broadcast
         message = {
             "id": "nous-server",
-            "type": "final_answer",
+            "type": ":final_answer",
+            "titties": "DDD",
             "payload": final_answer
         }
 
@@ -61,6 +76,11 @@ class NOUSServer:
         logger.info(f"Final answer sent to {client_count} clients")
 
 nous_server = NOUSServer()
+ws_server.register_handler("app/user-input", nous_server.handle_user_input)
+print("Registered user input handler")
+print(nous_server.handle_user_input)
+
+ws_server.register_handler("app/heartbeat", nous_server.heartbeat)
 
 # import os
 # import json

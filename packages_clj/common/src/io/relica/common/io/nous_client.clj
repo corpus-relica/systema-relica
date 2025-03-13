@@ -5,7 +5,8 @@
 
 
 (defprotocol NOUSOperations
-  (send-heartbeat! [this]))
+  (send-heartbeat! [this])
+  (user-input [this user-id env-id user-message]))
 
 (defrecord NOUSClient [ws-client options]
   NOUSOperations
@@ -14,7 +15,16 @@
     (tap> {:event :app/sending-heartbeat})
     (ws/send-message! ws-client :app/heartbeat
                             {:timestamp (System/currentTimeMillis)}
-                            3000)))
+                            3000))
+
+  (user-input [this user-id env-id user-message]
+    (print {:event :app/sending-user-input})
+    (ws/send-message! ws-client :app/user-input
+                            {:user-id user-id
+                             :env-id env-id
+                             :message user-message}
+                            3000))
+  )
 
 ;; Heartbeat scheduler
 (defn start-heartbeat-scheduler! [nous-client interval-ms]
@@ -42,6 +52,8 @@
                                                              :payload payload}))}})
         nous-client (->NOUSClient base-client {:timeout (or(:timeout opts) 5000)})]
 
+    ;; Register application-specific event handlers
+    (ws/register-handler! base-client ":final_answer" (:handle-final-answer app-handlers))
     ;; (ws/register-handler base-client :kind/model
     ;;                      (fn [payload]
     ;;                        (tap> {:event :app/handling-kind-model

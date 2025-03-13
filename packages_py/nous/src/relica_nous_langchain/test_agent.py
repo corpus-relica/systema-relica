@@ -8,6 +8,9 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
 
+from langgraph.checkpoint.memory import MemorySaver
+
+memory = MemorySaver()
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -36,18 +39,29 @@ def stream_graph_updates(user_input: str):
         for value in event.values():
             print("Assistant:", value["messages"][-1].content)
 
+# def get_response(user_input: str):
+#     return next(graph.stream({"messages": [{"role": "user", "content": user_input}]}))
 
-while True:
-    try:
-        user_input = input("User: ")
-        if user_input.lower() in ["quit", "exit", "q"]:
-            print("Goodbye!")
-            break
+async def get_response(user_input: str):
+    async for event in graph.astream({"messages": [{"role": "user", "content": user_input}]}):
+        if "chatbot" in event and "messages" in event["chatbot"]:
+            messages = event["chatbot"]["messages"]
+            if messages:
+                return messages[-1].content
+    return None
 
-        stream_graph_updates(user_input)
-    except:
-        # fallback if input() is not available
-        user_input = "What do you know about LangGraph?"
-        print("User: " + user_input)
-        stream_graph_updates(user_input)
-        break
+
+# while True:
+#     try:
+#         user_input = input("User: ")
+#         if user_input.lower() in ["quit", "exit", "q"]:
+#             print("Goodbye!")
+#             break
+
+#         stream_graph_updates(user_input)
+#     except:
+#         # fallback if input() is not available
+#         user_input = "What do you know about LangGraph?"
+#         print("User: " + user_input)
+#         stream_graph_updates(user_input)
+#         break
