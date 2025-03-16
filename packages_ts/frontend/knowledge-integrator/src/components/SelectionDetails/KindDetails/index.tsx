@@ -26,11 +26,11 @@ import PossibleRole from "../display/PossibleRole.js";
 import WorkflowFactsVisualizer from "../../../pages/Workflows/WorkflowFactsVisualizer.js";
 import Synonyms from "../display/Synonyms.js";
 
-import PhysicalObjectKindDetails from "./PhysicalObject.js"
-import AspectKindDetails from "./Aspect.js"
-import RoleKindDetails from "./Role.js"
-import RelationKindDetails from "./Relation.js"
-import OccurrenceKindDetails from "./Occurrence.js"
+import PhysicalObjectKindDetails from "./PhysicalObject.js";
+import AspectKindDetails from "./Aspect.js";
+import RoleKindDetails from "./Role.js";
+import RelationKindDetails from "./Relation.js";
+import OccurrenceKindDetails from "./Occurrence.js";
 
 const KindDetails: React.FC = () => {
   const [selectedNode] = useStore("selectedNode");
@@ -50,35 +50,40 @@ const KindDetails: React.FC = () => {
 
   const { uid, name, nature, category, supertypes, definitions } = data;
 
-  const tempDefs = definitions.map((def)=>({full_definition:def, partial_definition:""}))
-  const defsComp = <Definition definitions={tempDefs} />
-  const specComp = <Specialization uids={supertypes} childUID={uid}/>
+  if (!definitions) return <div>No definitions found</div>;
+
+  const tempDefs = definitions.map((def) => ({
+    full_definition: def,
+    partial_definition: "",
+  }));
+  const defsComp = <Definition definitions={tempDefs} />;
+  const specComp = <Specialization uids={supertypes} childUID={uid} />;
 
   let catComp;
-  switch(category){
-      case "physical object":
-        catComp = <PhysicalObjectKindDetails {...data}/>
+  switch (category) {
+    case "physical object":
+      catComp = <PhysicalObjectKindDetails {...data} />;
       break;
-      case "aspect":
-        catComp = <AspectKindDetails {...data}/>
+    case "aspect":
+      catComp = <AspectKindDetails {...data} />;
       break;
-      case "role":
-        catComp = <RoleKindDetails {...data}/>
+    case "role":
+      catComp = <RoleKindDetails {...data} />;
       break;
-      case "relation":
-        catComp = <RelationKindDetails {...data}/>
+    case "relation":
+      catComp = <RelationKindDetails {...data} />;
       break;
-      case "occurrence":
-        catComp = <OccurrenceKindDetails {...data}/>
+    case "occurrence":
+      catComp = <OccurrenceKindDetails {...data} />;
       break;
-      default:
-        catComp = <div>Unknown Entity Category: {category}</div>
+    default:
+      catComp = <div>Unknown Entity Category: {category}</div>;
       break;
   }
 
-        // <Typography size="18px" style={{ fontWeight: 800, color: "black" }}>
-        //   {category}
-        // </Typography>
+  // <Typography size="18px" style={{ fontWeight: 800, color: "black" }}>
+  //   {category}
+  // </Typography>
 
   // const synFacts = facts.filter((fact) => fact.rel_type_uid === 1981);
 
@@ -135,7 +140,8 @@ const KindDetails: React.FC = () => {
 
 export default KindDetails;
 
-      {/*<Box>
+{
+  /*<Box>
         <Stack direction="row" spacing="1">
           <Box>
             <Typography size="18px" style={{ fontWeight: 800, color: "black" }}>
@@ -215,8 +221,9 @@ export default KindDetails;
               <Table>
                 <TableBody>{factTableRows}</TableBody>
               </Table>
-            </TableContainer>*/}
-      //       <WorkflowFactsVisualizer facts={facts} sparse={true} />
-      //     </Box>
-      //   )}
-      // </Box>*/}
+            </TableContainer>*/
+}
+//       <WorkflowFactsVisualizer facts={facts} sparse={true} />
+//     </Box>
+//   )}
+// </Box>*/}

@@ -102,7 +102,7 @@ from src.meridian.server import WebSocketServer, app
 
 from src.relica_nous_langchain.test_agent import graph, get_response
 # from src.relica_nous_langchain.compere.NOUSCompere import nousCompere
-# from src.relica_nous_langchain.SemanticModel import semanticModel
+from src.relica_nous_langchain.SemanticModel import semantic_model
 
 # Set up logging - suppress EDN format logs
 logging.basicConfig(level=logging.INFO)
@@ -131,9 +131,13 @@ async def main():
     async def retrieveEnv():
         # print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
         try:
-            env = await aperture_client.retrieveEnvironment(7, None)
-            # print("*******************************************")
-            # print(f"ENVIRONMENT: {env}")  # Fixed logger and added f-string
+            result = await aperture_client.retrieveEnvironment(7, None)
+            print("*******************************************")
+            payload = result['payload']
+            env = payload['environment']
+            facts = env['facts']
+            semantic_model.addFacts(facts)
+            semantic_model.selected_entity = env['selected_entity_id']
             # Rest of your environment processing code
             return env
         except Exception as e:

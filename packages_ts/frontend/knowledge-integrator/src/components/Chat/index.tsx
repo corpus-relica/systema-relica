@@ -53,7 +53,7 @@ const Chat = ({ messages, onSubmit }: ChatProps) => {
       <Box sx={{
         flex: 1,
         overflowY: 'auto',
-        bgcolor: 'grey.100',
+        bgcolor: '#515151',
         p: 2,
         borderRadius: 2,
         fontSize: { xs: '0.875rem', sm: '1rem' },

@@ -10,7 +10,7 @@
            [org.java_websocket.handshake ServerHandshake]))
 
 ;; Client state
-(defonce ^:dynamic *message-handlers* (atom {}))
+(def ^:dynamic *message-handlers* (atom {}))
 (defonce message-id-counter (atom 0))
 
 ;; Response handlers for request-response pattern
@@ -177,10 +177,10 @@
               (onMessage [message]
                 (try
                   (let [parsed (format/deserialize-message client-info message)]
-                    (log/debug "Received message: " parsed)
-                    (log/debug "Message type: " (:type parsed))
-                    (log/debug "Message type type: " (type (:type parsed)))
-                    (log/debug "Message handlers: " @*message-handlers*)
+                    ;; (log/debug "Received message: " parsed)
+                    ;; (log/debug "Message type: " (:type parsed))
+                    ;; (log/debug "Message type type: " (type (:type parsed)))
+                    ;; (log/debug "Message handlers: " @*message-handlers*)
 
                     (cond
                       ;; Client registration

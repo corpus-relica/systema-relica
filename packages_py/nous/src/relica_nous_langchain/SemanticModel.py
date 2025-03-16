@@ -4,6 +4,7 @@ class SemanticModel:
     def __init__(self) -> None:
         self._facts = []
         self._models = {}
+        self.selected_entity = None
         pass
 
     def addFact(self, fact):
@@ -194,4 +195,4 @@ class SemanticModel:
         )
 
 
-semanticModel = SemanticModel()
+semantic_model = SemanticModel()

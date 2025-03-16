@@ -6,6 +6,7 @@ import asyncio
 import edn_format
 from dotenv import load_dotenv
 from src.meridian.client import WebSocketClient
+from src.relica_nous_langchain.SemanticModel import semantic_model
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG,
@@ -42,15 +43,15 @@ class ApertureClient:
     def setup_message_handlers(self):
         """Set up message event handlers"""
 
-        @self.client.on_message("environment-data")
-        async def on_environment_data(msg_id, payload):
-            logger.info("Received environment data update")
-            return payload
+        # @self.client.on_message("environment-data")
+        # async def on_environment_data(msg_id, payload):
+        #     logger.info("Received environment data update")
+        #     return payload
 
-        @self.client.on_message("entity-data")
-        async def on_entity_data(msg_id, payload):
-            logger.info("Received entity data update")
-            return payload
+        # @self.client.on_message("entity-data")
+        # async def on_entity_data(msg_id, payload):
+        #     logger.info("Received entity data update")
+        #     return payload
 
         # Setup connection/disconnection handlers
         @self.client.on_message("connect")
@@ -65,6 +66,33 @@ class ApertureClient:
             # Try to reconnect after a delay
             await asyncio.sleep(5)
             await self.connect()
+
+        @self.client.on_message("facts/loaded")
+        async def on_facts_loaded(msg_id, payload):
+            logger.info("Facts loaded")
+            semantic_model.addFacts(payload['facts'])
+            return payload
+
+        @self.client.on_message("facts/unloaded")
+        async def on_facts_unloaded(msg_id, payload):
+            logger.info("Facts unloaded")
+            semantic_model.removeFacts(payload['fact-uids'])
+            return payload
+
+        @self.client.on_message("entity/selected")
+        async def on_entity_selected(msg_id, payload):
+            logger.info("Entity selected")
+            logger.info(f"Selected entity: {payload['entity-uid']}")
+            semantic_model.selected_entity = payload['entity-uid']
+            # emit event
+            return payload
+
+        @self.client.on_message("entity/selected-none")
+        async def on_entity_deselected(msg_id, payload):
+            logger.info("Entity deselected")
+            semantic_model.selected_entity = None
+            # emit event
+            return payload
 
     async def connect(self):
         """Connect to the Aperture service with more verbose error handling"""

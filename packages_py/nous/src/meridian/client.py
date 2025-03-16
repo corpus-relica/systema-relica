@@ -110,6 +110,11 @@ class WebSocketClient:
                     # Parse message
                     parsed_message = deserialize_message(message, self.format)
 
+# {'type': 'entity/selected',
+#  'entity-uid': 1000000526,
+#  'user-id': 7,
+#  'environment-id': 1}
+
                     if not parsed_message:
                         logger.error(f"Failed to parse message: {message}")
                         continue
@@ -130,7 +135,8 @@ class WebSocketClient:
                     # Handle message by type
                     if msg_type in self.message_handlers:
                         handler = self.message_handlers[msg_type]
-                        await handler(msg_id, payload)
+                        # await handler(msg_id, payload)
+                        await handler(msg_id, parsed_message)
 
                 except Exception as e:
                     logger.error(f"Error processing message: {str(e)}")
@@ -203,6 +209,7 @@ class WebSocketClient:
         client.on_message("message_type", handler)
         """
         # When used as a decorator
+
         if handler is None:
             def decorator(handler_func):
                 self.message_handlers[msg_type] = handler_func
@@ -247,7 +254,7 @@ async def main():
     async def handle_broadcast(msg_id, payload):
         from_client = payload.get("from", "unknown")
         broadcast_message = payload.get("message", "")
-        logger.info(f"Broadcast from {from_client}: {broadcast_message}")
+        # logger.info(f"Broadcast from {from_client}: {broadcast_message}")
 
     # Connect to server
     connected = await client.connect()

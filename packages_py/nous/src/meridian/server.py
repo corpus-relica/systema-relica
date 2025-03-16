@@ -136,8 +136,13 @@ class WebSocketServer:
             client_format = client.get("format", FORMAT_JSON)
             websocket = client["websocket"]
 
+            print(f"Sending to client: {client_id}")
+            print(f"Message: {message}")
             # Serialize message to client's format
             message_str = serialize_message(message, client_format)
+            #escape message_str
+            # message_str = message_str.replace('"', '\\"')
+            print(f"Seralized message: {message_str}")
 
             try:
                 await websocket.send_text(message_str)
@@ -244,7 +249,7 @@ async def send_heartbeat():
                     "active_clients": ws_server.count_connected_clients()
                 }
             })
-            logger.info(f"Sent heartbeat to {ws_server.count_connected_clients()} clients")
+            # logger.info(f"Sent heartbeat to {ws_server.count_connected_clients()} clients")
         except Exception as e:
             logger.error(f"Error sending heartbeat: {str(e)}")
 

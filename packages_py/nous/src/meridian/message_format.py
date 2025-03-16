@@ -67,7 +67,9 @@ def dict_to_edn_str(data: Any) -> str:
         parts = [dict_to_edn_str(item) for item in data]
         return "[" + " ".join(parts) + "]"
     elif isinstance(data, str):
-        return f'"{data}"'
+        # Escape double quotes in the string before wrapping it
+        escaped_string = data.replace('"', '\\"')
+        return f'"{escaped_string}"'
     elif isinstance(data, bool):
         return "true" if data else "false"
     elif data is None:

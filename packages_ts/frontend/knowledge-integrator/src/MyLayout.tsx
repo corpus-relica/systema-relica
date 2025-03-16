@@ -253,13 +253,24 @@ export const MyLayout = (props) => {
     ccSocket.on("connect", onConnect);
     ccSocket.on("disconnect", onDisconnect);
     ccSocket.on("system:finalAnswer", onFinalAnswer);
+
     portalWs.on("portal:finalAnswer", onFinalAnswer);
+    portalWs.on("portal:factsLoaded", onAddFacts);
+    portalWs.on("portal:factsUnloaded", onRemFacts);
+    portalWs.on("portal:entitySelected", onSelectEntity);
+    portalWs.on("portal:entitySelectedNone", onNoneSelected);
 
     return () => {
       ccSocket.off("connect", onConnect);
       ccSocket.off("disconnect", onDisconnect);
       ccSocket.off("system:finalAnswer", onFinalAnswer);
+
       portalWs.off("portal:finalAnswer", onFinalAnswer);
+      portalWs.off("portal:factsLoaded", onAddFacts);
+      portalWs.off("portal:factsUnloaded", onRemFacts);
+      portalWs.off("portal:entitySelected", onSelectEntity);
+      portalWs.off("portal:entitySelectedNone", onNoneSelected);
+      
     };
   }, []);
 

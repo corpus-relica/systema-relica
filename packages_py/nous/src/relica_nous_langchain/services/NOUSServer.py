@@ -42,7 +42,8 @@ class NOUSServer:
 
     async def heartbeat(self, message, client_id):
         """Handle heartbeat message from browser client"""
-        logger.info(f"Heartbeat received: {message}")
+        # logger.info(f"Heartbeat received: {message}")
+        pass
 
     async def send_chat_history(self, chat_history):
         """Send chat history to all browser clients"""
@@ -67,7 +68,6 @@ class NOUSServer:
         message = {
             "id": "nous-server",
             "type": ":final_answer",
-            "titties": "DDD",
             "payload": final_answer
         }
 
