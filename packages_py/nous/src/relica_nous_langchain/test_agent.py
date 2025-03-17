@@ -71,41 +71,71 @@ This formalization outlines abstract entities, relations, and roles, serving as 
     ∀k∊NK,∃sr:(k,anything,sr)∊SubSupPairsor∃k′∊NK:(k,k′,sr)∊SubSupPairs&(k′,anything,sr)∊SubSupPairs.
 '''
 
+# primary_assistant_prompt = ChatPromptTemplate.from_messages(
+#     [
+#         (
+#             "system",
+#             "You are NOUS a helpful semantic modelling assistant for Systema Relica."
+#             "Use the provided information to answer the questions."
+#             # "Don't lean on your own understanding. Answer questions based only on what the model says."
+#             "Focus on understanding the structure and relationships in the data, rather than trying to memorize every detail."
+#             "Be comfortable with referring back to the provided information as needed, rather than relying on potentially faulty recall."
+#             "Be clear about what information is directly from the data and what might be an interpretation or assumption."
+#             "Ask for clarification when needed, instead of making assumptions to fill in gaps."
+#             "Be more confident in initial correct assessments, while still remaining open to correction."
+
+#             # " Use the provided tools to search for flights, company policies, and other information to assist the user's queries. "
+#             # " When searching, be persistent. Expand your query bounds if the first search returns no results. "
+#             # " If a search comes up empty, expand your search before giving up."
+#             "\n\nInformation about the Semantic Model:\n<Background>\n{bg}\n</Background>"
+#             "\n\nCurrent Environment:\n<Environment>\n{env}\n</Environment>"
+#             "\n\nCurrent Selected Entity:\n{selected_entity}</SelectedEntity>\n\n"
+#             "\nCurrent time: {time}.",
+#         ),
+#         ("placeholder", "{messages}"),
+#     ]
+# ).partial(time=datetime.now)
 primary_assistant_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are NOUS a helpful semantic modelling assistant for Systema Relica."
-            "Use the provided information to answer the questions."
-            # "Don't lean on your own understanding. Answer questions based only on what the model says."
-            "Focus on understanding the structure and relationships in the data, rather than trying to memorize every detail."
-            "Be comfortable with referring back to the provided information as needed, rather than relying on potentially faulty recall."
-            "Be clear about what information is directly from the data and what might be an interpretation or assumption."
-            "Ask for clarification when needed, instead of making assumptions to fill in gaps."
-            "Be more confident in initial correct assessments, while still remaining open to correction."
+            "You are NOUS, a helpful semantic modelling assistant for Systema Relica."
+            "Use the provided information to answer the user's questions."
 
-            # " Use the provided tools to search for flights, company policies, and other information to assist the user's queries. "
-            # " When searching, be persistent. Expand your query bounds if the first search returns no results. "
-            # " If a search comes up empty, expand your search before giving up."
+            "\n\n## IMPORTANT: Environment Information"
+            "\nThe semantic model environment is dynamic and may change between interactions. If you notice changes in the available entities, facts, or relationships:"
+            "\n- This is expected behavior, not a mistake on your part"
+            "\n- New facts or entities may be added or removed at any time"
+            "\n- The selected entity may change during our conversation"
+            "\n- Don't apologize for previously 'missing' information that wasn't available at that time"
+            "\n- Simply acknowledge the updated information and continue with your assistance"
+
+            "\n\n## Guidance for Responses"
+            "\n- Focus on understanding the structure and relationships in the data, rather than trying to memorize every detail"
+            "\n- Be comfortable referring back to the provided model information as needed"
+            "\n- Be clear about what information comes directly from the data and what might be an interpretation"
+            "\n- When in doubt about specific details, check the model information provided before responding"
+            "\n- Interpret the ontological structure in a practical way, explaining relationships in simple terms"
+
             "\n\nInformation about the Semantic Model:\n<Background>\n{bg}\n</Background>"
             "\n\nCurrent Environment:\n<Environment>\n{env}\n</Environment>"
-            "\n\nCurrent Selected Entity:\n{selected_entity}</SelectedEntity>\n\n"
-            "\nCurrent time: {time}.",
+            "\n\nCurrent Selected Entity:\n<SelectedEntity>\n{selected_entity}\n</SelectedEntity>"
+            "\n\nCurrent time: {time}.",
         ),
         ("placeholder", "{messages}"),
     ]
 ).partial(time=datetime.now)
-
 
 def chatbot(state: State):
     messages = state["messages"]
     prompt= primary_assistant_prompt.invoke({
         "selected_entity": semantic_model.selected_entity,
         # object to string
-        "env": str(semantic_model.models),
+        "env": semantic_model.context,
         "bg": someshit,
         "messages": messages})
     # print("CHATBOT @@@@@@@@@@@@@@@@@", semantic_model.selected_entity)
+    # print("CHATBOT @@@@@@@@@@@@@@@@@", semantic_model.context)
     print("CHATBOT @@@@@@@@@@@@@@@@@", prompt.to_messages())
     return {"messages": [llm.invoke(prompt)]}
 

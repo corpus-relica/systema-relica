@@ -70,13 +70,13 @@ class ApertureClient:
         @self.client.on_message("facts/loaded")
         async def on_facts_loaded(msg_id, payload):
             logger.info("Facts loaded")
-            semantic_model.addFacts(payload['facts'])
+            await semantic_model.addFacts(payload['facts'])
             return payload
 
         @self.client.on_message("facts/unloaded")
         async def on_facts_unloaded(msg_id, payload):
             logger.info("Facts unloaded")
-            semantic_model.removeFacts(payload['fact-uids'])
+            await semantic_model.removeFacts(payload['fact-uids'])
             return payload
 
         @self.client.on_message("entity/selected")
