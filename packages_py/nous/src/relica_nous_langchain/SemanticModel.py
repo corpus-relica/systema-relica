@@ -37,6 +37,11 @@ class SemanticModel:
     #################################
 
     def addModel(self, model):
+        print("ADDING MODEL")
+        print(model)
+        # does it even have a uid key?
+        if 'uid' not in model:
+            return
         self._models[model['uid']] = model
 
     def addModels(self, models):

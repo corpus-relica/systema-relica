@@ -93,6 +93,7 @@
   (go
     (try
 
+      (println "UID:" uid)
       ;; 1. Get entity type and category directly
       (let [entity-type (<! (archivist-api/get-entity-type uid))
             _ (log/info "Entity type:" entity-type)

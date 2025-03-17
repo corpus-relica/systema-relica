@@ -41,6 +41,39 @@
           {:error "Failed to get model"})))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :get/models
+  [{:keys [?data ?reply-fn] :as msg}]
+  (when ?reply-fn
+    (log/info (str "Getting models for user:" ?data))
+    (go
+      (try
+        (let [model-ids (:uids ?data)
+              _ (log/info "Model IDs:" model-ids)
+              models (loop [ids model-ids
+                          acc []]
+                     (if (empty? ids)
+                       acc
+                       (let [model (<! (sms/retrieve-semantic-model (first ids)))]
+                         (log/info "Retrieved model for ID:" (first ids))
+                         (recur (rest ids)
+                                (if model
+                                  (conj acc model)
+                                  acc)))))]
+          (log/info "All models retrieved:" (count models))
+          (if (seq models)
+            (do
+              (log/info "Sending success response with models")
+              (?reply-fn {:success true
+                         :models models}))
+            (do
+              (log/info "No models found, sending error response")
+              (?reply-fn {:success false
+                         :error "Models not found"}))))
+        (catch Exception e
+          (log/error e "Failed to get models")
+          (?reply-fn {:error (str "Failed to get models: " (.getMessage e))}))))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :get/kind-model
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn

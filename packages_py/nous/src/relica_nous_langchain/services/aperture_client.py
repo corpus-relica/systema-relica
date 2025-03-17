@@ -159,16 +159,19 @@ class ApertureClient:
                 payload["environment-id"] = environment_id
 
                     # payload[edn_format.Keyword("environment-id")] = environment_id
-            else:
-                # Use regular JSON format
-                payload = {"user-id": user_id}
-                # if environment_id is not None:
-                payload["environment-id"] = environment_id
+            # else:
+            #     # Use regular JSON format
+            #     payload = {"user-id": user_id}
+            #     # if environment_id is not None:
+            #     payload["environment-id"] = environment_id
 
             logger.info(f"Sending environment/get request with payload: {payload}")
             response = await self.client.send("environment/get", payload)
             # logger.info(f"Received environment response: {response}")
-            return response
+
+            payload = response['payload']
+
+            return payload
         except Exception as e:
             logger.error(f"Error retrieving environment: {e}", exc_info=True)
             return {"error": f"Failed to retrieve environment: {str(e)}"}

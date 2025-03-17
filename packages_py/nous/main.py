@@ -133,10 +133,31 @@ async def main():
         try:
             result = await aperture_client.retrieveEnvironment(7, None)
             print("*******************************************")
-            payload = result['payload']
-            env = payload['environment']
+
+            env = result['environment']
             facts = env['facts']
+
+            uids = []
+            for fact in facts:
+                uids.append(fact['lh_object_uid'])
+                uids.append(fact['rh_object_uid'])
+
+            # deduplicate
+            uids = list(set(uids))
+            # to array
+            uids = [uid for uid in uids]
+
+            models_result = await clarity_client.retrieveModels(uids)
+
+            models_payload = models_result['payload']
+            models = models_payload['models']
+
+            print("*******************************************")
+            print(f"Models retrieved: {models}")
+
+            semantic_model.addModels(models)
             semantic_model.addFacts(facts)
+
             semantic_model.selected_entity = env['selected_entity_id']
             # Rest of your environment processing code
             return env

@@ -23,7 +23,8 @@ class State(TypedDict):
 graph_builder = StateGraph(State)
 
 
-llm = ChatAnthropic(model="claude-3-5-sonnet-20240620")
+# llm = ChatAnthropic(model="claude-3-5-sonnet-20240620")
+llm = ChatAnthropic(model="claude-3-7-sonnet-latest")
 
 someshit= '''
 This formalization outlines abstract entities, relations, and roles, serving as a foundational blueprint. It sets the stage for a more specific model to follow, detailing the architecture of semantic relationships
@@ -76,7 +77,13 @@ primary_assistant_prompt = ChatPromptTemplate.from_messages(
             "system",
             "You are NOUS a helpful semantic modelling assistant for Systema Relica."
             "Use the provided information to answer the questions."
-            "Don't lean on your own understanding. Answer questions based only on what the model says."
+            # "Don't lean on your own understanding. Answer questions based only on what the model says."
+            "Focus on understanding the structure and relationships in the data, rather than trying to memorize every detail."
+            "Be comfortable with referring back to the provided information as needed, rather than relying on potentially faulty recall."
+            "Be clear about what information is directly from the data and what might be an interpretation or assumption."
+            "Ask for clarification when needed, instead of making assumptions to fill in gaps."
+            "Be more confident in initial correct assessments, while still remaining open to correction."
+
             # " Use the provided tools to search for flights, company policies, and other information to assist the user's queries. "
             # " When searching, be persistent. Expand your query bounds if the first search returns no results. "
             # " If a search comes up empty, expand your search before giving up."
@@ -94,7 +101,8 @@ def chatbot(state: State):
     messages = state["messages"]
     prompt= primary_assistant_prompt.invoke({
         "selected_entity": semantic_model.selected_entity,
-        "env": semantic_model.context,
+        # object to string
+        "env": str(semantic_model.models),
         "bg": someshit,
         "messages": messages})
     # print("CHATBOT @@@@@@@@@@@@@@@@@", semantic_model.selected_entity)

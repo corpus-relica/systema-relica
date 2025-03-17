@@ -27,7 +27,7 @@ class ClarityClient:
 
         # Initialize the WebSocketClient with Clarity service connection details
         self.client = WebSocketClient(
-            url=f"ws://{CLARITY_HOST}:{CLARITY_PORT}{CLARITY_PATH}",
+            url=f"ws://{CLARITY_HOST}:{CLARITY_PORT}{CLARITY_PATH}?format=edn&language=python",
             format="edn",
             auto_reconnect=True,
             reconnect_delay=5
@@ -156,7 +156,7 @@ class ClarityClient:
             logger.error(f"Error classifying individual: {str(e)}")
             return {"error": str(e)}
 
-    async def retrieveModels(self):
+    async def retrieveModels(self, uids):
         """Retrieve semantic models"""
         if not self.connected:
             await self.connect()
@@ -164,7 +164,7 @@ class ClarityClient:
                 return {"error": "Failed to connect to Clarity"}
 
         try:
-            response = await self.client.send("retrieve-models", {})
+            response = await self.client.send("get/models", {"uids": uids})
             return response
         except Exception as e:
             logger.error(f"Error retrieving models: {str(e)}")
