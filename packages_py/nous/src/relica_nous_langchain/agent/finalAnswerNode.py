@@ -16,6 +16,7 @@ from src.relica_nous_langchain.agent.Templates import FULL_TEMPLATES
 #     tool_names,
 #     )
 from src.relica_nous_langchain.SemanticModel import semantic_model
+from src.relica_nous_langchain.agent.reactAgentNode import format_conversation_for_prompt
 
 
 ################################################################################## FINAL ANSWER
@@ -47,28 +48,50 @@ final_answer_llm = ChatAnthropic(
     )
 
 def final_answer(state):
-    input = state['input']
+    """
+    Generate the final answer to the user's query.
+    
+    If the state already has an answer from the react_agent, use it.
+    Otherwise, generate a final answer based on all previous interactions.
+    """
+    print("/////////////////// FINAL ANSWER NODE BEGIN /////////////////////")
+    
+    input_text = state['input']
     messages = state['messages']
-    messages_str = "\n".join([msg["content"] for msg in messages])
+    print(f"FINAL ANSWER: Received {len(messages)} messages in history")
+    
+    # Format the full conversation history for context
+    conversation_history = format_conversation_for_prompt(messages)
+    
+    # If we already have an answer from the reactAgent, use it directly
+    if state.get('answer'):
+        message = state['answer']
+        print("/////////////////// USING EXISTING FINAL ANSWER /////////////////////")
+        print(message)
+    else:
+        # Generate a final answer using the LLM
+        prompt = f"""You are NOUS (Network for Ontological Understanding and Synthesis), an AI assistant.
 
-    prompt = FULL_TEMPLATES["final_answer"].format(
-        curr_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-        semantic_model=semantic_model.getModelRepresentation(semantic_model.selectedEntity),
-        context=semantic_model.context,
-        agent_scratchpad=messages_str,
-        chat_history=format_chat_history(state['messages'])  # Use state instead of memory
-    )
+Current Date and Time: {datetime.now().strftime("%Y-%m-%d %H:%M")}
 
-    response = final_answer_llm.invoke([("system", prompt + '\nFinal Answer: '), ("human", input)])
+Currently loaded semantic model:
+{semantic_model.getModelRepresentation(semantic_model.selectedEntity)}
 
-    print("/////////////////// FINAL ANSWER /////////////////////")
+{conversation_history}
 
-    message = response.content
+Current question: {input_text}
 
-    # memory.save_context(
-    #     {"input": state['input']},
-    #     {"output": message}
-    # )
+Based on the conversation history and the current question, provide a final, comprehensive answer.
+"""
+
+        response = final_answer_llm.invoke([("system", prompt), ("human", input_text)])
+        print("/////////////////// GENERATED FINAL ANSWER /////////////////////")
+        message = response.content
+        print(message)
+
+    # Always return a clean final answer without the "Final Answer:" prefix
+    if message.startswith("Final Answer:"):
+        message = message.replace("Final Answer:", "").strip()
 
     return {
         "messages": [{"role": "assistant", "content": f"Final Answer: {message}"}],

@@ -1,22 +1,34 @@
 #!/usr/bin/env python3
 
-
+# Model configuration
 openAIModel="gpt-4o-mini"
-anthropicModel = "claude-3-opus-20240229"
+# anthropicModel = "claude-3-opus-20240229"
+anthropicModel = "claude-3-7-sonnet-20250219"
 
 def format_chat_history(messages):
+    """
+    Format message history into a readable string, safely handling different
+    message formats and types.
+    """
+    if not messages:
+        return ""
+        
     formatted = ""
     for msg in messages:
-        formatted += f"{msg['role']}: {msg['content']}\n"
+        # Handle different message formats safely
+        if isinstance(msg, dict):
+            role = msg.get('role', 'unknown')
+            content = msg.get('content', '')
+            formatted += f"{role}: {content}\n"
+        elif isinstance(msg, str):
+            formatted += f"message: {msg}\n"
+        else:
+            # For any other type, convert to string safely
+            formatted += f"message: {str(msg)}\n"
+            
     return formatted
 
-NODE_REACT = "ReAct"
-NODE_THOUGHT = "thought"
-NODE_ACTION = "action"
-NODE_OBSERVATION = "observation"
-NODE_FINAL_ANSWER = "final_answer"
-NODE_COULDNT_ANSWER = "couldnt_answer"
-
+# Action types for graph flow control
 ACTION_CONTINUE = "continue"
 ACTION_FINAL_ANSWER = "final_answer"
 ACTION_MAX_LOOPS = "max_loops"

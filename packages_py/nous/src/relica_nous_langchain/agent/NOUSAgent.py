@@ -4,7 +4,7 @@ import os
 import getpass
 import uuid
 
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -13,123 +13,143 @@ from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
 from src.relica_nous_langchain.SemanticModel import semantic_model
 
 from src.relica_nous_langchain.agent.Common import (
-    NODE_REACT,
-    NODE_THOUGHT,
-    NODE_ACTION,
-    NODE_OBSERVATION,
-    NODE_FINAL_ANSWER,
-
     ACTION_CONTINUE,
     ACTION_FINAL_ANSWER,
 )
 
-
 from typing import TypedDict, Annotated, Sequence
 from langgraph.graph import StateGraph
 
-from src.relica_nous_langchain.agent.reactNode import react
-from src.relica_nous_langchain.agent.thoughtNode import thought
-from src.relica_nous_langchain.agent.actionNode import action
-from src.relica_nous_langchain.agent.observationNode import observation
+# Import new react_agent and final_answer nodes
+from src.relica_nous_langchain.agent.reactAgentNode import react_agent, should_continue_or_finish
 from src.relica_nous_langchain.agent.finalAnswerNode import final_answer
-from src.relica_nous_langchain.agent.shouldCutToTheChaseNode import should_cut_to_the_chase
 
-
+# Set API keys if not present
 if not os.environ.get("OPENAI_API_KEY"):
     os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter your OpenAI API key: ")
 if not os.environ.get("ANTHROPIC_API_KEY"):
     os.environ["ANTHROPIC_API_KEY"] = getpass.getpass("Enter your Anthropic API key: ")
 
-
-memory = MemorySaver() #ConversationBufferMemory(return_messages=True)
-
+# Initialize memory saver
+memory = MemorySaver()
 
 ###############################
 
-
+# Simplified state definition
 class AgentState(TypedDict):
-    loop_idx: int
     input: str
-    messages: Annotated[list[dict], operator.add]  # Chat history now part of state
+    messages: Annotated[list[dict], operator.add]  # Chat history
     answer: Optional[str]
     selected_entity: int
     cut_to_final: bool
-
+    loop_idx: int  # Keep for iteration tracking
 
 ###############################
 
-
+# Create new simplified workflow
 workflow = StateGraph(AgentState)
 
-workflow.add_node(NODE_REACT, react)
-workflow.add_node(NODE_THOUGHT, thought)
-workflow.add_node(NODE_ACTION, action)
-workflow.add_node(NODE_OBSERVATION, observation)
-workflow.add_node(NODE_FINAL_ANSWER, final_answer)
+# Add only two nodes: react_agent and final_answer
+workflow.add_node("react_agent", react_agent)
+workflow.add_node("final_answer", final_answer)
 
-workflow.set_entry_point(NODE_REACT)
+# Set entry point to react_agent
+workflow.set_entry_point("react_agent")
 
-workflow.add_edge(NODE_REACT, NODE_THOUGHT)
-workflow.add_edge(NODE_THOUGHT, NODE_ACTION)
-workflow.add_edge(NODE_ACTION, NODE_OBSERVATION)
+# Add conditional edge from react_agent to either itself or final_answer
 workflow.add_conditional_edges(
-    NODE_OBSERVATION,
-    should_cut_to_the_chase,
+    "react_agent",
+    should_continue_or_finish,
     {
-        ACTION_CONTINUE: NODE_THOUGHT,
-        ACTION_FINAL_ANSWER: NODE_FINAL_ANSWER,
+        ACTION_CONTINUE: "react_agent",
+        ACTION_FINAL_ANSWER: "final_answer",
     }
 )
 
-workflow.set_finish_point(NODE_FINAL_ANSWER)
+# Set finish point
+workflow.set_finish_point("final_answer")
 
+# Compile the workflow
 app = workflow.compile(
     checkpointer=memory
 )
 
-print(app.get_graph().draw_ascii())
-
+# Comment out the ASCII drawing that's causing errors
+# print(app.get_graph().draw_ascii())
 
 ###############################
-
 
 class NOUSAgent:
     def __init__(self):
         print("NOUS AGENT")
         self.emitter = EventEmitter()
+        self.conversation_history: List[Dict[str, Any]] = []
+        self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this conversation
 
     async def handleInput(self, user_input):
         try:
+            # Ensure user_input is a string
+            if not isinstance(user_input, str):
+                user_input = str(user_input)
+                
+            print(f"Processing user input: {user_input}")
+            
+            # Add user message to conversation history
+            user_message = {"role": "user", "content": user_input}
+            self.conversation_history.append(user_message)
+            
+            # Initialize state with the full conversation history
             inputs = {
                 "input": user_input,
                 "loop_idx": 0,
                 "selected_entity": semantic_model.selectedEntity,
-                "messages": [],
+                "messages": list(self.conversation_history),  # Use the full conversation history
                 "answer": None,
                 "cut_to_final": False
             }
 
             fa = ""
-            chat_messages = []
+            # Create a working copy of the conversation history for this turn
+            turn_messages = list(self.conversation_history)
 
             print("///////////////////// INPUT /////////////////////")
+            print(f"Conversation history length: {len(self.conversation_history)}")
 
-            config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+            config = {"configurable": {"thread_id": self.conversation_id}}
 
+            # Process the input through the workflow
             async for output in app.astream(inputs, config):
                 print("///////////////////// OUTPUT /////////////////////")
                 print(output)
                 for key, value in output.items():
                     for message in value.get("messages", []):
                         if isinstance(message, dict):
-                            chat_messages.append(message)
-                            if key == NODE_FINAL_ANSWER:
-                                self.emitter.emit('final_answer', message)
-                                fa = message["content"]
+                            turn_messages.append(message)
+                            # Extract final answer if present
+                            if key == "final_answer":
+                                final_answer_content = message["content"].replace("Final Answer: ", "")
+                                final_message = {"role": "assistant", "content": final_answer_content}
+                                self.conversation_history.append(final_message)
+                                self.emitter.emit('final_answer', final_message)
+                                fa = final_answer_content
                         else:
                             print(f"Unexpected message format: {message}")
+                            # Still add it to turn messages in a properly formatted way
+                            turn_messages.append({"role": "assistant", "content": str(message)})
 
-                    self.emitter.emit('chatHistory', chat_messages)
+                    self.emitter.emit('chatHistory', turn_messages)
+
+            # Ensure we have a fallback response if something goes wrong
+            if not fa:
+                fa = "I'm sorry, I wasn't able to process your request properly. Could you please try again?"
+                fallback_message = {"role": "assistant", "content": fa}
+                self.conversation_history.append(fallback_message)
+                self.emitter.emit('final_answer', fallback_message)
+
+            # Print conversation history for debugging
+            print("///////////////////// CONVERSATION HISTORY /////////////////////")
+            for idx, msg in enumerate(self.conversation_history):
+                print(f"{idx}. {msg['role']}: {msg['content'][:50]}...")
 
             return fa
 
@@ -137,6 +157,8 @@ class NOUSAgent:
             print("An error occurred:", str(e))
             print("Full error:", e)  # Add full error info
             error_message = {'role': 'assistant', 'content': f'Error: {str(e)}'}
+            self.conversation_history.append(error_message)
             self.emitter.emit('final_answer', error_message)
+            return f"Error: {str(e)}"
 
 nousAgent = NOUSAgent()
