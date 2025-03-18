@@ -48,6 +48,24 @@
         (?reply-fn result)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/text-search-load
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (let [result (<! (env-service/text-search-load @environment-service 
+                                                   (or (:user-id ?data) 7)
+                                                 (:term ?data)))]
+      (?reply-fn {:environment (:environment result)
+                  :facts (:facts result)})
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/loaded
+          :facts (:facts result)
+          :user-id 7;;(:user-id ?data)
+          :environment-id 1;;(:environment-id ?data)}
+          }
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/load-specialization
   [{:keys [?data ?reply-fn] :as msg}]
   (go

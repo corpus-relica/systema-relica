@@ -106,21 +106,21 @@
                         ;; (jdbc/execute-one! ds
                         ;;                    (into [query] all-values)
                         ;;                    {:builder-fn rs/as-unqualified-maps})
-(try
-  (jdbc/execute-one! ds
-                     (into [query] all-values)
-                     {:builder-fn rs/as-unqualified-maps})
-  (catch Exception e
-    (tap> (str "SQL error: " (.getMessage e)))
-    nil))
-                        ))
+    (try
+      (jdbc/execute-one! ds
+                         (into [query] all-values)
+                         {:builder-fn rs/as-unqualified-maps})
+      (catch Exception e
+        (tap> (str "SQL error: " (.getMessage e)))
+        nil))
+                            ))
 
-        ;; Update last_accessed in user_environments
-        _ (when can-write?
-            (jdbc/execute-one! ds
-                               ["UPDATE user_environments SET last_accessed = CURRENT_TIMESTAMP 
-                WHERE user_id = ? AND environment_id = ?"
-                                user-id env-id]))]
+            ;; Update last_accessed in user_environments
+            _ (when can-write?
+                (jdbc/execute-one! ds
+                                   ["UPDATE user_environments SET last_accessed = CURRENT_TIMESTAMP
+                    WHERE user_id = ? AND environment_id = ?"
+                                    user-id env-id]))]
 
     ;; Return the full updated environment
     (when updated-env

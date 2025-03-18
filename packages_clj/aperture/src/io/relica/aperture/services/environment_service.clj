@@ -23,6 +23,8 @@
   (get-environment [this user-id env-id])
   (list-environments [this user-id])
   (create-environment [this user-id name])
+
+  (text-search-load [this user-id search-term])
   
   ;; Fact/Entity management
   (load-specialization-hierarchy [this user-id uid env-id])
@@ -75,7 +77,43 @@
         (catch Exception e
           (log/error e "Failed to create environment")
           {:error "Failed to create environment"}))))
-  
+
+  (text-search-load [this user-id search-term]
+    (go
+      (try
+        (let [result (<! (archivist/text-search archivist-client {:searchTerm search-term}))
+              result (:results result)
+              - (println "TEXT SEARCH RESULT:")
+              _ (println result)
+              env-id (:id (get-default-environment user-id))
+              _ (println "USER ID:")
+              _ (println user-id)
+              _ (println "ENV ID:")
+              _ (println env-id)
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              facts-to-load (filter #(= (:lh_object_name %) search-term) facts)
+              _ (println "FACTS TO LOAD:")
+              _ (println facts-to-load)
+              combined-facts (concat old-facts facts-to-load)
+              new-facts (deduplicate-facts combined-facts)
+              _ (println "COMBINED AND NEW FACTS:")
+              _ (println combined-facts)
+              _ (println new-facts)
+              updated-env (when new-facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (println "UPDATED ENV:")
+          (println updated-env)
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts-to-load}
+            {:error "Failed to update environment with text search"}))
+        (catch Exception e
+          (log/error e "Failed to text search")
+          {:error "Failed to text search"}))))
+
   ;; Fact/Entity management
   (load-specialization-hierarchy [this user-id uid env-id]
     (go

@@ -5,7 +5,7 @@ from langchain.tools import tool
 from langchain_core.utils.function_calling import convert_to_openai_tool
 
 from src.relica_nous_langchain.SemanticModel import semantic_model
-# from src.relica_nous_langchain.services.CCComms import ccComms
+from src.relica_nous_langchain.services.aperture_client import aperture_client
 
 
 # @tool
@@ -66,31 +66,90 @@ async def messageUser(message: str)->str:
     """
     return "cut to the chase"
 
-# @tool
-# async def textSearchExact(search_term: str)->str:
-#     """use this ONLY IF THE UID IS UNKOWN! Use this to find and load an entity with a name that exactly matches a given text term. It loads the entity into the application context and returns detailed information about it. If the entity is already loaded, switch to 'getEntityDetails' for more comprehensive insights about the entity.
-#         Args:
-#             search_term: The text term to search for
-#     """
+def facts_to_related_entities_str(facts) -> str:
+    # Create a set of unique entities with their names
+    entities = {}
+    for f in facts:
+        entities[f['lh_object_uid']] = f['lh_object_name']
+        entities[f['rh_object_uid']] = f['rh_object_name']
 
-#     result = ccComms.textSearchExact(search_term)
+    return "\n".join(f"- {name} (UID: {uid})" for uid, name in entities.items())
 
-#     if result is None or len(result["facts"]) == 0:
-#         return f"No entity with found by the name \"{search_term}\""
+def facts_to_relations_str(facts) -> str:
+    # Create a more detailed representation of relationships
+    relations = []
+    for f in facts:
+        relation = f"- {f['lh_object_name']} (UID: {f['lh_object_uid']}) {f['rel_type_name']} (UID: {f['rel_type_uid']}) {f['rh_object_name']} (UID: {f['rh_object_uid']})"
+        relations.append(relation)
 
-#     related_str = semanticModel.facts_to_related_entities_str(result["facts"])
-#     relationships_str = semanticModel.facts_to_relations_str(result["facts"])
+    return "\n".join(relations)
 
-#     ret =  (
-#         f"\tRelated Entities (uid:name):\n"
-#         f"{related_str}\n"
-#         f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-#         f"{relationships_str}"
-#     )
+def facts_to_metadata_str(facts) -> str:
+    # Extract common metadata from the first fact (assuming consistent metadata)
+    if not facts:
+        return "No metadata available"
 
-#     ret += f"\nthese are just the basic facts about '{search_term}'. use 'getEntityDetails' for more comprehensive insights about the entity."
-#     ccComms.emit("nous", "selectEntity", { "uid": result["facts"][0]["lh_object_uid"] })
-#     return ret
+    f = facts[0]
+    metadata = [
+        f"- Collection: {f.get('collection_name', 'N/A')}",
+        f"- Author: {f.get('author', 'N/A')}",
+        f"- Reference: {f.get('reference', 'N/A')}",
+        f"- Language: {f.get('language', 'N/A')}",
+        f"- Status: {f.get('approval_status', 'N/A')}"
+    ]
+
+    return "\n".join(metadata)
+
+@tool
+async def textSearchExact(search_term: str)->str:
+    """use this ONLY IF THE UID IS UNKOWN! Use this to find and load an entity with a name that exactly matches a given text term. It loads the entity into the application context and returns detailed information about it. If the entity is already loaded, switch to 'getEntityDetails' for more comprehensive insights about the entity.
+        Args:
+            search_term: The text term to search for
+    """
+    result = await aperture_client.textSearchLoad(search_term)
+
+    # Check if result exists and has facts
+    if result is None or "facts" not in result or len(result["facts"]) == 0:
+        return f"No entity found with the name \"{search_term}\""
+
+    facts = result["facts"]
+
+    # Determine the main entity we're looking at
+    entity_matches = [f for f in facts if f['lh_object_name'] == search_term or f['rh_object_name'] == search_term]
+    if entity_matches:
+        main_entity = search_term
+        main_uid = entity_matches[0]['lh_object_uid'] if entity_matches[0]['lh_object_name'] == search_term else entity_matches[0]['rh_object_uid']
+    else:
+        # Fallback to the first fact's left-hand entity
+        main_entity = facts[0]['lh_object_name']
+        main_uid = facts[0]['lh_object_uid']
+
+    # Build a structured, RAG-friendly output
+    output = [
+        f"ENTITY: {main_entity} (UID: {main_uid})",
+        "",
+        "RELATED ENTITIES:",
+        facts_to_related_entities_str(facts),
+        "",
+        "RELATIONSHIPS:",
+        facts_to_relations_str(facts),
+        "",
+        "METADATA:",
+        facts_to_metadata_str(facts)
+    ]
+
+    # Add a note about getEntityDetails
+    output.append(f"\nNote: These are the basic facts about '{main_entity}'. Use 'getEntityDetails' with UID {main_uid} for more comprehensive insights.")
+
+    ret = "\n".join(output)
+
+    # Select the entity
+    await aperture_client.selectEntity(7, 1, main_uid)
+
+    print("\\\\\\\\\\\\\\\\\\\\\\\\\\\\  SOME SHIT !!!! \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
+    print(ret)
+
+    return ret
 
 
 # @tool
@@ -314,7 +373,7 @@ tools = [
          # getEntityDetails,
          # loadEntity,
          cutToFinalAnswer,
-         # textSearchExact,
+         textSearchExact,
          # # specializeKind,
          # # classifyIndividual,
          # # #

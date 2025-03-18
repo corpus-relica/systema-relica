@@ -100,8 +100,9 @@ from src.relica_nous_langchain.services.clarity_client import clarity_client
 
 from src.meridian.server import WebSocketServer, app
 
-from src.relica_nous_langchain.test_agent import handleInput
+# from src.relica_nous_langchain.test_agent import handleInput
 from src.relica_nous_langchain.agent.NOUSAgent import nousAgent
+from src.relica_nous_langchain.agent.NOUSAgent_prebuilt import handleInput
 
 # from src.relica_nous_langchain.compere.NOUSCompere import nousCompere
 from src.relica_nous_langchain.SemanticModel import semantic_model
@@ -149,10 +150,10 @@ async def main():
 
     async def handle_user_input(input: str):
         print(f"Processing user input FOO': {input}")
-        # foo = await handleInput(input)
-        foo = await nousAgent.handleInput(input)
+        foo = await handleInput(input)
+        # foo = await nousAgent.handleInput(input)
         print(f"RESPONSE: {foo}")
-        await nous_server.send_final_answer({'message': foo})
+        await nous_server.send_final_answer({'message': foo.content})
 #     async def handleUserInput(input: str):
 #         res = await nousCompere.handleInput(input)
 #         return res
