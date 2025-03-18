@@ -10,7 +10,7 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
 
-# from src.relica_nous_langchain.services.CCComms import ccComms
+from src.relica_nous_langchain.SemanticModel import semantic_model
 
 from src.relica_nous_langchain.agent.Common import (
     NODE_REACT,
@@ -103,7 +103,7 @@ class NOUSAgent:
             inputs = {
                 "input": user_input,
                 "loop_idx": 0,
-                # "selected_entity": ccComms.selectedEntity,
+                "selected_entity": semantic_model.selectedEntity,
                 "messages": [],
                 "answer": None,
                 "cut_to_final": False

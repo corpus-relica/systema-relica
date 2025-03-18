@@ -15,8 +15,7 @@ from src.relica_nous_langchain.agent.Templates import FULL_TEMPLATES
 #     tool_descriptions,
 #     tool_names,
 #     )
-from src.relica_nous_langchain.services.CCComms import ccComms
-from src.relica_nous_langchain.SemanticModel import semanticModel
+from src.relica_nous_langchain.SemanticModel import semantic_model
 
 
 ################################################################################## FINAL ANSWER
@@ -54,8 +53,8 @@ def final_answer(state):
 
     prompt = FULL_TEMPLATES["final_answer"].format(
         curr_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-        semantic_model=semanticModel.getModelRepresentation(ccComms.selectedEntity),
-        context=semanticModel.context,
+        semantic_model=semantic_model.getModelRepresentation(semantic_model.selectedEntity),
+        context=semantic_model.context,
         agent_scratchpad=messages_str,
         chat_history=format_chat_history(state['messages'])  # Use state instead of memory
     )

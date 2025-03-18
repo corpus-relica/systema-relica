@@ -152,6 +152,10 @@ class SemanticModel:
     def facts(self):
         return self._facts
 
+    @property
+    def selectedEntity(self):
+        return self.selected_entity
+
     def hasFactInvolvingUID(self, uid):
         for f in self._facts:
             if uid in [f['lh_object_uid'], f['rh_object_uid']]:

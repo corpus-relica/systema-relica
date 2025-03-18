@@ -161,7 +161,7 @@ def stream_graph_updates(user_input: str):
 # def get_response(user_input: str):
 #     return next(graph.stream({"messages": [{"role": "user", "content": user_input}]}))
 
-async def get_response(user_input: str):
+async def handleInput(user_input: str):
     async for event in graph.astream({"messages": [
                                                    {"role": "user", "content": user_input}]},
                                      config):

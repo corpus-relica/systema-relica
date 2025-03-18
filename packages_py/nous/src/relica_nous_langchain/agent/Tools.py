@@ -4,7 +4,7 @@ import asyncio
 from langchain.tools import tool
 from langchain_core.utils.function_calling import convert_to_openai_tool
 
-from src.relica_nous_langchain.SemanticModel import semanticModel
+from src.relica_nous_langchain.SemanticModel import semantic_model
 # from src.relica_nous_langchain.services.CCComms import ccComms
 
 
@@ -50,14 +50,21 @@ from src.relica_nous_langchain.SemanticModel import semanticModel
 #     return content
 
 
-# @tool
-# async def cutToFinalAnswer(message: str)->str:
-#     """Invoke this to bypass ongoing dialogues and immediately supply the final, conclusive answer. It skips all intermediate conversation steps and allows to provide the direct outcome.
-#         Args:
-#             message: The final answer to the original input question
-#     """
-#     return "cut to the chase"
+@tool
+async def cutToFinalAnswer(message: str)->str:
+    """Invoke this to bypass ongoing dialogues and immediately supply the final, conclusive answer. It skips all intermediate conversation steps and allows to provide the direct outcome.
+        Args:
+            message: The final answer to the original input question
+    """
+    return "cut to the chase"
 
+@tool
+async def messageUser(message: str)->str:
+    """Invoke this to send messages to the user in casual conversation.
+        Args:
+            message: The message to the user
+    """
+    return "cut to the chase"
 
 # @tool
 # async def textSearchExact(search_term: str)->str:
@@ -306,7 +313,7 @@ from src.relica_nous_langchain.SemanticModel import semanticModel
 tools = [
          # getEntityDetails,
          # loadEntity,
-         # cutToFinalAnswer,
+         cutToFinalAnswer,
          # textSearchExact,
          # # specializeKind,
          # # classifyIndividual,

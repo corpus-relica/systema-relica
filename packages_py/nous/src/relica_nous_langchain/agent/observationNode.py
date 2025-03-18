@@ -9,8 +9,7 @@ from src.relica_nous_langchain.agent.Common import (
     format_chat_history,
     )
 from src.relica_nous_langchain.agent.Templates import FULL_TEMPLATES
-from src.relica_nous_langchain.services.CCComms import ccComms
-from src.relica_nous_langchain.SemanticModel import semanticModel
+from src.relica_nous_langchain.SemanticModel import semantic_model
 
 
 ################################################################################## OBSERVATION
@@ -47,8 +46,8 @@ async def observation(state):
     # Build the observation prompt
     prompt = FULL_TEMPLATES["observation"].format(
         curr_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-        semantic_model=semanticModel.getModelRepresentation(ccComms.selectedEntity),
-        context=semanticModel.context,
+        semantic_model=semantic_model.getModelRepresentation(semantic_model.selectedEntity),
+        context=semantic_model.context,
         agent_scratchpad=messages_str,
         # action_name=action_name,
         # action_arguments=json.dumps(action_arguments, indent=2),
