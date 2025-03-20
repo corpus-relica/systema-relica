@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
 # Model configuration
-openAIModel="gpt-4o-mini"
+
+# openAIModel="gpt-4o-mini"
+openAIModel="o3-mini"
+
 # anthropicModel = "claude-3-opus-20240229"
 anthropicModel = "claude-3-7-sonnet-20250219"
 

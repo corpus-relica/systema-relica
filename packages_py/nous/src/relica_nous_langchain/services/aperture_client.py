@@ -427,8 +427,8 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("load-entity", {"uid": uid})
-            return response
+            response = await self.client.send("environment/load-entity", {"uid": uid})
+            return response['payload']
         except Exception as e:
             logger.error(f"Error loading entity: {e}")
             return {"error": f"Failed to load entity: {str(e)}"}

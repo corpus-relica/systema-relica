@@ -6,65 +6,69 @@ from langchain_core.utils.function_calling import convert_to_openai_tool
 
 from src.relica_nous_langchain.SemanticModel import semantic_model
 from src.relica_nous_langchain.services.aperture_client import aperture_client
-
-
-# @tool
-# async def loadEntity(uid: int) -> str: #asyncio.Future:
-#     """Use this to load an entity that is not currently loaded in the system. Provide the unique identifier (uid) of the entity, and the system will load it, returning detailed information about the entity.
-#         Args:
-#             uid: The unique identifier of the entity to load
-#     """
-#     uid = int(uid)
-#     result = ccComms.loadEntity(uid)
-
-#     if result is None:
-#         return "No entity with that uid exists"
-
-#     related_str = semanticModel.facts_to_related_entities_str(result["facts"])
-#     relationships_str = semanticModel.facts_to_relations_str(result["facts"])
-
-#     ret =  (
-#         f"\tRelated Entities (uid:name):\n"
-#         f"{related_str}\n"
-#         f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-#         f"{relationships_str}"
-#     )
-
-#     return ret
-
-
-# @tool
-# async def getEntityDetails(uid: int)->str | None:
-#     """USE THIS FIRST!, use this to retrieve their full details. Provide the entity's uid, and the system will fetch comprehensive information, including details about related uids not fully loaded in the current context. Opt for this instead of 'loadEntity' or 'textSearchExact' for entities that are already present in the system.
-#         Args:
-#             uid: The unique identifier of the entity to retrieve details for
-#     """
-#     uid = int(uid)
-
-#     content = semanticModel.getModelRepresentation(uid)
-
-#     if content is None:
-#         content = "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
-
-#     ccComms.emit("nous", "selectEntity", { "uid": uid })
-#     return content
+from src.relica_nous_langchain.services.archivist_client import archivist_client
 
 
 @tool
-async def cutToFinalAnswer(message: str)->str:
-    """Invoke this to bypass ongoing dialogues and immediately supply the final, conclusive answer. It skips all intermediate conversation steps and allows to provide the direct outcome.
+async def loadEntity(uid: int) -> str: #asyncio.Future:
+    """Use this to load an entity that is not currently loaded in the system. Provide the unique identifier (uid) of the entity, and the system will load it, returning detailed information about the entity.
         Args:
-            message: The final answer to the original input question
+            uid: The unique identifier of the entity to load
     """
-    return "cut to the chase"
+    uid = int(uid)
+    result = await aperture_client.loadEntity(uid)
+
+    if result is None:
+        return "No entity with that uid exists"
+
+    related_str = facts_to_related_entities_str(result["facts"])
+    relationships_str = facts_to_relations_str(result["facts"])
+
+    ret =  (
+        f"\tRelated Entities (uid:name):\n"
+        f"{related_str}\n"
+        f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+        f"{relationships_str}"
+    )
+
+    return ret
+
 
 @tool
-async def messageUser(message: str)->str:
-    """Invoke this to send messages to the user in casual conversation.
+async def getEntityDetails(uid: int)->str | None:
+    """USE THIS FIRST!, use this to retrieve their full details. Provide the entity's uid, and the system will fetch comprehensive information, including details about related uids not fully loaded in the current context. Opt for this instead of 'loadEntity' or 'textSearchExact' for entities that are already present in the system.
         Args:
-            message: The message to the user
+            uid: The unique identifier of the entity to retrieve details for
     """
-    return "cut to the chase"
+    uid = int(uid)
+
+    content = semantic_model.getModelRepresentation(uid)
+
+    if content is None:
+        content = "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
+
+    # Select the entity
+    # TODO - send actual user and environment ids
+    await aperture_client.selectEntity(7, 1, uid)
+
+    return content
+
+
+# @tool
+# async def cutToFinalAnswer(message: str)->str:
+#     """Invoke this to bypass ongoing dialogues and immediately supply the final, conclusive answer. It skips all intermediate conversation steps and allows to provide the direct outcome.
+#         Args:
+#             message: The final answer to the original input question
+#     """
+#     return "cut to the chase"
+
+# @tool
+# async def messageUser(message: str)->str:
+#     """Invoke this to send messages to the user in casual conversation.
+#         Args:
+#             message: The message to the user
+#     """
+#     return "cut to the chase"
 
 def facts_to_related_entities_str(facts) -> str:
     # Create a set of unique entities with their names
@@ -144,6 +148,7 @@ async def textSearchExact(search_term: str)->str:
     ret = "\n".join(output)
 
     # Select the entity
+    # TODO - send actual user and environment ids
     await aperture_client.selectEntity(7, 1, main_uid)
 
     print("\\\\\\\\\\\\\\\\\\\\\\\\\\\\  SOME SHIT !!!! \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
@@ -306,29 +311,30 @@ async def textSearchExact(search_term: str)->str:
 
 #     return ret
 
-# @tool
-# async def allRelatedFacts(uid: int)->str:
-#     """Use this to retrieve all facts related to an entity (not including subtypes of a kind). Provide the uid of the entity, and the system will return a string representation of all facts related to the entity.
-#         Args:
-#             uid: The unique identifier of the entity to retrieve all related facts for
-#     """
-#     uid = int(uid)
-#     result = ccComms.retrieveAllRelatedFacts(uid)
+@tool
+async def allRelatedFacts(uid: int)->str:
+    """Use this to retrieve all facts related to an entity (not including subtypes of a kind). Provide the uid of the entity, and the system will return a string representation of all facts related to the entity.
+        Args:
+            uid: The unique identifier of the entity to retrieve all related facts for
+    """
+    uid = int(uid)
+    # TODO - send actual user and environment ids
+    result = await aperture_client.loadAllRelatedFacts(7, 1, uid)
 
-#     if result is None:
-#         return "No entity with that uid exists"
+    if result is None:
+        return "No entity with that uid exists"
 
-#     related_str = semanticModel.facts_to_related_entities_str(result["facts"])
-#     relationships_str = semanticModel.facts_to_relations_str(result["facts"])
+    related_str = facts_to_related_entities_str(result["facts"])
+    relationships_str = facts_to_relations_str(result["facts"])
 
-#     ret =  (
-#         f"\tRelated Entities (uid:name):\n"
-#         f"{related_str}\n"
-#         f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-#         f"{relationships_str}"
-#     )
+    ret =  (
+        f"\tRelated Entities (uid:name):\n"
+        f"{related_str}\n"
+        f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+        f"{relationships_str}"
+    )
 
-#     return ret
+    return ret
 
 # from langchain_openai import ChatOpenAI
 # from langchain_core.prompts import ChatPromptTemplate
@@ -370,9 +376,9 @@ async def textSearchExact(search_term: str)->str:
 #     return response
 
 tools = [
-         # getEntityDetails,
-         # loadEntity,
-         cutToFinalAnswer,
+         getEntityDetails,
+         loadEntity,
+         # cutToFinalAnswer,
          textSearchExact,
          # # specializeKind,
          # # classifyIndividual,
@@ -381,7 +387,7 @@ tools = [
          # specializationFact,
          # classified,
          # classificationFact,
-         # allRelatedFacts,
+         allRelatedFacts,
          # listSubtypes,
          # findSuitableSupertype,
          ]

@@ -234,10 +234,13 @@ class SemanticModel:
         )
 
     def format_entity(self, model):
+        print("/////////////////////////////// FORMATTING ENTITY ///////////////////////////////")
+        print(model)
+
         """Format an entity based on its type and properties."""
         uid = model.get('uid')
         name = model.get('name', 'Unnamed')
-        entity_type = model.get('type', 'unknown')
+        entity_type = model.get('nature', 'unknown')
         category = model.get('category', 'unspecified')
 
         # Base entity template
@@ -320,6 +323,8 @@ class SemanticModel:
             result += "\nRELATED FACTS:\n"
             result += self.facts_to_categorized_facts_str(entity_facts)
 
+        print(result)
+        print("/////////////////////////////// DONE FORMATTING ENTITY ///////////////////////////////")
         return result
 
     def get_entity_name(self, uid):
@@ -396,7 +401,7 @@ class SemanticModel:
         # Group facts by relationship type
         grouped_facts = {}
         for f in facts:
-            rel_type = f['rel_type_name']
+            rel_type = f['rel_type_uid']
             if rel_type not in grouped_facts:
                 grouped_facts[rel_type] = []
             grouped_facts[rel_type].append(f)
