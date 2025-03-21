@@ -46,18 +46,18 @@
         (log/error e "Failed to get definitive facts")
         []))))
 
-;; (defn get-all-related-facts
-;;   "Get all related facts for a UID"
-;;   [uid]
-;;   (go
-;;     (try
-;;       (let [response (<! (archivist/get-all-related archivist-client uid))]
-;;         (if (:success response)
-;;           (:facts response)
-;;           []))
-;;       (catch Exception e
-;;         (log/error e "Failed to get all related facts")
-;;         []))))
+(defn get-all-related-facts
+  "Get all related facts for a UID"
+  [uid]
+  (go
+    (try
+      (let [response (<! (archivist/get-all-related archivist-client uid))]
+        (if (:success response)
+          (:facts response)
+          []))
+      (catch Exception e
+        (log/error e "Failed to get all related facts")
+        []))))
 
 (defn get-related-facts-by-relation
   "Get related facts by relation type"

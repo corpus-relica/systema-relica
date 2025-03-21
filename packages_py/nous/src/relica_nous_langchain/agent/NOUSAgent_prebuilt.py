@@ -86,6 +86,7 @@ This formalization outlines abstract entities, relations, and roles, serving as 
     Root={anything}where Root⊂NK
     All Kinds are Subtypes of 'Anything': Every kind k in NK is either directly or indirectly a subtype of 'Anything,' connected by a specialization relation.
     ∀k∊NK,∃sr:(k,anything,sr)∊SubSupPairsor∃k′∊NK:(k,k′,sr)∊SubSupPairs&(k′,anything,sr)∊SubSupPairs.
+
 '''
 
 

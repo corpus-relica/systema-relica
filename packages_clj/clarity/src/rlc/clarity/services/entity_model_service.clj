@@ -33,6 +33,29 @@
         (log/error e "Failed to retrieve classifiers")
         {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
 
+(defn retrieve-stuff [uid]
+  "Retrieve stuff for an individual or kind of entity"
+  (go
+    (try
+      (let [stuff (<! (archivist-api/get-all-related-facts uid))
+            classifications (filter #(= (:rel_type_uid %) 1225) stuff)
+            specializations (filter #(= (:rel_type_uid %) 1146) stuff)
+            qualifications (filter #(= (:rel_type_uid %) 1726) stuff)
+            synonyms (vec
+                      (reduce (fn [m f]
+                                (conj m (:lh_object_name f)))
+                                  #{}
+                                  (filter #(= (:rel_type_uid %) 1981) stuff)
+                                  ))]
+        (log/info "Stuff: " stuff)
+        {:classifications classifications
+         :specializations specializations
+         :qualifications qualifications
+         :synonyms synonyms})
+      (catch Exception e
+        (log/error e "Failed to retrieve stuff")
+        {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
+
 ;; --------------------------------------------------------------------- KIND --
 
 (defn retrieve-kind-of-entity-model
@@ -40,15 +63,28 @@
   [uid]
   (go
     (try
-      (let [{:keys [names supertypes definitions]} (<! (retrieve-supertypes-and-definitions uid))]
+      (let [{:keys [names supertypes definitions]} (<! (retrieve-supertypes-and-definitions uid))
+            stuff (<! (retrieve-stuff uid))]
         (log/info "Supertypes:" (count supertypes))
         (log/info "Definitions:" (count definitions))
         (log/info "Names:" (count names) "First name:" (first names))
+        (log/info "Stuff:" stuff)
+        ;; {:uid uid
+        ;;  :name (first names)
+        ;;  :nature :kind
+        ;;  :definitions definitions
+        ;;  :supertypes supertypes
+        ;;  :classifications (:classifications stuff)
+        ;;  :specializations (:specializations stuff)
+        ;;  :qualifications (:qualifications stuff)
+        ;;  :synonyms (:synonyms stuff)}
+
         {:uid uid
          :name (first names)
          :nature :kind
          :definitions definitions
-         :supertypes supertypes})
+         :supertypes supertypes
+         :synonyms (:synonyms stuff)})
       (catch Exception e
         (log/error e "Failed to retrieve entity object model")
         {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))

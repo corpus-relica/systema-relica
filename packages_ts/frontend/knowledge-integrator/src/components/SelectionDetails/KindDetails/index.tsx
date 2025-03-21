@@ -48,7 +48,8 @@ const KindDetails: React.FC = () => {
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  const { uid, name, nature, category, supertypes, definitions } = data;
+  const { uid, name, nature, category, supertypes, definitions, synonyms } =
+    data;
 
   if (!definitions) return <div>No definitions found</div>;
 
@@ -132,6 +133,9 @@ const KindDetails: React.FC = () => {
           {uid}:{name}
         </Typography>
       </Box>
+      {synonyms &&
+        synonyms.length > 0 &&
+        synonyms.map((syn) => <div>{syn}</div>)}
       {defsComp}
       {catComp}
     </Stack>
