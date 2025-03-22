@@ -166,6 +166,65 @@
       (catch Exception e
         (log/error "Failed to process chat user input:" e)
         {:error "Failed to process chat user input"}))))
+
+(defn handle-load-composition [{:keys [uid client-id] :as message}]
+      (println "LOAD COMPOSITION" message)
+  (go
+    (try
+      (println "LOAD COMPOSITION" message)
+      (let [environment-id (get-environment-id client-id)
+            _ (println "ENVIRONMENT ID" environment-id uid message client-id)
+            result (<! (aperture/load-composition aperture-client (:user-id message) environment-id uid))
+            ]
+        {:success true
+         :message "Composition loaded"
+         :composition {:foo "bar"}});;result})
+      (catch Exception e
+        (println "Failed to load composition:" e)
+        {:error "Failed to load composition"})))
+  )
+
+(defn handle-load-composition-in [{:keys [uid client-id] :as message}]
+      (println "LOAD COMPOSITION IN" message)
+  (go
+    (try
+      (println "LOAD COMPOSITION IN" message)
+      (let [environment-id (get-environment-id client-id)
+            _ (println "ENVIRONMENT ID" environment-id uid message client-id)
+            result (<! (aperture/load-composition-in aperture-client (:user-id message) environment-id uid))
+            ]
+        {:success true
+         :message "Composition In loaded"
+         :composition {:foo "bar"}});;result})
+      (catch Exception e
+        (println "Failed to load composition:" e)
+        {:error "Failed to load composition"})))
+  )
+
+(defn handle-load-connections [{:keys [uid client-id] :as message}]
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            result (<! (aperture/load-connections aperture-client (:user-id message) environment-id uid))]
+        {:success true
+         :message "Connections loaded"
+         :connections result})
+      (catch Exception e
+        (log/error "Failed to load connections:" e)
+        {:error "Failed to load connections"}))))
+
+(defn handle-load-connections-in [{:keys [uid client-id] :as message}]
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            result (<! (aperture/load-connections-in aperture-client (:user-id message) environment-id uid))]
+        {:success true
+         :message "Connections loaded"
+         :connections result})
+      (catch Exception e
+        (log/error "Failed to load connections:" e)
+        {:error "Failed to load connections"}))))
+
 ;; Event handlers
 
 (defn handle-entity-selected-event [payload]
@@ -289,6 +348,11 @@
    "loadEntities" handle-load-entities
    "unloadEntities" handle-unload-entities
    "loadSubtypesCone" handle-load-subtypes-cone
+   ;;----
+   "loadComposition" handle-load-composition
+   "loadCompositionIn" handle-load-composition-in
+   "loadConnections" handle-load-connections
+   "loadConnectionsIn" handle-load-connections-in
 
    "chatUserInput" handle-chat-user-input
 

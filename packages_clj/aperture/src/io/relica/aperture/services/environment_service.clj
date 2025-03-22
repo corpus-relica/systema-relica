@@ -34,6 +34,10 @@
   (load-entities [this user-id env-id entity-uids])
   (unload-entities [this user-id env-id entity-uids])
   (load-subtypes-cone [this user-id entity-uid env-id])
+  (load-composition [this user-id entity-uid env-id])
+  (load-composition-in [this user-id entity-uid env-id])
+  (load-connections [this user-id entity-uid env-id])
+  (load-connections-in [this user-id entity-uid env-id])
   (clear-entities [this user-id env-id])
   
   ;; Entity selection
@@ -384,6 +388,86 @@
         (catch Exception e
           (log/error e "Failed to load subtypes cone")
           {:error "Failed to load subtypes cone"}))))
+
+  (load-composition [this user-id env-id entity-uid]
+    (go
+      (try
+        (let [result (<! (archivist/get-recurisve-relations archivist-client entity-uid 1190))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with composition"}))
+        (catch Exception e))
+        ))
+
+  (load-composition-in [this user-id env-id entity-uid]
+    (go
+      (try
+        (let [result (<! (archivist/get-recurisve-relations-to archivist-client entity-uid 1190))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with composition"}))
+        (catch Exception e))
+        ))
+
+  (load-connections [this user-id env-id entity-uid]
+    (go
+      (try
+        (let [result (<! (archivist/get-recurisve-relations archivist-client entity-uid 1487))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with composition"}))
+        (catch Exception e))
+        ))
+
+  (load-connections-in [this user-id env-id entity-uid]
+    (go
+      (try
+        (let [result (<! (archivist/get-recurisve-relations-to archivist-client entity-uid 1487))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with composition"}))
+        (catch Exception e))
+        ))
 
   (clear-entities [this user-id env-id]
     (go

@@ -51,6 +51,8 @@
   (get-core-sample-rh [this uid rel-type-uid])
   (get-related-to [this uid rel-type-uid])
   (get-related-to-subtype-cone [this uid rel-type-uid])
+  (get-recurisve-relations [this uid rel-type-uid])
+  (get-recurisve-relations-to [this uid rel-type-uid])
   (get-classification-fact [this uid])
   (get-classified [this uid])
   (get-subtypes [this uid])
@@ -209,6 +211,18 @@
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :fact/get-related-on-uid-subtype-cone
                       {:lh-object-uid lh-object-uid
+                       :rel-type-uid rel-type-uid} (:timeout options)))
+
+  (get-recurisve-relations [this uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-recursive-relations
+                      {:uid uid
+                       :rel-type-uid rel-type-uid} (:timeout options)))
+
+  (get-recurisve-relations-to [this uid rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-recursive-relations-to
+                      {:uid uid
                        :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-inherited-relation [this uid rel-type-uid]

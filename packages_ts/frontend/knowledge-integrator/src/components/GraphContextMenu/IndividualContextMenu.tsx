@@ -14,6 +14,10 @@ import { sendSocketMessage } from "../../socket";
 const SHOW_ALL = "show 'all'";
 const REM_THIS = "rem this";
 const DELETE_THIS = "delete this!";
+const COMPOSITION_OUT = "load composition out";
+const CONNECTIONS_OUT = "load connections out";
+const COMPOSITION_IN = "load composition in";
+const CONNECTIONS_IN = "load connections in";
 
 interface IndividualContextMenuProps {
   uid: number;
@@ -57,6 +61,26 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
           setWarnIsOpen(true);
           handleClose();
           break;
+        case COMPOSITION_OUT:
+          // sockSendCC("user", "loadComposition", { uid });
+          sendSocketMessage("loadComposition", { uid });
+          handleClose();
+          break;
+        case CONNECTIONS_OUT:
+          // sockSendCC("user", "loadConnections", { uid });
+          sendSocketMessage("loadConnections", { uid });
+          handleClose();
+          break;
+        case COMPOSITION_IN:
+          // sockSendCC("user", "loadComposition", { uid });
+          sendSocketMessage("loadCompositionIn", { uid });
+          handleClose();
+          break;
+        case CONNECTIONS_IN:
+          // sockSendCC("user", "loadConnections", { uid });
+          sendSocketMessage("loadConnectionsIn", { uid });
+          handleClose();
+          break;
         default:
           console.log(`Unknown value: ${value}`);
       }
@@ -94,6 +118,18 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       </MenuItem>
       <MenuItem value={SHOW_ALL} onClick={handleItemClick}>
         show 'all'
+      </MenuItem>
+      <MenuItem value={COMPOSITION_OUT} onClick={handleItemClick}>
+        {"load composition ->"}
+      </MenuItem>
+      <MenuItem value={COMPOSITION_IN} onClick={handleItemClick}>
+        {"-> load composition"}
+      </MenuItem>
+      <MenuItem value={CONNECTIONS_OUT} onClick={handleItemClick}>
+        {"load connections ->"}
+      </MenuItem>
+      <MenuItem value={CONNECTIONS_IN} onClick={handleItemClick}>
+        {"-> load connections"}
       </MenuItem>
       <Divider />
       <MenuItem value={REM_THIS} onClick={handleItemClick}>

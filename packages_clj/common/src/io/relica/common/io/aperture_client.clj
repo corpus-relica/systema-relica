@@ -15,6 +15,10 @@
   (load-entities [this user-id env-id entity-uids])
   (unload-entities [this user-id env-id entity-uids])
   (load-subtypes-cone [this user-id env-id entity-uid])
+  (load-composition [this user-id env-id entity-uid])
+  (load-composition-in [this user-id env-id entity-uid])
+  (load-connections [this user-id env-id entity-uid])
+  (load-connections-in [this user-id env-id entity-uid])
   (update-environment! [this user-id env-id updates])
   (select-entity [this user-id env-id entity-uid])
   (select-entity-none [this user-id env-id])
@@ -88,6 +92,38 @@
   (load-subtypes-cone [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
     (ws/send-message! ws-client :environment/load-subtypes-cone
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uid entity-uid}
+                      (:timeout options)))
+
+  (load-composition [this user-id env-id entity-uid]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/load-composition
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uid entity-uid}
+                      (:timeout options)))
+
+  (load-composition-in [this user-id env-id entity-uid]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/load-composition-in
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uid entity-uid}
+                      (:timeout options)))
+
+  (load-connections [this user-id env-id entity-uid]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/load-connections
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uid entity-uid}
+                      (:timeout options)))
+
+  (load-connections-in [this user-id env-id entity-uid]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/load-connections-in
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}

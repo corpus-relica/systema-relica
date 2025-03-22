@@ -26,12 +26,15 @@
   (get-all-related-facts [this uid])
   (get-all-related-facts-recursive [this uid depth])
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid])
+  (get-related-to-on-uid-subtype-cone [this rh-object-uid rel-type-uid])
   (get-inherited-relation [this uid rel-type-uid])
   (get-core-sample [this uid rel-type-uid])
   (get-core-sample-rh [this uid rel-type-uid])
   (get-facts-relating-entities [this uid1 uid2])
   (get-related-to [this uid rel-type-uid])
   (get-related-to-subtype-cone [this lh-object-uid rel-type-uid])
+  (get-recursive-relations [this uid rel-type-uid max-depth])
+  (get-recursive-relations-to [this uid rel-type-uid max-depth])
   (confirm-fact [this fact])
   (confirm-fact-in-relation-cone [this lh-object-uids rel-type-uids rh-object-uids])
   (delete-fact [this uid])
@@ -54,17 +57,17 @@
             subtypes (cache/all-descendants-of cache-service uid)
             _ (tap> "------------------- GET SUBTYPES CONE -------------------")
             _ (tap> subtypes)
-            
+
             ;; Get facts about the root entity itself to ensure the connection
             root-facts (get-subtypes this uid)
             _ (tap> "------------------- ROOT ENTITY SUBTYPES -------------------")
             _ (tap> root-facts)
-            
+
             ;; Get facts about all descendants
             descendant-facts (map #(get-subtypes this %) subtypes)
             _ (tap> "------------------- GET SUBTYPES CONE FACTS -------------------")
             _ (tap> descendant-facts)
-            
+
             ;; Combine root facts with descendant facts
             all-facts (cons root-facts descendant-facts)]
         (flatten all-facts))))
@@ -158,9 +161,9 @@
 
               ;; Filter out duplicates
               unique-results (vals (reduce (fn [acc item]
-                                      (assoc acc (:fact_uid item) item))
-                                    {}
-                                    prelim-result))
+                                             (assoc acc (:fact_uid item) item))
+                                           {}
+                                           prelim-result))
               ;; unique-results (filter (fn [item]
               ;;                          (let [index-of-first-occurrence
               ;;                                (first
@@ -198,9 +201,9 @@
               _ (tap> res)
 
               unique-results (vals (reduce (fn [acc item]
-                                      (assoc acc (:fact_uid item) item))
-                                    {}
-                                    res))
+                                             (assoc acc (:fact_uid item) item))
+                                           {}
+                                           res))
               ;; Filter out duplicates
               ;; unique-results (filter (fn [item]
               ;;                          (let [index-of-first-occurrence
@@ -217,6 +220,49 @@
               ;;                        res)
               ]
           (tap> "------------------- GET RELATED ON UID SUBTYPE CONE UNIQUE -------------------")
+          (tap> unique-results)
+          unique-results)
+        (catch Exception e
+          (log/error "Error in get-related-on-uid-subtype-cone:" (ex-message e))
+          []))))
+
+  (get-related-to-on-uid-subtype-cone [_ rh-object-uid rel-type-uid]
+    (go
+      (try
+        (let [;; Get all subtypes of the relation type
+              subtypes-of-rel-type (cache/all-descendants-of cache-service rel-type-uid)
+              all-rel-types (conj subtypes-of-rel-type rel-type-uid)
+
+              ;; Get all facts involving the entity with the specified relation types
+              results (graph/exec-query graph-service
+                                        queries/all-related-facts-d
+                                        {:start_uid rh-object-uid
+                                         :rel_type_uids all-rel-types})
+              res (graph/transform-results results)
+
+              _ (tap> "------------------- GET RELATED TO ON UID SUBTYPE CONE -------------------")
+              _ (tap> res)
+
+              unique-results (vals (reduce (fn [acc item]
+                                             (assoc acc (:fact_uid item) item))
+                                           {}
+                                           res))
+              ;; Filter out duplicates
+              ;; unique-results (filter (fn [item]
+              ;;                          (let [index-of-first-occurrence
+              ;;                                (first
+              ;;                                 (keep-indexed
+              ;;                                  (fn [idx itm]
+              ;;                                    (when (= (:fact_uid itm) (:fact_uid item)) idx))
+              ;;                                  res))]
+              ;;                            (= index-of-first-occurrence
+              ;;                               (first
+              ;;                                (keep-indexed
+              ;;                                 (fn [idx _] idx)
+              ;;                                 (filter #(= (:fact_uid %) (:fact_uid item)) res))))))
+              ;;                        res)
+              ]
+          (tap> "------------------- GET RELATED TO ON UID SUBTYPE CONE UNIQUE -------------------")
           (tap> unique-results)
           unique-results)
         (catch Exception e
@@ -255,7 +301,7 @@
               ;; Function to get related facts based on match-on parameter
               get-facts-fn (fn [hierarchy-uid]
                              (get-related-facts this hierarchy-uid rel-type-uid))
-              
+
               ;; Process each level in the hierarchy and collect results
               results (<! (go
                             (loop [items spec-facts
@@ -268,7 +314,7 @@
                                       facts (<! facts-chan)]
                                   ;; Continue with next item, adding facts to result vector
                                   (recur (rest items) (conj result-vec facts)))))))]
-          
+
           results)
         (catch Exception e
           (log/error e "Error in get-core-sample:" (ex-message e))
@@ -348,12 +394,12 @@
                                           {:uid uid})
                 res (graph/transform-results results)]
             res)
-            (let [results (graph/exec-query graph-service
-                                            queries/related-to
-                                            {:uid uid
-                                             :rel_type_uids [rel-type-uid]})
-                  res (graph/transform-results results)]
-              res))
+          (let [results (graph/exec-query graph-service
+                                          queries/related-to
+                                          {:uid uid
+                                           :rel_type_uids [rel-type-uid]})
+                res (graph/transform-results results)]
+            res))
         (catch Exception e
           (log/error "Error in get-related-to:" (ex-message e))
           []))))
@@ -374,13 +420,125 @@
               res (graph/transform-results results)
 
               unique-results (vals (reduce (fn [acc item]
-                                      (assoc acc (:fact_uid item) item))
-                                    {}
-                                    res))]
+                                             (assoc acc (:fact_uid item) item))
+                                           {}
+                                           res))]
           unique-results)
         (catch Exception e
           (log/error "Error in get-related-to-subtype-cone:" (ex-message e))
           []))))
+
+  (get-recursive-relations [this uid rel-type-uid max-depth]
+    (go
+      (try
+        (log/info (str "Getting recursive relations for uid: " uid " with relation type: " rel-type-uid))
+        (let [;; Default max depth if not provided
+              actual-max-depth (or max-depth 10)
+
+              ;; Create a unique-by-fact-uid function to remove duplicates
+              unique-by-fact-uid (fn [facts]
+                                   (vals (reduce (fn [acc item]
+                                                   (assoc acc (:fact_uid item) item))
+                                                 {}
+                                                 facts)))
+
+              ;; Helper function to get related entities for a relation type
+              get-related-entities (fn [entity-uid]
+                                     (go
+                                       (let [facts (<! (get-related-on-uid-subtype-cone this entity-uid rel-type-uid))]
+                                         (map (fn [fact]
+                                                {:fact fact
+                                                 :related-uid (:rh_object_uid fact)})
+                                              facts))))
+
+              ;; Recursive function to build the hierarchy
+              build-hierarchy (fn build-hierarchy-fn [current-uid current-depth visited]
+                                (go
+                                  (if (or (>= current-depth actual-max-depth)
+                                          (contains? visited current-uid))
+                                    ;; Base case: max depth reached or we've already visited this node
+                                    []
+                                    (let [;; Mark this node as visited to prevent cycles
+                                          updated-visited (conj visited current-uid)
+
+                                          ;; Get direct relations for this entity
+                                          relations (<! (get-related-entities current-uid))
+
+                                          ;; Process each related entity recursively
+                                          recursive-results (atom [])
+                                          _ (doseq [relation relations]
+                                              (let [related-uid (:related-uid relation)
+                                                    children (<! (build-hierarchy-fn related-uid
+                                                                                     (inc current-depth)
+                                                                                     updated-visited))]
+                                                (swap! recursive-results conj
+                                                       {:fact (:fact relation)
+                                                        :related-uid related-uid
+                                                        :children children})))]
+                                      @recursive-results))))]
+
+          ;; Start the recursion from the root entity
+          (<! (build-hierarchy uid 0 #{})))
+
+        (catch Exception e
+          (log/error "Error in get-recursive-relations:" (ex-message e))
+          {:error (str "Failed to get recursive relations: " (ex-message e))}))))
+
+  (get-recursive-relations-to [this uid rel-type-uid max-depth]
+    (go
+      (try
+        (log/info (str "Getting recursive relations into uid: " uid " with relation type: " rel-type-uid))
+        (let [;; Default max depth if not provided
+              actual-max-depth (or max-depth 10)
+
+              ;; Create a unique-by-fact-uid function to remove duplicates
+              unique-by-fact-uid (fn [facts]
+                                   (vals (reduce (fn [acc item]
+                                                   (assoc acc (:fact_uid item) item))
+                                                 {}
+                                                 facts)))
+
+              ;; Helper function to get related entities for a relation type
+              get-related-entities (fn [entity-uid]
+                                     (go
+                                       (let [facts (<! (get-related-to-on-uid-subtype-cone this entity-uid rel-type-uid))]
+                                         (map (fn [fact]
+                                                {:fact fact
+                                                 :related-uid (:lh_object_uid fact)})
+                                              facts))))
+
+              ;; Recursive function to build the hierarchy
+              build-hierarchy (fn build-hierarchy-fn [current-uid current-depth visited]
+                                (go
+                                  (if (or (>= current-depth actual-max-depth)
+                                          (contains? visited current-uid))
+                                    ;; Base case: max depth reached or we've already visited this node
+                                    []
+                                    (let [;; Mark this node as visited to prevent cycles
+                                          updated-visited (conj visited current-uid)
+
+                                          ;; Get direct relations for this entity
+                                          relations (<! (get-related-entities current-uid))
+
+                                          ;; Process each related entity recursively
+                                          recursive-results (atom [])
+                                          _ (doseq [relation relations]
+                                              (let [related-uid (:related-uid relation)
+                                                    children (<! (build-hierarchy-fn related-uid
+                                                                                     (inc current-depth)
+                                                                                     updated-visited))]
+                                                (swap! recursive-results conj
+                                                       {:fact (:fact relation)
+                                                        :related-uid related-uid
+                                                        :children children})))]
+                                      @recursive-results))))]
+
+          ;; Start the recursion from the root entity
+          (<! (build-hierarchy uid 0 #{})))
+
+        (catch Exception e
+          (log/error "Error in get-recursive-relations:" (ex-message e))
+          {:error (str "Failed to get recursive relations: " (ex-message e))}))))
 
   (confirm-fact [_ fact]
     (go
@@ -484,6 +642,11 @@
   [fact-service lh-object-uid rel-type-uid]
   (get-related-on-uid-subtype-cone fact-service lh-object-uid rel-type-uid))
 
+(defn get-recursive-relations-facts
+  "Get all relations of a specific type recursively, building a hierarchy (like parts of parts)"
+  [fact-service uid rel-type-uid & [max-depth]]
+  (get-recursive-relations fact-service uid rel-type-uid max-depth))
+
 (comment
   ;; Test operations
   (let [test-service (create-fact-service graph-service nil cache-service nil nil)]
@@ -491,7 +654,8 @@
 
   @fact-service
 
-  (go (let [xxx (<! (get-classified @fact-service 1000000061 true))]
-        (println "XXX")
-        (println xxx)
-        xxx)))
+  ;; Test the new recursive relations function
+  (go (let [composition-hierarchy (<! (get-recursive-relations @fact-service 1000000123 5519 5))]
+        (println "Composition hierarchy:")
+        (println composition-hierarchy)
+        composition-hierarchy)))

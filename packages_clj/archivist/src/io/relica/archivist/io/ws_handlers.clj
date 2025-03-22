@@ -184,6 +184,40 @@
                         :error "Failed to get related to subtypes cone facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-recursive-relations
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (<! (fact-service/get-recursive-relations fact-s (:uid ?data) (:rel-type-uid ?data) 10))]
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get recursive relations")
+            (?reply-fn {:success false
+                        :error "Failed to get recursive relations"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-recursive-relations-to
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [facts (<! (fact-service/get-recursive-relations-to fact-s (:uid ?data) (:rel-type-uid ?data) 10))]
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get recursive relations")
+            (?reply-fn {:success false
+                        :error "Failed to get recursive relations"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :fact/get-classified
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
