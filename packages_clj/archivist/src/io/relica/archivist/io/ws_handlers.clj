@@ -121,7 +121,7 @@
                   :error "fact service not initialized"})
       (go
         (try
-          (let [facts (<!(fact-service/get-related-on-uid-subtype-cone-facts
+          (let [facts (<!(fact-service/get-related-on-uid-subtype-cone
                        fact-s
                        (:lh-object-uid ?data)
                        (:rel-type-uid ?data)))]

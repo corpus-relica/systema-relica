@@ -6,7 +6,8 @@
 openAIModel="o3-mini"
 
 # anthropicModel = "claude-3-opus-20240229"
-anthropicModel = "claude-3-7-sonnet-20250219"
+# anthropicModel = "claude-3-7-sonnet-20250219"
+anthropicModel = "claude-3-5-sonnet-latest"
 
 def format_chat_history(messages):
     """

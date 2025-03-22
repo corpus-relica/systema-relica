@@ -26,21 +26,21 @@ from src.relica_nous_langchain.agent.Tools import (
     tools,
     )
 
-model = ChatAnthropic(
-    model=anthropicModel,
-    temperature=0.7,
-    max_tokens=1500,
-    timeout=None,
-    max_retries=2,
-).bind_tools(tools)
-
-# model = ChatOpenAI(
-#     model=openAIModel,
-#     # temperature=0,
+# model = ChatAnthropic(
+#     model=anthropicModel,
+#     temperature=0.7,
 #     max_tokens=1500,
 #     timeout=None,
 #     max_retries=2,
-#     ).bind_tools(tools)
+# ).bind_tools(tools)
+
+model = ChatOpenAI(
+    model=openAIModel,
+    # temperature=0,
+    max_tokens=1500,
+    timeout=None,
+    max_retries=2,
+    ).bind_tools(tools)
 
 
 background_info = '''

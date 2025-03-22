@@ -431,114 +431,114 @@
   (get-recursive-relations [this uid rel-type-uid max-depth]
     (go
       (try
-        (log/info (str "Getting recursive relations for uid: " uid " with relation type: " rel-type-uid))
+        (log/info (str "Getting flattened recursive relations for uid: " uid " with relation type: " rel-type-uid))
         (let [;; Default max depth if not provided
               actual-max-depth (or max-depth 10)
 
-              ;; Create a unique-by-fact-uid function to remove duplicates
-              unique-by-fact-uid (fn [facts]
-                                   (vals (reduce (fn [acc item]
-                                                   (assoc acc (:fact_uid item) item))
-                                                 {}
-                                                 facts)))
+              ;; Atom to collect all facts
+              all-facts (atom [])
 
               ;; Helper function to get related entities for a relation type
               get-related-entities (fn [entity-uid]
                                      (go
                                        (let [facts (<! (get-related-on-uid-subtype-cone this entity-uid rel-type-uid))]
+                                         ;; Add facts to the global collection
+                                         (swap! all-facts concat facts)
                                          (map (fn [fact]
                                                 {:fact fact
                                                  :related-uid (:rh_object_uid fact)})
                                               facts))))
 
-              ;; Recursive function to build the hierarchy
-              build-hierarchy (fn build-hierarchy-fn [current-uid current-depth visited]
-                                (go
-                                  (if (or (>= current-depth actual-max-depth)
-                                          (contains? visited current-uid))
-                                    ;; Base case: max depth reached or we've already visited this node
-                                    []
-                                    (let [;; Mark this node as visited to prevent cycles
-                                          updated-visited (conj visited current-uid)
+              ;; Recursive function to traverse the hierarchy without building it
+              traverse-hierarchy (fn traverse-hierarchy-fn [current-uid current-depth visited]
+                                   (go
+                                     (if (or (>= current-depth actual-max-depth)
+                                             (contains? visited current-uid))
+                                       ;; Base case: max depth reached or we've already visited this node
+                                       nil
+                                       (let [;; Mark this node as visited to prevent cycles
+                                             updated-visited (conj visited current-uid)
 
-                                          ;; Get direct relations for this entity
-                                          relations (<! (get-related-entities current-uid))
+                                             ;; Get direct relations for this entity
+                                             relations (<! (get-related-entities current-uid))]
 
-                                          ;; Process each related entity recursively
-                                          recursive-results (atom [])
-                                          _ (doseq [relation relations]
-                                              (let [related-uid (:related-uid relation)
-                                                    children (<! (build-hierarchy-fn related-uid
-                                                                                     (inc current-depth)
-                                                                                     updated-visited))]
-                                                (swap! recursive-results conj
-                                                       {:fact (:fact relation)
-                                                        :related-uid related-uid
-                                                        :children children})))]
-                                      @recursive-results))))]
+                                         ;; Process each related entity recursively
+                                         (doseq [relation relations]
+                                           (let [related-uid (:related-uid relation)]
+                                             ;; Just traverse, don't build a structure
+                                             (<! (traverse-hierarchy-fn related-uid
+                                                                        (inc current-depth)
+                                                                        updated-visited))))
+                                         nil))))]
 
-          ;; Start the recursion from the root entity
-          (<! (build-hierarchy uid 0 #{})))
+          ;; Start the traversal from the root entity - don't care about return value
+          (<! (traverse-hierarchy uid 0 #{}))
+
+          ;; Return unique facts by fact_uid
+          (vals (reduce (fn [acc item]
+                          (assoc acc (:fact_uid item) item))
+                        {}
+                        @all-facts)))
 
         (catch Exception e
-          (log/error "Error in get-recursive-relations:" (ex-message e))
-          {:error (str "Failed to get recursive relations: " (ex-message e))}))))
+          (log/error "Error in get-recursive-relations-flat:" (ex-message e))
+          {:error (str "Failed to get recursive relations flat: " (ex-message e))}))))
 
   (get-recursive-relations-to [this uid rel-type-uid max-depth]
     (go
       (try
-        (log/info (str "Getting recursive relations into uid: " uid " with relation type: " rel-type-uid))
+        (log/info (str "Getting flattened recursive relations into uid: " uid " with relation type: " rel-type-uid))
         (let [;; Default max depth if not provided
               actual-max-depth (or max-depth 10)
 
-              ;; Create a unique-by-fact-uid function to remove duplicates
-              unique-by-fact-uid (fn [facts]
-                                   (vals (reduce (fn [acc item]
-                                                   (assoc acc (:fact_uid item) item))
-                                                 {}
-                                                 facts)))
+              ;; Atom to collect all facts
+              all-facts (atom [])
 
               ;; Helper function to get related entities for a relation type
               get-related-entities (fn [entity-uid]
                                      (go
                                        (let [facts (<! (get-related-to-on-uid-subtype-cone this entity-uid rel-type-uid))]
+                                         ;; Add facts to the global collection
+                                         (swap! all-facts concat facts)
                                          (map (fn [fact]
                                                 {:fact fact
                                                  :related-uid (:lh_object_uid fact)})
                                               facts))))
 
-              ;; Recursive function to build the hierarchy
-              build-hierarchy (fn build-hierarchy-fn [current-uid current-depth visited]
-                                (go
-                                  (if (or (>= current-depth actual-max-depth)
-                                          (contains? visited current-uid))
-                                    ;; Base case: max depth reached or we've already visited this node
-                                    []
-                                    (let [;; Mark this node as visited to prevent cycles
-                                          updated-visited (conj visited current-uid)
+              ;; Recursive function to traverse the hierarchy without building it
+              traverse-hierarchy (fn traverse-hierarchy-fn [current-uid current-depth visited]
+                                   (go
+                                     (if (or (>= current-depth actual-max-depth)
+                                             (contains? visited current-uid))
+                                       ;; Base case: max depth reached or we've already visited this node
+                                       nil
+                                       (let [;; Mark this node as visited to prevent cycles
+                                             updated-visited (conj visited current-uid)
 
-                                          ;; Get direct relations for this entity
-                                          relations (<! (get-related-entities current-uid))
+                                             ;; Get direct relations for this entity
+                                             relations (<! (get-related-entities current-uid))]
 
-                                          ;; Process each related entity recursively
-                                          recursive-results (atom [])
-                                          _ (doseq [relation relations]
-                                              (let [related-uid (:related-uid relation)
-                                                    children (<! (build-hierarchy-fn related-uid
-                                                                                     (inc current-depth)
-                                                                                     updated-visited))]
-                                                (swap! recursive-results conj
-                                                       {:fact (:fact relation)
-                                                        :related-uid related-uid
-                                                        :children children})))]
-                                      @recursive-results))))]
+                                         ;; Process each related entity recursively
+                                         (doseq [relation relations]
+                                           (let [related-uid (:related-uid relation)]
+                                             ;; Just traverse, don't build a structure
+                                             (<! (traverse-hierarchy-fn related-uid
+                                                                        (inc current-depth)
+                                                                        updated-visited))))
+                                         nil))))]
 
-          ;; Start the recursion from the root entity
-          (<! (build-hierarchy uid 0 #{})))
+          ;; Start the traversal from the root entity - don't care about return value
+          (<! (traverse-hierarchy uid 0 #{}))
+
+          ;; Return unique facts by fact_uid
+          (vals (reduce (fn [acc item]
+                          (assoc acc (:fact_uid item) item))
+                        {}
+                        @all-facts)))
 
         (catch Exception e
-          (log/error "Error in get-recursive-relations:" (ex-message e))
-          {:error (str "Failed to get recursive relations: " (ex-message e))}))))
+          (log/error "Error in get-recursive-relations-to:" (ex-message e))
+          {:error (str "Failed to get recursive relations to: " (ex-message e))}))))
 
   (confirm-fact [_ fact]
     (go
@@ -636,16 +636,6 @@
 (defn stop  []
   (println "Stopping Fact Service..."))
 
-;; Helper functions for external use
-(defn get-related-on-uid-subtype-cone-facts
-  "Get all facts related to an entity with a specific relation type or its subtypes"
-  [fact-service lh-object-uid rel-type-uid]
-  (get-related-on-uid-subtype-cone fact-service lh-object-uid rel-type-uid))
-
-(defn get-recursive-relations-facts
-  "Get all relations of a specific type recursively, building a hierarchy (like parts of parts)"
-  [fact-service uid rel-type-uid & [max-depth]]
-  (get-recursive-relations fact-service uid rel-type-uid max-depth))
 
 (comment
   ;; Test operations
@@ -658,4 +648,6 @@
   (go (let [composition-hierarchy (<! (get-recursive-relations @fact-service 1000000123 5519 5))]
         (println "Composition hierarchy:")
         (println composition-hierarchy)
-        composition-hierarchy)))
+        composition-hierarchy))
+
+  )
