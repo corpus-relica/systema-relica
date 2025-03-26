@@ -16,7 +16,7 @@ from src.relica_nous_langchain.agent.Templates import FULL_TEMPLATES
 #     tool_names,
 #     )
 from src.relica_nous_langchain.SemanticModel import semantic_model
-from src.relica_nous_langchain.agent.reactAgentNode import format_conversation_for_prompt
+# from src.relica_nous_langchain.agent.reactAgentNode import format_conversation_for_prompt
 
 
 ################################################################################## FINAL ANSWER
@@ -37,7 +37,7 @@ from src.relica_nous_langchain.agent.reactAgentNode import format_conversation_f
 
 final_answer_llm = ChatAnthropic(
     model=anthropicModel,
-    temperature=0,
+    temperature=0.7,
     max_tokens=1000,
     timeout=None,
     max_retries=2,
@@ -57,12 +57,8 @@ def final_answer(state):
     print("/////////////////// FINAL ANSWER NODE BEGIN /////////////////////")
     
     input_text = state['input']
-    messages = state['messages']
-    print(f"FINAL ANSWER: Received {len(messages)} messages in history")
-    
-    # Format the full conversation history for context
-    conversation_history = format_conversation_for_prompt(messages)
-    
+    scratchpad = state['scratchpad']
+
     # If we already have an answer from the reactAgent, use it directly
     if state.get('answer'):
         message = state['answer']
@@ -77,9 +73,11 @@ Current Date and Time: {datetime.now().strftime("%Y-%m-%d %H:%M")}
 Currently loaded semantic model:
 {semantic_model.getModelRepresentation(semantic_model.selectedEntity)}
 
-{conversation_history}
+Current question:
+{input_text}
 
-Current question: {input_text}
+scratchpad:
+{scratchpad}
 
 Based on the conversation history and the current question, provide a final, comprehensive answer.
 """
@@ -89,11 +87,7 @@ Based on the conversation history and the current question, provide a final, com
         message = response.content
         print(message)
 
-    # Always return a clean final answer without the "Final Answer:" prefix
-    if message.startswith("Final Answer:"):
-        message = message.replace("Final Answer:", "").strip()
-
+    # Return just the message content
     return {
-        "messages": [{"role": "assistant", "content": f"Final Answer: {message}"}],
         "answer": message
     }

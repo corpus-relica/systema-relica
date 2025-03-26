@@ -39,6 +39,7 @@ memory = MemorySaver()
 class AgentState(TypedDict):
     input: str
     messages: Annotated[list[dict], operator.add]  # Chat history
+    scratchpad: str
     answer: Optional[str]
     selected_entity: int
     cut_to_final: bool
@@ -71,7 +72,7 @@ workflow.set_finish_point("final_answer")
 
 # Compile the workflow
 app = workflow.compile(
-    checkpointer=memory
+    # checkpointer=memory
 )
 
 # Comment out the ASCII drawing that's causing errors
@@ -81,10 +82,12 @@ app = workflow.compile(
 
 class NOUSAgent:
     def __init__(self):
-        print("NOUS AGENT")
         self.emitter = EventEmitter()
         self.conversation_history: List[Dict[str, Any]] = []
         self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this conversation
+        self.last_user_input = None
+        self.last_assistant_response = None
+        print("NOUS AGENT", self.conversation_id)
 
     async def handleInput(self, user_input):
         try:
@@ -94,26 +97,42 @@ class NOUSAgent:
                 
             print(f"Processing user input: {user_input}")
             
-            # Add user message to conversation history
-            user_message = {"role": "user", "content": user_input}
-            self.conversation_history.append(user_message)
+            # Add user message to conversation history if not a duplicate
+            is_duplicate = False
+            if self.conversation_history and self.conversation_history[-1]["role"] == "user" and self.conversation_history[-1]["content"] == user_input:
+                is_duplicate = True
+                print("Duplicate user message detected, not adding to history")
             
-            # Initialize state with the full conversation history
+            if not is_duplicate:
+                user_message = {"role": "user", "content": user_input}
+                self.conversation_history.append(user_message)
+            
+            # Create a clean copy of the conversation history for the model
+            # This prevents the model from getting confused by duplicate messages
+            clean_history = []
+            seen_messages = set()
+            
+            for msg in self.conversation_history:
+                # Create a unique key for each message based on role and content
+                msg_key = f"{msg['role']}:{msg['content'][:50]}"
+                if msg_key not in seen_messages:
+                    clean_history.append(msg)
+                    seen_messages.add(msg_key)
+            
+            # Initialize state with the clean history
             inputs = {
                 "input": user_input,
                 "loop_idx": 0,
                 "selected_entity": semantic_model.selectedEntity,
-                "messages": list(self.conversation_history),  # Use the full conversation history
+                "messages": clean_history,
+                "scratchpad": "",
                 "answer": None,
                 "cut_to_final": False
             }
 
             fa = ""
-            # Create a working copy of the conversation history for this turn
-            turn_messages = list(self.conversation_history)
-
             print("///////////////////// INPUT /////////////////////")
-            print(f"Conversation history length: {len(self.conversation_history)}")
+            print(f"Conversation history length: {len(clean_history)}")
 
             config = {"configurable": {"thread_id": self.conversation_id}}
 
@@ -122,22 +141,25 @@ class NOUSAgent:
                 print("///////////////////// OUTPUT /////////////////////")
                 print(output)
                 for key, value in output.items():
-                    for message in value.get("messages", []):
-                        if isinstance(message, dict):
-                            turn_messages.append(message)
-                            # Extract final answer if present
-                            if key == "final_answer":
-                                final_answer_content = message["content"].replace("Final Answer: ", "")
-                                final_message = {"role": "assistant", "content": final_answer_content}
-                                self.conversation_history.append(final_message)
-                                self.emitter.emit('final_answer', final_message)
-                                fa = final_answer_content
-                        else:
-                            print(f"Unexpected message format: {message}")
-                            # Still add it to turn messages in a properly formatted way
-                            turn_messages.append({"role": "assistant", "content": str(message)})
-
-                    self.emitter.emit('chatHistory', turn_messages)
+                    if key == "final_answer":
+                        # Format the final answer as a message
+                        fa = value["answer"]
+                        message = {"role": "assistant", "content": fa}
+                        
+                        # Only add if not a duplicate of the last assistant message
+                        should_add = True
+                        for i in range(len(self.conversation_history) - 1, -1, -1):
+                            if self.conversation_history[i]["role"] == "assistant":
+                                if self.conversation_history[i]["content"] == fa:
+                                    should_add = False
+                                break
+                        
+                        if should_add:
+                            self.conversation_history.append(message)
+                        
+                        # Always emit the chat history and final answer
+                        self.emitter.emit('chatHistory', self.conversation_history)
+                        self.emitter.emit('final_answer', message)
 
             # Ensure we have a fallback response if something goes wrong
             if not fa:
@@ -156,7 +178,7 @@ class NOUSAgent:
         except Exception as e:
             print("An error occurred:", str(e))
             print("Full error:", e)  # Add full error info
-            error_message = {'role': 'assistant', 'content': f'Error: {str(e)}'}
+            error_message = {'role': 'assistant', "content": f"Error: {str(e)}"}
             self.conversation_history.append(error_message)
             self.emitter.emit('final_answer', error_message)
             return f"Error: {str(e)}"

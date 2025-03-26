@@ -150,10 +150,11 @@ async def main():
 
     async def handle_user_input(input: str):
         print(f"Processing user input FOO': {input}")
-        foo = await handleInput(input)
-        # foo = await nousAgent.handleInput(input)
+        # foo = await handleInput(input)
+        foo = await nousAgent.handleInput(input)
         print(f"RESPONSE: {foo}")
-        await nous_server.send_final_answer({'message': foo.content})
+        # await nous_server.send_final_answer({'message': foo.content})
+        await nous_server.send_final_answer({'message': foo})
 #     async def handleUserInput(input: str):
 #         res = await nousCompere.handleInput(input)
 #         return res

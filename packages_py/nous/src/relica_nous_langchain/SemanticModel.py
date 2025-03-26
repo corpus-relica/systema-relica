@@ -132,12 +132,20 @@ class SemanticModel:
         return orphaned_models
 
     async def addFact(self, fact):
+        # check if the fact is already in the list
+        # if it is, remove it first
+        self._facts = [f for f in self._facts if f['fact_uid'] != fact['fact_uid']]
         self._facts.append(fact)
+        # await self.removeOrphanedModelsForRemovedFacts(fact['fact_uid'])
         await self.loadModelsForFacts(fact)
 
     async def addFacts(self, facts):
-        # First add the facts to the internal collection
+        # check if the facts are already in the list
+        # if they are, remove them first
+        factUIDs = [f['fact_uid'] for f in facts]
+        self._facts = [f for f in self._facts if f['fact_uid'] not in factUIDs]
         self._facts.extend(facts)
+        # await self.removeOrphanedModelsForRemovedFacts(factUIDs)
         await self.loadModelsForFacts(facts)
 
     async def removeFact(self, factUID):
@@ -248,7 +256,7 @@ class SemanticModel:
 
         # Add category if available
         if category:
-            result += f" ({category})"
+            result += f" {category}"
 
         # Add definitions or classifiers based on type
         if entity_type == 'kind':
@@ -350,15 +358,18 @@ class SemanticModel:
                 rel_types[rel_type] = []
 
             lh_name = fact.get('lh_object_name', f"Entity {fact.get('lh_object_uid')}")
+            lh_uid = fact.get('lh_object_uid')
             rh_name = fact.get('rh_object_name', f"Entity {fact.get('rh_object_uid')}")
+            rh_uid = fact.get('rh_object_uid')
 
-            rel_types[rel_type].append(f"- {lh_name} {rel_type} {rh_name}")
+
+            rel_types[rel_type].append(f"- {lh_name}({lh_uid}) -> {rel_type} -> {rh_name}({rh_uid})")
 
         # Add each relation type group
         for rel_type, lines in rel_types.items():
-            relationship_lines.append(f"{rel_type.upper()}:")
+            # relationship_lines.append(f"{rel_type.upper()}:")
             relationship_lines.extend(lines)
-            relationship_lines.append("")  # Empty line for spacing
+            # relationship_lines.append("")  # Empty line for spacing
 
         return "\n".join(relationship_lines)
 
@@ -410,7 +421,7 @@ class SemanticModel:
         result = ""
         for rel_type, fact_group in grouped_facts.items():
             facts_str = "\n".join(
-                f"{f['lh_object_name']} -> {f['rh_object_name']}"
+                f"{f['lh_object_name']} -> {f['rel_type_name']} -> {f['rh_object_name']}"
                 for f in fact_group
             )
             result += f"# {rel_type}:\n{facts_str}\n"

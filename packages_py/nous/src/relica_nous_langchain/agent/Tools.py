@@ -11,7 +11,7 @@ from src.relica_nous_langchain.services.archivist_client import archivist_client
 
 @tool
 async def loadEntity(uid: int) -> str: #asyncio.Future:
-    """Use this to load an entity that is not currently loaded in the system. Provide the unique identifier (uid) of the entity, and the system will load it, returning detailed information about the entity.
+    """LOAD ADDITIONAL ENTITIES. Use this when you know a UID but it's not in the current context. This tool is useful for following relationship chains when investigating what happened with entities.
         Args:
             uid: The unique identifier of the entity to load
     """
@@ -36,10 +36,11 @@ async def loadEntity(uid: int) -> str: #asyncio.Future:
 
 @tool
 async def getEntityDetails(uid: int)->str | None:
-    """USE THIS FIRST!, use this to retrieve their full details. Provide the entity's uid, and the system will fetch comprehensive information, including details about related uids not fully loaded in the current context. Opt for this instead of 'loadEntity' or 'textSearchExact' for entities that are already present in the system.
+    """USE THIS FIRST FOR ANY ENTITY MENTIONED IN A QUESTION! Use this to retrieve comprehensive information about an entity, including any states, occurrences, or events it might be involved in. Always use this tool when the user asks about specific entities or "what happened" with entities.
         Args:
             uid: The unique identifier of the entity to retrieve details for
     """
+
     uid = int(uid)
 
     content = semantic_model.getModelRepresentation(uid)
@@ -106,10 +107,11 @@ def facts_to_metadata_str(facts) -> str:
 
 @tool
 async def textSearchExact(search_term: str)->str:
-    """use this ONLY IF THE UID IS UNKOWN! Use this to find and load an entity with a name that exactly matches a given text term. It loads the entity into the application context and returns detailed information about it. If the entity is already loaded, switch to 'getEntityDetails' for more comprehensive insights about the entity.
+    """SEARCH FOR UNKNOWN ENTITIES OR EVENTS. Use this when you need to find entities by name that aren't yet loaded, or when searching for events, incidents, or occurrences that might not be visible in the current context.
         Args:
-            search_term: The text term to search for
+            search_term: The text term to search for (can be entity names, event types, etc.)
     """
+
     result = await aperture_client.textSearchLoad(search_term)
 
     # Check if result exists and has facts
@@ -313,7 +315,7 @@ async def textSearchExact(search_term: str)->str:
 
 @tool
 async def allRelatedFacts(uid: int)->str:
-    """Use this to retrieve all facts related to an entity (not including subtypes of a kind). Provide the uid of the entity, and the system will return a string representation of all facts related to the entity.
+    """DISCOVER COMPLETE RELATIONSHIPS! Use this to explore ALL connections to an entity, essential for understanding what happened with entities or their components. Always use this tool when asked about events, incidents, or changes involving an entity.
         Args:
             uid: The unique identifier of the entity to retrieve all related facts for
     """
