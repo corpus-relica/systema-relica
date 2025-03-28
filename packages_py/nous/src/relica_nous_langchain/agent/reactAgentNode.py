@@ -10,6 +10,8 @@ from src.relica_nous_langchain.agent.Common import (
     format_chat_history,
     ACTION_FINAL_ANSWER,
     ACTION_CONTINUE,
+    ACTION_THINK,
+    ACTION_ACT,
     )
 from src.relica_nous_langchain.agent.Tools import (
     converted_tools,
@@ -367,3 +369,9 @@ Scratchpad:
 # Simple condition function to determine if we should continue or finish
 def should_continue_or_finish(state):
     return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_CONTINUE
+
+def route_after_thought(state):
+    return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_ACT
+
+def route_after_action(state):
+    return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_THINK

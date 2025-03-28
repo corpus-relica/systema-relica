@@ -93,7 +93,7 @@
                       (:user-id ?data) 
                       (:entity-uid ?data)
                       (:environment-id ?data)))]
-      (?reply-fn (:environment result))
+      (?reply-fn result)
       (when (:success result)
         (ws/broadcast!
          {:type :facts/loaded

@@ -1,28 +1,40 @@
 #!/usr/bin/env python3
+import os
+
+import instructor
+from groq import Groq
+from langchain_groq import ChatGroq
 
 from datetime import datetime
-# from langchain_openai import  ChatOpenAI
-from langchain_anthropic import ChatAnthropic
 
-from src.relica_nous_langchain.agent.Common import (
-    # openAIModel,
-    anthropicModel,
-    )
+# from src.relica_nous_langchain.agent.Common import (
+#     # openAIModel,
+#     # anthropicModel,
+#     )
 from src.relica_nous_langchain.agent.Common import (
     ACTION_CONTINUE,
     ACTION_FINAL_ANSWER,
 )
 
 from pydantic import BaseModel, Field, StrictInt
+from typing import Literal
 
+isCompleteTemplate = """Answer only yes or no, Does the following statement indicate that a task is complete or that you should otherwise advance to the final answer stage:
 
-isCompleteTemplate = """Answer only yes or no: Does the following statement indicate that a task needs to be completed or that some work is required?: \"{input}\""""
+\"{input}\"
+
+in other words, 'yes' means you should skip to the final answer stage, and 'no' means you should continue with the current task.
+"""
 
 class ShouldContinueResponse(BaseModel):
-    should_continue: str = Field(..., enum=["yes", "no"])
+    # reasoning: str = Field(
+    #     ...,
+    #     description="why you made the choice you did.",
+    # )
+    skip_to_answer: Literal["yes", "no"] = Field(..., description="whether to skip to the final answer(yes) stage or not(no).")
 
-# should_continue_llm = ChatOpenAI(
-#     model="gpt-4o",
+# should_continue_llm = ChatAnthropic(
+#     model=anthropicModel,
 #     temperature=0,
 #     max_tokens=1000,
 #     timeout=None,
@@ -30,25 +42,32 @@ class ShouldContinueResponse(BaseModel):
 #     stop=['<\\s>'],
 #     ).with_structured_output(ShouldContinueResponse)
 
-should_continue_llm = ChatAnthropic(
-    model=anthropicModel,
-    temperature=0,
-    max_tokens=1000,
-    timeout=None,
-    max_retries=2,
-    stop=['<\\s>'],
-    ).with_structured_output(ShouldContinueResponse)
+# should_continue_llm = ChatGroq(
+#     model="qwen-qwq-32b",
+#     temperature=0.7,
+#     max_tokens=1000,
+#     timeout=None,
+#     max_retries=2,
+#     stop=['<\\s>'],
+#     ).with_structured_output(ShouldContinueResponse)
+
+# client = Groq(
+#     api_key=os.environ.get("GROQ_API_KEY"),
+# )
+
+client = instructor.from_groq(Groq(
+    api_key=os.environ.get("GROQ_API_KEY"),
+))
+# class ExtractUser(BaseModel):
+#     name: str
+#     age: int
 
 # Define the function that determines whether to continue or not
 def should_continue(state):
     print("/////////////////// SHOULD CONTINUE /////////////////////")
 
-    messages = state['messages']
     input = state['input']
-
-    last_message = messages[-1]
-    #last_message is everything after the first colon
-    last_message = last_message[last_message.find(":")+1:].strip()
+    last_message = state['thought']
 
     #check does last_message contain "final answer"
     if "final answer" in last_message: return ACTION_FINAL_ANSWER
@@ -59,11 +78,29 @@ def should_continue(state):
         input=last_message,
     )
 
-    response = should_continue_llm.invoke([("system",  prompt), ("human", input)])
+    chat_completion = client.chat.completions.create(
+        model="qwen-qwq-32b",
+        response_model=ShouldContinueResponse,
+        messages=[
+            {
+                "role": "system",
+                "content": prompt,
+                },
+            {
+                "role": "user",
+                "content": input,
+                }
+            ],
+    )
+    # assert resp.name == "Jason"
+    # assert resp.age == 25
+    print("**************** SHOULD CONTINUE RESPONSE !!!!!! -->", chat_completion)
 
-    message = response.should_continue
+    message = chat_completion #.skip_to_answer
+    # message = response.should_continue
+    print("**************** SHOULD CONTINUE RESPONSE -->", message)
 
-    if message == "no":
+    if message == "yes":
         return ACTION_FINAL_ANSWER
     else:
         return ACTION_CONTINUE

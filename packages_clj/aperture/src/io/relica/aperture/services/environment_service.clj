@@ -154,7 +154,7 @@
           (if updated-env
             {:success true
              :environment updated-env
-             :facts (:facts updated-env)}
+             :facts facts}
             {:error "Failed to update environment with related facts"}))
         (catch Exception e
           (log/error e "Failed to load all related facts")

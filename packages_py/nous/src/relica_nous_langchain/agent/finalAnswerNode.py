@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
 from datetime import datetime
-# from langchain_openai import  ChatOpenAI
+from langchain_openai import  ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
+
 from src.relica_nous_langchain.agent.Common import (
-    # openAIModel,
+    openAIModel,
+    localModel,
     anthropicModel,
     format_chat_history,
     )
@@ -22,21 +26,8 @@ from src.relica_nous_langchain.SemanticModel import semantic_model
 ################################################################################## FINAL ANSWER
 
 
-# final_answer_llm = ChatOpenAI(
-#     model=openAIModel,
-#     temperature=0,
-#     max_tokens=1000,
-#     timeout=None,
-#     max_retries=2,
-#     stop=['\nObservation',
-#           '\nFinal Answer',
-#           '\nThought',
-#           '\nAction'],
-#     )
-
-
-final_answer_llm = ChatAnthropic(
-    model=anthropicModel,
+final_answer_llm = ChatGroq(
+    model_name="qwen-qwq-32b",
     temperature=0.7,
     max_tokens=1000,
     timeout=None,
@@ -46,6 +37,44 @@ final_answer_llm = ChatAnthropic(
           '\nThought',
           '\nAction'],
     )
+# final_answer_llm = ChatOpenAI(
+#     model=openAIModel,
+#     # temperature=0,
+#     max_tokens=1000,
+#     timeout=None,
+#     max_retries=2,
+#     stop=['\nObservation',
+#           '\nFinal Answer',
+#           '\nThought',
+#           '\nAction'],
+#     )
+
+# final_answer_llm = ChatOpenAI(
+#     # model=openAIModel,
+#     temperature=0,
+#     base_url="http://127.0.0.1:1234/v1",
+#     openai_api_key="dummy_value",
+#     model_name=localModel,
+#     max_tokens=1000,
+#     timeout=None,
+#     max_retries=2,
+#     stop=['\nObservation',
+#           '\nFinal Answer',
+#           '\nThought',
+#           '\nAction'],
+#     )
+
+# final_answer_llm = ChatAnthropic(
+#     model=anthropicModel,
+#     temperature=0.7,
+#     max_tokens=1000,
+#     timeout=None,
+#     max_retries=2,
+#     stop=['\nObservation',
+#           '\nFinal Answer',
+#           '\nThought',
+#           '\nAction'],
+#     )
 
 def final_answer(state):
     """
@@ -83,8 +112,12 @@ Based on the conversation history and the current question, provide a final, com
 """
 
         response = final_answer_llm.invoke([("system", prompt), ("human", input_text)])
+
+
         print("/////////////////// GENERATED FINAL ANSWER /////////////////////")
         message = response.content
+        # strip everything before '</think>'
+        message = message.split("</think>")[-1]
         print(message)
 
     # Return just the message content

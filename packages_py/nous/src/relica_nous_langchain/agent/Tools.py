@@ -35,7 +35,7 @@ async def loadEntity(uid: int) -> str: #asyncio.Future:
 
 
 @tool
-async def getEntityDetails(uid: int)->str | None:
+async def getEntityOverview(uid: int)->str | None:
     """USE THIS FIRST FOR ANY ENTITY MENTIONED IN A QUESTION! Use this to retrieve comprehensive information about an entity, including any states, occurrences, or events it might be involved in. Always use this tool when the user asks about specific entities or "what happened" with entities.
         Args:
             uid: The unique identifier of the entity to retrieve details for
@@ -55,13 +55,13 @@ async def getEntityDetails(uid: int)->str | None:
     return content
 
 
-# @tool
-# async def cutToFinalAnswer(message: str)->str:
-#     """Invoke this to bypass ongoing dialogues and immediately supply the final, conclusive answer. It skips all intermediate conversation steps and allows to provide the direct outcome.
-#         Args:
-#             message: The final answer to the original input question
-#     """
-#     return "cut to the chase"
+@tool
+async def cutToFinalAnswer(message: str)->str:
+    """Invoke this to bypass ongoing dialogues and immediately supply the final, conclusive answer. It skips all intermediate conversation steps and allows to provide the direct outcome.
+        Args:
+            message: The final answer to the original input question
+    """
+    return "cut to the chase"
 
 # @tool
 # async def messageUser(message: str)->str:
@@ -314,7 +314,7 @@ async def textSearchExact(search_term: str)->str:
 #     return ret
 
 @tool
-async def allRelatedFacts(uid: int)->str:
+async def getEntityDetails(uid: int)->str:
     """DISCOVER COMPLETE RELATIONSHIPS! Use this to explore ALL connections to an entity, essential for understanding what happened with entities or their components. Always use this tool when asked about events, incidents, or changes involving an entity.
         Args:
             uid: The unique identifier of the entity to retrieve all related facts for
@@ -378,10 +378,11 @@ async def allRelatedFacts(uid: int)->str:
 #     return response
 
 tools = [
-         getEntityDetails,
-         loadEntity,
-         # cutToFinalAnswer,
          textSearchExact,
+         loadEntity,
+         getEntityOverview,
+         getEntityDetails,
+         cutToFinalAnswer,
          # # specializeKind,
          # # classifyIndividual,
          # # #
@@ -389,7 +390,6 @@ tools = [
          # specializationFact,
          # classified,
          # classificationFact,
-         allRelatedFacts,
          # listSubtypes,
          # findSuitableSupertype,
          ]

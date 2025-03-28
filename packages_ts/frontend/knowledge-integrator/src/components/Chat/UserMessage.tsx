@@ -1,5 +1,6 @@
 import React from 'react';
 import { Paper, Box } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
 
 interface UserMessageProps {
   content: string;
@@ -20,7 +21,9 @@ const UserMessage = ({ content }: UserMessageProps) => {
         lineHeight: { xs: 1.5, sm: 1.55, md: 1.55, lg: 1.55 }
       }}
     >
-      <Box>{content}</Box>
+      <Box>
+        <ReactMarkdown>{content}</ReactMarkdown>
+      </Box>
     </Paper>
   );
 };

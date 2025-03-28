@@ -1,18 +1,12 @@
 import React from 'react';
 import { Paper, Box } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
 
 interface AssistantMessageProps {
   content: string;
 }
 
 const AssistantMessage = ({ content }: AssistantMessageProps) => {
-  // Escape double quotes and handle other special characters
-  const escapedContent = content
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r')
-    .replace(/\t/g, '\\t');
-
   return (
     <Paper
       sx={{
@@ -27,7 +21,11 @@ const AssistantMessage = ({ content }: AssistantMessageProps) => {
         lineHeight: { xs: 1.5, sm: 1.55, md: 1.55, lg: 1.55 }
       }}
     >
-      <Box sx={{ whiteSpace: 'pre-wrap' }}>{JSON.parse(`"${escapedContent}"`)}</Box>
+      <Box className="prose prose-slate">
+        <ReactMarkdown>
+          {content}
+          </ReactMarkdown>
+      </Box>
     </Paper>
   );
 };

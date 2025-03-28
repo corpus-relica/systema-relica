@@ -6,7 +6,7 @@ import uuid
 
 from typing import Optional, List, Dict, Any
 
-from langgraph.checkpoint.memory import MemorySaver
+# from langgraph.checkpoint.memory import MemorySaver
 
 from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
 
@@ -15,13 +15,27 @@ from src.relica_nous_langchain.SemanticModel import semantic_model
 from src.relica_nous_langchain.agent.Common import (
     ACTION_CONTINUE,
     ACTION_FINAL_ANSWER,
+    ACTION_THINK,
+    ACTION_ACT,
 )
 
 from typing import TypedDict, Annotated, Sequence
 from langgraph.graph import StateGraph
 
-# Import new react_agent and final_answer nodes
-from src.relica_nous_langchain.agent.reactAgentNode import react_agent, should_continue_or_finish
+# Import bifurcated agent nodes
+from src.relica_nous_langchain.agent.reactAgentNode import (
+    # thought_agent,
+    # action_observe_agent,
+    route_after_thought,
+    route_after_action,
+    should_continue_or_finish
+)
+
+from src.relica_nous_langchain.agent.thoughtNode import thought
+from src.relica_nous_langchain.agent.actionObserveNode import action_observe
+from src.relica_nous_langchain.agent.shouldContinueNode import should_continue
+
+
 from src.relica_nous_langchain.agent.finalAnswerNode import final_answer
 
 # Set API keys if not present
@@ -31,7 +45,7 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
     os.environ["ANTHROPIC_API_KEY"] = getpass.getpass("Enter your Anthropic API key: ")
 
 # Initialize memory saver
-memory = MemorySaver()
+# memory = MemorySaver()
 
 ###############################
 
@@ -40,30 +54,52 @@ class AgentState(TypedDict):
     input: str
     messages: Annotated[list[dict], operator.add]  # Chat history
     scratchpad: str
+    thought: Optional[str]  # Added to store the current thought
     answer: Optional[str]
     selected_entity: int
     cut_to_final: bool
     loop_idx: int  # Keep for iteration tracking
+    next_step: str  # Added to track routing between nodes
 
 ###############################
 
-# Create new simplified workflow
+# Create new bifurcated workflow
 workflow = StateGraph(AgentState)
 
-# Add only two nodes: react_agent and final_answer
-workflow.add_node("react_agent", react_agent)
+# Add nodes for thought, action/observe, and final_answer
+workflow.add_node("thought_agent", thought)
+workflow.add_node("action_observe_agent", action_observe)
 workflow.add_node("final_answer", final_answer)
 
-# Set entry point to react_agent
-workflow.set_entry_point("react_agent")
+# Set entry point to thought_agent
+workflow.set_entry_point("thought_agent")
 
-# Add conditional edge from react_agent to either itself or final_answer
 workflow.add_conditional_edges(
-    "react_agent",
-    should_continue_or_finish,
+    "thought_agent",
+    should_continue,
     {
-        ACTION_CONTINUE: "react_agent",
-        ACTION_FINAL_ANSWER: "final_answer",
+        ACTION_CONTINUE: "action_observe_agent",
+        ACTION_FINAL_ANSWER: "final_answer"
+    }
+)
+
+# Add conditional edge from thought_agent based on the returned next_step
+# workflow.add_conditional_edges(
+#     "thought_agent",
+#     route_after_thought,
+#     {
+#         ACTION_ACT: "action_observe_agent",
+#         ACTION_FINAL_ANSWER: "final_answer"
+#     }
+# )
+
+# Add conditional edge from action_observe_agent based on the returned next_step
+workflow.add_conditional_edges(
+    "action_observe_agent",
+    route_after_action,
+    {
+        ACTION_THINK: "thought_agent",
+        ACTION_FINAL_ANSWER: "final_answer"
     }
 )
 
@@ -85,8 +121,6 @@ class NOUSAgent:
         self.emitter = EventEmitter()
         self.conversation_history: List[Dict[str, Any]] = []
         self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this conversation
-        self.last_user_input = None
-        self.last_assistant_response = None
         print("NOUS AGENT", self.conversation_id)
 
     async def handleInput(self, user_input):
@@ -126,8 +160,10 @@ class NOUSAgent:
                 "selected_entity": semantic_model.selectedEntity,
                 "messages": clean_history,
                 "scratchpad": "",
+                "thought": "",
                 "answer": None,
-                "cut_to_final": False
+                "cut_to_final": False,
+                "next_step": ACTION_THINK
             }
 
             fa = ""
