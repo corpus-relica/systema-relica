@@ -1,8 +1,8 @@
-(ns io.relica.clarity.handlers.physical-object
+(ns io.relica.clarity.specs.physical-object
   (:require [clojure.spec.alpha :as s]
             [expound.alpha :as expound]
             ;; [io.relica.clarity.io.archivist-api :as api]
-            [io.relica.clarity.handlers.base :as base]))
+            [io.relica.clarity.specs.base :as base]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
@@ -10,9 +10,9 @@
 
 
 (s/def ::kinds-of-aspects
-  (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
-                   :entity #(do (require '[io.relica.clarity.handlers.aspect])
-                               (s/valid? :io.relica.clarity.handlers.aspect/kind-of-aspect %)))))
+  (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
+                   :entity #(do (require '[io.relica.clarity.specs.aspect])
+                               (s/valid? :io.relica.clarity.specs.aspect/kind-of-aspect %)))))
 
 (s/def ::definitive-kinds-of-aspects
   ::kinds-of-aspects)
@@ -28,24 +28,24 @@
     (s/spec ::physical-object)))
 
 ;; (s/def ::parts
-;;   (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
+;;   (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
 ;;                    :entity (fn [x] (s/valid? @physical-object-delayed x)))))
 
 ;; (s/def ::totalities
-;;   (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
+;;   (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
 ;;                    :entity (fn [x] (s/valid? @physical-object-delayed x)))))
 
 ;; (s/def ::adopted-state
-;;   (s/or :uid :io.relica.clarity.handlers.base/uid
-;;         :entity #(do (require '[io.relica.clarity.handlers.state])
-;;                      (s/valid? :io.relica.clarity.handlers.state/state %))))
+;;   (s/or :uid :io.relica.clarity.specs.base/uid
+;;         :entity #(do (require '[io.relica.clarity.specs.state])
+;;                      (s/valid? :io.relica.clarity.specs.state/state %))))
 
 ;; (s/def ::physical-object-kind
 ;;   (s/merge
-;;    :io.relica.clarity.handlers.base/entity-kind))
+;;    :io.relica.clarity.specs.base/entity-kind))
 
 (s/def ::kind-of-physical-object
-  (s/and :io.relica.clarity.handlers.base/kind-of-entity
+  (s/and :io.relica.clarity.specs.base/kind-of-entity
          (s/keys :opt-un [
                           ::definitive-kinds-of-aspects
                           ::possible-kinds-of-aspects
@@ -76,41 +76,41 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; INDIVIDUAL ;;
 
 (s/def ::aspects
-  (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
-                   :entity #(do (require '[io.relica.clarity.handlers.aspect])
-                               (s/valid? :io.relica.clarity.handlers.aspect/individual-aspect %)))))
+  (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
+                   :entity #(do (require '[io.relica.clarity.specs.aspect])
+                               (s/valid? :io.relica.clarity.specs.aspect/individual-aspect %)))))
 
 ;; TODO should maybe be a tuple of kind-of-relation and involved individual-occurrence
 (s/def ::involvements
-  (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
-                   :entity #(do (require '[io.relica.clarity.handlers.involvement])
-                               (s/valid? :io.relica.clarity.handlers.involvement/individual-involvement %)))))
+  (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
+                   :entity #(do (require '[io.relica.clarity.specs.involvement])
+                               (s/valid? :io.relica.clarity.specs.involvement/individual-involvement %)))))
 
-;; -(s/def :io.relica.clarity.handlers.base/involver-occurrence
-;; -  (s/or :uid :io.relica.clarity.handlers.base/uid
+;; -(s/def :io.relica.clarity.specs.base/involver-occurrence
+;; -  (s/or :uid :io.relica.clarity.specs.base/uid
 ;; -        :entity #(do (require '[io.relica.clarity.occurrence])
-;; -                     (s/valid? :io.relica.clarity.handlers.occurrence/occurrence %))))
+;; -                     (s/valid? :io.relica.clarity.specs.occurrence/occurrence %))))
 ;; -
-;; -(s/def :io.relica.clarity.handlers.base/involving-relation
-;; -  (s/or :uid :io.relica.clarity.handlers.base/uid
+;; -(s/def :io.relica.clarity.specs.base/involving-relation
+;; -  (s/or :uid :io.relica.clarity.specs.base/uid
 ;; -        :entity #(do (require '[io.relica.clarity.relation])
-;; -                     (s/valid? :io.relica.clarity.handlers.relation/relation-kind %))))
+;; -                     (s/valid? :io.relica.clarity.specs.relation/relation-kind %))))
 ;; -
-;; -(s/def :io.relica.clarity.handlers.base/involvement-tuple
-;; -  (s/tuple :io.relica.clarity.handlers.base/involving-relation
-;; -           :io.relica.clarity.handlers.base/involver-occurrence))
+;; -(s/def :io.relica.clarity.specs.base/involvement-tuple
+;; -  (s/tuple :io.relica.clarity.specs.base/involving-relation
+;; -           :io.relica.clarity.specs.base/involver-occurrence))
 ;; -
-;; -(s/def :io.relica.clarity.handlers.base/involvers
-;; -  (s/coll-of :io.relica.clarity.handlers.base/involvement-tuple :kind vector? :min-count 1))
+;; -(s/def :io.relica.clarity.specs.base/involvers
+;; -  (s/coll-of :io.relica.clarity.specs.base/involvement-tuple :kind vector? :min-count 1))
 
 ;; TODO should maybe be a tuple of kind-of-role and kind-of-relation
 (s/def ::roles
-  (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
-                   :entity #(do (require '[io.relica.clarity.handlers.role])
-                               (s/valid? :io.relica.clarity.handlers.role/kind-of-role %)))))
+  (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
+                   :entity #(do (require '[io.relica.clarity.specs.role])
+                               (s/valid? :io.relica.clarity.specs.role/kind-of-role %)))))
 
 (s/def ::individual-physical-object
-  (s/and :io.relica.clarity.handlers.base/individual-entity
+  (s/and :io.relica.clarity.specs.base/individual-entity
          (s/keys :opt-un [
                           ::aspects      ;; possessed-individual-aspects
                           ::involvements ;; involvements-in-individual-occurrences

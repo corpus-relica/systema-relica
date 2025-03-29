@@ -1,9 +1,9 @@
-(ns io.relica.clarity.handlers.occurrence
+(ns io.relica.clarity.specs.occurrence
   (:require [clojure.spec.alpha :as s]
             [expound.alpha :as expound]
-            [io.relica.clarity.handlers.base :as base]
-            [io.relica.clarity.handlers.state :as state]
-            [io.relica.clarity.handlers.aspect :as aspect]))
+            [io.relica.clarity.specs.base :as base]
+            [io.relica.clarity.specs.state :as state]
+            [io.relica.clarity.specs.aspect :as aspect]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
@@ -12,9 +12,9 @@
 ;; ASPECT
 
 (s/def ::kinds-of-aspects
-  (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
-                   :entity #(do (require '[io.relica.clarity.handlers.aspect])
-                               (s/valid? :io.relica.clarity.handlers.aspect/kind-of-aspect %)))))
+  (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
+                   :entity #(do (require '[io.relica.clarity.specs.aspect])
+                               (s/valid? :io.relica.clarity.specs.aspect/kind-of-aspect %)))))
 
 (s/def ::definitive-kinds-of-aspects
   ::kinds-of-aspects)
@@ -28,18 +28,18 @@
 ;; INVOLVEMENT
 
 ;; (s/def ::kinds-of-involvements
-;;   (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
-;;                    :entity #(do (require '[io.relica.clarity.handlers.relation])
-;;                                (s/valid? :io.relica.clarity.handlers.relation/relation-kind %)))))
+;;   (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
+;;                    :entity #(do (require '[io.relica.clarity.specs.relation])
+;;                                (s/valid? :io.relica.clarity.specs.relation/relation-kind %)))))
 
 (s/def ::kind-of-involvement
-  (s/or :uid :io.relica.clarity.handlers.base/uid
-        :entity #(do (require '[io.relica.clarity.handlers.relation])
-                     (s/valid? :io.relica.clarity.handlers.relation/kind-of-relation %))))
+  (s/or :uid :io.relica.clarity.specs.base/uid
+        :entity #(do (require '[io.relica.clarity.specs.relation])
+                     (s/valid? :io.relica.clarity.specs.relation/kind-of-relation %))))
 
 (s/def ::kind-of-involved
   (s/or :uid int?
-        :entity :io.relica.clarity.handlers.base/kind-of-entity))
+        :entity :io.relica.clarity.specs.base/kind-of-entity))
 
 (s/def ::kind-of-involvement-tuple
   (s/tuple ::kind-of-involvement ::kind-of-involved))
@@ -57,7 +57,7 @@
 
 (s/def ::kind-of-occurrence
   (s/merge
-    :io.relica.clarity.handlers.state/kind-of-state
+    :io.relica.clarity.specs.state/kind-of-state
     (s/keys :opt-un [
                      ::definitive-kinds-of-aspects
                      ::possible-kinds-of-aspects
@@ -75,19 +75,19 @@
 ;; ASPECT
 
 (s/def ::aspects
-  (s/coll-of (s/or :uid :io.relica.clarity.handlers.base/uid
-                   :entity #(do (require '[io.relica.clarity.handlers.aspect])
-                               (s/valid? :io.relica.clarity.handlers.aspect/individual-aspect %)))))
+  (s/coll-of (s/or :uid :io.relica.clarity.specs.base/uid
+                   :entity #(do (require '[io.relica.clarity.specs.aspect])
+                               (s/valid? :io.relica.clarity.specs.aspect/individual-aspect %)))))
 
 ;; INVOLVEMENT
 
 (s/def ::individual-involvement
   (s/or :uid int?
-        :entity :io.relica.clarity.handlers.relation/individual-relation))
+        :entity :io.relica.clarity.specs.relation/individual-relation))
 
 (s/def ::individual-involved
   (s/or :uid int?
-        :entity :io.relica.clarity.handlers.base/individual-entity))
+        :entity :io.relica.clarity.specs.base/individual-entity))
 
 (s/def ::individual-involvement-tuple
   (s/tuple ::individual-involvement ::individual-involved))
@@ -97,8 +97,8 @@
 
 (s/def ::occurrence-type #{:activity :process :event :deed})
 
-(s/def :io.relica.clarity.handlers.occurrence/individual-occurrence
-  (s/merge :io.relica.clarity.handlers.state/individual-state
+(s/def :io.relica.clarity.specs.occurrence/individual-occurrence
+  (s/merge :io.relica.clarity.specs.state/individual-state
            (s/keys :req-un [::occurrence-type]
                    :opt-un [
 
@@ -119,9 +119,9 @@
 ;; (s/def ::place-of-end ::base/kind-ref)
 
 
-;; (s/def :io.relica.clarity.handlers.occurrence/happens-during ::aspect/period-in-time)
+;; (s/def :io.relica.clarity.specs.occurrence/happens-during ::aspect/period-in-time)
 
-;; (s/def :io.relica.clarity.handlers.occurrence/happens-within ::aspect/period-in-time)
+;; (s/def :io.relica.clarity.specs.occurrence/happens-within ::aspect/period-in-time)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; TEST ;;
 

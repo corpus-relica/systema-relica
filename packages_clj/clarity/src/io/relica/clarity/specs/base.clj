@@ -1,4 +1,4 @@
-(ns io.relica.clarity.handlers.base
+(ns io.relica.clarity.specs.base
   (:require [clojure.spec.alpha :as s]
             [expound.alpha :as expound]))
 
@@ -73,7 +73,7 @@
      :supertypes [1 2 3]
      })
 
-  (expound/expound :io.relica.clarity.handlers.base/entity some-entity)
+  (expound/expound :io.relica.clarity.specs.base/entity some-entity)
 
   (def some-other-entity
     {:uid 2
@@ -82,7 +82,7 @@
      :classifiers [1 2 3]
      })
 
-  (expound/expound :io.relica.clarity.handlers.base/entity some-other-entity)
+  (expound/expound :io.relica.clarity.specs.base/entity some-other-entity)
 
   ;; Valid example
   (def valid-kind

@@ -1,27 +1,27 @@
-(ns io.relica.clarity.handlers.aspect
+(ns io.relica.clarity.specs.aspect
   (:require [clojure.spec.alpha :as s]
             [expound.alpha :as expound]
-            [io.relica.clarity.handlers.base :as base]))
+            [io.relica.clarity.specs.base :as base]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
 (s/def ::aspect-nature #{:qualitative :quantitative})
 
 (s/def ::qualitative-value
-  (s/or :uid :io.relica.clarity.handlers.base/uid
-       :entity :io.relica.clarity.handlers.base/qualification-entity))
+  (s/or :uid :io.relica.clarity.specs.base/uid
+       :entity :io.relica.clarity.specs.base/qualification-entity))
 
 (s/def ::uom-value
-  (s/or :uid :io.relica.clarity.handlers.base/uid
-        :entity :io.relica.clarity.handlers.base/kind-entity))
+  (s/or :uid :io.relica.clarity.specs.base/uid
+        :entity :io.relica.clarity.specs.base/kind-entity))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
 
 ;; ;; (s/def ::intrinsic boolean?)
 
 (s/def ::kind-of-possessor-or-ref
-  (s/or :uid :io.relica.clarity.handlers.base/uid
-        :entity :io.relica.clarity.handlers.base/kind-of-entity))
+  (s/or :uid :io.relica.clarity.specs.base/uid
+        :entity :io.relica.clarity.specs.base/kind-of-entity))
 
 (s/def ::kinds-of-possessors
   (s/coll-of ::kind-of-possessor-or-ref))
@@ -37,7 +37,7 @@
 
 (s/def ::kind-of-aspect
   (s/merge
-    :io.relica.clarity.handlers.base/kind-of-entity
+    :io.relica.clarity.specs.base/kind-of-entity
     (s/keys :opt-un [::required-kind-of-role-1
                      ::required-kind-of-role-2]))
     ;; ::definitive-kinds-of-possessors
@@ -52,14 +52,14 @@
                                   :ratio (s/and float? #(<= 0 % 1))))
 
 (s/def ::possessor
-  (s/or :uid :io.relica.clarity.handlers.base/uid
-        :physical-object #(do (require '[io.relica.clarity.handlers.physical-object])
-                                  (s/valid? :io.relica.clarity.handlers.physical-object/individual-physical-object %))
-        :occurrence #(do (require '[io.relica.clarity.handlers.occurrence :as o])
-                             (s/valid? :io.relica.clarity.handlers.occurrence/individual-occurrence %))))
+  (s/or :uid :io.relica.clarity.specs.base/uid
+        :physical-object #(do (require '[io.relica.clarity.specs.physical-object])
+                                  (s/valid? :io.relica.clarity.specs.physical-object/individual-physical-object %))
+        :occurrence #(do (require '[io.relica.clarity.specs.occurrence :as o])
+                             (s/valid? :io.relica.clarity.specs.occurrence/individual-occurrence %))))
 
 (s/def ::individual-aspect
-  (s/and :io.relica.clarity.handlers.base/individual-entity
+  (s/and :io.relica.clarity.specs.base/individual-entity
          (s/keys :req-un [::aspect-nature
                           ::possessor])
          #(case (:aspect-nature %)
@@ -70,7 +70,7 @@
 
 ;; (s/def ::point-in-time
 ;;   (s/or
-;;    :uid :io.relica.clarity.handlers.base/uid
+;;    :uid :io.relica.clarity.specs.base/uid
 ;;    :entity (s/and ::aspect
 ;;               #(= (:aspect-nature %) :quantitative)
 ;;               #(inst? (:value %))
@@ -88,7 +88,7 @@
 ;; (s/def ::end-time ::point-in-time)
 
 ;; (s/def ::period-in-time
-;;   (s/merge :io.relica.clarity.handlers.base/entity
+;;   (s/merge :io.relica.clarity.specs.base/entity
 ;;            (s/keys :req-un [::begin-time
 ;;                             ::end-time])))
 

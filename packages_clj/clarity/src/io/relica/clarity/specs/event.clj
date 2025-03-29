@@ -1,9 +1,9 @@
-(ns io.relica.clarity.handlers.event
+(ns io.relica.clarity.specs.event
   (:require [clojure.spec.alpha :as s]
             [cheshire.core :as json]
-            [io.relica.clarity.handlers.occurrence :as occurrence]
-            [io.relica.clarity.handlers.state :as state]
-            [io.relica.clarity.handlers.base :as base]
+            [io.relica.clarity.specs.occurrence :as occurrence]
+            [io.relica.clarity.specs.state :as state]
+            [io.relica.clarity.specs.base :as base]
             ;; [io.relica.clarity.io.archivist-api :as api]
 
             [io.relica.common.io.archivist-client :as api]

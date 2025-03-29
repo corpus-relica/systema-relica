@@ -3,14 +3,14 @@
             [clojure.pprint :refer [pprint]]
             [clojure.core.async :refer [go <!]]
             [clojure.spec.alpha :as s]
-            [io.relica.clarity.handlers.base :as base]
-            [io.relica.clarity.handlers.physical-object :as po]
-            [io.relica.clarity.handlers.aspect :as aspect]
-            [io.relica.clarity.handlers.state :as state]
-            [io.relica.clarity.handlers.occurrence :as occurrence]
-            [io.relica.clarity.handlers.event :as event]
-            [io.relica.clarity.handlers.relation :as relation]
-            [io.relica.clarity.handlers.role :as role]
+            [io.relica.clarity.specs.base :as base]
+            [io.relica.clarity.specs.physical-object :as po]
+            [io.relica.clarity.specs.aspect :as aspect]
+            [io.relica.clarity.specs.state :as state]
+            [io.relica.clarity.specs.occurrence :as occurrence]
+            [io.relica.clarity.specs.event :as event]
+            [io.relica.clarity.specs.relation :as relation]
+            [io.relica.clarity.specs.role :as role]
             [io.relica.clarity.services.entity-model-service :as e-ms]
             [io.relica.clarity.services.physical-object-model-service :as po-ms]
             [io.relica.clarity.services.aspect-model-service :as asp-ms]
@@ -23,12 +23,12 @@
 
 ;; Category to namespace/spec mapping
 (def category-to-spec
-  {"physical object" :io.relica.clarity.handlers.physical-object/physical-object
-   "aspect" :io.relica.clarity.handlers.aspect/aspect
-   "role" :io.relica.clarity.handlers.role/role-kind
-   "relation" :io.relica.clarity.handlers.relation/relation-kind
-   "occurrence" :io.relica.clarity.handlers.occurrence/occurrence
-   "state" :io.relica.clarity.handlers.state/state})
+  {"physical object" :io.relica.clarity.specs.physical-object/physical-object
+   "aspect" :io.relica.clarity.specs.aspect/aspect
+   "role" :io.relica.clarity.specs.role/role-kind
+   "relation" :io.relica.clarity.specs.relation/relation-kind
+   "occurrence" :io.relica.clarity.specs.occurrence/occurrence
+   "state" :io.relica.clarity.specs.state/state})
 
 ;; ;; Relation UID to semantic relationship mapping
 (def relation-uid-to-semantic

@@ -1,19 +1,19 @@
-(ns io.relica.clarity.handlers.state
+(ns io.relica.clarity.specs.state
   (:require [clojure.spec.alpha :as s]
-            [io.relica.clarity.handlers.base :as base]
-            [io.relica.clarity.handlers.aspect :as aspect]))
+            [io.relica.clarity.specs.base :as base]
+            [io.relica.clarity.specs.aspect :as aspect]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
 
 (s/def ::kind-of-state
-  :io.relica.clarity.handlers.base/kind-of-entity)
+  :io.relica.clarity.specs.base/kind-of-entity)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; INDIVIDUAL ;;
 
 (s/def ::individual-state
-  (s/merge :io.relica.clarity.handlers.base/individual-entity
+  (s/merge :io.relica.clarity.specs.base/individual-entity
            (s/keys :opt-un [
                             ;; ::involved
                             ;; ::aspects
@@ -34,18 +34,18 @@
 
 
 ;; (s/def ::cause
-;;   (s/or :uid :io.relica.clarity.handlers.base/uid
+;;   (s/or :uid :io.relica.clarity.specs.base/uid
 ;;         :entity #(do (require '[io.relica.clarity.occurrence :as o])
-;;                      (s/valid? :io.relica.clarity.handlers.occurrence/occurrence %))))
+;;                      (s/valid? :io.relica.clarity.specs.occurrence/occurrence %))))
 
 ;; (s/def ::cause-of-begin ::cause)
 
 ;; (s/def ::cause-of-end ::cause)
 
 ;; (s/def ::adopter
-;;   (s/or :uid :io.relica.clarity.handlers.base/uid
+;;   (s/or :uid :io.relica.clarity.specs.base/uid
 ;;         :entity #(do (require '[io.relica.clarity.physical-object :as po])
-;;                      (s/valid? :io.relica.clarity.handlers.physical-object/physical-object %))))
+;;                      (s/valid? :io.relica.clarity.specs.physical-object/physical-object %))))
 
 ;; (s/def ::begin-time ::aspect/point-in-time)
 
