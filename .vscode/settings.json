@@ -2,6 +2,7 @@
     "conventionalCommits.scopes": [
         "nous",
         "system-wide",
-        "clarity"
+        "clarity",
+        "aperture"
     ]
 }
