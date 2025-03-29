@@ -1,13 +1,13 @@
-(ns rlc.clarity.handlers.event
+(ns io.relica.clarity.handlers.event
   (:require [clojure.spec.alpha :as s]
             [cheshire.core :as json]
-            [rlc.clarity.handlers.occurrence :as occurrence]
-            [rlc.clarity.handlers.state :as state]
-            [rlc.clarity.handlers.base :as base]
-            ;; [rlc.clarity.io.archivist-api :as api]
+            [io.relica.clarity.handlers.occurrence :as occurrence]
+            [io.relica.clarity.handlers.state :as state]
+            [io.relica.clarity.handlers.base :as base]
+            ;; [io.relica.clarity.io.archivist-api :as api]
 
             [io.relica.common.io.archivist-client :as api]
-            [rlc.clarity.io.client-instances :refer [archivist-client]]
+            [io.relica.clarity.io.client-instances :refer [archivist-client]]
 
             [ring.util.response :as response]))
 
@@ -15,8 +15,8 @@
 
 ;; Event-specific specs
 (s/def ::event
-  (s/and :rlc.clarity.occurrence/occurrence
-         (s/keys :req-un [:rlc.clarity.state/is-the-case-at])
+  (s/and :io.relica.clarity.occurrence/occurrence
+         (s/keys :req-un [:io.relica.clarity.state/is-the-case-at])
          #(= (:occurrence-type %) :event)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DATA RETRIEVAL

@@ -1,9 +1,9 @@
-(ns rlc.clarity.services.physical-object-model-service
+(ns io.relica.clarity.services.physical-object-model-service
   (:require [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
             [clojure.core.async :refer [go <!]]
-            [rlc.clarity.io.archivist-api :as archivist-api]
-            [rlc.clarity.services.entity-model-service :as e-ms]))
+            [io.relica.clarity.io.archivist-api :as archivist-api]
+            [io.relica.clarity.services.entity-model-service :as e-ms]))
 
 (def aspect-uid 1727) ; "has as aspect"
 (def involvement-uid 4648) ; "involvement in an occurrence"

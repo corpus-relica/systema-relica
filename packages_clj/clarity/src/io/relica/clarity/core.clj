@@ -1,13 +1,13 @@
-(ns rlc.clarity.core
+(ns io.relica.clarity.core
   (:require
    [io.relica.common.websocket.server :as common-ws]
-   [rlc.clarity.io.ws-server :as ws]
-   ;; [rlc.clarity.xxx :refer [xxx]]
+   [io.relica.clarity.io.ws-server :as ws]
+   ;; [io.relica.clarity.xxx :refer [xxx]]
     [clojure.core.async :as async :refer [go <!]]
     [cheshire.core :as json]
     ;; [io.relica.common.io.archivist-client :as archivist]
-    ;; [rlc.clarity.io.client-instances :refer [archivist-client]]
-    [rlc.clarity.services.semantic-model-service :as sms]
+    ;; [io.relica.clarity.io.client-instances :refer [archivist-client]]
+    [io.relica.clarity.services.semantic-model-service :as sms]
    ;; [io.pedestal.http :as http]
    ;; [io.pedestal.http.route :as route]
    ;; [clj-http.client :as client]

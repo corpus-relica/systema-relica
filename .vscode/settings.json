@@ -1,6 +1,7 @@
 {
     "conventionalCommits.scopes": [
         "nous",
-        "system-wide"
+        "system-wide",
+        "clarity"
     ]
 }

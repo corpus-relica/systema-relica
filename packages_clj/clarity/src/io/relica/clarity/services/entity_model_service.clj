@@ -1,9 +1,9 @@
-(ns rlc.clarity.services.entity-model-service
+(ns io.relica.clarity.services.entity-model-service
   (:require [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
             [clojure.core.async :refer [go <!]]
             [clojure.spec.alpha :as s]
-            [rlc.clarity.io.archivist-api :as archivist-api]))
+            [io.relica.clarity.io.archivist-api :as archivist-api]))
 
 ;; ------------------------------------------------------------------ HELPERS --
 

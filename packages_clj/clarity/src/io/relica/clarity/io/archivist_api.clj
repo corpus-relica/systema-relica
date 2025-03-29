@@ -1,9 +1,9 @@
-(ns rlc.clarity.io.archivist-api
+(ns io.relica.clarity.io.archivist-api
   (:require
    [clojure.tools.logging :as log]
    [clojure.core.async :as async :refer [go <!]]
    [io.relica.common.io.archivist-client :as archivist]
-   [rlc.clarity.io.client-instances :refer [archivist-client]]))
+   [io.relica.clarity.io.client-instances :refer [archivist-client]]))
 
 
 ;; Direct access to Archivist API

@@ -1,34 +1,34 @@
-(ns rlc.clarity.services.semantic-model-service
+(ns io.relica.clarity.services.semantic-model-service
   (:require [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
             [clojure.core.async :refer [go <!]]
             [clojure.spec.alpha :as s]
-            [rlc.clarity.handlers.base :as base]
-            [rlc.clarity.handlers.physical-object :as po]
-            [rlc.clarity.handlers.aspect :as aspect]
-            [rlc.clarity.handlers.state :as state]
-            [rlc.clarity.handlers.occurrence :as occurrence]
-            [rlc.clarity.handlers.event :as event]
-            [rlc.clarity.handlers.relation :as relation]
-            [rlc.clarity.handlers.role :as role]
-            [rlc.clarity.services.entity-model-service :as e-ms]
-            [rlc.clarity.services.physical-object-model-service :as po-ms]
-            [rlc.clarity.services.aspect-model-service :as asp-ms]
-            [rlc.clarity.services.role-model-service :as rol-ms]
-            [rlc.clarity.services.relation-model-service :as rel-ms]
-            [rlc.clarity.services.occurrence-model-service :as occ-ms]
+            [io.relica.clarity.handlers.base :as base]
+            [io.relica.clarity.handlers.physical-object :as po]
+            [io.relica.clarity.handlers.aspect :as aspect]
+            [io.relica.clarity.handlers.state :as state]
+            [io.relica.clarity.handlers.occurrence :as occurrence]
+            [io.relica.clarity.handlers.event :as event]
+            [io.relica.clarity.handlers.relation :as relation]
+            [io.relica.clarity.handlers.role :as role]
+            [io.relica.clarity.services.entity-model-service :as e-ms]
+            [io.relica.clarity.services.physical-object-model-service :as po-ms]
+            [io.relica.clarity.services.aspect-model-service :as asp-ms]
+            [io.relica.clarity.services.role-model-service :as rol-ms]
+            [io.relica.clarity.services.relation-model-service :as rel-ms]
+            [io.relica.clarity.services.occurrence-model-service :as occ-ms]
             [io.relica.common.io.archivist-client :as archivist]
-            [rlc.clarity.io.archivist-api :as archivist-api]
-            [rlc.clarity.io.client-instances :refer [archivist-client]]))
+            [io.relica.clarity.io.archivist-api :as archivist-api]
+            [io.relica.clarity.io.client-instances :refer [archivist-client]]))
 
 ;; Category to namespace/spec mapping
 (def category-to-spec
-  {"physical object" :rlc.clarity.handlers.physical-object/physical-object
-   "aspect" :rlc.clarity.handlers.aspect/aspect
-   "role" :rlc.clarity.handlers.role/role-kind
-   "relation" :rlc.clarity.handlers.relation/relation-kind
-   "occurrence" :rlc.clarity.handlers.occurrence/occurrence
-   "state" :rlc.clarity.handlers.state/state})
+  {"physical object" :io.relica.clarity.handlers.physical-object/physical-object
+   "aspect" :io.relica.clarity.handlers.aspect/aspect
+   "role" :io.relica.clarity.handlers.role/role-kind
+   "relation" :io.relica.clarity.handlers.relation/relation-kind
+   "occurrence" :io.relica.clarity.handlers.occurrence/occurrence
+   "state" :io.relica.clarity.handlers.state/state})
 
 ;; ;; Relation UID to semantic relationship mapping
 (def relation-uid-to-semantic

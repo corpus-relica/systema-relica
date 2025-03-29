@@ -1,19 +1,19 @@
-(ns rlc.clarity.handlers.state
+(ns io.relica.clarity.handlers.state
   (:require [clojure.spec.alpha :as s]
-            [rlc.clarity.handlers.base :as base]
-            [rlc.clarity.handlers.aspect :as aspect]))
+            [io.relica.clarity.handlers.base :as base]
+            [io.relica.clarity.handlers.aspect :as aspect]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SPEC ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; KIND ;;
 
 (s/def ::kind-of-state
-  :rlc.clarity.handlers.base/kind-of-entity)
+  :io.relica.clarity.handlers.base/kind-of-entity)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; INDIVIDUAL ;;
 
 (s/def ::individual-state
-  (s/merge :rlc.clarity.handlers.base/individual-entity
+  (s/merge :io.relica.clarity.handlers.base/individual-entity
            (s/keys :opt-un [
                             ;; ::involved
                             ;; ::aspects
@@ -34,18 +34,18 @@
 
 
 ;; (s/def ::cause
-;;   (s/or :uid :rlc.clarity.handlers.base/uid
-;;         :entity #(do (require '[rlc.clarity.occurrence :as o])
-;;                      (s/valid? :rlc.clarity.handlers.occurrence/occurrence %))))
+;;   (s/or :uid :io.relica.clarity.handlers.base/uid
+;;         :entity #(do (require '[io.relica.clarity.occurrence :as o])
+;;                      (s/valid? :io.relica.clarity.handlers.occurrence/occurrence %))))
 
 ;; (s/def ::cause-of-begin ::cause)
 
 ;; (s/def ::cause-of-end ::cause)
 
 ;; (s/def ::adopter
-;;   (s/or :uid :rlc.clarity.handlers.base/uid
-;;         :entity #(do (require '[rlc.clarity.physical-object :as po])
-;;                      (s/valid? :rlc.clarity.handlers.physical-object/physical-object %))))
+;;   (s/or :uid :io.relica.clarity.handlers.base/uid
+;;         :entity #(do (require '[io.relica.clarity.physical-object :as po])
+;;                      (s/valid? :io.relica.clarity.handlers.physical-object/physical-object %))))
 
 ;; (s/def ::begin-time ::aspect/point-in-time)
 
@@ -55,11 +55,11 @@
 
 
 ;; (s/def ::prestate
-;;   (s/or :uid :rlc.clarity.base/uid
+;;   (s/or :uid :io.relica.clarity.base/uid
 ;;         :entity ::state))
 
 ;; (s/def ::poststate
-;;   (s/or :uid :rlc.clarity.base/uid
+;;   (s/or :uid :io.relica.clarity.base/uid
 ;;         :entity ::state))
 
 (comment

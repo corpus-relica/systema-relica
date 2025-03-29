@@ -1,10 +1,10 @@
-(ns rlc.clarity.services.role-model-service
+(ns io.relica.clarity.services.role-model-service
   (:require
    [clojure.tools.logging :as log]
    [clojure.core.async :as async :refer [go <!]]
-   [rlc.clarity.services.entity-model-service :as e-ms]
+   [io.relica.clarity.services.entity-model-service :as e-ms]
    [io.relica.common.io.archivist-client :as archivist]
-   [rlc.clarity.io.client-instances :refer [archivist-client]]
+   [io.relica.clarity.io.client-instances :refer [archivist-client]]
    ))
 
 
