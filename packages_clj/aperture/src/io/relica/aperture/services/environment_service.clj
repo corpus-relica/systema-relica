@@ -1,6 +1,6 @@
 (ns io.relica.aperture.services.environment-service
   (:require [clojure.tools.logging :as log]
-            [io.relica.aperture.env :refer [get-user-environment get-user-environments
+            [io.relica.aperture.config :refer [get-user-environment get-user-environments
                                            update-user-environment! select-entity!
                                            deselect-entity! get-default-environment
                                            create-user-environment!]]

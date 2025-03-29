@@ -1,4 +1,4 @@
-(ns io.relica.aperture.io.ws-server-ii
+(ns io.relica.aperture.io.ws-server
   (:require [io.relica.common.websocket.server :as ws-server]
             [clojure.core.async :as async :refer [go go-loop <! >! timeout chan]]
             [clojure.tools.logging :as log]))

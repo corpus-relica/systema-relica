@@ -1,8 +1,8 @@
-(ns io.relica.aperture.handlers.environment-handlers
+(ns io.relica.aperture.io.ws-handlers
   (:require [clojure.tools.logging :as log]
             [io.relica.common.websocket.server :as common-ws]
-            [io.relica.aperture.io.ws-server-ii :as ws]
-            [io.relica.aperture.env :refer [get-default-environment]]
+            [io.relica.aperture.io.ws-server :as ws]
+            [io.relica.aperture.config :refer [get-default-environment]]
             [io.relica.aperture.services.environment-service :as env-service]
             [clojure.core.async :refer [go <!]]))
 

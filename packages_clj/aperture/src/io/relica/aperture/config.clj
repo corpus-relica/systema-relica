@@ -1,4 +1,4 @@
-(ns io.relica.aperture.env
+(ns io.relica.aperture.config
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.cors :as cors]
@@ -7,6 +7,11 @@
             [cheshire.core :as json]
             [clojure.core.async :as async]
             [clojure.tools.logging :as log]))
+
+;; WebSocket Port Configuration
+(defn get-ws-port []
+  (or (some-> (System/getenv "APERTURE_WS_PORT") parse-long)
+      2175)) ; Default port
 
 ;; Database configuration
 (def db-spec
