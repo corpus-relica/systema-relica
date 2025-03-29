@@ -1,7 +1,7 @@
 (ns io.relica.clarity.core
   (:require
    [io.relica.common.websocket.server :as common-ws]
-   [io.relica.clarity.io.ws-server :as ws]
+   [io.relica.clarity.io.ws-server :as ws-server]
    ;; [io.relica.clarity.xxx :refer [xxx]]
     [clojure.core.async :as async :refer [go <!]]
     [cheshire.core :as json]
@@ -14,10 +14,12 @@
    ;; [portal.api :as p]
     [clojure.tools.logging :as log]
     [clojure.pprint :as pprint]
+    [mount.core :as mount]
+    [io.relica.clarity.components :as components]
    ))
 
-;; Server instance
-(defonce server-instance (atom nil))
+;; Server instance - no longer needed with mount
+;; (defonce server-instance (atom nil))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :get/model
@@ -116,38 +118,38 @@
           (?reply-fn [:get/individual-model-response
                       {:error "Failed to get individual"}]))))))
 
-;; Server management
-(defn start! []
-  (when-not @server-instance
-    (let [port 2176
-          server (ws/start! port)]
-      (reset! server-instance server)
-      (log/info (str "Clarity WebSocket server started on port" port))
-      server)))
+;; Server management - replaced by mount components
+;; (defn start! []
+;;   (when-not @server-instance
+;;     (let [port 2176
+;;           server (ws-server/start! port)]
+;;       (reset! server-instance server)
+;;       (log/info (str "Clarity WebSocket server started on port" port))
+;;       server)))
 
-(defn stop! []
-  (when-let [server @server-instance]
-    (ws/stop! server)
-    (reset! server-instance nil)
-    (tap> "Clarity WebSocket server stopped")))
+;; (defn stop! []
+;;   (when-let [server @server-instance]
+;;     (ws-server/stop! server)
+;;     (reset! server-instance nil)
+;;     (tap> "Clarity WebSocket server stopped")))
 
 (defn -main [& args]
-  (start!))
+  (components/start-system))
 
 ;; REPL helpers
 (comment
-  ;; Start server
-  (def server (start!))
-
+  ;; Start system using mount
+  (mount/start)
+  
   ;; Get active connections
-  (ws/get-active-sessions @server-instance)
+  (ws-server/get-active-sessions mount.core/ws-server-component)
 
   ;; Test broadcast
-  (ws/broadcast! @server-instance
+  (ws-server/broadcast! mount.core/ws-server-component
                 {:type "system-notification"
                  :message "Test broadcast"})
 
-  ;; Stop server
-  (stop!)
+  ;; Stop system
+  (mount/stop)
 
   )

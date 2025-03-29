@@ -78,7 +78,7 @@
 ;;           {}))
 ;;       (catch Exception e
 ;;         (log/error e "Failed to get related facts by relation")
-;;         {:success false}))))
+;;         {:success false})))
 
 
 ;; ----------------------------------------------------------------------
@@ -144,3 +144,19 @@
 
 
   )
+
+;; Service lifecycle management
+(defn start
+  "Start the semantic model service"
+  []
+  (log/info "Initializing semantic model service...")
+  ;; Initialize any resources, connections, or state needed by the service
+  ;; For now, this is just a placeholder
+  {})
+
+(defn stop
+  "Stop the semantic model service"
+  []
+  (log/info "Shutting down semantic model service...")
+  ;; Clean up any resources, connections, or state used by the service
+  nil)

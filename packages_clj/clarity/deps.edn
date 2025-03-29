@@ -10,6 +10,7 @@
         djblue/portal                       {:mvn/version "0.50.0"}
         org.clojure/core.async              {:mvn/version "1.7.701"}
         expound/expound                     {:mvn/version "0.9.0"}
+        mount/mount                         {:mvn/version "0.1.17"}
 
         io.relica/common                              {:local/root "../common"}
         }
@@ -24,4 +25,4 @@
            :reveal {:extra-deps {vlaaad/reveal {:mvn/version "1.3.280"}}
                     :main-opts ["-m" "nrepl.cmdline"
                                 "--middleware" "[vlaaad.reveal.nrepl/middleware]"]}
-           :run {:main-opts ["-m" "rlc.clarity.core"]}}
+           :run {:main-opts ["-m" "io.relica.clarity.core"]}}
