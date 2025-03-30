@@ -1,85 +1,28 @@
-# AODF/1.0 - COMPONENT: ARCHIVIST SERVICE
+# AODF: Archivist Service
 
-## META
-- FORMAT_VERSION: 1.0
-- CREATION_DATE: 2025-03-29
-- COMPONENT_TYPE: service
-- DOCUMENTATION_SCOPE: orientation
+## 1. Overview
+The Archivist service is responsible for managing persistent storage and data retrieval for the Relica system. It interacts with various data sources and provides a unified interface for data access.
 
-## IDENTITY
-- ID: archivist
-- PATH: packages_clj/archivist/
-- NAMESPACE: io.relica.archivist
-- DESCRIPTION: "Persistent data storage service for simulation results and application state"
+## 2. Structure
+- **Core Namespace:** `io.relica.archivist.core`
+- **Key Modules:** `io.relica.archivist.protocols`, `io.relica.archivist.db`
 
-## FUNCTION
-- PRIMARY_ROLE: data_persistence
-- PROTOCOLS: [websocket]
-- DATA_HANDLED: [simulation_results, configurations, application_state]
-- PERSISTENCE_TYPE: database
+## 3. Operations
+- `store-data`: Persists data records.
+- `retrieve-data`: Fetches data based on queries.
+- `delete-data`: Removes data records.
 
-## STRUCTURE
-- ENTRY_POINT: {file: "src/io/relica/archivist/core.clj", function: "start"}
-- COMPONENTS: {file: "src/io/relica/archivist/components.clj"}
-- HANDLERS: {directory: "src/io/relica/archivist/io/ws_handlers/"}
-- DATABASE: {directory: "src/io/relica/archivist/db/"}
-- SPECS: {directory: "src/io/relica/archivist/specs/"}
+## 4. Relationships
+- **Depends on:** `io.relica.common`
+- **Used by:** `io.relica.portal`, `io.relica.clarity`
 
-## RELATIONSHIPS
-- PROVIDES_TO: [
-    {component: "portal", interface: "archivist_client", data: "stored_records"},
-    {component: "clarity", interface: "archivist_client", data: "stored_records"},
-    {component: "aperture", interface: "archivist_client", data: "stored_records"}
-  ]
-- CONSUMES_FROM: [
-    {component: "aperture", interface: "websocket", data: "simulation_results"}
-  ]
-- IMPLEMENTS: [
-    {protocol: "websocket_server", specification: "src/io/relica/archivist/specs/ws_protocol.clj"}
-  ]
+## 5. Environment Variables
+- `ARCHIVIST_DB_URL`: Database connection string.
+- `ARCHIVIST_PORT`: Service port.
 
-## EXECUTION_FLOW
-- STARTUP: [
-    {step: 1, file: "src/io/relica/archivist/core.clj", function: "start"},
-    {step: 2, file: "src/io/relica/archivist/components.clj", function: "start-components"},
-    {step: 3, file: "src/io/relica/archivist/io/ws_server.clj", function: "start-server"}
-  ]
-- MESSAGE_HANDLING: [
-    {step: 1, file: "src/io/relica/archivist/io/ws_server.clj", function: "on-message"},
-    {step: 2, file: "src/io/relica/archivist/io/ws_handlers.clj", function: "handle-message"},
-    {step: 3, file: "src/io/relica/archivist/io/ws_handlers/*.clj", function: "handle-*"}
-  ]
+## 6. Deployment
+Deployed as a standalone service, typically containerized.
 
-## OPERATIONS
-- STORE_DATA: {file: "src/io/relica/archivist/io/ws_handlers/storage.clj", function: "handle-store"}
-- QUERY_DATA: {file: "src/io/relica/archivist/io/ws_handlers/query.clj", function: "handle-query"}
-- RETRIEVE_ENTRY: {file: "src/io/relica/archivist/io/ws_handlers/retrieval.clj", function: "handle-get"}
-
-## CLIENT_USAGE
-- CLIENT_IMPLEMENTATION: {file: "packages_clj/common/src/io/relica/common/io/archivist_client.clj"}
-- EXAMPLES: [
-    {file: "packages_clj/portal/src/io/relica/portal/io/client_instances.clj", function: "init-archivist-client"},
-    {file: "packages_clj/aperture/src/io/relica/aperture/services/environment.clj", function: "store-simulation-results"}
-  ]
-
-## TROUBLESHOOTING
-- CONNECTION_ISSUES: {file: "src/io/relica/archivist/io/ws_server.clj"}
-- DATA_PERSISTENCE_FAILURES: {file: "src/io/relica/archivist/db/operations.clj"}
-- MESSAGE_HANDLING_ERRORS: {file: "src/io/relica/archivist/io/ws_handlers/*.clj"}
-
-## DEPLOYMENT
-- CONTAINER: "archivist"
-- ENV_VARS: [
-    {name: "DB_HOST", purpose: "database connection hostname"},
-    {name: "DB_PORT", purpose: "database connection port"},
-    {name: "WS_PORT", purpose: "websocket server port"}
-  ]
-- COMPOSE_SERVICE: {file: "docker-compose.yml", service: "archivist"}
-
-## CONCEPTUAL_MODEL
-- CENTRAL_ABSTRACTIONS: [
-    {name: "record", description: "A stored data entity with metadata"},
-    {name: "query", description: "A specification for filtering stored records"},
-    {name: "websocket-message", description: "Protocol message for client-server communication"}
-  ]
-- DATA_FLOW: "Clients connect via WebSocket → Send request messages → Server processes requests → Database operations occur → Response messages returned"
+## 7. Troubleshooting
+- Check database connectivity.
+- Review service logs for errors during operations.
