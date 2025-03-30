@@ -1,32 +1,94 @@
-# AODF: Aperture Service
+# AODF/1.0 - COMPONENT: APERTURE SERVICE
 
-## 1. Overview
-The Aperture service provides data visualization capabilities and potentially UI components for the Relica system. It fetches data and renders it in various formats for user interfaces or reports.
+## META
+- FORMAT_VERSION: 1.0
+- CREATION_DATE: 2025-03-29
+- COMPONENT_TYPE: service
+- DOCUMENTATION_SCOPE: orientation
 
-## 2. Structure
-- **Core Namespace:** `io.relica.aperture.core`
-- **Key Modules:** `io.relica.aperture.viz`, `io.relica.aperture.data`, `io.relica.aperture.endpoints`
+## IDENTITY
+- ID: aperture
+- PATH: packages_clj/aperture/
+- NAMESPACE: io.relica.aperture
+- DESCRIPTION: "Environment management service for handling user environments and entity relationships"
 
-## 3. Client Usage
-Clients (typically the Portal service or direct frontend calls) request visualizations via defined API endpoints, specifying data sources and desired chart types or formats.
+## FUNCTION
+- PRIMARY_ROLE: environment_management
+- PROTOCOLS: [websocket]
+- DATA_HANDLED: [user_environments, entities, facts, relationships]
+- PERSISTENCE_TYPE: external_archivist
 
-## 4. Operations
-- `generate-visualization`: Creates a specific chart/graph based on input parameters.
-- `get-data-summary`: Provides aggregated data summaries suitable for dashboards.
+## STRUCTURE
+- ENTRY_POINT: {file: "src/io/relica/aperture/core.clj", function: "-main"}
+- COMPONENTS: {file: "src/io/relica/aperture/components.clj"}
+- HANDLERS: {file: "src/io/relica/aperture/io/ws_handlers.clj"}
+- SERVICES: {directory: "src/io/relica/aperture/services/"}
+- CONFIG: {file: "src/io/relica/aperture/config.clj"}
 
-## 5. Relationships
-- **Depends on:** `io.relica.common`, `io.relica.archivist` (for data fetching)
-- **Used by:** `io.relica.portal`, Frontend applications
+## RELATIONSHIPS
+- PROVIDES_TO: [
+    {component: "portal", interface: "websocket", data: "environment_data"}
+  ]
+- CONSUMES_FROM: [
+    {component: "archivist", interface: "archivist_client", data: "stored_records"}
+  ]
+- IMPLEMENTS: [
+    {protocol: "websocket_server", specification: "src/io/relica/aperture/io/ws_server.clj"}
+  ]
 
-## 6. Environment Variables
-- `APERTURE_API_ENDPOINT`: Base URL for the Aperture API.
-- `APERTURE_PORT`: Service port.
-- `ARCHIVIST_API_URL`: Endpoint for fetching data from Archivist.
+## EXECUTION_FLOW
+- STARTUP: [
+    {step: 1, file: "src/io/relica/aperture/core.clj", function: "-main"},
+    {step: 2, file: "src/io/relica/aperture/components.clj", function: "start-system"},
+    {step: 3, file: "src/io/relica/aperture/components.clj", function: "websocket-server"},
+    {step: 4, file: "src/io/relica/aperture/components.clj", function: "environment-service"}
+  ]
+- MESSAGE_HANDLING: [
+    {step: 1, file: "src/io/relica/aperture/io/ws_server.clj", function: "on-message"},
+    {step: 2, file: "src/io/relica/aperture/io/ws_handlers.clj", function: "handle-ws-message"},
+    {step: 3, file: "src/io/relica/aperture/services/environment_service.clj", function: "various-operations"}
+  ]
 
-## 7. Deployment
-Deployed as a web service, often containerized.
+## OPERATIONS
+- ENVIRONMENT_GET: {file: "src/io/relica/aperture/io/ws_handlers.clj", function: "handle-ws-message :environment/get"}
+- ENVIRONMENT_LIST: {file: "src/io/relica/aperture/io/ws_handlers.clj", function: "handle-ws-message :environment/list"}
+- ENVIRONMENT_CREATE: {file: "src/io/relica/aperture/io/ws_handlers.clj", function: "handle-ws-message :environment/create"}
+- LOAD_ENTITY: {file: "src/io/relica/aperture/services/environment_service.clj", function: "load-entity"}
+- UNLOAD_ENTITY: {file: "src/io/relica/aperture/services/environment_service.clj", function: "unload-entity"}
+- LOAD_CONNECTIONS: {file: "src/io/relica/aperture/services/environment_service.clj", function: "load-connections"}
 
-## 8. Troubleshooting
-- Check connectivity to data sources (Archivist).
-- Validate input parameters for visualization requests.
-- Review logs for rendering errors.
+## CLIENT_USAGE
+- CLIENT_CONNECTION: {protocol: "websocket", endpoint: "/ws"}
+- EXAMPLE_REQUEST: {
+    type: ":environment/get",
+    data: {user-id: "user-identifier", environment-id: "env-id"}
+  }
+- EXAMPLE_RESPONSE: {
+    id: "env-id",
+    name: "Environment Name",
+    facts: [],
+    selected_entity: null
+  }
+
+## TROUBLESHOOTING
+- CONNECTION_ISSUES: {file: "src/io/relica/aperture/io/ws_server.clj"}
+- ENVIRONMENT_LOADING_FAILURES: {file: "src/io/relica/aperture/services/environment_service.clj"}
+- ENTITY_RELATIONSHIP_ERRORS: {file: "src/io/relica/aperture/services/environment_service.clj", functions: ["load-connections", "load-composition"]}
+
+## DEPLOYMENT
+- CONTAINER: "aperture"
+- ENV_VARS: [
+    {name: "WS_PORT", purpose: "websocket server port"},
+    {name: "ARCHIVIST_HOST", purpose: "hostname for archivist service"},
+    {name: "ARCHIVIST_PORT", purpose: "port for archivist service"}
+  ]
+- COMPOSE_SERVICE: {file: "docker-compose.yml", service: "aperture"}
+
+## CONCEPTUAL_MODEL
+- CENTRAL_ABSTRACTIONS: [
+    {name: "environment", description: "A user workspace containing loaded entities and their relationships"},
+    {name: "entity", description: "A semantic object with properties and relationships"},
+    {name: "fact", description: "A piece of information about an entity or relationship"},
+    {name: "connection", description: "A relationship between entities"}
+  ]
+- DATA_FLOW: "Client requests environment data → Server loads entities and relationships from Archivist → Server transforms data into environment model → Environment data returned to client"

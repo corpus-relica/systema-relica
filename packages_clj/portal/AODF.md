@@ -1,45 +1,98 @@
-# AODF: Portal Service
+# AODF/1.0 - COMPONENT: PORTAL SERVICE
 
-## 1. Overview
-The Portal service acts as the primary API gateway and WebSocket hub for the Relica system. It authenticates requests (JWT), routes them to appropriate backend services (Archivist, Clarity, Aperture), and manages WebSocket connections for real-time communication.
+## META
+- FORMAT_VERSION: 1.0
+- CREATION_DATE: 2025-03-29
+- COMPONENT_TYPE: service
+- DOCUMENTATION_SCOPE: orientation
 
-## 2. Structure
-- **Core Namespace:** `io.relica.portal.core`
-- **Key Modules:**
-    - `io.relica.portal.handlers.http`: Handles incoming HTTP requests.
-    - `io.relica.portal.handlers.websocket`: Manages WebSocket connections and message routing.
-    - `io.relica.portal.io.client_instances`: Manages connections to backend services.
-    - `io.relica.portal.auth`: Handles authentication (JWT).
-- **Configuration:** `io.relica.portal.config`
+## IDENTITY
+- ID: portal
+- PATH: packages_clj/portal/
+- NAMESPACE: io.relica.portal
+- DESCRIPTION: "Gateway service that provides HTTP and WebSocket APIs for frontend clients to interact with the backend services"
 
-## 3. Operations / Routes
-- **HTTP API (`/api/v1/...`):** Proxies requests to backend REST APIs.
-    - `/api/v1/auth/login`: User authentication.
-    - `/api/v1/data/...`: Routes to Archivist.
-    - `/api/v1/insights/...`: Routes to Clarity.
-    - `/api/v1/viz/...`: Routes to Aperture.
-- **WebSocket Endpoint (`/ws`):** Handles real-time bidirectional communication, routing messages between clients and backend services (Clarity, Archivist).
+## FUNCTION
+- PRIMARY_ROLE: api_gateway
+- PROTOCOLS: [http, websocket]
+- DATA_HANDLED: [user_authentication, client_requests, service_responses]
+- PERSISTENCE_TYPE: stateless
 
-## 4. Relationships
-- **Depends on:** `io.relica.common`
-- **Connects to:** `io.relica.archivist`, `io.relica.clarity`, `io.relica.aperture`
-- **Used by:** Frontend clients, external API consumers.
+## STRUCTURE
+- ENTRY_POINT: {file: "src/io/relica/portal/core.clj", function: "-main"}
+- ROUTES: {file: "src/io/relica/portal/routes.clj"}
+- HTTP_HANDLERS: {file: "src/io/relica/portal/handlers/http.clj"}
+- WS_HANDLERS: {file: "src/io/relica/portal/handlers/websocket.clj"}
+- MIDDLEWARE: {file: "src/io/relica/portal/middleware.clj"}
+- AUTH: {directory: "src/io/relica/portal/auth/"}
+- CLIENT_INSTANCES: {file: "src/io/relica/portal/io/client_instances.clj"}
 
-## 5. Security
-- **Authentication:** All API routes (except login/public) and WebSocket connections are secured using JSON Web Tokens (JWT).
+## RELATIONSHIPS
+- PROVIDES_TO: [
+    {component: "frontend_clients", interface: "http_api", data: "system_data"},
+    {component: "frontend_clients", interface: "websocket", data: "realtime_updates"}
+  ]
+- CONSUMES_FROM: [
+    {component: "archivist", interface: "archivist_client", data: "stored_records"},
+    {component: "clarity", interface: "clarity_client", data: "semantic_models"},
+    {component: "aperture", interface: "aperture_client", data: "environment_data"},
+    {component: "nous", interface: "nous_client", data: "ai_responses"}
+  ]
+- IMPLEMENTS: [
+    {protocol: "http_server", specification: "src/io/relica/portal/routes.clj"},
+    {protocol: "websocket_server", specification: "src/io/relica/portal/handlers/http.clj:ws-handler"}
+  ]
 
-## 6. Environment Variables
-- `PORTAL_PORT`: Port the service listens on (e.g., 8080).
-- `JWT_SECRET`: Secret key for signing and verifying JWTs.
-- `ARCHIVIST_WS_URL`/`ARCHIVIST_API_URL`: URLs for Archivist service.
-- `CLARITY_WS_URL`/`CLARITY_API_URL`: URLs for Clarity service.
-- `APERTURE_API_URL`: URL for Aperture service.
+## EXECUTION_FLOW
+- STARTUP: [
+    {step: 1, file: "src/io/relica/portal/core.clj", function: "-main"},
+    {step: 2, file: "src/io/relica/portal/core.clj", function: "start!"},
+    {step: 3, file: "src/io/relica/portal/io/client_instances.clj", function: "initialize-clients"}
+  ]
+- REQUEST_HANDLING: [
+    {step: 1, file: "src/io/relica/portal/routes.clj", function: "app-routes"},
+    {step: 2, file: "src/io/relica/portal/middleware.clj", function: "wrap-jwt-auth"},
+    {step: 3, file: "src/io/relica/portal/handlers/http.clj", function: "handle-*"}
+  ]
+- WEBSOCKET_HANDLING: [
+    {step: 1, file: "src/io/relica/portal/handlers/http.clj", function: "ws-handler"},
+    {step: 2, file: "src/io/relica/portal/handlers/websocket.clj", function: "handle-ws-message"},
+    {step: 3, file: "src/io/relica/portal/handlers/websocket.clj", function: "handle-*"}
+  ]
 
-## 7. Deployment
-Deployed as the main entry point service, typically containerized and exposed via an ingress controller or load balancer.
+## OPERATIONS
+- AUTH: {file: "src/io/relica/portal/handlers/websocket.clj", function: "handle-auth"}
+- GET_ENVIRONMENT: {file: "src/io/relica/portal/handlers/http.clj", function: "handle-get-environment"}
+- GET_MODEL: {file: "src/io/relica/portal/handlers/http.clj", function: "handle-get-model"}
+- SELECT_ENTITY: {file: "src/io/relica/portal/handlers/websocket.clj", function: "handle-select-entity"}
+- LOAD_ENTITIES: {file: "src/io/relica/portal/handlers/websocket.clj", function: "handle-load-entities"}
 
-## 8. Troubleshooting
-- Verify JWT secret configuration.
-- Check connectivity to all backend services (Archivist, Clarity, Aperture).
-- Inspect logs for routing errors or authentication failures.
-- Monitor WebSocket connection stability and message flow.
+## CLIENT_USAGE
+- HTTP_API: {base_url: "/api", authentication: "JWT in Authorization header"}
+- WEBSOCKET_CONNECTION: {endpoint: "/chsk", authentication: "token parameter"}
+- EVENT_BROADCASTING: {mechanism: "WebSocket messages to clients in same environment"}
+
+## TROUBLESHOOTING
+- AUTH_ISSUES: {file: "src/io/relica/portal/auth/jwt.clj", function: "validate-jwt"}
+- CONNECTION_ISSUES: {file: "src/io/relica/portal/handlers/http.clj", function: "ws-handler"}
+- CLIENT_COMMUNICATION: {file: "src/io/relica/portal/io/client_instances.clj"}
+
+## DEPLOYMENT
+- CONTAINER: "portal"
+- ENV_VARS: [
+    {name: "PORT", purpose: "HTTP server port"},
+    {name: "JWT_SECRET", purpose: "Secret for JWT token validation"},
+    {name: "ARCHIVIST_HOST", purpose: "hostname for archivist service"},
+    {name: "CLARITY_HOST", purpose: "hostname for clarity service"},
+    {name: "APERTURE_HOST", purpose: "hostname for aperture service"}
+  ]
+- COMPOSE_SERVICE: {file: "docker-compose.yml", service: "portal"}
+
+## CONCEPTUAL_MODEL
+- CENTRAL_ABSTRACTIONS: [
+    {name: "route", description: "HTTP endpoint that maps to a specific handler function"},
+    {name: "handler", description: "Function that processes requests and returns responses"},
+    {name: "middleware", description: "Function that intercepts and potentially modifies requests/responses"},
+    {name: "client", description: "Connection to another service in the system"}
+  ]
+- DATA_FLOW: "Frontend client sends request → Portal authenticates request → Portal forwards request to appropriate backend service → Portal receives response → Portal transforms response if needed → Portal returns response to client"
