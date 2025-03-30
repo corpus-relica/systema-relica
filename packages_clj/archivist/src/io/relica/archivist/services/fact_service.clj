@@ -6,16 +6,10 @@
             [io.relica.archivist.services.cache-service :as cache]
             [io.relica.archivist.services.concept-service :as concept]
             [io.relica.archivist.services.uid-service :as uid]
+            [io.relica.archivist.utils.traversal :as traversal]
             [io.relica.archivist.db.queries :as queries]))
 
-(defn- await-all
-  "Helper function to await a sequence of core.async channels"
-  [channels]
-  (go
-    (let [results (atom [])]
-      (doseq [c channels]
-        (swap! results conj (<! c)))
-      @results)))
+;; Using the traversal/await-all function instead
 
 (defprotocol FactOperations
   (get-subtypes [this uid])
@@ -52,25 +46,10 @@
   (get-subtypes-cone [this uid]
     (tap> "------------------- GET SUBTYPES CONE DAMNIT! -------------------")
     (tap> uid)
-    (go
-      (let [;; Get all descendants
-            subtypes (cache/all-descendants-of cache-service uid)
-            _ (tap> "------------------- GET SUBTYPES CONE -------------------")
-            _ (tap> subtypes)
-
-            ;; Get facts about the root entity itself to ensure the connection
-            root-facts (get-subtypes this uid)
-            _ (tap> "------------------- ROOT ENTITY SUBTYPES -------------------")
-            _ (tap> root-facts)
-
-            ;; Get facts about all descendants
-            descendant-facts (map #(get-subtypes this %) subtypes)
-            _ (tap> "------------------- GET SUBTYPES CONE FACTS -------------------")
-            _ (tap> descendant-facts)
-
-            ;; Combine root facts with descendant facts
-            all-facts (cons root-facts descendant-facts)]
-        (flatten all-facts))))
+    (traversal/get-specialization-cone (:graph-service this) 
+                                       (:cache-service this) 
+                                       #(get-subtypes this %) 
+                                       uid))
 
   (get-classified [this uid recursive]
     (go
@@ -152,121 +131,53 @@
                             (let [result (<! (get-all-related-facts this current-uid))
                                   next-uids (map :lh_object_uid result)
                                   recursive-results (map #(recurse-fn % (inc curr-depth)) next-uids)
-                                  all-results (await-all recursive-results)]
+                                  all-results (<! (traversal/await-all recursive-results))]
                               (concat result (flatten all-results)))
                             [])))
 
               ;; Execute recursive function
-              prelim-result (<! (recurse uid 0))
-
-              ;; Filter out duplicates
-              unique-results (vals (reduce (fn [acc item]
-                                             (assoc acc (:fact_uid item) item))
-                                           {}
-                                           prelim-result))
-              ;; unique-results (filter (fn [item]
-              ;;                          (let [index-of-first-occurrence
-              ;;                                (first
-              ;;                                 (keep-indexed
-              ;;                                  (fn [idx itm]
-              ;;                                    (when (= (:fact_uid itm) (:fact_uid item)) idx))
-              ;;                                  prelim-result))]
-              ;;                            (= index-of-first-occurrence
-              ;;                               (first
-              ;;                                (keep-indexed
-              ;;                                 (fn [idx _] idx)
-              ;;                                 (filter #(= (:fact_uid %) (:fact_uid item)) prelim-result))))))
-              ;;                        prelim-result)
-              ]
-          unique-results)
+              prelim-result (<! (recurse uid 0))]
+          
+          ;; Deduplicate results
+          (traversal/deduplicate-facts prelim-result))
         (catch Exception e
           (log/error "Error in get-all-related-facts-recursive:" (ex-message e))
           []))))
 
-  (get-related-on-uid-subtype-cone [_ lh-object-uid rel-type-uid]
+  (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid]
     (go
       (try
-        (let [;; Get all subtypes of the relation type
-              subtypes-of-rel-type (cache/all-descendants-of cache-service rel-type-uid)
-              all-rel-types (conj subtypes-of-rel-type rel-type-uid)
-
-              ;; Get all facts involving the entity with the specified relation types
-              results (graph/exec-query graph-service
-                                        queries/all-related-facts-c
-                                        {:start_uid lh-object-uid
-                                         :rel_type_uids all-rel-types})
-              res (graph/transform-results results)
-
-              _ (tap> "------------------- GET RELATED ON UID SUBTYPE CONE -------------------")
-              _ (tap> res)
-
-              unique-results (vals (reduce (fn [acc item]
-                                             (assoc acc (:fact_uid item) item))
-                                           {}
-                                           res))
-              ;; Filter out duplicates
-              ;; unique-results (filter (fn [item]
-              ;;                          (let [index-of-first-occurrence
-              ;;                                (first
-              ;;                                 (keep-indexed
-              ;;                                  (fn [idx itm]
-              ;;                                    (when (= (:fact_uid itm) (:fact_uid item)) idx))
-              ;;                                  res))]
-              ;;                            (= index-of-first-occurrence
-              ;;                               (first
-              ;;                                (keep-indexed
-              ;;                                 (fn [idx _] idx)
-              ;;                                 (filter #(= (:fact_uid %) (:fact_uid item)) res))))))
-              ;;                        res)
-              ]
+        (let [results (<! (traversal/traverse-with-subtypes 
+                            (:graph-service this) 
+                            (:cache-service this) 
+                            lh-object-uid 
+                            rel-type-uid 
+                            :outgoing))]
+          (tap> "------------------- GET RELATED ON UID SUBTYPE CONE -------------------")
+          (tap> results)
           (tap> "------------------- GET RELATED ON UID SUBTYPE CONE UNIQUE -------------------")
-          (tap> unique-results)
-          unique-results)
+          (tap> results)
+          results)
         (catch Exception e
           (log/error "Error in get-related-on-uid-subtype-cone:" (ex-message e))
           []))))
 
-  (get-related-to-on-uid-subtype-cone [_ rh-object-uid rel-type-uid]
+  (get-related-to-on-uid-subtype-cone [this rh-object-uid rel-type-uid]
     (go
       (try
-        (let [;; Get all subtypes of the relation type
-              subtypes-of-rel-type (cache/all-descendants-of cache-service rel-type-uid)
-              all-rel-types (conj subtypes-of-rel-type rel-type-uid)
-
-              ;; Get all facts involving the entity with the specified relation types
-              results (graph/exec-query graph-service
-                                        queries/all-related-facts-d
-                                        {:start_uid rh-object-uid
-                                         :rel_type_uids all-rel-types})
-              res (graph/transform-results results)
-
-              _ (tap> "------------------- GET RELATED TO ON UID SUBTYPE CONE -------------------")
-              _ (tap> res)
-
-              unique-results (vals (reduce (fn [acc item]
-                                             (assoc acc (:fact_uid item) item))
-                                           {}
-                                           res))
-              ;; Filter out duplicates
-              ;; unique-results (filter (fn [item]
-              ;;                          (let [index-of-first-occurrence
-              ;;                                (first
-              ;;                                 (keep-indexed
-              ;;                                  (fn [idx itm]
-              ;;                                    (when (= (:fact_uid itm) (:fact_uid item)) idx))
-              ;;                                  res))]
-              ;;                            (= index-of-first-occurrence
-              ;;                               (first
-              ;;                                (keep-indexed
-              ;;                                 (fn [idx _] idx)
-              ;;                                 (filter #(= (:fact_uid %) (:fact_uid item)) res))))))
-              ;;                        res)
-              ]
+        (let [results (<! (traversal/traverse-with-subtypes 
+                            (:graph-service this) 
+                            (:cache-service this) 
+                            rh-object-uid 
+                            rel-type-uid 
+                            :incoming))]
+          (tap> "------------------- GET RELATED TO ON UID SUBTYPE CONE -------------------")
+          (tap> results)
           (tap> "------------------- GET RELATED TO ON UID SUBTYPE CONE UNIQUE -------------------")
-          (tap> unique-results)
-          unique-results)
+          (tap> results)
+          results)
         (catch Exception e
-          (log/error "Error in get-related-on-uid-subtype-cone:" (ex-message e))
+          (log/error "Error in get-related-to-on-uid-subtype-cone:" (ex-message e))
           []))))
 
   (get-inherited-relation [this uid rel-type-uid]
@@ -297,27 +208,31 @@
       (try
         (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
               spec-facts (reverse (:facts spec-h))  ;; Reverse to get subject-centric order
-
-              ;; Function to get related facts based on match-on parameter
-              get-facts-fn (fn [hierarchy-uid]
-                             (get-related-facts this hierarchy-uid rel-type-uid))
-
-              ;; Process each level in the hierarchy and collect results
-              results (<! (go
-                            (loop [items spec-facts
-                                   result-vec []]
-                              (if (empty? items)
-                                result-vec  ;; Return collected results
-                                (let [item (first items)
-                                      hierarchy-uid (:lh_object_uid item)
-                                      facts-chan (get-facts-fn hierarchy-uid)
-                                      facts (<! facts-chan)]
-                                  ;; Continue with next item, adding facts to result vector
-                                  (recur (rest items) (conj result-vec facts)))))))]
-
-          results)
+              
+              ;; Get all related facts for the entity itself
+              direct-facts (<! (get-related-facts this uid rel-type-uid))
+              
+              ;; If we have direct facts, return them
+              result (if (not (empty? direct-facts))
+                       direct-facts
+                       ;; Otherwise, check specialization hierarchy
+                       (loop [items spec-facts
+                              acc []]
+                         (if (empty? items)
+                           acc  ;; Return accumulated results
+                           (let [item (first items)
+                                 related-facts-chan (get-related-facts this (:lh_object_uid item) rel-type-uid)
+                                 facts (<! related-facts-chan)]
+                             (if (seq facts)
+                               ;; Found facts, add to accumulator and continue
+                               (recur (rest items) (concat acc facts))
+                               ;; No facts found, continue with next item
+                               (recur (rest items) acc))))))]
+          
+          ;; Return results
+          result)
         (catch Exception e
-          (log/error e "Error in get-core-sample:" (ex-message e))
+          (log/error "Error in get-core-sample:" (ex-message e))
           []))))
 
   (get-core-sample-rh [this uid rel-type-uid]
@@ -325,62 +240,42 @@
       (try
         (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
               spec-facts (reverse (:facts spec-h))  ;; Reverse to get subject-centric order
-
-              ;; Function to get related facts based on match-on parameter
-              get-facts-fn (fn [hierarchy-uid]
-                             (get-related-to this hierarchy-uid rel-type-uid))
-
-              ;; Process each level in the hierarchy and collect results
-              results (<! (go
-                            (loop [items spec-facts
-                                   result-vec []]
-                              (if (empty? items)
-                                result-vec  ;; Return collected results
-                                (let [item (first items)
-                                      hierarchy-uid (:lh_object_uid item)
-                                      facts-chan (get-facts-fn hierarchy-uid)
-                                      facts (<! facts-chan)]
-                                  ;; Continue with next item, adding facts to result vector
-                                  (recur (rest items) (conj result-vec facts)))))))]
-
-          results)
+              
+              ;; Get all related-to facts for the entity itself
+              direct-facts (<! (get-related-to this uid rel-type-uid))
+              
+              ;; If we have direct facts, return them
+              result (if (not (empty? direct-facts))
+                       direct-facts
+                       ;; Otherwise, check specialization hierarchy
+                       (loop [items spec-facts
+                              acc []]
+                         (if (empty? items)
+                           acc  ;; Return accumulated results
+                           (let [item (first items)
+                                 related-facts-chan (get-related-to this (:lh_object_uid item) rel-type-uid)
+                                 facts (<! related-facts-chan)]
+                             (if (seq facts)
+                               ;; Found facts, add to accumulator and continue
+                               (recur (rest items) (concat acc facts))
+                               ;; No facts found, continue with next item
+                               (recur (rest items) acc))))))]
+          
+          ;; Return results
+          result)
         (catch Exception e
-          (log/error e "Error in get-core-sample:" (ex-message e))
+          (log/error "Error in get-core-sample-rh:" (ex-message e))
           []))))
 
   (get-facts-relating-entities [_ uid1 uid2]
     (go
       (try
-        (let [;; Get facts where uid1 is the subject and uid2 is the object
-              results (graph/exec-query graph-service
-                                        queries/all-related-facts
-                                        {:start_uid uid1
-                                         :end_uid uid2})
-              res (graph/transform-results results)
-
-              ;; Get facts where uid2 is the subject and uid1 is the object
-              results-b (graph/exec-query graph-service
-                                          queries/all-related-facts-b
-                                          {:start_uid uid1
-                                           :end_uid uid2})
-              res-b (graph/transform-results results-b)
-
-              ;; Combine results and filter out duplicates
-              possibly-redunt-results (concat res res-b)
-              unique-results (filter (fn [item]
-                                       (let [index-of-first-occurrence
-                                             (first
-                                              (keep-indexed
-                                               (fn [idx itm]
-                                                 (when (= (:fact_uid itm) (:fact_uid item)) idx))
-                                               possibly-redunt-results))]
-                                         (= index-of-first-occurrence
-                                            (first
-                                             (keep-indexed
-                                              (fn [idx _] idx)
-                                              (filter #(= (:fact_uid %) (:fact_uid item)) possibly-redunt-results))))))
-                                     possibly-redunt-results)]
-          unique-results)
+        (let [results (graph/exec-query graph-service
+                                         queries/facts-relating-entities
+                                         {:uid1 uid1
+                                          :uid2 uid2})
+              res (graph/transform-results results)]
+          res)
         (catch Exception e
           (log/error "Error in get-facts-relating-entities:" (ex-message e))
           []))))
@@ -388,42 +283,27 @@
   (get-related-to [_ uid rel-type-uid]
     (go
       (try
-        (if (and (not (nil? uid)) (nil? rel-type-uid))
-          (let [results (graph/exec-query graph-service
-                                          queries/any-related-to
-                                          {:uid uid})
-                res (graph/transform-results results)]
-            res)
-          (let [results (graph/exec-query graph-service
-                                          queries/related-to
-                                          {:uid uid
-                                           :rel_type_uids [rel-type-uid]})
-                res (graph/transform-results results)]
-            res))
+        (let [results (graph/exec-query graph-service
+                                         queries/related-to
+                                         {:end_uid uid
+                                          :rel_type_uid rel-type-uid})
+              res (graph/transform-results results)]
+          res)
         (catch Exception e
           (log/error "Error in get-related-to:" (ex-message e))
           []))))
 
-  (get-related-to-subtype-cone [_ lh-object-uid rel-type-uid]
+  (get-related-to-subtype-cone [this lh-object-uid rel-type-uid]
     (go
       (try
-        (let [;; Get all subtypes of the relation type
-              subtypes-of-rel-type (cache/all-descendants-of cache-service rel-type-uid)
-              all-rel-types (conj subtypes-of-rel-type rel-type-uid)
-
-              ;; Get all facts involving the entity with the specified relation types
+        (let [rel-subtypes (<! (cache/all-descendants-of cache-service rel-type-uid))
+              all-rel-types (conj rel-subtypes rel-type-uid)
               results (graph/exec-query graph-service
-                                        queries/related-to
-                                        {:uid lh-object-uid
-                                         :rel_type_uids all-rel-types})
-
-              res (graph/transform-results results)
-
-              unique-results (vals (reduce (fn [acc item]
-                                             (assoc acc (:fact_uid item) item))
-                                           {}
-                                           res))]
-          unique-results)
+                                         queries/related-to-subtype-cone
+                                         {:end_uid lh-object-uid
+                                          :rel_type_uids all-rel-types})
+              res (graph/transform-results results)]
+          res)
         (catch Exception e
           (log/error "Error in get-related-to-subtype-cone:" (ex-message e))
           []))))
@@ -432,160 +312,99 @@
     (go
       (try
         (log/info (str "Getting flattened recursive relations for uid: " uid " with relation type: " rel-type-uid))
-        (let [;; Default max depth if not provided
-              actual-max-depth (or max-depth 10)
-
-              ;; Atom to collect all facts
-              all-facts (atom [])
-
-              ;; Helper function to get related entities for a relation type
-              get-related-entities (fn [entity-uid]
-                                     (go
-                                       (let [facts (<! (get-related-on-uid-subtype-cone this entity-uid rel-type-uid))]
-                                         ;; Add facts to the global collection
-                                         (swap! all-facts concat facts)
-                                         (map (fn [fact]
-                                                {:fact fact
-                                                 :related-uid (:rh_object_uid fact)})
-                                              facts))))
-
-              ;; Recursive function to traverse the hierarchy without building it
-              traverse-hierarchy (fn traverse-hierarchy-fn [current-uid current-depth visited]
-                                   (go
-                                     (if (or (>= current-depth actual-max-depth)
-                                             (contains? visited current-uid))
-                                       ;; Base case: max depth reached or we've already visited this node
-                                       nil
-                                       (let [;; Mark this node as visited to prevent cycles
-                                             updated-visited (conj visited current-uid)
-
-                                             ;; Get direct relations for this entity
-                                             relations (<! (get-related-entities current-uid))]
-
-                                         ;; Process each related entity recursively
-                                         (doseq [relation relations]
-                                           (let [related-uid (:related-uid relation)]
-                                             ;; Just traverse, don't build a structure
-                                             (<! (traverse-hierarchy-fn related-uid
-                                                                        (inc current-depth)
-                                                                        updated-visited))))
-                                         nil))))]
-
-          ;; Start the traversal from the root entity - don't care about return value
-          (<! (traverse-hierarchy uid 0 #{}))
-
-          ;; Return unique facts by fact_uid
-          (vals (reduce (fn [acc item]
-                          (assoc acc (:fact_uid item) item))
-                        {}
-                        @all-facts)))
-
+        (<! (traversal/traverse-recursive 
+              (:graph-service this) 
+              (:cache-service this) 
+              uid 
+              rel-type-uid 
+              :outgoing 
+              max-depth))
         (catch Exception e
-          (log/error "Error in get-recursive-relations-flat:" (ex-message e))
-          {:error (str "Failed to get recursive relations flat: " (ex-message e))}))))
+          (log/error "Error in get-recursive-relations:" (ex-message e))
+          []))))
 
   (get-recursive-relations-to [this uid rel-type-uid max-depth]
     (go
       (try
-        (log/info (str "Getting flattened recursive relations into uid: " uid " with relation type: " rel-type-uid))
-        (let [;; Default max depth if not provided
-              actual-max-depth (or max-depth 10)
-
-              ;; Atom to collect all facts
-              all-facts (atom [])
-
-              ;; Helper function to get related entities for a relation type
-              get-related-entities (fn [entity-uid]
-                                     (go
-                                       (let [facts (<! (get-related-to-on-uid-subtype-cone this entity-uid rel-type-uid))]
-                                         ;; Add facts to the global collection
-                                         (swap! all-facts concat facts)
-                                         (map (fn [fact]
-                                                {:fact fact
-                                                 :related-uid (:lh_object_uid fact)})
-                                              facts))))
-
-              ;; Recursive function to traverse the hierarchy without building it
-              traverse-hierarchy (fn traverse-hierarchy-fn [current-uid current-depth visited]
-                                   (go
-                                     (if (or (>= current-depth actual-max-depth)
-                                             (contains? visited current-uid))
-                                       ;; Base case: max depth reached or we've already visited this node
-                                       nil
-                                       (let [;; Mark this node as visited to prevent cycles
-                                             updated-visited (conj visited current-uid)
-
-                                             ;; Get direct relations for this entity
-                                             relations (<! (get-related-entities current-uid))]
-
-                                         ;; Process each related entity recursively
-                                         (doseq [relation relations]
-                                           (let [related-uid (:related-uid relation)]
-                                             ;; Just traverse, don't build a structure
-                                             (<! (traverse-hierarchy-fn related-uid
-                                                                        (inc current-depth)
-                                                                        updated-visited))))
-                                         nil))))]
-
-          ;; Start the traversal from the root entity - don't care about return value
-          (<! (traverse-hierarchy uid 0 #{}))
-
-          ;; Return unique facts by fact_uid
-          (vals (reduce (fn [acc item]
-                          (assoc acc (:fact_uid item) item))
-                        {}
-                        @all-facts)))
-
+        (log/info (str "Getting flattened recursive relations-to for uid: " uid " with relation type: " rel-type-uid))
+        (<! (traversal/traverse-recursive 
+              (:graph-service this) 
+              (:cache-service this) 
+              uid 
+              rel-type-uid 
+              :incoming 
+              max-depth))
         (catch Exception e
           (log/error "Error in get-recursive-relations-to:" (ex-message e))
-          {:error (str "Failed to get recursive relations to: " (ex-message e))}))))
+          []))))
 
   (confirm-fact [_ fact]
-    (go
-      (try
-        (let [query "MATCH (r:Fact {lh_object_uid: $lh_object_uid, rh_object_uid: $rh_object_uid, rel_type_uid: $rel_type_uid}) RETURN r"
-              result (graph/exec-query graph-service
-                                       query
-                                       {:lh_object_uid (:lh_object_uid fact)
-                                        :rh_object_uid (:rh_object_uid fact)
-                                        :rel_type_uid (:rel_type_uid fact)})]
-          (if (empty? result)
-            nil
-            (first (graph/transform-results result))))
-        (catch Exception e
-          (log/error "Error in confirm-fact:" (ex-message e))
-          nil))))
+    (try
+      (let [;; Extract fact properties
+            lh-object-uid (:lh_object_uid fact)
+            rel-type-uid (:rel_type_uid fact)
+            rh-object-uid (:rh_object_uid fact)
+            
+            ;; Build the query parameters
+            params {:lh_object_uid lh-object-uid
+                    :rel_type_uid rel-type-uid
+                    :rh_object_uid rh-object-uid}
+            
+            ;; Check if the fact already exists
+            existing-query "MATCH (a)-[r:FACT {rel_type_uid: $rel_type_uid}]->(b) 
+                           WHERE a.uid = $lh_object_uid AND b.uid = $rh_object_uid 
+                           RETURN r"
+            existing-results (graph/exec-query graph-service existing-query params)]
+        
+        ;; If the fact doesn't exist, create it
+        (if (empty? existing-results)
+          (let [;; Generate a new fact UID
+                fact-uid (uid/generate-uid uid-service)
+                
+                ;; Add the fact UID to the parameters
+                params-with-uid (assoc params :fact_uid fact-uid)
+                
+                ;; Create the fact
+                create-query "MATCH (a), (b) 
+                             WHERE a.uid = $lh_object_uid AND b.uid = $rh_object_uid 
+                             CREATE (a)-[r:FACT {fact_uid: $fact_uid, rel_type_uid: $rel_type_uid}]->(b) 
+                             RETURN r"
+                result (graph/exec-write-query graph-service create-query params-with-uid)]
+            
+            ;; Return the created fact
+            (if (empty? result)
+              nil
+              (let [fact-map (get-in (first result) [:r :properties])]
+                (into {} fact-map))))
+          
+          ;; If the fact already exists, return it
+          (let [fact-map (get-in (first existing-results) [:r :properties])]
+            (into {} fact-map))))
+      (catch Exception e
+        (log/error "Error in confirm-fact:" (ex-message e))
+        nil)))
 
   (confirm-fact-in-relation-cone [this lh-object-uids rel-type-uids rh-object-uids]
     (go
       (try
-        (when (and (nil? lh-object-uids) (nil? rel-type-uids) (nil? rh-object-uids))
-          (throw (Exception. "At least one of lh_object_uid, rel_type_uid, or rh_object_uid must be non-null")))
-
-        (let [;; Build the query dynamically based on the provided parameters
-              base-query "MATCH (r:Fact) WHERE 1=1"
-              params (atom {})
-
-              ;; Add conditions for lh_object_uids if provided
+        (let [;; Initialize parameters
+              params (atom {:lh_object_uids lh-object-uids
+                            :rh_object_uids rh-object-uids})
+              
+              ;; Start building the query
               query-with-lh (if (not (nil? lh-object-uids))
-                              (do
-                                (swap! params assoc :lh_object_uids lh-object-uids)
-                                (str base-query " AND r.lh_object_uid IN $lh_object_uids"))
-                              base-query)
-
-              ;; Add conditions for rh_object_uids if provided
+                              "MATCH (a)-[r:FACT]->(b) WHERE a.uid IN $lh_object_uids"
+                              "MATCH (a)-[r:FACT]->(b)")
+              
               query-with-rh (if (not (nil? rh-object-uids))
-                              (do
-                                (swap! params assoc :rh_object_uids rh-object-uids)
-                                (str query-with-lh " AND r.rh_object_uid IN $rh_object_uids"))
+                              (str query-with-lh " AND b.uid IN $rh_object_uids")
                               query-with-lh)
-
-              ;; Add conditions for rel_type_uids if provided
+              
+              ;; Handle relation type UIDs with subtype expansion
               rel-subtypes (atom [])
               _ (when (not (nil? rel-type-uids))
                   (doseq [rel-type-uid rel-type-uids]
                     (let [subtypes (<! (cache/all-descendants-of cache-service rel-type-uid))]
-                      (swap! rel-subtypes conj rel-type-uid)
                       (swap! rel-subtypes concat subtypes))))
 
               query-with-rel (if (not (nil? rel-type-uids))
