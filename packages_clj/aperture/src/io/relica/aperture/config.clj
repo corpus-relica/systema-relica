@@ -21,6 +21,16 @@
 
 (def ds (jdbc/get-datasource db-spec))
 
+;; Safe thaw function that handles null values
+(defn safe-thaw [data]
+  (if (nil? data)
+    []  ;; Return empty vector for null values
+    (try
+      (nippy/thaw data)
+      (catch Exception e
+        (log/warn "Error deserializing data:" (ex-message e))
+        []))))
+
 (defn get-user-environments
   "Retrieve all environments for a user"
   [user-id]
@@ -31,8 +41,8 @@
                  WHERE ue.user_id = ?" user-id]
                             {:builder-fn rs/as-unqualified-maps})]
     (map #(-> %
-              (update :facts nippy/thaw)
-              (update :models nippy/thaw))
+              (update :facts safe-thaw)
+              (update :models safe-thaw))
          envs)))
 
 (defn get-user-environment
@@ -46,8 +56,8 @@
                                          {:builder-fn rs/as-unqualified-maps})]
     (let [now (System/currentTimeMillis)
           parsed-env (-> user-env
-                         (update :facts nippy/thaw)
-                         (update :models nippy/thaw))]
+                         (update :facts safe-thaw)
+                         (update :models safe-thaw))]
       (log/info "Environment parsing time:" (- (System/currentTimeMillis) now) "ms")
       parsed-env)))
 
@@ -176,7 +186,16 @@
                     LIMIT 1" user-id]
         env-id  (:user_environments/environment_id (jdbc/execute-one! ds env-query))]
     (if env-id
-      (get-user-environment user-id env-id)
+      (try
+        (get-user-environment user-id env-id)
+        (catch Exception e
+          (log/error "Error getting default environment:" (ex-message e))
+          (tap> {:msg "Error getting default environment" :user-id user-id :error (ex-message e)})
+          ;; Return a minimal valid environment structure with empty collections
+          {:id env-id
+           :facts []
+           :models []
+           :user_id user-id}))
       (do
         (tap> {:msg "No default environment found" :user-id user-id})
         nil))))
