@@ -19,7 +19,8 @@
             [io.relica.clarity.services.occurrence-model-service :as occ-ms]
             [io.relica.common.io.archivist-client :as archivist]
             [io.relica.clarity.io.archivist-api :as archivist-api]
-            [io.relica.clarity.io.client-instances :refer [archivist-client]]))
+            [io.relica.clarity.io.client-instances :refer [archivist-client]]
+            [io.relica.clarity.utils :as utils]))
 
 ;; Category to namespace/spec mapping
 (def category-to-spec
@@ -104,29 +105,36 @@
             ;; 2. Get basic facts directly
             ;; definition-facts (<! (get-definitive-facts uid))
             ;; all-related-facts (<! (get-all-related-facts uid))
-            ]
-        (case entity-type
-          "kind"
-          (case category
-            "physical object" (<! (po-ms/retrieve-kind-of-physical-object-model uid))
-            "aspect" (<! (asp-ms/retrieve-kind-of-aspect-model uid))
-            "role" (<! (rol-ms/retrieve-kind-of-role-model uid))
-            "relation" (<! (rel-ms/retrieve-kind-of-relation-model uid))
-            "occurrence" (<! (occ-ms/retrieve-kind-of-occurrence-model uid))
-            ;; "state" (retrieve-kind-of-state-model uid)
-            "anything" (<! (e-ms/retrieve-kind-of-entity-model uid))
-            {})
-          "individual"
-          (case category
-            "physical object" (<! (po-ms/retrieve-individual-physical-object-model uid))
-            "aspect" (<! (asp-ms/retrieve-individual-aspect-model uid))
-            ;; "role" (<! (rol-ms/retrieve-individual-of-role-model uid)) INTENTIONALLY OMITTED
-            "relation" (<! (rel-ms/retrieve-individual-relation-model uid))
-            "occurrence" (<! (occ-ms/retrieve-individual-occurrence-model uid))
-            ;; "state" (retrieve-individual-of-state-model uid) TODO
-            ;; "anything" (<! (e-ms/retrieve-individual-of-entity-model uid))
-            {})
-          {}))
+            
+            ;; 3. Get the appropriate model based on entity type and category
+            raw-model (case entity-type
+                        "kind"
+                        (case category
+                          "physical object" (<! (po-ms/retrieve-kind-of-physical-object-model uid))
+                          "aspect" (<! (asp-ms/retrieve-kind-of-aspect-model uid))
+                          "role" (<! (rol-ms/retrieve-kind-of-role-model uid))
+                          "relation" (<! (rel-ms/retrieve-kind-of-relation-model uid))
+                          "occurrence" (<! (occ-ms/retrieve-kind-of-occurrence-model uid))
+                          ;; "state" (retrieve-kind-of-state-model uid)
+                          "anything" (<! (e-ms/retrieve-kind-of-entity-model uid))
+                          {})
+                        "individual"
+                        (case category
+                          "physical object" (<! (po-ms/retrieve-individual-physical-object-model uid))
+                          "aspect" (<! (asp-ms/retrieve-individual-aspect-model uid))
+                          ;; "role" (<! (rol-ms/retrieve-individual-of-role-model uid)) INTENTIONALLY OMITTED
+                          "relation" (<! (rel-ms/retrieve-individual-relation-model uid))
+                          "occurrence" (<! (occ-ms/retrieve-individual-occurrence-model uid))
+                          ;; "state" (retrieve-individual-of-state-model uid) TODO
+                          ;; "anything" (<! (e-ms/retrieve-individual-of-entity-model uid))
+                          {})
+                        {})
+            
+            ;; 4. Clean the model by removing empty arrays
+            cleaned-model (utils/clean-model raw-model)]
+        
+        ;; Return the cleaned model
+        cleaned-model)
 
       (catch Exception e
         (log/error "Error retrieving semantic model for UID:" uid e)
