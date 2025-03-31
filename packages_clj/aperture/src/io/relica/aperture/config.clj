@@ -46,11 +46,22 @@
                           FROM environments e
                           JOIN user_environments ue ON e.id = ue.environment_id
                           WHERE ue.user_id = ? AND e.id = ?" user-id env-id]
-                                         {:builder-fn rs/as-unqualified-maps})]
+                                         {:builder-fn rs/as-unqualified-maps})
+             ;; current time in millis
+
+             ]
+    (let [now (System/currentTimeMillis)]
+
+
+
+    (println "__________________________________________________________________")
+    ;; (println user-env)
     (let [parsed-env (-> user-env
                          (update :facts #(json/parse-string (.getValue %) true))
                          (update :models #(json/parse-string (.getValue %) true)))]
-      parsed-env)))
+      (println parsed-env)
+      (println "------------------------------------------------------------------" (- (System/currentTimeMillis) now) "ms")
+      parsed-env))))
 
 (defn create-environment!
   "Create a new environment with a name and return it"

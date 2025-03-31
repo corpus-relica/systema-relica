@@ -24,8 +24,10 @@
       (println (type (:user-id ?data)))
       (let [result (<! (env-service/get-environment @environment-service 
                                                   (:user-id ?data) 
-                                                  (:environment-id ?data)))]
-        (println "RESULT")
+                                                  (or (:environment-id ?data)
+                                                      (:id (get-default-environment (:user-id ?data))))))]
+
+        (println "##################################################   RESULT")
         (println result)
         (?reply-fn result)))))
 
@@ -95,12 +97,23 @@
                       (:environment-id ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
-        (ws/broadcast!
-         {:type :models/loaded
-          :models (:model result)
-          :user-id (:user-id ?data)
-          :environment-id (:environment-id ?data)}
-         10)))))
+        (do
+          (ws/broadcast!
+           {:type :models/loaded
+            :models (:model result)
+            :user-id (:user-id ?data)
+            :environment-id (or (:environment-id ?data)
+                             (:id (get-default-environment (:user-id ?data))))}
+           10)
+          (ws/broadcast!
+           {:type :facts/loaded
+            :facts (:facts (:model result))
+            :user-id (:user-id ?data)
+            :environment-id (or (:environment-id ?data)
+                             (:id (get-default-environment (:user-id ?data))))}
+           10)
+          )
+        ))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/load-all-related-facts

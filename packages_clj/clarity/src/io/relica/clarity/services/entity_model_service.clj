@@ -70,9 +70,9 @@
             stuff (<! (archivist-api/get-all-related-facts uid))
             synonym-facts (filter #(= (:rel_type_uid %) 1981) stuff)
             synonym-names (map :lh_object_name synonym-facts)
-            facts (merge
+            facts (vec (concat
                    definitive-facts
-                   synonym-facts)]
+                   synonym-facts))]
         (log/info "Supertypes:" (count supertypes))
         (log/info "Definitions:" (count definitions))
         (log/info "Names:" (count names) "First name:" (first names))

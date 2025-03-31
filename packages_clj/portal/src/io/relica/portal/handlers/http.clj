@@ -162,6 +162,8 @@
                           (:user-id identity)
                           nil))
             env (:environment response)]
+        (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        (println "ENVIRONMENT" response)
         (swap! connected-clients update-in [(:clientId params)] assoc :environment-id (:id env))
         (success-response env))
       (catch Exception e

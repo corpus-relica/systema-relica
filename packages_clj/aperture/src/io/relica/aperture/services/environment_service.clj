@@ -148,22 +148,25 @@
     (go
       (try
         (let [result (<! (clarity/get-model clarity-client uid))
-              ;; env-id (or env-id (:id (get-default-environment user-id)))
-              ;; env (get-user-environment user-id env-id)
-              ;; old-facts (:facts env)
-              ;; facts (:facts result)
-              ;; combined-facts (concat old-facts facts)
-              ;; new-facts (deduplicate-facts combined-facts)
-              ;; updated-env (when facts
-              ;;              (update-user-environment! user-id env-id {:facts new-facts}))
+              model (:model result)
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts model)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts
+                                                                     :models [model]}))
               ]
           (println "MODEL RESULT:")
-          (pprint/pprint result)
-          ;; (if updated-env
-          ;;   {:success true
-          ;;    :environment updated-env
-          ;;    :facts facts}
-          ;;   {:error "Failed to update environment with model"})
+          (pprint/pprint model)
+          (if model
+            {:success true
+             :environment updated-env
+             :model model
+             }
+            {:error "Failed to update environment with model"})
           )
         (catch Exception e
           (log/error e "Failed to load model")
