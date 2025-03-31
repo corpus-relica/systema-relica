@@ -6,7 +6,9 @@
                                            create-user-environment!]]
             [clojure.core.async :as async :refer [go <! >! chan]]
             [cheshire.core :as json]
-            [io.relica.common.io.archivist-client :as archivist]))
+            [io.relica.common.io.archivist-client :as archivist]
+            [io.relica.common.io.clarity-client :as clarity]
+            ))
 
 ;; Helper function to deduplicate facts by fact_uid
 (defn- deduplicate-facts
@@ -28,6 +30,7 @@
   
   ;; Fact/Entity management
   (load-specialization-hierarchy [this user-id uid env-id])
+  (load-model [this user-id uid env-id])
   (load-all-related-facts [this user-id entity-uid env-id])
   (load-entity [this user-id entity-uid env-id])
   (unload-entity [this user-id entity-uid env-id])
@@ -45,7 +48,7 @@
   (deselect-entity [this user-id env-id]))
 
 ;; Implementation of environment service
-(defrecord EnvironmentService [archivist-client]
+(defrecord EnvironmentService [archivist-client clarity-client]
   EnvironmentOperations
   
   ;; Environment management
@@ -139,6 +142,32 @@
         (catch Exception e
           (log/error e "Failed to load specialization hierarchy")
           {:error "Failed to load specialization hierarchy"}))))
+
+  (load-model [this user-id uid env-id]
+    (go
+      (try
+        (let [result (<! (clarity/get-model clarity-client uid))
+              ;; env-id (or env-id (:id (get-default-environment user-id)))
+              ;; env (get-user-environment user-id env-id)
+              ;; old-facts (:facts env)
+              ;; facts (:facts result)
+              ;; combined-facts (concat old-facts facts)
+              ;; new-facts (deduplicate-facts combined-facts)
+              ;; updated-env (when facts
+              ;;              (update-user-environment! user-id env-id {:facts new-facts}))
+              ]
+          (println "MODEL RESULT:")
+          (println result)
+          ;; (if updated-env
+          ;;   {:success true
+          ;;    :environment updated-env
+          ;;    :facts facts}
+          ;;   {:error "Failed to update environment with model"})
+          )
+        (catch Exception e
+          (log/error e "Failed to load model")
+          {:error "Failed to load model"})))
+    )
   
   (load-all-related-facts [this user-id entity-uid env-id]
     (go
@@ -512,5 +541,5 @@
           {:error "Failed to deselect entity"})))))
 
 ;; Factory function to create environment service
-(defn create-environment-service [archivist-client]
-  (->EnvironmentService archivist-client))
+(defn create-environment-service [archivist-client clarity-client]
+  (->EnvironmentService archivist-client clarity-client))

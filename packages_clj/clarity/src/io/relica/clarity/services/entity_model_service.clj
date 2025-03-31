@@ -7,20 +7,20 @@
 
 ;; ------------------------------------------------------------------ HELPERS --
 
-(defn retrieve-supertypes-and-definitions [uid]
-  "Retrieve supertypes and definitions for a physical object entity"
-  (go
-    (try
-      (let [definitive-facts (<! (archivist-api/get-definitive-facts uid))
-            names (map :lh_object_name definitive-facts)
-            supertypes (map :rh_object_uid definitive-facts)
-            definitions (map :full_definition definitive-facts)]
-        {:names names
-         :supertypes supertypes
-         :definitions definitions})
-      (catch Exception e
-        (log/error e "Failed to retrieve supertypes and definitions")
-        {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
+;; (defn retrieve-supertypes-and-definitions [uid]
+;;   "Retrieve supertypes and definitions for a physical object entity"
+;;   (go
+;;     (try
+;;       (let [definitive-facts (<! (archivist-api/get-definitive-facts uid))
+;;             names (map :lh_object_name definitive-facts)
+;;             supertypes (map :rh_object_uid definitive-facts)
+;;             definitions (map :full_definition definitive-facts)]
+;;         {:names names
+;;          :supertypes supertypes
+;;          :definitions definitions})
+;;       (catch Exception e
+;;         (log/error e "Failed to retrieve supertypes and definitions")
+;;         {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
 
 (defn retrieve-classifiers [uid]
   "Retrieve classifiers for an individual entity"
@@ -63,12 +63,20 @@
   [uid]
   (go
     (try
-      (let [{:keys [names supertypes definitions]} (<! (retrieve-supertypes-and-definitions uid))
-            stuff (<! (retrieve-stuff uid))]
+      (let [definitive-facts (<! (archivist-api/get-definitive-facts uid))
+            names (map :lh_object_name definitive-facts)
+            supertypes (map :rh_object_uid definitive-facts)
+            definitions (map :full_definition definitive-facts)
+            stuff (<! (archivist-api/get-all-related-facts uid))
+            synonym-facts (filter #(= (:rel_type_uid %) 1981) stuff)
+            synonym-names (map :lh_object_name synonym-facts)
+            facts (merge
+                   definitive-facts
+                   synonym-facts)]
         (log/info "Supertypes:" (count supertypes))
         (log/info "Definitions:" (count definitions))
         (log/info "Names:" (count names) "First name:" (first names))
-        (log/info "Stuff:" stuff)
+        (log/info "Synonyms:" synonym-names)
         ;; {:uid uid
         ;;  :name (first names)
         ;;  :nature :kind
@@ -84,7 +92,8 @@
          :nature :kind
          :definitions definitions
          :supertypes supertypes
-         :synonyms (:synonyms stuff)})
+         :synonyms synonym-names
+         :facts facts})
       (catch Exception e
         (log/error e "Failed to retrieve entity object model")
         {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))
@@ -101,7 +110,8 @@
         {:uid uid
          :name (:lh_object_name (first classifiers))
          :nature :individual
-         :classifiers (map #(:rh_object_uid %) classifiers)})
+         :classifiers (map #(:rh_object_uid %) classifiers)
+         :facts classifiers})
       (catch Exception e
         (log/error e "Failed to retrieve entity individual model")
         {:valid false :error (str "Error: " (.getMessage e)) :uid uid}))))

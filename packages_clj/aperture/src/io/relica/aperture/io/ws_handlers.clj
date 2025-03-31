@@ -85,6 +85,24 @@
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-model
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (let [result (<! (env-service/load-model
+                      @environment-service
+                      (:user-id ?data)
+                      (:uid ?data)
+                      (:environment-id ?data)))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :models/loaded
+          :models (:model result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/load-all-related-facts
   [{:keys [?data ?reply-fn] :as msg}]
   (go
