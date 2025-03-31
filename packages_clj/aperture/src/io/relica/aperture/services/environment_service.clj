@@ -8,7 +8,8 @@
             [cheshire.core :as json]
             [io.relica.common.io.archivist-client :as archivist]
             [io.relica.common.io.clarity-client :as clarity]
-            ))
+
+            [clojure.pprint :as pprint]))
 
 ;; Helper function to deduplicate facts by fact_uid
 (defn- deduplicate-facts
@@ -157,7 +158,7 @@
               ;;              (update-user-environment! user-id env-id {:facts new-facts}))
               ]
           (println "MODEL RESULT:")
-          (println result)
+          (pprint/pprint result)
           ;; (if updated-env
           ;;   {:success true
           ;;    :environment updated-env

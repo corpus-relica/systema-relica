@@ -22,6 +22,8 @@
   (go
     (try
       (let [base-model (<! (e-ms/retrieve-kind-of-entity-model uid))
+            ;; For aspects, we don't currently have any additional facts to gather
+            ;; The facts are already in the base model
             ]
         (merge base-model
                {:category "aspect"
@@ -40,6 +42,7 @@
     (log/info "Retrieving individual aspect model" uid)
     (try
       (let [base-model (<! (e-ms/retrieve-individual-entity-model uid))
+            ;; The facts are already in the base model
             ]
         (merge base-model
                {:category "aspect"}
