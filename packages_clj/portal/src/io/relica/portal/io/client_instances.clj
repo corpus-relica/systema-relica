@@ -39,7 +39,8 @@
 (defonce aperture-client (aperture/create-client
                           "ws://localhost:2175/ws"
                           {:handlers aperture-handlers
-                           :timeout 10000}))
+                          ;; :timeout 10000
+                           }))
 
 ;; (ws/connect! aperture-client)
 
