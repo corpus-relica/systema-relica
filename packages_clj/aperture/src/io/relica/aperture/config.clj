@@ -1,11 +1,8 @@
 (ns io.relica.aperture.config
-  (:require [io.pedestal.http :as http]
-            [io.pedestal.http.route :as route]
-            [io.pedestal.http.cors :as cors]
-            [next.jdbc :as jdbc]
+  (:require [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [cheshire.core :as json]
-            [clojure.core.async :as async]
+            [taoensso.nippy :as nippy]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]))
 
 ;; WebSocket Port Configuration
@@ -24,6 +21,16 @@
 
 (def ds (jdbc/get-datasource db-spec))
 
+;; Safe thaw function that handles null values
+(defn safe-thaw [data]
+  (if (nil? data)
+    []  ;; Return empty vector for null values
+    (try
+      (nippy/thaw data)
+      (catch Exception e
+        (log/warn "Error deserializing data:" (ex-message e))
+        []))))
+
 (defn get-user-environments
   "Retrieve all environments for a user"
   [user-id]
@@ -34,8 +41,8 @@
                  WHERE ue.user_id = ?" user-id]
                             {:builder-fn rs/as-unqualified-maps})]
     (map #(-> %
-              (update :facts (fn [f] (json/parse-string (.getValue f) true)))
-              (update :models (fn [m] (json/parse-string (.getValue m) true))))
+              (update :facts safe-thaw)
+              (update :models safe-thaw))
          envs)))
 
 (defn get-user-environment
@@ -46,43 +53,35 @@
                           FROM environments e
                           JOIN user_environments ue ON e.id = ue.environment_id
                           WHERE ue.user_id = ? AND e.id = ?" user-id env-id]
-                                         {:builder-fn rs/as-unqualified-maps})
-             ;; current time in millis
-
-             ]
-    (let [now (System/currentTimeMillis)]
-
-
-
-    (println "__________________________________________________________________")
-    ;; (println user-env)
-    (let [parsed-env (-> user-env
-                         (update :facts #(json/parse-string (.getValue %) true))
-                         (update :models #(json/parse-string (.getValue %) true)))]
-      (println parsed-env)
-      (println "------------------------------------------------------------------" (- (System/currentTimeMillis) now) "ms")
-      parsed-env))))
+                                         {:builder-fn rs/as-unqualified-maps})]
+    (let [now (System/currentTimeMillis)
+          parsed-env (-> user-env
+                         (update :facts safe-thaw)
+                         (update :models safe-thaw))]
+      (log/info "Environment parsing time:" (- (System/currentTimeMillis) now) "ms")
+      parsed-env)))
 
 (defn create-environment!
   "Create a new environment with a name and return it"
   [env-name]
-  (let [empty-json-array (json/generate-string [])]
+  (let [empty-array (nippy/freeze [])]
     (jdbc/execute-one! ds
                        ["INSERT INTO environments (name, facts, models)
         VALUES (?, ?, ?)
-        RETURNING *" env-name empty-json-array empty-json-array]
+        RETURNING *" env-name empty-array empty-array]
                        {:builder-fn rs/as-unqualified-maps})))
 
 (defn create-user-environment!
   "Create initial environment for user with a name"
   [user-id env-name]
   (jdbc/with-transaction [tx ds]
-    (let [env (create-environment! env-name)
-          user-env (jdbc/execute-one! tx
-                                      ["INSERT INTO user_environments (user_id, environment_id, is_owner, can_write)
-                            VALUES (?, ?, true, true)
-                            RETURNING *" user-id (:id env)]
-                                      {:builder-fn rs/as-unqualified-maps})]
+    (let [env (create-environment! env-name)]
+      ;; Create the user-environment association
+      (jdbc/execute-one! tx
+                        ["INSERT INTO user_environments (user_id, environment_id, is_owner, can_write)
+                          VALUES (?, ?, true, true)"
+                         user-id (:id env)])
+      ;; Return the full environment
       (get-user-environment user-id (:id env)))))
 
 (defn update-user-environment!
@@ -91,53 +90,50 @@
   (let [user-id (long user-id)
         ;; Verify user has write access to this environment
         can-write-result (jdbc/execute-one! ds
-                                   ["SELECT can_write FROM user_environments
-                                     WHERE user_id = ? AND environment_id = ?"
-                                    user-id env-id])
-                can-write? (:user_environments/can_write can-write-result)
+                                  ["SELECT can_write FROM user_environments
+                                    WHERE user_id = ? AND environment_id = ?"
+                                   user-id env-id])
+        can-write? (:user_environments/can_write can-write-result)
 
         ;; Build the update query for environments table
         set-clauses (remove nil?
-                            [(when (:name updates) "name = ?")
-                             (when (:facts updates) "facts = ?::jsonb")
-                             (when (:models updates) "models = ?::jsonb")
-                             (when (:selected_entity_id updates) "selected_entity_id = ?")
-                             (when (:selected_entity_type updates) "selected_entity_type = ?::entity_fact_enum")])
+                           [(when (:name updates) "name = ?")
+                            (when (:facts updates) "facts = ?")
+                            (when (:models updates) "models = ?")
+                            (when (:selected_entity_id updates) "selected_entity_id = ?")
+                            (when (:selected_entity_type updates) "selected_entity_type = ?::entity_fact_enum")])
 
         ;; Generate the values for update fields
         set-values (remove nil?
-                           [(when (:name updates) (:name updates))
-                            (when (:facts updates) (json/generate-string (:facts updates)))
-                            (when (:models updates) (json/generate-string (:models updates)))
-                            (when (:selected_entity_id updates) (:selected_entity_id updates))
-                            (when (:selected_entity_type updates) (name (:selected_entity_type updates)))])
+                          [(when (:name updates) (:name updates))
+                           (when (:facts updates) (nippy/freeze (:facts updates)))
+                           (when (:models updates) (nippy/freeze (:models updates)))
+                           (when (:selected_entity_id updates) (:selected_entity_id updates))
+                           (when (:selected_entity_type updates) (name (:selected_entity_type updates)))])
 
         ;; Only proceed if we have write access and updates to make
         updated-env (when (and can-write? (seq set-clauses))
-                      (let [query (str "UPDATE environments SET "
-                                       (clojure.string/join ", " set-clauses)
-                                       " WHERE id = ? RETURNING *")
-                            all-values (conj (vec set-values) env-id)]
+                     (let [query (str "UPDATE environments SET "
+                                     (str/join ", " set-clauses)
+                                     " WHERE id = ? RETURNING *")
+                           all-values (conj (vec set-values) env-id)]
                        ;; Update the environment
-                        ;; (jdbc/execute-one! ds
-                        ;;                    (into [query] all-values)
-                        ;;                    {:builder-fn rs/as-unqualified-maps})
-    (try
-      (jdbc/execute-one! ds
-                         (into [query] all-values)
-                         {:builder-fn rs/as-unqualified-maps})
-      (catch Exception e
-        (tap> (str "SQL error: " (.getMessage e)))
-        nil))
-                            ))
-
-            ;; Update last_accessed in user_environments
-            _ (when can-write?
-                (jdbc/execute-one! ds
-                                   ["UPDATE user_environments SET last_accessed = CURRENT_TIMESTAMP
-                    WHERE user_id = ? AND environment_id = ?"
-                                    user-id env-id]))]
-
+                       (try
+                         (jdbc/execute-one! ds
+                                          (into [query] all-values)
+                                          {:builder-fn rs/as-unqualified-maps})
+                         (catch Exception e
+                           (log/error "SQL error:" (ex-message e))
+                           (tap> (str "SQL error: " (.getMessage e)))
+                           nil))))
+        
+        ;; Update last_accessed in user_environments
+        _ (when can-write?
+            (jdbc/execute-one! ds
+                             ["UPDATE user_environments SET last_accessed = CURRENT_TIMESTAMP
+                               WHERE user_id = ? AND environment_id = ?"
+                              user-id env-id]))]
+    
     ;; Return the full updated environment
     (when updated-env
       (get-user-environment user-id env-id))))
@@ -156,8 +152,6 @@
         ;; Execute explicit NULL update
         updated-env (when can-write?
                       (try
-                        ;; (tap> {:query "UPDATE environments SET selected_entity_id = NULL WHERE id = ? RETURNING *"
-                        ;;        :values [env-id]})
                         (jdbc/execute-one! ds
                                          ["UPDATE environments SET selected_entity_id = NULL WHERE id = ? RETURNING *"
                                           env-id]
@@ -192,7 +186,16 @@
                     LIMIT 1" user-id]
         env-id  (:user_environments/environment_id (jdbc/execute-one! ds env-query))]
     (if env-id
-      (get-user-environment user-id env-id)
+      (try
+        (get-user-environment user-id env-id)
+        (catch Exception e
+          (log/error "Error getting default environment:" (ex-message e))
+          (tap> {:msg "Error getting default environment" :user-id user-id :error (ex-message e)})
+          ;; Return a minimal valid environment structure with empty collections
+          {:id env-id
+           :facts []
+           :models []
+           :user_id user-id}))
       (do
         (tap> {:msg "No default environment found" :user-id user-id})
         nil))))
