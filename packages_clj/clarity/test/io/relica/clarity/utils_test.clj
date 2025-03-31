@@ -37,7 +37,7 @@
           result (utils/remove-empty-arrays input)]
       (is (= expected result))))
   
-  (testing "Real-world model example"
+  (testing "Preserving top-level model fields"
     (let [input {:uid "123"
                  :name "Test Model"
                  :category "physical object"
@@ -49,8 +49,52 @@
           expected {:uid "123"
                     :name "Test Model"
                     :category "physical object"
+                    :definitive-kinds-of-qualitative-aspects []
+                    :definitive-kinds-of-quantitative-aspects []
+                    :definitive-kinds-of-intrinsic-aspects []
+                    :possible-kinds-of-roles []
                     :facts [{:fact_uid "456" :lh_object_uid "123" :rh_object_uid "789"}]}
+          result (utils/clean-model input)]
+      (is (= expected result))))
+  
+  (testing "Removing empty arrays from nested structures while preserving top-level fields"
+    (let [input {:uid "123"
+                 :definitive-kinds-of-qualitative-aspects [[] [1 2 3] []]
+                 :possible-kinds-of-roles [[] [{:role "test"} {}] []]}
+          expected {:uid "123"
+                    :definitive-kinds-of-qualitative-aspects [[1 2 3]]
+                    :possible-kinds-of-roles [[{:role "test"} {}]]}
           result (utils/remove-empty-arrays input)]
+      (is (= expected result))))
+  
+  (testing "Preserving top-level model fields with empty arrays"
+    (let [input {:uid "123"
+                 :name "Test Model"
+                 :category "physical object"
+                 :definitive-kinds-of-qualitative-aspects []
+                 :definitive-kinds-of-quantitative-aspects []
+                 :definitive-kinds-of-intrinsic-aspects []
+                 :possible-kinds-of-roles [[]]
+                 :facts [{:fact_uid "456" :lh_object_uid "123" :rh_object_uid "789"}]}
+          expected {:uid "123"
+                    :name "Test Model"
+                    :category "physical object"
+                    :definitive-kinds-of-qualitative-aspects []
+                    :definitive-kinds-of-quantitative-aspects []
+                    :definitive-kinds-of-intrinsic-aspects []
+                    :possible-kinds-of-roles []
+                    :facts [{:fact_uid "456" :lh_object_uid "123" :rh_object_uid "789"}]}
+          result (utils/clean-model input)]
+      (is (= expected result))))
+  
+  (testing "Preserving top-level model fields with nested empty arrays"
+    (let [input {:uid "123"
+                 :definitive-kinds-of-qualitative-aspects [[] [1 2 3] []]
+                 :possible-kinds-of-roles [[] [{:role "test"} {}] []]}
+          expected {:uid "123"
+                    :definitive-kinds-of-qualitative-aspects [[1 2 3]]
+                    :possible-kinds-of-roles [[{:role "test"} {}]]}
+          result (utils/clean-model input)]
       (is (= expected result)))))
 
 (deftest clean-model-test
@@ -60,5 +104,5 @@
       (is (= {:b [1 2 3]} (utils/clean-model model)))
       
       ;; Should return the original model if an exception occurs
-      (with-redefs [utils/remove-empty-arrays (fn [_] (throw (Exception. "Test exception")))]
+      (with-redefs [utils/remove-empty-arrays (fn [_ _] (throw (Exception. "Test exception")))]
         (is (= model (utils/clean-model model)))))))
