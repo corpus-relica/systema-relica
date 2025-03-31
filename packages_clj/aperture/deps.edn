@@ -8,7 +8,7 @@
         ch.qos.logback/logback-classic {:mvn/version "1.4.11"}
         mount/mount {:mvn/version "0.1.18"}
         metosin/malli {:mvn/version "0.13.0"}  ; For schema validation
-        com.taoensso/nippy {:mvn/version "3.3.0"}  ; For state serialization
+        com.taoensso/nippy {:mvn/version "3.4.2"}  ; For state serialization
         org.clojure/data.json {:mvn/version "2.4.0"}
         cheshire/cheshire {:mvn/version "5.13.0"}
         com.github.seancorfield/next.jdbc   {:mvn/version "1.3.909"}
