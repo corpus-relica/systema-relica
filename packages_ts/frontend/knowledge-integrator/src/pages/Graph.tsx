@@ -319,14 +319,19 @@ const Graph = observer(() => {
                 flexGrow: 1,
                 position: "relative",
                 backgroundColor: "#1a1a1a",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
               {quintessentialModelData && (
-                <QuintessentialModelViz
-                  model={quintessentialModelData}
-                  onElementClick={handleModelElementClick}
-                  selectedElement={selectedModelElement?.uid?.toString()}
-                />
+                <Box sx={{ flexGrow: 1, position: "relative" }}>
+                  <QuintessentialModelViz
+                    model={quintessentialModelData}
+                    onElementClick={handleModelElementClick}
+                    selectedElement={selectedModelElement?.uid?.toString()}
+                  />
+                </Box>
               )}
             </Box>
 

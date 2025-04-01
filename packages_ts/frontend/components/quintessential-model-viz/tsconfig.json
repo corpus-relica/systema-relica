@@ -13,7 +13,8 @@
     "jsx": "react-jsx",
     
     "skipLibCheck": true,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "noEmitOnError": false
   },
   "include": ["src/**/*"],
   "exclude": ["src/main.tsx"]

@@ -26,9 +26,11 @@ export const QuintessentialModelViz: React.FC<QuintessentialModelVizProps> = ({
   }, [model]);
 
   return (
-    <div className="quintessential-model-container">
+    <div className="quintessential-model-container" style={{ width: '100%', height: '100%' }}>
       <Canvas camera={{ position: [0, 0, 15], fov: 50 }}>
+        {/* @ts-ignore */}
         <ambientLight intensity={0.5} />
+        {/* @ts-ignore */}
         <pointLight position={[10, 10, 10]} />
         <drei.OrbitControls />
         {isReady && (

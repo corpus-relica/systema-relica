@@ -24,4 +24,20 @@ declare module '@react-three/fiber' {
     renderer: WebGLRenderer;
     [key: string]: any;
   };
+
+  // Add Three.js JSX element types
+  namespace JSX {
+    interface IntrinsicElements {
+      group: any;
+      mesh: any;
+      line: any;
+      lineBasicMaterial: any;
+      meshStandardMaterial: any;
+      sphereGeometry: any;
+      bufferGeometry: any;
+      ambientLight: any;
+      pointLight: any;
+      // Add other elements as needed
+    }
+  }
 }
