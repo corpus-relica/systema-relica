@@ -87,9 +87,37 @@
             ;; ancestors that have aspects or roles
             all-sources (into #{} (concat @aspect-sources @role-sources))
             
+            ;; Build a map of the complete inheritance chain
+            inheritance-map (reduce (fn [acc fact]
+                                     (assoc acc (:lh_object_uid fact) 
+                                            (conj (get acc (:lh_object_uid fact) #{}) 
+                                                  (:rh_object_uid fact))))
+                                   {}
+                                   specialization-facts)
+            
+            ;; Function to find all ancestors in the inheritance chain
+            ;; Using letfn for proper recursive function definition
+            ancestors (letfn [(find-all-ancestors [uid visited]
+                               (if (contains? visited uid)
+                                 visited
+                                 (let [parents (get inheritance-map uid #{})]
+                                   (reduce (fn [acc parent]
+                                            (find-all-ancestors parent acc))
+                                          (conj visited uid)
+                                          parents))))]
+                      (find-all-ancestors uid #{}))
+            
+            ;; Include all specialization facts that are part of the lineage chain
+            ;; but prioritize those that connect to sources of inherited properties
             relevant-spec-facts (filter (fn [fact]
-                                         (or (all-sources (:lh_object_uid fact))
-                                             (all-sources (:rh_object_uid fact))))
+                                        (and (= (:rel_type_uid fact) 1146)
+                                             (or 
+                                              ;; Include facts directly connecting to property sources
+                                              (all-sources (:lh_object_uid fact))
+                                              (all-sources (:rh_object_uid fact))
+                                              ;; Include facts that form the inheritance chain
+                                              (and (contains? ancestors (:lh_object_uid fact))
+                                                   (contains? ancestors (:rh_object_uid fact))))))
                                        specialization-facts)
             
             ;; Collect all facts used to build this model
