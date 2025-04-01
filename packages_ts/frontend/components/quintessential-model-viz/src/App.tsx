@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Text } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import './App.css';
 import { ModelRenderer } from './ModelRenderer';
 import { QuintessentialModel, ModelElement } from './types';
@@ -11,6 +11,7 @@ interface QuintessentialModelVizProps {
   selectedElement?: string;
 }
 
+// Using only named export to avoid the named and default export warning
 export const QuintessentialModelViz: React.FC<QuintessentialModelVizProps> = ({
   model,
   onElementClick,
@@ -29,7 +30,7 @@ export const QuintessentialModelViz: React.FC<QuintessentialModelVizProps> = ({
       <Canvas camera={{ position: [0, 0, 15], fov: 50 }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
-        <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+        <OrbitControls />
         {isReady && (
           <ModelRenderer 
             model={model} 
@@ -41,6 +42,3 @@ export const QuintessentialModelViz: React.FC<QuintessentialModelVizProps> = ({
     </div>
   );
 };
-
-// Default export for the component
-export default QuintessentialModelViz;

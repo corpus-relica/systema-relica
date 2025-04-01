@@ -2,14 +2,15 @@
   "extends": "../../../config/tsconfig.frontend.json",
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
 
     "rootDir": "./src",
     "outDir": "./dist",
     "declarationDir": "dist",
 
-    "isolatedModules": true
+    "isolatedModules": true,
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*"],
   "exclude": ["src/main.tsx"]

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/App.tsx'),
+      entry: resolve(__dirname, 'src/index.ts'),
       name: 'QuintessentialModelViz',
       formats: ['es', 'umd'],
       fileName: (format) => `quintessential-model-viz.${format === 'es' ? 'js' : 'cjs'}`
@@ -22,7 +22,9 @@ export default defineConfig({
           three: 'THREE',
           '@react-three/fiber': 'ReactThreeFiber',
           '@react-three/drei': 'Drei'
-        }
+        },
+        // Use named exports consistently
+        exports: 'named'
       }
     }
   }

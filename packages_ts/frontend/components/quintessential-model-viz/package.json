@@ -5,19 +5,19 @@
   "type": "module",
   "main": "./dist/quintessential-model-viz.cjs",
   "module": "./dist/quintessential-model-viz.js",
-  "types": "./dist/App.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/quintessential-model-viz.js",
-      "require": "./dist/quintessential-model-viz.cjs",
-      "types": "./dist/App.d.ts"
+      "require": "./dist/quintessential-model-viz.cjs"
     }
   },
   "files": ["dist"],
   "scripts": {
     "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
     "dev": "vite",
-    "build:types": "tsc --project tsconfig.json",
+    "build:types": "npx tsc --project tsconfig.json",
     "build:vite": "vite build",
     "build": "yarn clean && yarn build:vite && yarn build:types",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
