@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import * as drei from '@react-three/drei';
 import './App.css';
 import { ModelRenderer } from './ModelRenderer';
 import { QuintessentialModel, ModelElement } from './types';
@@ -30,7 +30,7 @@ export const QuintessentialModelViz: React.FC<QuintessentialModelVizProps> = ({
       <Canvas camera={{ position: [0, 0, 15], fov: 50 }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
-        <OrbitControls />
+        <drei.OrbitControls />
         {isReady && (
           <ModelRenderer 
             model={model} 

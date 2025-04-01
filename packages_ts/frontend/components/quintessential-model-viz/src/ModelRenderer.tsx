@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
+import * as drei from '@react-three/drei';
 import * as THREE from 'three';
 import { QuintessentialModel, ModelElement, ModelGraph, ElementNode, ElementLink, Position } from './types';
 import { getElementColor } from './utils';
@@ -133,7 +133,7 @@ export const ModelRenderer: React.FC<ModelRendererProps> = ({
               emissiveIntensity={selectedElement === node.id ? 0.5 : 0}
             />
           </mesh>
-          <Text
+          <drei.Text
             position={[0, node.size + 0.3, 0]}
             fontSize={0.5}
             color="white"
@@ -143,7 +143,7 @@ export const ModelRenderer: React.FC<ModelRendererProps> = ({
             outlineColor="#000000"
           >
             {node.element.name}
-          </Text>
+          </drei.Text>
         </group>
       ))}
     </group>

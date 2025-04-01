@@ -10,7 +10,10 @@
     "declarationDir": "dist",
 
     "isolatedModules": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    
+    "skipLibCheck": true,
+    "noImplicitAny": false
   },
   "include": ["src/**/*"],
   "exclude": ["src/main.tsx"]
