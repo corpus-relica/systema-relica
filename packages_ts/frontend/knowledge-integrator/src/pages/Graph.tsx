@@ -29,6 +29,7 @@ import { getAuthToken } from "../providers/AuthProvider.js";
 
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
+const LOAD_MODEL = "loadModel";
 const SELECT_ENTITY = "selectEntity";
 const SELECT_NONE = "selectNone";
 
@@ -131,7 +132,7 @@ const Graph = observer(() => {
     setSearchUIOpen(false);
     if (!res) return;
     const { lh_object_uid } = res;
-    sendSocketMessage(LOAD_SPECIALIZATION_HIERARCHY, { uid: lh_object_uid });
+    sendSocketMessage(LOAD_MODEL, { uid: lh_object_uid });
     selectNode(lh_object_uid);
   };
 

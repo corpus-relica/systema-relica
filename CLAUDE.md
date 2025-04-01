@@ -28,3 +28,59 @@
   - Prefer pure functions
   - Use maps for data structures
   - Handle errors with appropriate exception handling
+
+## System Architecture
+```
+flowchart TB
+    subgraph Frontend["Frontend Layer"]
+        KI["Knowledge Integrator\n(React-admin + Vite)\nAdmin UI"]
+    end
+
+    subgraph Gateway["API Gateway & Real-time"]
+        Portal["Portal\n(Clojure)\nWebSocket/REST Gateway"]
+    end
+
+    subgraph Auth["Authentication Layer"]
+        Shutter["Shutter\n(Clojure)\nAuth Service"]
+    end
+
+    subgraph Session["Session Management"]
+        Aperture["Aperture\n(Clojure)\nSession & Environment"]
+    end
+
+    subgraph Semantic["Semantic Processing"]
+        Clarity["Clarity\n(Clojure)\nObject-Semantic Mapping Layer"]
+    end
+
+    subgraph Foundation["Foundation Layer"]
+        Archivist["Archivist\n(Clojure)\nData Persistence"]
+        Neo4j["Neo4j\nGraph Database"]
+        Postgres["PostgreSQL\nRelational Storage"]
+        Redis["Redis\nCaching Layer"]
+    end
+        
+    %% Frontend connections
+    KI <--> |"WebSocket/REST"| Portal
+    KI <--> |"Auth"| Shutter
+
+    %% Gateway connections
+    Portal <--> |"Token Validation"| Shutter
+    Portal <--> |"Session Management"| Aperture
+    Portal <--> |"Data Operations"| Clarity
+    Portal <-.-> |"Grounding"| Archivist
+
+    %% Auth connections
+    Shutter <--> |"User Auth"| Postgres
+
+    %% Session connections
+    Aperture <--> |"Context"| Clarity
+    Aperture <-.-> |"Grounding"| Archivist
+
+    %% Semantic layer connections
+    Clarity <--> |"Persistence"| Archivist
+
+    %% Foundation layer connections
+    Archivist <--> Neo4j
+    Archivist <--> Postgres
+    Archivist <--> Redis
+```

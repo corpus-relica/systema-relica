@@ -37,3 +37,4 @@ dist/
 packages_ts/frontend/**/dist/
 packages_ts/frontend/components/**/dist/
 .windsurfrules
+packages_clj/aperture/.nrepl-port
