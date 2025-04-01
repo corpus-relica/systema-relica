@@ -84,11 +84,19 @@
 (defn serialize-message
   "Serialize a message using the appropriate format."
   [client-info message]
-  (let [format (format-for-client client-info)]
-    (serialize format message)))
+  (println "SERIALIZE MESSAGE", client-info)
+  (let [t (System/currentTimeMillis)
+        format (format-for-client client-info)
+        serialized (serialize format message)]
+    (println "SERIALIZE TIME" (- (System/currentTimeMillis) t))
+    serialized))
 
 (defn deserialize-message
   "Deserialize a message using the appropriate format."
   [client-info message-str]
-  (let [format (format-for-client client-info)]
-    (deserialize format message-str)))
+  (println "DESERIALIZE MESSAGE", client-info)
+  (let [t (System/currentTimeMillis)
+        format (format-for-client client-info)
+        deserialized (deserialize format message-str)]
+    (println "DESERIALIZE TIME" (- (System/currentTimeMillis) t))
+    deserialized))
