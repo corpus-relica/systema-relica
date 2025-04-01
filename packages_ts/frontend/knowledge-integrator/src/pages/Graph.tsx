@@ -32,8 +32,34 @@ const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 const SELECT_ENTITY = "selectEntity";
 const SELECT_NONE = "selectNone";
 
+// Add JSX namespace declaration to fix IntrinsicElements errors
+declare namespace JSX {
+  interface IntrinsicElements {
+    div: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLDivElement>,
+      HTMLDivElement
+    >;
+    h2: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLHeadingElement>,
+      HTMLHeadingElement
+    >;
+    h3: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLHeadingElement>,
+      HTMLHeadingElement
+    >;
+    p: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLParagraphElement>,
+      HTMLParagraphElement
+    >;
+    strong: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLElement>,
+      HTMLElement
+    >;
+  }
+}
+
 const Graph = observer(() => {
-  const { factDataStore, colorPaletteStore } = useStores();
+  const { factDataStore, colorPaletteStore, modelDataStore } = useStores();
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
 
@@ -45,8 +71,6 @@ const Graph = observer(() => {
 
   // State for view toggle
   const [showQuintessentialView, setShowQuintessentialView] = useState(false);
-  const [quintessentialModelData, setQuintessentialModelData] =
-    useState<any>(null);
   const [selectedModelElement, setSelectedModelElement] = useState<any>(null);
 
   const token = getAuthToken();
@@ -124,68 +148,6 @@ const Graph = observer(() => {
   const handleViewToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const showQModel = event.target.checked;
     setShowQuintessentialView(showQModel);
-
-    // Load sample quintessential model data when switching to that view
-    if (showQModel && !quintessentialModelData) {
-      // In a real implementation, we would fetch this from an API
-      // For now, using sample data from the GitHub issue
-      const sampleModelData = {
-        models: [
-          {
-            uid: 990007,
-            name: "man",
-            nature: "kind",
-            category: "physical object",
-            definitions: ["is a person who is male."],
-            supertypes: [990010],
-            "possible-kinds-of-roles": [
-              // Simplified for sample
-              [[1000000731, "brother", 990007, "man"]],
-              [[1000000780, "consultee", 990010, "person"]],
-              [[990039, "customer", 990157, "social entity"]],
-              [[640073, "provider", 990006, "lifeform"]],
-              [[5137, "reference location", 160177, "material"]],
-              [[4084, "used for segregation", 730044, "physical object"]],
-              [[4888, "correlating aspect", 4990, "concept"]],
-            ],
-            "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": [],
-          },
-          {
-            uid: 990010,
-            name: "person",
-            nature: "kind",
-            category: "physical object",
-            definitions: ["is a human being."],
-            supertypes: [990006],
-            "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": [],
-          },
-          {
-            uid: 990006,
-            name: "lifeform",
-            nature: "kind",
-            category: "physical object",
-            definitions: ["is a living organism."],
-            supertypes: [730044],
-            "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": [],
-          },
-          {
-            uid: 730044,
-            name: "physical object",
-            nature: "kind",
-            category: "physical object",
-            definitions: ["is a discrete body of matter."],
-            supertypes: [],
-            "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": [],
-          },
-        ],
-      };
-
-      setQuintessentialModelData(sampleModelData);
-    }
   };
 
   const handleModelElementClick = (element: any) => {
@@ -324,10 +286,17 @@ const Graph = observer(() => {
                 flexDirection: "column",
               }}
             >
-              {quintessentialModelData && (
-                <Box sx={{ flexGrow: 1, position: "relative" }}>
+              {modelDataStore.quintessentialModel && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    width: "100%",
+                    height: "100%",
+                    overflow: "hidden", // Prevent scrolling on the main container
+                  }}
+                >
                   <QuintessentialModelViz
-                    model={quintessentialModelData}
+                    model={modelDataStore.quintessentialModel}
                     onElementClick={handleModelElementClick}
                     selectedElement={selectedModelElement?.uid?.toString()}
                   />
@@ -349,60 +318,61 @@ const Graph = observer(() => {
                 sx={{
                   flexGrow: 1,
                   overflowY: "auto", // Enable vertical scrolling
-                  padding: 2,
-                  "&::-webkit-scrollbar": {
-                    width: "0.4em",
-                  },
-                  "&::-webkit-scrollbar-track": {
-                    boxShadow: "inset 0 0 6px rgba(0,0,0,0.00)",
-                    webkitBoxShadow: "inset 0 0 6px rgba(0,0,0,0.00)",
-                  },
-                  "&::-webkit-scrollbar-thumb": {
-                    backgroundColor: "rgba(0,0,0,.1)",
-                    outline: "1px solid slategrey",
-                  },
+                  padding: "16px",
+                  color: "white",
                 }}
               >
                 {selectedModelElement ? (
                   <div>
-                    <h2>{selectedModelElement.name}</h2>
+                    <h2>{selectedModelElement.name || "Selected Element"}</h2>
+                    <p>
+                      <strong>Type:</strong>{" "}
+                      {selectedModelElement.nature || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Category:</strong>{" "}
+                      {selectedModelElement.category || "N/A"}
+                    </p>
+                    <p>
+                      <strong>UID:</strong> {selectedModelElement.uid || "N/A"}
+                    </p>
 
-                    {selectedModelElement.category && (
-                      <p>
-                        <strong>Category:</strong>{" "}
-                        {selectedModelElement.category}
-                      </p>
-                    )}
+                    <h3>Definitions</h3>
+                    <p>
+                      {selectedModelElement.definitions &&
+                      selectedModelElement.definitions.length > 0
+                        ? selectedModelElement.definitions.join("; ")
+                        : "No definitions available."}
+                    </p>
 
-                    {selectedModelElement.nature && (
-                      <p>
-                        <strong>Nature:</strong> {selectedModelElement.nature}
-                      </p>
-                    )}
-
-                    {selectedModelElement.definitions &&
-                      selectedModelElement.definitions.length > 0 && (
-                        <>
-                          <h3>Definition:</h3>
-                          {selectedModelElement.definitions.map(
-                            (def: string, index: number) => (
-                              <p key={index}>{def}</p>
-                            )
-                          )}
-                        </>
-                      )}
-
-                    {selectedModelElement.supertypes &&
-                      selectedModelElement.supertypes.length > 0 && (
+                    <p>
+                      <strong>Supertypes:</strong>{" "}
+                      {selectedModelElement.supertypes &&
+                      selectedModelElement.supertypes.length > 0
+                        ? selectedModelElement.supertypes.join(", ")
+                        : "None"}
+                    </p>
+                    <div>
+                      {/* Additional details could be added here */}
+                      <div>
                         <p>
-                          <strong>Supertypes:</strong>{" "}
-                          {selectedModelElement.supertypes.join(", ")}
+                          {selectedModelElement["possible-kinds-of-roles"] &&
+                          selectedModelElement["possible-kinds-of-roles"]
+                            .length > 0
+                            ? `${selectedModelElement["possible-kinds-of-roles"].length} possible roles`
+                            : "No roles defined"}
                         </p>
-                      )}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div>
-                    <p>Select an element in the model to view its details.</p>
+                    <h2>Quintessential Model</h2>
+                    <p>Select an element to view details.</p>
+                    <p>
+                      This view shows the ontological structure of the knowledge
+                      model.
+                    </p>
                   </div>
                 )}
               </Box>
