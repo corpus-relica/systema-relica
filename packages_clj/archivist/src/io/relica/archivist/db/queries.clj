@@ -300,9 +300,9 @@
   RETURN count(r) as total")
 
 (neo4j/defquery get-entity-type
-  "MATCH ()--(r)-->() 
-   WHERE r.lh_object_uid = $uid 
-   AND (r.rel_type_uid = 1146 OR r.rel_type_uid = 1726 OR r.rel_type_uid = 1225) 
+  "MATCH ()--(r)-->()
+   WHERE r.lh_object_uid = $uid
+   AND (r.rel_type_uid = 1146 OR r.rel_type_uid = 1726 OR r.rel_type_uid = 1225)
    RETURN r")
 
 (neo4j/defquery reparent-kind

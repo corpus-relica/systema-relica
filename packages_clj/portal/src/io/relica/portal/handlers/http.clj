@@ -157,12 +157,14 @@
 (defn handle-get-environment [{:keys [identity params] :as request}]
   (go
     (try
-      (let [response (<! (aperture/get-environment
+      (let [t (System/currentTimeMillis)
+            response (<! (aperture/get-environment
                           aperture-client
                           (:user-id identity)
                           nil))
             env (:environment response)]
         (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        (println "TIME" (- (System/currentTimeMillis) t) "ms")
         (println "ENVIRONMENT" response)
         (swap! connected-clients update-in [(:clientId params)] assoc :environment-id (:id env))
         (success-response env))
