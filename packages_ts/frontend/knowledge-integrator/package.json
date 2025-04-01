@@ -22,6 +22,7 @@
     "@relica/constants": "0.0.0",
     "@relica/fact-search-ui": "0.0.1",
     "@relica/hsm-manager": "0.0.0",
+    "@relica/quintessential-model-viz": "0.0.1",
     "@shadcn/ui": "^0.0.4",
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.0.13",

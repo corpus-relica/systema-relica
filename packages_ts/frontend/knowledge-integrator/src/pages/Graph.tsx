@@ -42,10 +42,11 @@ const Graph = observer(() => {
 
   const [searchUIOpen, setSearchUIOpen] = useState(false);
   const [filter, setFilter] = useState<number>(0);
-  
+
   // State for view toggle
   const [showQuintessentialView, setShowQuintessentialView] = useState(false);
-  const [quintessentialModelData, setQuintessentialModelData] = useState<any>(null);
+  const [quintessentialModelData, setQuintessentialModelData] =
+    useState<any>(null);
   const [selectedModelElement, setSelectedModelElement] = useState<any>(null);
 
   const token = getAuthToken();
@@ -123,7 +124,7 @@ const Graph = observer(() => {
   const handleViewToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const showQModel = event.target.checked;
     setShowQuintessentialView(showQModel);
-    
+
     // Load sample quintessential model data when switching to that view
     if (showQModel && !quintessentialModelData) {
       // In a real implementation, we would fetch this from an API
@@ -131,16 +132,12 @@ const Graph = observer(() => {
       const sampleModelData = {
         models: [
           {
-            "uid": 990007,
-            "name": "man",
-            "nature": "kind",
-            "category": "physical object",
-            "definitions": [
-              "is a person who is male."
-            ],
-            "supertypes": [
-              990010
-            ],
+            uid: 990007,
+            name: "man",
+            nature: "kind",
+            category: "physical object",
+            definitions: ["is a person who is male."],
+            supertypes: [990010],
             "possible-kinds-of-roles": [
               // Simplified for sample
               [[1000000731, "brother", 990007, "man"]],
@@ -149,58 +146,48 @@ const Graph = observer(() => {
               [[640073, "provider", 990006, "lifeform"]],
               [[5137, "reference location", 160177, "material"]],
               [[4084, "used for segregation", 730044, "physical object"]],
-              [[4888, "correlating aspect", 4990, "concept"]]
+              [[4888, "correlating aspect", 4990, "concept"]],
             ],
             "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": []
+            "definitive-kinds-of-intrinsic-aspects": [],
           },
           {
-            "uid": 990010,
-            "name": "person",
-            "nature": "kind",
-            "category": "physical object",
-            "definitions": [
-              "is a human being."
-            ],
-            "supertypes": [
-              990006
-            ],
+            uid: 990010,
+            name: "person",
+            nature: "kind",
+            category: "physical object",
+            definitions: ["is a human being."],
+            supertypes: [990006],
             "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": []
+            "definitive-kinds-of-intrinsic-aspects": [],
           },
           {
-            "uid": 990006,
-            "name": "lifeform",
-            "nature": "kind",
-            "category": "physical object",
-            "definitions": [
-              "is a living organism."
-            ],
-            "supertypes": [
-              730044
-            ],
+            uid: 990006,
+            name: "lifeform",
+            nature: "kind",
+            category: "physical object",
+            definitions: ["is a living organism."],
+            supertypes: [730044],
             "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": []
+            "definitive-kinds-of-intrinsic-aspects": [],
           },
           {
-            "uid": 730044,
-            "name": "physical object",
-            "nature": "kind",
-            "category": "physical object",
-            "definitions": [
-              "is a discrete body of matter."
-            ],
-            "supertypes": [],
+            uid: 730044,
+            name: "physical object",
+            nature: "kind",
+            category: "physical object",
+            definitions: ["is a discrete body of matter."],
+            supertypes: [],
             "definitive-kinds-of-quantitative-aspects": [],
-            "definitive-kinds-of-intrinsic-aspects": []
-          }
-        ]
+            "definitive-kinds-of-intrinsic-aspects": [],
+          },
+        ],
       };
-      
+
       setQuintessentialModelData(sampleModelData);
     }
   };
-  
+
   const handleModelElementClick = (element: any) => {
     setSelectedModelElement(element);
     // Could also trigger selection in other parts of the system
@@ -267,22 +254,24 @@ const Graph = observer(() => {
                 color="primary"
               />
             }
-            label={showQuintessentialView ? "Quintessential Model" : "Standard Graph"}
+            label={
+              showQuintessentialView ? "Quintessential Model" : "Standard Graph"
+            }
             sx={{
               position: "absolute",
-              top: 10,
-              left: 10,
+              top: 55,
+              left: 265,
               zIndex: 10,
               backgroundColor: "rgba(81, 81, 81, 0.7)",
               padding: "0 10px",
               borderRadius: "4px",
-              '& .MuiFormControlLabel-label': {
-                color: "white"
-              }
+              "& .MuiFormControlLabel-label": {
+                color: "white",
+              },
             }}
           />
         </Tooltip>
-        
+
         <Fab
           color="primary"
           aria-label="add"
@@ -295,7 +284,7 @@ const Graph = observer(() => {
         >
           <CopyAllIcon />
         </Fab>
-        
+
         {/* Standard Graph View */}
         {!showQuintessentialView && (
           <GraphAndSelectionLayout
@@ -320,7 +309,7 @@ const Graph = observer(() => {
             setSearchUIOpen={setSearchUIOpen}
           />
         )}
-        
+
         {/* Quintessential Model View */}
         {showQuintessentialView && (
           <Box sx={{ display: "flex", flexDirection: "row", width: "100%" }}>
@@ -372,27 +361,39 @@ const Graph = observer(() => {
                 {selectedModelElement ? (
                   <div>
                     <h2>{selectedModelElement.name}</h2>
-                    
+
                     {selectedModelElement.category && (
-                      <p><strong>Category:</strong> {selectedModelElement.category}</p>
+                      <p>
+                        <strong>Category:</strong>{" "}
+                        {selectedModelElement.category}
+                      </p>
                     )}
-                    
+
                     {selectedModelElement.nature && (
-                      <p><strong>Nature:</strong> {selectedModelElement.nature}</p>
+                      <p>
+                        <strong>Nature:</strong> {selectedModelElement.nature}
+                      </p>
                     )}
-                    
-                    {selectedModelElement.definitions && selectedModelElement.definitions.length > 0 && (
-                      <>
-                        <h3>Definition:</h3>
-                        {selectedModelElement.definitions.map((def: string, index: number) => (
-                          <p key={index}>{def}</p>
-                        ))}
-                      </>
-                    )}
-                    
-                    {selectedModelElement.supertypes && selectedModelElement.supertypes.length > 0 && (
-                      <p><strong>Supertypes:</strong> {selectedModelElement.supertypes.join(', ')}</p>
-                    )}
+
+                    {selectedModelElement.definitions &&
+                      selectedModelElement.definitions.length > 0 && (
+                        <>
+                          <h3>Definition:</h3>
+                          {selectedModelElement.definitions.map(
+                            (def: string, index: number) => (
+                              <p key={index}>{def}</p>
+                            )
+                          )}
+                        </>
+                      )}
+
+                    {selectedModelElement.supertypes &&
+                      selectedModelElement.supertypes.length > 0 && (
+                        <p>
+                          <strong>Supertypes:</strong>{" "}
+                          {selectedModelElement.supertypes.join(", ")}
+                        </p>
+                      )}
                   </div>
                 ) : (
                   <div>
