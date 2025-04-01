@@ -1,6 +1,7 @@
 (ns io.relica.common.websocket.format
   (:require [clojure.edn :as edn]
             [cheshire.core :as json]
+            [taoensso.nippy :as nippy]
             [clojure.tools.logging :as log]))
 
 ;; Protocol for message format conversion
@@ -42,9 +43,27 @@
         (log/error "Error deserializing JSON:" (.getMessage e) "Raw:" string)
         (throw e)))))
 
+;; Nippy Format implementation (for Clojure-to-Clojure communication)
+(defrecord NippyFormat []
+  MessageFormat
+  (serialize [_ data]
+    (try
+      (nippy/freeze-to-string data)
+      (catch Exception e
+        (log/error "Error serializing Nippy:" (.getMessage e))
+        (throw e))))
+
+  (deserialize [_ string]
+    (try
+      (nippy/thaw-from-string string)
+      (catch Exception e
+        (log/error "Error deserializing Nippy:" (.getMessage e) "Raw:" string)
+        (throw e)))))
+
 ;; Singleton instances
 (def edn-format (->EDNFormat))
 (def json-format (->JSONFormat))
+(def nippy-format (->NippyFormat))
 
 ;; Helper to determine format from client info
 (defn format-for-client
@@ -55,9 +74,10 @@
   (case (:format client-info)
     "json" json-format
     "edn" edn-format
-    ;; Default to EDN for Clojure clients, JSON for others
+    "nippy" nippy-format
+    ;; Default to Nippy for Clojure clients, JSON for others
     (if (= (:language client-info) "clojure")
-      edn-format
+      nippy-format
       json-format)))
 
 ;; Helper functions
