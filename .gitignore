@@ -31,3 +31,4 @@ temp.*
 .maven/
 .windsurfrules
 packages_clj/aperture/.nrepl-port
+packages_ts/frontend/components/quintessential-model-viz/dist/*
