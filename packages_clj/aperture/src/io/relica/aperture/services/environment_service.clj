@@ -334,7 +334,8 @@
         (let [env-id (or env-id (:id (get-default-environment user-id)))
               environment (get-user-environment user-id env-id)
               updated (when env-id
-                       (update-user-environment! user-id env-id {:facts []}))]
+                       (update-user-environment! user-id env-id {:facts []
+                                                                 :models []}))]
           (if updated
             {:success true
              :fact-uids-removed (map (fn [f] (:fact_uid f)) (:facts environment))}
