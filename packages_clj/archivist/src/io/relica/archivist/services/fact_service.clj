@@ -1,3 +1,4 @@
+
 (ns io.relica.archivist.services.fact-service
   (:require [clojure.tools.logging :as log]
             [clojure.core.async :refer [<! go]]

@@ -6,7 +6,10 @@
                                            create-user-environment!]]
             [clojure.core.async :as async :refer [go <! >! chan]]
             [cheshire.core :as json]
-            [io.relica.common.io.archivist-client :as archivist]))
+            [io.relica.common.io.archivist-client :as archivist]
+            [io.relica.common.io.clarity-client :as clarity]
+
+            [clojure.pprint :as pprint]))
 
 ;; Helper function to deduplicate facts by fact_uid
 (defn- deduplicate-facts
@@ -25,9 +28,10 @@
   (create-environment [this user-id name])
 
   (text-search-load [this user-id search-term])
-  
+
   ;; Fact/Entity management
   (load-specialization-hierarchy [this user-id uid env-id])
+  (load-model [this user-id uid env-id])
   (load-all-related-facts [this user-id entity-uid env-id])
   (load-entity [this user-id entity-uid env-id])
   (unload-entity [this user-id entity-uid env-id])
@@ -39,15 +43,15 @@
   (load-connections [this user-id entity-uid env-id])
   (load-connections-in [this user-id entity-uid env-id])
   (clear-entities [this user-id env-id])
-  
+
   ;; Entity selection
   (select-entity [this user-id env-id entity-uid])
   (deselect-entity [this user-id env-id]))
 
 ;; Implementation of environment service
-(defrecord EnvironmentService [archivist-client]
+(defrecord EnvironmentService [archivist-client clarity-client]
   EnvironmentOperations
-  
+
   ;; Environment management
   (get-environment [_ user-id env-id]
     (go
@@ -61,7 +65,7 @@
         (catch Exception e
           (log/error e "Failed to get environment")
           {:error "Failed to get environment"}))))
-  
+
   (list-environments [_ user-id]
     (go
       (try
@@ -70,7 +74,7 @@
         (catch Exception e
           (log/error e "Failed to list environments")
           {:error "Failed to list environments"}))))
-  
+
   (create-environment [_ user-id name]
     (go
       (try
@@ -139,7 +143,38 @@
         (catch Exception e
           (log/error e "Failed to load specialization hierarchy")
           {:error "Failed to load specialization hierarchy"}))))
-  
+
+  (load-model [this user-id uid env-id]
+    (go
+      (try
+        (let [result (<! (clarity/get-model clarity-client uid))
+              model (:model result)
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              old-models (:models env)
+              facts (:facts model)
+              combined-facts (concat old-facts facts)
+              combined-models (conj (or old-models []) model)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts
+                                                                     :models [combined-models]}))
+              ]
+          (println "MODEL RESULT:")
+          (pprint/pprint model)
+          (if model
+            {:success true
+             :environment updated-env
+             :model model
+             }
+            {:error "Failed to update environment with model"})
+          )
+        (catch Exception e
+          (log/error e "Failed to load model")
+          {:error "Failed to load model"})))
+    )
+
   (load-all-related-facts [this user-id entity-uid env-id]
     (go
       (try
@@ -159,22 +194,22 @@
         (catch Exception e
           (log/error e "Failed to load all related facts")
           {:error "Failed to load all related facts"}))))
-  
+
   (load-entity [this user-id entity-uid env-id]
     (go
       (try
         (let [env-id (or env-id (:id (get-default-environment user-id)))
               env (get-user-environment user-id env-id)
               selected-entity (:selected_entity_id env)
-              
+
               ;; Get definitive facts for the entity
               def-result (<! (archivist/get-definitive-facts archivist-client entity-uid))
               definitive-facts (:facts def-result)
 
               ;; If there's a selected entity, get facts relating it to our entity
               rel-result (if selected-entity
-                           (<! (archivist/get-facts-relating-entities archivist-client 
-                                                                      entity-uid 
+                           (<! (archivist/get-facts-relating-entities archivist-client
+                                                                      entity-uid
                                                                       selected-entity))
                            {:facts []})
               relating-facts (:facts rel-result)
@@ -183,19 +218,19 @@
               all-new-facts (concat definitive-facts relating-facts)
               ;; Deduplicate only the new facts
               unique-new-facts (deduplicate-facts all-new-facts)
-              
+
               ;; Check if there are already existing facts in the environment
               old-facts (:facts env)
-              
+
               ;; Combine with existing facts and deduplicate for storing in environment
               combined-facts (concat old-facts unique-new-facts)
               deduplicated-env-facts (deduplicate-facts combined-facts)
 
               ;; Models could be implemented here if needed
-              
+
               ;; Update the environment - only when we have new facts to add
               updated-env (when (seq unique-new-facts)
-                           (update-user-environment! user-id env-id {:facts deduplicated-env-facts}))]          
+                           (update-user-environment! user-id env-id {:facts deduplicated-env-facts}))]
           (if updated-env
             {:success true
              :environment updated-env
@@ -204,29 +239,29 @@
         (catch Exception e
           (log/error e "Failed to load entity")
           {:error "Failed to load entity"}))))
-  
+
   (unload-entity [this user-id entity-uid env-id]
     (go
       (try
         (let [env (get-user-environment user-id env-id)
               facts (:facts env)
               ;; Find facts to remove (those where the entity is on either side)
-              facts-to-remove (filter #(or (= entity-uid (:lh_object_uid %)) 
-                                          (= entity-uid (:rh_object_uid %))) 
+              facts-to-remove (filter #(or (= entity-uid (:lh_object_uid %))
+                                          (= entity-uid (:rh_object_uid %)))
                                     facts)
               ;; Find facts to keep
-              remaining-facts (remove #(or (= entity-uid (:lh_object_uid %)) 
+              remaining-facts (remove #(or (= entity-uid (:lh_object_uid %))
                                           (= entity-uid (:rh_object_uid %)))
                                     facts)
               ;; Get UIDs of facts to remove
               fact-uids-to-remove (mapv :fact_uid facts-to-remove)
-              
+
               ;; Find candidate model UIDs to remove
               ;; These are models that might need to be removed if they're not referenced by remaining facts
               candidate-model-uids-to-remove (-> #{}
                                                (into (map :lh_object_uid facts-to-remove))
                                                (into (map :rh_object_uid facts-to-remove)))
-              
+
               ;; Remove models from candidates if they're still referenced in remaining facts
               final-model-uids-to-remove (loop [models candidate-model-uids-to-remove
                                               remaining remaining-facts]
@@ -239,11 +274,11 @@
                                                           (contains? models lh-uid) (disj lh-uid)
                                                           (contains? models rh-uid) (disj rh-uid))]
                                              (recur models (rest remaining)))))
-              
+
               ;; Update environment with remaining facts
               updated-env (when env
                        (update-user-environment! user-id env-id {:facts remaining-facts}))]
-          
+
           (if updated-env
             {:success true
              :environment updated-env
@@ -253,7 +288,7 @@
         (catch Exception e
           (log/error e "Failed to unload entity")
           {:error "Failed to unload entity"}))))
-  
+
   (load-entities [this user-id env-id entity-uids]
     (go
       (try
@@ -263,7 +298,7 @@
               new-models-only (atom [])
               env (get-user-environment user-id env-id)
               old-facts (:facts env)]
-              
+
           ;; Process each entity and collect ONLY the new facts
           (doseq [entity-uid entity-uids]
             (let [result (<! (load-entity this user-id entity-uid env-id))
@@ -277,7 +312,7 @@
                 )))
 
           (tap> @new-facts-only)
-          
+
           ;; Get only unique facts to add to the environment
           (let [unique-new-facts (deduplicate-facts @new-facts-only)
                 ;; Deduplicate when combining with existing facts
@@ -294,7 +329,7 @@
         (catch Exception e
           (log/error e "Failed to load entities")
           {:error "Failed to load entities"}))))
-  
+
   (unload-entities [this user-id env-id entity-uids]
     (go
       (try
@@ -303,34 +338,34 @@
               ;; Track all facts and models to remove
               all-fact-uids-to-remove (atom [])
               all-model-uids-to-remove (atom [])]
-          
+
           ;; Process each entity
           (doseq [entity-uid entity-uids]
             (let [;; Find facts to remove for this entity
-                  facts-to-remove (filter #(or (= entity-uid (:lh_object_uid %)) 
-                                              (= entity-uid (:rh_object_uid %))) 
+                  facts-to-remove (filter #(or (= entity-uid (:lh_object_uid %))
+                                              (= entity-uid (:rh_object_uid %)))
                                         facts)
                   ;; Get UIDs of facts to remove
                   fact-uids-to-remove (mapv :fact_uid facts-to-remove)
-                  
+
                   ;; Find candidate model UIDs to remove
                   candidate-model-uids-to-remove (-> #{}
                                                    (into (map :lh_object_uid facts-to-remove))
                                                    (into (map :rh_object_uid facts-to-remove)))]
-              
+
               ;; Add to our collection
               (swap! all-fact-uids-to-remove concat fact-uids-to-remove)
               (swap! all-model-uids-to-remove concat (vec candidate-model-uids-to-remove))))
-          
+
           ;; Now remove all facts referencing any of these entities
-          (let [remaining-facts (remove #(or (some (fn [entity-uid] 
+          (let [remaining-facts (remove #(or (some (fn [entity-uid]
                                                    (= entity-uid (:lh_object_uid %)))
                                                  entity-uids)
                                            (some (fn [entity-uid]
                                                    (= entity-uid (:rh_object_uid %)))
                                                  entity-uids))
                                        facts)
-                
+
                 ;; Determine which models can be removed (not referenced in remaining facts)
                 final-model-uids-to-remove (loop [models (set @all-model-uids-to-remove)
                                                  remaining remaining-facts]
@@ -343,11 +378,11 @@
                                                              (contains? models lh-uid) (disj lh-uid)
                                                              (contains? models rh-uid) (disj rh-uid))]
                                                 (recur models (rest remaining)))))
-                
+
                 ;; Update environment with remaining facts
                 updated-env (when env
                           (update-user-environment! user-id env-id {:facts remaining-facts}))]
-            
+
             (if updated-env
               {:success true
                :environment updated-env
@@ -475,7 +510,8 @@
         (let [env-id (or env-id (:id (get-default-environment user-id)))
               environment (get-user-environment user-id env-id)
               updated (when env-id
-                       (update-user-environment! user-id env-id {:facts []}))]
+                       (update-user-environment! user-id env-id {:facts []
+                                                                 :models []}))]
           (if updated
             {:success true
              :fact-uids-removed (map (fn [f] (:fact_uid f)) (:facts environment))}
@@ -483,13 +519,13 @@
         (catch Exception e
           (log/error e "Failed to clear entities")
           {:error "Failed to clear entities"}))))
-  
+
   ;; Entity selection
   (select-entity [this user-id env-id entity-uid]
     (go
       (try
         (let [env-id (or env-id (:id (get-default-environment user-id)))
-              updated (when env-id 
+              updated (when env-id
                        (select-entity! user-id env-id entity-uid))]
           (if updated
             {:success true :selected-entity entity-uid}
@@ -497,7 +533,7 @@
         (catch Exception e
           (log/error e "Failed to select entity")
           {:error "Failed to select entity"}))))
-  
+
   (deselect-entity [this user-id env-id]
     (go
       (try
@@ -512,5 +548,5 @@
           {:error "Failed to deselect entity"})))))
 
 ;; Factory function to create environment service
-(defn create-environment-service [archivist-client]
-  (->EnvironmentService archivist-client))
+(defn create-environment-service [archivist-client clarity-client]
+  (->EnvironmentService archivist-client clarity-client))

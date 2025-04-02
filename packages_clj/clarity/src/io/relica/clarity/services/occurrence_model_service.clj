@@ -22,6 +22,7 @@
   (go
     (try
       (let [base-model (<! (e-ms/retrieve-kind-of-entity-model uid))
+            ;; We're not fetching additional facts for occurrences yet
             ]
         (merge base-model
                {:category "occurrence"

@@ -5,7 +5,8 @@
             [io.relica.aperture.io.ws-handlers :as ws-handlers]
             [io.relica.aperture.config :as config]
             [io.relica.common.io.archivist-client :as archivist]
-            [io.relica.aperture.io.client-instances :refer [archivist-client]]
+            [io.relica.aperture.io.client-instances :refer [archivist-client
+                                                            clarity-client]]
             [clojure.tools.logging :as log]))
 
 ;; WebSocket Server Component
@@ -24,7 +25,7 @@
   :start (do
            (log/info "Starting Environment Service...")
            ;; Create the environment service with the archivist client
-           (let [service (env-service/create-environment-service archivist-client)]
+           (let [service (env-service/create-environment-service archivist-client clarity-client)]
              ;; Register the service with the handlers
              (ws-handlers/set-environment-service! service)
              ;; Return the service instance

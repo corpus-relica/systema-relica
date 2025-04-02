@@ -1,0 +1,52 @@
+{
+  "name": "@relica/quintessential-model-viz",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/quintessential-model-viz.cjs",
+  "module": "./dist/quintessential-model-viz.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/quintessential-model-viz.js",
+      "require": "./dist/quintessential-model-viz.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+    "dev": "vite",
+    "build:types": "echo \"Skipping TypeScript type generation\" || npx tsc --project tsconfig.json --emitDeclarationOnly",
+    "build:vite": "vite build",
+    "build": "yarn clean && yarn build:vite && yarn build:types",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "mobx-react": "^9.2.0",
+    "three": "^0.171.0",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/drei": "^9.120.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@types/three": "^0.171.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react-swc": "^3.3.2",
+    "concurrently": "^8.2.1",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "mobx": "^6.10.2",
+    "nodemon": "^3.0.1",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  }
+}

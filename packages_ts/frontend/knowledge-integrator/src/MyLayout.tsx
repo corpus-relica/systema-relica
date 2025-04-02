@@ -36,7 +36,7 @@ export const MyLayout = (props) => {
 
   console.log("vvvv - ROOT STORAGE vvvv:");
   console.log(rootStore);
-  const { factDataStore } = rootStore;
+  const { factDataStore, modelDataStore } = rootStore;
 
   const [replOpen, setReplOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(true);
@@ -166,20 +166,16 @@ export const MyLayout = (props) => {
     // MODELS
 
     const onAddModels = (d) => {
-      d.models.forEach((model: any) => {
-        const key = "model:" + model.uid;
-        console.log("WHAT THE FUCK IS HAPPENING HERE!!", key);
-        // memStore.removeItem(key);
-        // memStore.setItem(key, model);
-      });
+      console.log("Adding models:", d.models);
+      if (d.models && d.models.length > 0) {
+        modelDataStore.addModels(d.models);
+      }
     };
 
     const onRemModels = (d) => {
-      d.model_uids.forEach((uid: number) => {
-        const key = "model:" + uid;
-        console.log("AND HERE!!", key);
-        // memStore.removeItem(key);
-      });
+      console.log("Removing models:", d.model_uids);
+      // Currently not implemented in ModelDataStore
+      // Would need to add a removeModels method to ModelDataStore
     };
 
     // ENTITIES
@@ -240,7 +236,17 @@ export const MyLayout = (props) => {
 
         const env = await portalClient.retrieveEnvironment();
         console.log("vvvv - ENVIRONMENT foo vvvv:", env);
-        factDataStore.addFacts(env.facts);
+        
+        // Process facts from environment
+        if (env.facts && env.facts.length > 0) {
+          factDataStore.addFacts(env.facts);
+        }
+        
+        // Process models from environment
+        if (env.models && env.models.length > 0) {
+          console.log("Processing models from environment:", env.models);
+          modelDataStore.addModels(env.models);
+        }
 
         console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
       } catch (error) {
@@ -259,6 +265,8 @@ export const MyLayout = (props) => {
     portalWs.on("portal:factsUnloaded", onRemFacts);
     portalWs.on("portal:entitySelected", onSelectEntity);
     portalWs.on("portal:entitySelectedNone", onNoneSelected);
+    portalWs.on("portal:modelsLoaded", onAddModels);
+    portalWs.on("portal:modelsUnloaded", onRemModels);
 
     return () => {
       ccSocket.off("connect", onConnect);
@@ -270,6 +278,8 @@ export const MyLayout = (props) => {
       portalWs.off("portal:factsUnloaded", onRemFacts);
       portalWs.off("portal:entitySelected", onSelectEntity);
       portalWs.off("portal:entitySelectedNone", onNoneSelected);
+      portalWs.off("portal:modelsLoaded", onAddModels);
+      portalWs.off("portal:modelsUnloaded", onRemModels);
       
     };
   }, []);

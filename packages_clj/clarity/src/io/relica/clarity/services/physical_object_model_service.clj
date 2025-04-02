@@ -3,6 +3,8 @@
             [clojure.pprint :refer [pprint]]
             [clojure.core.async :refer [go <!]]
             [io.relica.clarity.io.archivist-api :as archivist-api]
+            [io.relica.common.io.archivist-client :as archivist]
+            [io.relica.clarity.io.client-instances :refer [archivist-client]]
             [io.relica.clarity.services.entity-model-service :as e-ms]))
 
 (def aspect-uid 1727) ; "has as aspect"
@@ -37,18 +39,24 @@
   (go
     (try
       (let [base-model (<! (e-ms/retrieve-kind-of-entity-model uid))
+            ;; Get specialization hierarchy to find inheritance path
+            specialization-response (<! (archivist/get-specialization-hierarchy 
+                                        archivist-client 
+                                        nil
+                                        uid))
+            specialization-facts (if (:success specialization-response)
+                                   (:facts (:hierarchy specialization-response))
+                                   [])
+            
+            ;; Get all aspects through core sample (which already follows inheritance)
             definitive-qual-aspects (<! (archivist-api/get-core-sample
                                          uid qual-asp-rel-type-uid))
             definitive-quant-aspects (<! (archivist-api/get-core-sample
                                           uid quant-asp-rel-type-uid))
             definitive-intrn-aspects (<! (archivist-api/get-core-sample
                                           uid intrn-asp-rel-type-uid))
-            ;; possible-aspects (<! (po/get-possible-aspects uid))
-            ;; required-aspects (<! (po/get-required-aspects uid))
-            ;; definitive-involvements (<! (po/get-definitive-involvements uid))
-            ;; possible-involvements (<! (po/get-possible-involvements uid))
-            ;; required-involvements (<! (po/get-required-involvements uid))
-            ;; definitive-roles (<! (po/get-definitive-roles uid))
+            
+            ;; Get possible roles this physical object can have
             possible-roles-result (<! (archivist-api/get-core-sample
                                        uid can-have-role-rel-type-uid))
             _ (log/info "Possible roles result:" possible-roles-result)
@@ -60,7 +68,74 @@
                                           (:lh_object_name y)]) x))
                                 possible-roles-result)
             _ (log/info "Possible roles:" possible-roles)
-            ;; required-roles (<! (po/get-required-roles uid))
+            
+            ;; Identify the source entities (ancestors) that define aspects and roles
+            aspect-sources (atom #{})
+            _ (doseq [aspects-list [definitive-qual-aspects definitive-quant-aspects definitive-intrn-aspects]]
+                (doseq [aspect-level aspects-list]
+                  (doseq [aspect aspect-level]
+                    (when (not= (:lh_object_uid aspect) uid)
+                      (swap! aspect-sources conj (:lh_object_uid aspect))))))
+            
+            role-sources (atom #{})
+            _ (doseq [roles-level possible-roles-result]
+                (doseq [role roles-level]
+                  (when (not= (:lh_object_uid role) uid)
+                    (swap! role-sources conj (:lh_object_uid role)))))
+            
+            ;; Find the relevant specialization facts that link from our type to the
+            ;; ancestors that have aspects or roles
+            all-sources (into #{} (concat @aspect-sources @role-sources))
+            
+            ;; Build a map of the complete inheritance chain
+            inheritance-map (reduce (fn [acc fact]
+                                     (assoc acc (:lh_object_uid fact) 
+                                            (conj (get acc (:lh_object_uid fact) #{}) 
+                                                  (:rh_object_uid fact))))
+                                   {}
+                                   specialization-facts)
+            
+            ;; Function to find all ancestors in the inheritance chain
+            ;; Using letfn for proper recursive function definition
+            ancestors (letfn [(find-all-ancestors [uid visited]
+                               (if (contains? visited uid)
+                                 visited
+                                 (let [parents (get inheritance-map uid #{})]
+                                   (reduce (fn [acc parent]
+                                            (find-all-ancestors parent acc))
+                                          (conj visited uid)
+                                          parents))))]
+                      (find-all-ancestors uid #{}))
+            
+            ;; Include all specialization facts that are part of the lineage chain
+            ;; but prioritize those that connect to sources of inherited properties
+            relevant-spec-facts (filter (fn [fact]
+                                        (and (= (:rel_type_uid fact) 1146)
+                                             (or 
+                                              ;; Include facts directly connecting to property sources
+                                              (all-sources (:lh_object_uid fact))
+                                              (all-sources (:rh_object_uid fact))
+                                              ;; Include facts that form the inheritance chain
+                                              (and (contains? ancestors (:lh_object_uid fact))
+                                                   (contains? ancestors (:rh_object_uid fact))))))
+                                       specialization-facts)
+            
+            ;; Collect all facts used to build this model
+            all-facts (concat 
+                        (get base-model :facts [])
+                        (flatten definitive-qual-aspects)
+                        (flatten definitive-quant-aspects)
+                        (flatten definitive-intrn-aspects)
+                        (flatten possible-roles-result)
+                        relevant-spec-facts)
+                        
+            ;; Deduplicate facts by fact_uid
+            unique-facts (vals (reduce (fn [acc item]
+                                         (if (:fact_uid item)
+                                           (assoc acc (:fact_uid item) item)
+                                           acc))
+                                       {}
+                                       all-facts))
             ]
         (merge base-model
                {:category "physical object"
@@ -75,6 +150,7 @@
                ;;  :definitive-kinds-of-roles definitive-roles
                 :possible-kinds-of-roles possible-roles
                ;;  :required-kinds-of-roles required-roles}
+                :facts unique-facts
                }
                ))
       (catch Exception e))))
@@ -106,6 +182,22 @@
 
             connections-in-result (<! (archivist-api/get-related-facts-by-relation uid connection-uid))
             connections-in (map :rh_object_uid connections-in-result)
+            
+            ;; Collect all facts used to build this model
+            all-facts (concat 
+                        (get base-model :facts [])
+                        totalities-result
+                        parts-result
+                        connected-to-result
+                        connections-in-result)
+                        
+            ;; Deduplicate facts by fact_uid
+            unique-facts (vals (reduce (fn [acc item]
+                                         (if (:fact_uid item)
+                                           (assoc acc (:fact_uid item) item)
+                                           acc))
+                                       {}
+                                       all-facts))
             ]
         (log/info "Base model:" parts)
         (merge base-model
@@ -117,6 +209,7 @@
                 :connected-to connected-to
                 :connections-in connections-in
                ;;  :adopted-state
+                :facts unique-facts
                }
                ))
       (catch Exception e))))

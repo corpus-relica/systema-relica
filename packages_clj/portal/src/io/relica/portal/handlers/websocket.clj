@@ -79,6 +79,17 @@
         (log/error "Failed to load specialization hierarchy:" e)
         {:error "Failed to load specialization hierarchy"}))))
 
+(defn load-model [{:keys [uid] :as message}]
+  (go
+    (try
+      (let [result (<! (aperture/load-model aperture-client (:user-id message) uid))]
+        {:success true
+         :message "Model loaded"
+         :model result})
+      (catch Exception e
+        (log/error "Failed to load model:" e)
+        {:error "Failed to load model"}))))
+
 (defn handle-clear-environment-entities [{:keys [client-id] :as message}]
   (go
     (try
@@ -342,6 +353,7 @@
    "selectEntity" handle-select-entity
    "selectNone" handle-select-entity-none
    "loadSpecializationHierarchy" load-specialization-hierarchy
+   "loadModel" load-model
    "clearEnvironmentEntities"handle-clear-environment-entities
    "loadAllRelatedFacts" handle-load-all-related-facts
    "unloadEntity" handle-unload-entity

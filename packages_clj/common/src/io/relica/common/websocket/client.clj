@@ -106,7 +106,7 @@
       (println "Connecting to WebSocket server at" (:uri options))
 
       (let [handlers (or (:handlers options) {})
-            format (or (:format options) "edn")
+            format (or (:format options) "nippy")
             language (or (:language options) "clojure")
             client-info {:format format :language language}
             base-uri (URI. (:uri options))
@@ -333,7 +333,7 @@
                          :reconnect-delay 5000
                          :heartbeat true
                          :heartbeat-interval 30000
-                         :format "edn"
+                         :format "nippy"
                          :language "clojure"}
         full-options (merge default-options options)]
     (->JsonWebSocketClient full-options (atom {:connected false}))))

@@ -9,6 +9,7 @@
   (list-environments [this user-id])
   (create-environment [this user-id env-name])
   (load-specialization-hierarchy [this user-id uid])
+  (load-model [this user-id uid])
   (clear-environment-entities [this user-id env-id])
   (load-all-related-facts [this user-id env-id entity-uid])
   (unload-entity [this user-id env-id entity-uid])
@@ -54,6 +55,13 @@
   (load-specialization-hierarchy [this user-id uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
     (ws/send-message! ws-client :environment/load-specialization
+                      {:uid uid
+                       :user-id user-id}
+                      (:timeout options)))
+
+  (load-model [this user-id uid]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/load-model
                       {:uid uid
                        :user-id user-id}
                       (:timeout options)))

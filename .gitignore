@@ -29,3 +29,12 @@ temp.*
 # Clojure deps and Maven
 .m2/
 .maven/
+
+# Frontend build artifacts
+dist/
+*/dist/
+**/dist/
+packages_ts/frontend/**/dist/
+packages_ts/frontend/components/**/dist/
+.windsurfrules
+packages_clj/aperture/.nrepl-port
