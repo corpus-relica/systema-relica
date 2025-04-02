@@ -1,3 +1,4 @@
+
 (ns io.relica.archivist.services.fact-service
   (:require [clojure.tools.logging :as log]
             [clojure.core.async :refer [<! go]]
@@ -62,7 +63,6 @@
                                   (graph/transform-results direct-results))]
           (if-not recursive
             direct-classified
-            (let [subtypes (cache/all-descendants-of cache-service uid)
             (let [subtypes (cache/all-descendants-of cache-service uid)
                   subtypes-facts (map #(get-classified this % false) subtypes)
                   all-facts (concat direct-classified (flatten subtypes-facts))]
@@ -228,61 +228,9 @@
                                   (recur (rest items) (conj result-vec facts)))))))]
 
           results)
-
-              ;; Function to get related facts based on match-on parameter
-              get-facts-fn (fn [hierarchy-uid]
-                             (get-related-facts this hierarchy-uid rel-type-uid))
-
-              ;; Process each level in the hierarchy and collect results
-              results (<! (go
-                            (loop [items spec-facts
-                                   result-vec []]
-                              (if (empty? items)
-                                result-vec  ;; Return collected results
-                                (let [item (first items)
-                                      hierarchy-uid (:lh_object_uid item)
-                                      facts-chan (get-facts-fn hierarchy-uid)
-                                      facts (<! facts-chan)]
-                                  ;; Continue with next item, adding facts to result vector
-                                  (recur (rest items) (conj result-vec facts)))))))]
-
-          results)
         (catch Exception e
           (log/error e "Error in get-core-sample:" (ex-message e))
-          (log/error e "Error in get-core-sample:" (ex-message e))
           []))))
-
-  ;; (get-core-sample [this uid rel-type-uid]
-  ;;   (go
-  ;;     (try
-  ;;       (let [spec-h (gellish/get-specialization-hierarchy gellish-base-service uid)
-  ;;             spec-facts (reverse (:facts spec-h))  ;; Reverse to get subject-centric order
-
-  ;;             ;; Get all related facts for the entity itself
-  ;;             direct-facts (<! (get-related-facts this uid rel-type-uid))
-
-  ;;             ;; If we have direct facts, return them
-  ;;             result (if (not (empty? direct-facts))
-  ;;                      direct-facts
-  ;;                      ;; Otherwise, check specialization hierarchy
-  ;;                      (loop [items spec-facts
-  ;;                             acc []]
-  ;;                        (if (empty? items)
-  ;;                          acc  ;; Return accumulated results
-  ;;                          (let [item (first items)
-  ;;                                related-facts-chan (get-related-facts this (:lh_object_uid item) rel-type-uid)
-  ;;                                facts (<! related-facts-chan)]
-  ;;                            (if (seq facts)
-  ;;                              ;; Found facts, add to accumulator and continue
-  ;;                              (recur (rest items) (concat acc facts))
-  ;;                              ;; No facts found, continue with next item
-  ;;                              (recur (rest items) acc))))))]
-
-  ;;         ;; Return results
-  ;;         result)
-  ;;       (catch Exception e
-  ;;         (log/error "Error in get-core-sample:" (ex-message e))
-  ;;         []))))
 
   ;; (get-core-sample [this uid rel-type-uid]
   ;;   (go
@@ -368,7 +316,6 @@
                                          queries/related-to
                                          {:end_uid uid
                                           :rel_type_uids [rel-type-uid]})
-                                          :rel_type_uids [rel-type-uid]})
               res (graph/transform-results results)]
           res)
         (catch Exception e
@@ -379,10 +326,8 @@
     (go
       (try
         (let [rel-subtypes (cache/all-descendants-of cache-service rel-type-uid)
-        (let [rel-subtypes (cache/all-descendants-of cache-service rel-type-uid)
               all-rel-types (conj rel-subtypes rel-type-uid)
               results (graph/exec-query graph-service
-                                         queries/related-to
                                          queries/related-to
                                          {:end_uid lh-object-uid
                                           :rel_type_uids all-rel-types})
@@ -444,7 +389,7 @@
         (if (empty? existing-results)
           (let [;; Generate a new fact UID
                 fact-uid (first (uid/reserve-uid uid-service 1))
-                
+
                 ;; Add the fact UID to the parameters
                 params-with-uid (assoc params :fact_uid fact-uid)
 
@@ -488,7 +433,6 @@
               rel-subtypes (atom [])
               _ (when (not (nil? rel-type-uids))
                   (doseq [rel-type-uid rel-type-uids]
-                    (let [subtypes (cache/all-descendants-of cache-service rel-type-uid)]
                     (let [subtypes (cache/all-descendants-of cache-service rel-type-uid)]
                       (swap! rel-subtypes concat subtypes))))
 
@@ -555,4 +499,3 @@
         composition-hierarchy))
 
   )
-

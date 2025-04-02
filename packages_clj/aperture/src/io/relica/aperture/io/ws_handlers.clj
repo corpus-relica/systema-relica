@@ -22,13 +22,15 @@
       (println "FUGGING GETTING ENVIRONMENT")
       (println ?data)
       (println (type (:user-id ?data)))
-      (let [result (<! (env-service/get-environment @environment-service 
+      (let [t (System/currentTimeMillis)
+            result (<! (env-service/get-environment @environment-service
                                                   (:user-id ?data) 
                                                   (or (:environment-id ?data)
                                                       (:id (get-default-environment (:user-id ?data))))))]
 
         (println "##################################################   RESULT")
-        (println result)
+        (println (- (System/currentTimeMillis) t) "ms")
+        ;; (println result)
         (?reply-fn result)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
