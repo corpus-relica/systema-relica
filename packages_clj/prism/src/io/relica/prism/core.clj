@@ -1,29 +1,47 @@
 (ns io.relica.prism.core
   (:require [taoensso.timbre :as log]
-            [environ.core :refer [env]]
-            ; Add other required namespaces here later, e.g.:
-            ; [io.relica.prism.db :as db]
-            ; [io.relica.prism.xls :as xls]
-            ; [io.relica.prism.import :as importer]
-            ))
+            [io.relica.prism.db :as db]
+            [io.relica.prism.xls :as xls]
+            [io.relica.prism.config :as config]
+            [clojure.java.io :as io]))
 
-(log/set-level! :info) ; Or configure based on env
+(log/set-level! (config/log-level))
 
 (defn initialize-database-if-needed
   "Checks if the database is empty and performs initial seeding if necessary."
   []
   (log/info "Checking database initialization status...")
-  (let [db-empty? true] ; Placeholder - replace with actual check via db.clj
-    (if db-empty?
-      (do
-        (log/info "Database is empty. Starting seeding process...")
-        ;; 1. Process XLS files (using xls.clj)
-        ;; 2. Generate CSVs (or prepare data)
-        ;; 3. Load Nodes via Cypher (using db.clj)
-        ;; 4. Load Relationships via Cypher (using db.clj)
-        ;; 5. Trigger cache building (TBD)
-        (log/info "Seeding process completed (Placeholder)"))
-      (log/info "Database already initialized. Skipping seeding."))))
+  (try
+    (let [db-empty? (db/database-empty?)]
+      (if db-empty?
+        (do
+          (log/info "Database is empty. Starting seeding process...")
+          (let [csv-file-paths (xls/process-seed-directory)]
+            (if (seq csv-file-paths)
+              (do
+                (log/infof "Generated %d CSV files for import." (count csv-file-paths))
+                (doseq [csv-path csv-file-paths
+                        :let [file-name (.getName (io/file csv-path))]] ; Get just the filename
+                  (log/infof "--- Processing CSV: %s ---" file-name)
+                  (log/info "Loading nodes...")
+                  (let [node-result (db/load-nodes-from-csv! file-name)]
+                    (when-not (:success node-result)
+                      (throw (ex-info (str "Failed to load nodes from " file-name) {:file file-name :error (:error node-result)}))))
+
+                  (log/info "Loading relationships...")
+                  (let [rel-result (db/load-relationships-from-csv! file-name)]
+                    (when-not (:success rel-result)
+                      (throw (ex-info (str "Failed to load relationships from " file-name) {:file file-name :error (:error rel-result)}))))
+
+                  (log/infof "--- Finished processing CSV: %s ---" file-name))
+                ;; 5. Trigger cache building (TBD)
+                (log/info "Seeding process completed successfully."))
+              (log/warn "Seeding process skipped: No CSV files were generated from the seed directory."))))
+        (log/info "Database already initialized. Skipping seeding.")))
+    (catch Exception e
+      (log/error e "An error occurred during database initialization/seeding.")
+      ;; Decide if we should re-throw or handle differently
+      (throw e))))
 
 (defn start-prism-services
   "Main entry point for Prism logic (e.g., called on app startup)."
