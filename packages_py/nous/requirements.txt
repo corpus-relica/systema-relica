@@ -1,0 +1,38 @@
+# Core web server dependencies
+fastapi>=0.115.0
+uvicorn>=0.34.0
+websockets>=15.0.0
+pydantic>=2.10.0
+python-dotenv>=1.0.0
+
+# Clojure communication
+edn_format>=0.7.5
+
+# LLM and agent dependencies
+langchain>=0.3.0
+langchain-core>=0.3.0
+langgraph>=0.3.0
+
+langchain-groq>=0.3.2
+langchain-anthropic>=0.3.0
+langchain-openai>=0.3.0
+
+groq>=0.3.0
+openai>=1.66.0
+anthropic>=0.49.0
+
+instructor>=1.7.9
+
+# Additional dependencies
+asyncio>=3.4.3
+requests>=2.32.0
+numpy>=1.26.0
+tqdm>=4.67.0
+typer>=0.15.0
+jsonschema>=4.23.0
+orjson>=3.10.0
+httpx>=0.28.0
+
+# Optional dependencies for advanced features
+# vllm>=0.8.0
+# torch>=2.6.0

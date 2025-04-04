@@ -38,24 +38,27 @@
     #(do (reset! running false)
          (async/close! scheduler))))
 
+(def default-timeout 5000)
 ;; Factory function
-(defn create-client [server-uri opts]
-  (let [app-handlers (:handlers opts)
+(defn create-client
+  [{:keys [timeout handlers host port] :or {timeout default-timeout} :as opts}]
+  (let [uri (str "ws://" host ":" port "/ws")
+        default-handlers {:on-connect #(tap> {:event :app/connected})
+                          :on-disconnect #(tap> {:event :app/disconnected})
+                          :on-message (fn [event-type payload]
+                                        (tap> {:event :app/received-message
+                                               :type event-type
+                                               :payload payload}))}
+        merged-handlers (merge default-handlers handlers)
         base-client (ws/create-client
-                                      {:service-name "nous"
-                                       :format "json"
-                                       :uri server-uri
-                                       :handlers
-                                       {:on-connect #(tap> {:event :app/connected})
-                                        :on-disconnect #(tap> {:event :app/disconnected})
-                                        :on-message (fn [event-type payload]
-                                                      (tap> {:event :app/received-message
-                                                             :type event-type
-                                                             :payload payload}))}})
-        nous-client (->NOUSClient base-client {:timeout (or(:timeout opts) 5000)})]
+                {:service-name "nous"
+                 :uri uri
+                 :format "json"
+                 :handlers merged-handlers})
+        nous-client (->NOUSClient base-client {:timeout timeout})]
 
     ;; Register application-specific event handlers
-    (ws/register-handler! base-client ":final_answer" (:handle-final-answer app-handlers))
+    (ws/register-handler! base-client ":final_answer" (:handle-final-answer handlers))
     ;; (ws/register-handler base-client :kind/model
     ;;                      (fn [payload]
     ;;                        (tap> {:event :app/handling-kind-model

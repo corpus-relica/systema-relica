@@ -16,4 +16,6 @@
    :clarity {:host (or (System/getenv "CLARITY_HOST") "localhost")
              :port (or (System/getenv "CLARITY_PORT") 2176)}
    :aperture {:host (or (System/getenv "APERTURE_HOST") "localhost")
-             :port (or (System/getenv "APERTURE_PORT") 2175)}})
+             :port (or (System/getenv "APERTURE_PORT") 2175)}
+   :nous {:host (or (System/getenv "NOUS_HOST") "localhost")
+          :port (or (System/getenv "NOUS_PORT") 2177)}})

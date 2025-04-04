@@ -72,8 +72,9 @@
   )
 
 (defonce nous-client (nous/create-client
-                      "ws://localhost:2204/ws"
-                      {:handlers (merge
+                      {:host (get-in app-config [:nous :host])
+                       :port (get-in app-config [:nous :port])
+                       :handlers (merge
                                   nous-handlers
                                   {:on-connect (fn []
                                                  (tap> "Connected to NOUS")
