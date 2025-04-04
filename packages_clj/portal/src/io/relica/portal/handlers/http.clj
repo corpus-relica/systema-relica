@@ -136,9 +136,11 @@
      :body (json/generate-string {:error "No token provided"})}))
 
 (defn handle-get-collections [req]
+  (print "GET THE MUTHER FUCKING COLLECTIONS" req)
   (go
     (try
       (let [result (<! (archivist/get-collections archivist-client))]
+        (println "RESULT" result)
         (success-response (:collections result)))
       (catch Exception e
         (error-response "Failed to fetch collections")))))

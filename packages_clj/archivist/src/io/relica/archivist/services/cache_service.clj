@@ -3,12 +3,19 @@
             [taoensso.carmine :as car]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
-            [io.relica.archivist.services.linearization-service :as lin]))
+            [io.relica.archivist.services.linearization-service :as lin]
+            [io.relica.archivist.config :refer [db-config]]))
+
+(def redis-url (str "redis://" (get-in db-config [:redis :host]) ":" (get-in db-config [:redis :port])))
+(println "Redis URL:" redis-url)
+(println "Redis user:" (get-in db-config [:redis :user]))
+(println "Redis password:" (get-in db-config [:redis :password]))
 
 ;; Redis connection configuration
-(def redis-conn {:pool {} :spec {:uri "redis://localhost:6379"
-                                :username "default"
-                                :password "redis"}})
+(def redis-conn {:pool {}
+                 :spec {:uri redis-url
+                        :username (get-in db-config [:redis :user])
+                        :password (get-in db-config [:redis :password])}})
 
 (defmacro wcar* [& body] `(car/wcar redis-conn ~@body))
 

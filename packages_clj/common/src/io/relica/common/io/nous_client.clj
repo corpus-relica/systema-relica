@@ -42,7 +42,9 @@
 (defn create-client [server-uri opts]
   (let [app-handlers (:handlers opts)
         base-client (ws/create-client
-                                      {:uri server-uri
+                                      {:service-name "nous"
+                                       :format "json"
+                                       :uri server-uri
                                        :handlers
                                        {:on-connect #(tap> {:event :app/connected})
                                         :on-disconnect #(tap> {:event :app/disconnected})

@@ -3,54 +3,41 @@ MAINTAINER Marc <marc@speculum-obscurum>
 
 WORKDIR /usr/src/app
 
-COPY package.json .
-COPY yarn.lock .
+# COPY package.json .
+# COPY yarn.lock .
 
-COPY packages_ts/libs/types ./packages_ts/libs/types
-COPY packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
-COPY packages_ts/backend/archivist ./packages_ts/backend/archivist
+# COPY packages_ts/libs/types ./packages_ts/libs/types
+# COPY packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
+# COPY packages_ts/backend/archivist ./packages_ts/backend/archivist
 
-COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
-COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
-COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
+# COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
+# COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
+# COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
 
-RUN yarn install --pure-lockfile --non-interactive
+# RUN yarn install --pure-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages_ts/libs/types
-RUN yarn build
+# WORKDIR /usr/src/app/packages_ts/libs/types
+# RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/core/hsm-manager
-RUN yarn build
+# WORKDIR /usr/src/app/packages_ts/core/hsm-manager
+# RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/backend/archivist
-RUN yarn build
+# WORKDIR /usr/src/app/packages_ts/backend/archivist
+# RUN yarn build
 
 # --------------------------------------
 
-FROM node:latest
+FROM clojure:temurin-17-tools-deps
 
 WORKDIR /usr/src/app
 
-COPY package.json .
-COPY yarn.lock .
+COPY packages_clj/common /usr/src/app/packages_clj/common
+COPY packages_clj/archivist /usr/src/app/packages_clj/archivist
 
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.base.json /usr/src/app/packages_ts/config/tsconfig.base.json
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib.json /usr/src/app/packages_ts/config/tsconfig.lib.json
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib-react.json /usr/src/app/packages_ts/config/tsconfig.lib-react.json
+WORKDIR /usr/src/app/packages_clj/archivist
 
-COPY --from=build /usr/src/app/packages_ts/libs/types/package.json /usr/src/app/packages_ts/libs/types/package.json
-COPY --from=build /usr/src/app/packages_ts/libs/types/dist /usr/src/app/packages_ts/libs/types/dist
+# Expose both the application and nREPL ports
+EXPOSE 3000
+EXPOSE 7890
 
-COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/package.json /usr/src/app/packages_ts/core/hsm-manager/package.json
-COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/dist /usr/src/app/packages_ts/core/hsm-manager/dist
-COPY --from=build /usr/src/app/packages_ts/core/hsm-manager/tsconfig.json /usr/src/app/packages_ts/core/hsm-manager/tsconfig.json
-
-COPY packages_ts/backend/archivist /usr/src/app/packages_ts/backend/archivist
-
-ENV NODE_ENV development
-
-RUN yarn install --pure-lockfile --non-interactive
-
-WORKDIR /usr/src/app/packages_ts/backend/archivist
-
-CMD ["yarn", "start:dev"]
+CMD ["clojure", "-M:dev"]

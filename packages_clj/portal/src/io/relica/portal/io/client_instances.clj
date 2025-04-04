@@ -6,18 +6,20 @@
             ;; [io.relica.common.websocket.client :as ws]
             [io.relica.common.events.core :as events]
             [clojure.tools.logging :as log]
+            [io.relica.portal.config :refer [app-config]]
             ))
 
 ;; ARCHIVIST
 
-(defonce archivist-client (archivist/create-client))
-(archivist/connect! archivist-client)
+(defonce archivist-client (archivist/create-client
+                           {:host (get-in app-config [:archivist :host])
+                            :port (get-in app-config [:archivist :port])}))
 
 ;; CLARITY
 
 (defonce clarity-client (clarity/create-client
-                         "ws://localhost:2176/ws"
-                         {}))
+                         {:host (get-in app-config [:clarity :host])
+                          :port (get-in app-config [:clarity :port])}))
 
 ;; APERTURE
 
@@ -37,8 +39,9 @@
 
 ;; Create Aperture client with handlers
 (defonce aperture-client (aperture/create-client
-                          "ws://localhost:2175/ws"
-                          {:handlers aperture-handlers}))
+                          {:host (get-in app-config [:aperture :host])
+                           :port (get-in app-config [:aperture :port])
+                           :handlers aperture-handlers}))
 
 ;; (ws/connect! aperture-client)
 

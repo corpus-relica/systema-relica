@@ -1,6 +1,7 @@
 (ns io.relica.archivist.services.graph-service
   (:require [clojure.tools.logging :as log]
-            [neo4j-clj.core :as neo4j])
+            [neo4j-clj.core :as neo4j]
+            [io.relica.archivist.config :refer [db-config]])
   (:import (org.neo4j.driver Values)
            (org.neo4j.driver.internal.value NumberValueAdapter)))
 
@@ -106,10 +107,12 @@
 (def graph-service (atom nil))
 
 (defn start []
-  (let [conn (neo4j/connect
-               (java.net.URI. "bolt://localhost:7687")
-               "neo4j"
-               "password")
+  (let [uri-str (str "bolt://" (get-in db-config [:neo4j :host]) ":" (get-in db-config [:neo4j :port]))
+        _ (println "Connecting to Neo4j at" uri-str)
+        conn (neo4j/connect
+               (java.net.URI. uri-str)
+               (get-in db-config [:neo4j :user])
+               (get-in db-config [:neo4j :password]))
         session-factory (fn [] (neo4j/get-session conn))
         service (create-graph-service session-factory)]
     (reset! graph-service service)
@@ -122,10 +125,12 @@
 
 (comment
   ;; Test operations
-  (let [conn (neo4j/connect
-               (java.net.URI. "bolt://localhost:7687")
-               "neo4j"
-               "password")
+  (let [uri-str (str "bolt://" (get-in db-config [:neo4j :host]) ":" (get-in db-config [:neo4j :port]))
+        _ (println "Connecting to Neo4j at" uri-str)
+        conn (neo4j/connect
+               (java.net.URI. uri-str)
+               (get-in db-config [:neo4j :user])
+               (get-in db-config [:neo4j :password]))
         session-factory (fn [] (neo4j/get-session conn))
         test-service (create-graph-service session-factory)]
     (exec-query test-service "MATCH (n) RETURN n LIMIT 1" nil))

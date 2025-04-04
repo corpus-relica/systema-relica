@@ -207,6 +207,7 @@
 (defonce server (atom nil))
 
 (defn start []
+  (println "SOMETHING ACTUALLY HAPPENED!!!!")
   (when-not @server
     (reset! server (http/start (http/create-server service-map)))
     (log/info "Server started on port" (:port env))))

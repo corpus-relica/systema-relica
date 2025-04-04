@@ -1,13 +1,10 @@
 (ns io.relica.common.io.archivist-client
   (:require [io.relica.common.websocket.client :as ws]
-            [clojure.core.async :refer [go <!]]
+            [clojure.core.async :as async :refer [go-loop <! timeout]]
             [clojure.tools.logging :as log]))
 
 ;; Configuration
 (def ^:private default-timeout 5000)
-
-(def ^:private default-ws-url
-  (or (System/getenv "ARCHIVIST_WS_URL") "localhost:3000"))
 
 (defprotocol ArchivistOperations
   (execute-query [this query params])
@@ -84,7 +81,8 @@
   (rollback-transaction [this uid])
 
   ;; Validation operations
-  (validate-entity [this entity-data]))
+  (validate-entity [this entity-data])
+  (send-heartbeat! [this]))
 
 (defprotocol ConnectionManagement
   (connect! [this])
@@ -361,24 +359,46 @@
 
   (validate-entity [this entity-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :validation/validate entity-data (:timeout options))))
+    (ws/send-message! client :validation/validate entity-data (:timeout options)))
+
+  (send-heartbeat! [this]
+    (tap> {:event :app/sending-heartbeat})
+    (ws/send-message! client :app/heartbeat
+                            {:timestamp (System/currentTimeMillis)}
+                            30000)))
+
+
+;; Heartbeat scheduler
+(defn start-heartbeat-scheduler! [aperture-client interval-ms]
+  (let [running (atom true)
+        scheduler (go-loop []
+                    (<! (timeout interval-ms))
+                    (when @running
+                      (send-heartbeat! aperture-client)
+                      (recur)))]
+    ;; Return a function that stops the scheduler
+    #(do (reset! running false)
+         (async/close! scheduler))))
 
 (defn create-client
-  ([]
-   (create-client default-ws-url {}))
-  ([url]
-   (create-client url {}))
-  ([url {:keys [timeout handlers] :or {timeout default-timeout} :as opts}]
-   (let [default-handlers {:on-error (fn [e]
+  [{:keys [timeout handlers host port] :or {timeout default-timeout} :as opts}]
+   (let [uri (str "ws://" host ":" port "/ws")
+         default-handlers {:on-error (fn [e]
                                        (log/error "Archivist WS Error:" e))
                            :on-message (fn [msg]
                                          (log/debug "Archivist message received:" msg))}
          merged-handlers (merge default-handlers handlers)
          ;; client (ws/create-client {:uri url :handlers merged-handlers})]
-         client (ws/create-client {:port 3000 :uri "ws://localhost:3000/ws" :handlers merged-handlers})]
-     (->ArchivistClient client {:url url
-                                :timeout timeout
-                                :handlers merged-handlers}))))
+         client (ws/create-client {:service-name "archivist"
+                                   :uri uri
+                                   :handlers merged-handlers})
+         archivist-client (->ArchivistClient client {:timeout timeout})]
+
+     (ws/connect! client)
+
+     (start-heartbeat-scheduler! archivist-client 30000)
+
+     archivist-client))
 
 ;; Singleton instance for backward compatibility
 ;; (defonce archivist-client (create-client))

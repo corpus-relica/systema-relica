@@ -3,18 +3,18 @@
 (def db-config
   {:postgres {:dbtype "postgresql"
               :dbname (or (System/getenv "POSTGRES_DB") "postgres")
-             :host (or (System/getenv "POSTGRES_HOST") "postgres")
-             :port (or (System/getenv "POSTGRES_PORT") 5432)
-             :user (or (System/getenv "POSTGRES_USER") "user")
-             :password (or (System/getenv "POSTGRES_PASSWORD") "password")}
+              :host (or (System/getenv "POSTGRES_HOST") "postgres")
+              :port (or (System/getenv "POSTGRES_PORT") 5432)
+              :user (or (System/getenv "POSTGRES_USER") "user")
+              :password (or (System/getenv "POSTGRES_PASSWORD") "password")}
 
-   :redis {:url (or (System/getenv "REDIS_URL") "redis://:redis@redis:6379")
-           :host (or (System/getenv "REDIS_HOST") "redis")
-           :port (or (System/getenv "REDIS_PORT") 6379)}
+   :redis {:host (or (System/getenv "REDIS_HOST") "redis")
+           :port (or (System/getenv "REDIS_PORT") 6379)
+           :user (or (System/getenv "REDIS_USER") "default")
+           :password (or (System/getenv "REDIS_PASSWORD") "redis")}
 
-   :neo4j {:url (or (System/getenv "NEO4J_URL") "bolt://localhost:7687")
-           :host (or (System/getenv "REDIS_HOST") "neo4j")
-           :port (or (System/getenv "REDIS_PORT") 7687)
+   :neo4j {:host (or (System/getenv "NEO4J_HOST") "neo4j")
+           :port (or (System/getenv "NEO4J_PORT") 7687)
            :user (or (System/getenv "NEO4J_USER") "neo4j")
            :password (or (System/getenv "NEO4J_PASSWORD") "password")}})
 

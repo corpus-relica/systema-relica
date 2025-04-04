@@ -109,12 +109,12 @@
                                                                  (let [resp {:id msg-id
                                                                              :type "response"
                                                                              :payload response}
-                                                                       _ (println "!!!!!! Response:" resp)
+                                                                       ;; _ (println "!!!!!! Response:" resp)
                                                                        resp-str (format/serialize-message
                                                                                  (get @connected-clients client-id)
                                                                                  resp)]
-                                                                   (println "!!!!!! client-id:" client-id)
-                                                                   (println "!!!!!! Response string:" resp-str)
+                                                                   ;; (println "!!!!!! client-id:" client-id)
+                                                                   ;; (println "!!!!!! Response string:" resp-str)
                                                                    (http-kit/send! channel resp-str)))}]
                                      (event-msg-handler event-msg))
 
@@ -247,6 +247,7 @@
         (let [channel (:channel client)
               message-str (format/serialize-message client message)]
           (println "Sending message to client:" client-id)
+          (println "Client data:" client)
           (println "Message:" message-str)
           (http-kit/send! channel message-str)))
       client-count))

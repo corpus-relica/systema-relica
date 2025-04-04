@@ -74,14 +74,19 @@ services:
       - NEO4J_PORT=7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password
-      - REDIS_URL=redis://:redis@redis:6379
+
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
 
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
-    command: ["yarn", "start:dev"]
+    command: ["clojure", "-M:dev"]
+    # command: ["yarn", "start:dev"]
     volumes:
       - ./packages_ts/backend/archivist:/usr/src/app/packages_ts/backend/archivist
       - ./seed_xls:/usr/src/app/packages_ts/backend/archivist/seed_xls:ro
@@ -99,42 +104,42 @@ services:
     networks:
       - rlc-net
 
-  clarity-core:
-    container_name: clarity-core
-    # image: node:latest
-    build:
-      context: ./
-      dockerfile: Dockerfile.clarity-core
-    # working_dir: /usr/src/app
-    restart: always
-    environment:
-      - RELICA_CLARITY_CORE_ALLOWED_ORIGIN=*
-      - RELICA_CLARITY_CORE_API_PORT=3001
+  # clarity-core:
+  #   container_name: clarity-core
+  #   # image: node:latest
+  #   build:
+  #     context: ./
+  #     dockerfile: Dockerfile.clarity-core
+  #   # working_dir: /usr/src/app
+  #   restart: always
+  #   environment:
+  #     - RELICA_CLARITY_CORE_ALLOWED_ORIGIN=*
+  #     - RELICA_CLARITY_CORE_API_PORT=3001
 
-      - RELICA_POSTGRES_HOST=postgres
-      - RELICA_POSTGRES_USER=postgres
-      - RELICA_POSTGRES_PASSWORD=password
-      - RELICA_POSTGRES_DB_NAME=postgres
-      - RELICA_POSTGRES_PORT=5432
-      - RELICA_NEO4J_URL=http://localhost:3000
+  #     - RELICA_POSTGRES_HOST=postgres
+  #     - RELICA_POSTGRES_USER=postgres
+  #     - RELICA_POSTGRES_PASSWORD=password
+  #     - RELICA_POSTGRES_DB_NAME=postgres
+  #     - RELICA_POSTGRES_PORT=5432
+  #     - RELICA_NEO4J_URL=http://localhost:3000
 
-    # command: sh -c "npm install && npx tsc --outDir dist && npm start"
-    # command: sh -c "yarn install && yarn dev"
-    command: ["yarn", "start:dev"]
-    volumes:
-      - ./packages_ts/backend/clarity-core:/usr/src/app/packages_ts/backend/clarity-core
-      - /usr/src/app/packages_ts/backend/clarity-core/node_modules
-    ports:
-      - "3001:3001"
-    depends_on:
-      - archivist
-    networks:
-      rlc-net:
-        aliases:
-          - clarity-core
+  #   # command: sh -c "npm install && npx tsc --outDir dist && npm start"
+  #   # command: sh -c "yarn install && yarn dev"
+  #   command: ["yarn", "start:dev"]
+  #   volumes:
+  #     - ./packages_ts/backend/clarity-core:/usr/src/app/packages_ts/backend/clarity-core
+  #     - /usr/src/app/packages_ts/backend/clarity-core/node_modules
+  #   ports:
+  #     - "3001:3001"
+  #   depends_on:
+  #     - archivist
+  #   networks:
+  #     rlc-net:
+  #       aliases:
+  #         - clarity-core
 
-  clarity-clj:
-    container_name: clarity-clj
+  clarity:
+    container_name: clarity
     build:
       context: ./
       dockerfile: Dockerfile.clarity-clj
@@ -145,16 +150,19 @@ services:
       - ./packages_clj/clarity:/usr/src/app/packages_clj/clarity
       - /usr/src/app/.m2
     ports:
-      - "3002:3002"
+      - "2176:2176"
       # nREPL port
-      - "7888:7888"
-      - "5555:5555"
+      - "7892:7892"
+      # - "5555:5555"
+    environment:
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
     depends_on:
       - archivist
     networks:
       rlc-net:
         aliases:
-          - clarity-clj
+          - clarity
 
   aperture:
     container_name: aperture
@@ -171,15 +179,17 @@ services:
       # nREPL port
       - "7891:7891"
     environment:
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
       - JWT_SECRET=changeme
-      - ARCHIVIST_URL=http://archivist:3000
     depends_on:
       - postgres
+      - archivist
     networks:
       rlc-net:
         aliases:
@@ -201,11 +211,17 @@ services:
       - "7890:7890"
     environment:
       - JWT_SECRET=changeme
-      - ARCHIVIST_URL=http://archivist:3000
-    # depends_on:
-    #   - shutter
-    #   - clarity
-    #   - archivist
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - CLARITY_HOST=clarity
+      - CLARITY_PORT=2176
+      - APERTURE_HOST=aperture
+      - APERTURE_PORT=2175
+    depends_on:
+      #   - shutter
+      - archivist
+      - clarity
+      - aperture
     networks:
       rlc-net:
         aliases:
@@ -249,7 +265,7 @@ services:
       - "80:80" # or whatever port you prefer
     depends_on:
       - archivist
-      - clarity-core
+      - clarity
     networks:
       rlc-net:
         aliases:

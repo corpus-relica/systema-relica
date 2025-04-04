@@ -1,0 +1,15 @@
+(ns user
+  (:require [nrepl.server :as nrepl]
+            [cider.nrepl :refer [cider-nrepl-handler]]
+            [io.relica.clarity.core :as core]))
+
+(defn start-dev []
+  (println "Starting nREPL server on port 7891")
+  (nrepl/start-server :port 7891
+                     :bind "0.0.0.0"
+                     :handler cider-nrepl-handler)
+  (println "Starting Clarity service")
+  (core/-main))
+
+(defn -main []
+  (start-dev))

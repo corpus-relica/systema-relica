@@ -3,6 +3,8 @@
             [clojure.core.async :as async :refer [go-loop <! timeout]]
             [clojure.tools.logging :as log]))
 
+;; Configuration
+(def ^:private default-timeout 5000)
 
 (defprotocol ClarityOperations
   (get-model [this uid])
@@ -64,18 +66,20 @@
          (async/close! scheduler))))
 
 ;; Factory function
-(defn create-client [server-uri opts]
-  (let [app-handlers (:handlers opts)
-        base-client (ws/create-client
-                                      {:uri server-uri
-                                       :handlers
-                                       {:on-connect #(tap> {:event :app/connected})
-                                        :on-disconnect #(tap> {:event :app/disconnected})
-                                        :on-message (fn [event-type payload]
-                                                      (tap> {:event :app/received-message
-                                                             :type event-type
-                                                             :payload payload}))}})
-        clarity-client (->ClarityClient base-client {:timeout (or(:timeout opts) 5000)})]
+(defn create-client
+  [{:keys [timeout handlers host port] :or {timeout default-timeout}}]
+  (let [uri (str "ws://" host ":" port "/ws")
+        default-handlers {:on-connect #(tap> {:event :app/connected})
+                          :on-disconnect #(tap> {:event :app/disconnected})
+                          :on-message (fn [event-type payload]
+                                        (tap> {:event :app/received-message
+                                               :type event-type
+                                               :payload payload}))}
+        merged-handlers (merge default-handlers handlers)
+        base-client (ws/create-client {:service-name "clarity"
+                                       :uri uri
+                                       :handlers merged-handlers})
+        clarity-client (->ClarityClient base-client {:timeout timeout})]
 
     ;; (ws/register-handler base-client :kind/model
     ;;                      (fn [payload]

@@ -3,22 +3,22 @@ MAINTAINER Marc <marc@speculum-obscurum>
 
 WORKDIR /usr/src/app
 
-COPY package.json .
-COPY yarn.lock .
+# COPY package.json .
+# COPY yarn.lock .
 
-COPY packages_ts/libs/types ./packages_ts/libs/types
-COPY packages_ts/libs/constants ./packages_ts/libs/constants
+# COPY packages_ts/libs/types ./packages_ts/libs/types
+# COPY packages_ts/libs/constants ./packages_ts/libs/constants
 
-COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
-COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
+# COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
+# COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
 
-RUN yarn install --pure-lockfile --non-interactive
+# RUN yarn install --pure-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages_ts/libs/types
-RUN yarn build
+# WORKDIR /usr/src/app/packages_ts/libs/types
+# RUN yarn build
 
-WORKDIR /usr/src/app/packages_ts/libs/constants
-RUN yarn build
+# WORKDIR /usr/src/app/packages_ts/libs/constants
+# RUN yarn build
 
 # --------------------------------------
 
@@ -26,21 +26,22 @@ FROM clojure:temurin-17-tools-deps
 
 WORKDIR /usr/src/app
 
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.base.json /usr/src/app/packages_ts/config/tsconfig.base.json
-COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib.json /usr/src/app/packages_ts/config/tsconfig.lib.json
+# COPY --from=build /usr/src/app/packages_ts/config/tsconfig.base.json /usr/src/app/packages_ts/config/tsconfig.base.json
+# COPY --from=build /usr/src/app/packages_ts/config/tsconfig.lib.json /usr/src/app/packages_ts/config/tsconfig.lib.json
 
-COPY --from=build /usr/src/app/packages_ts/libs/types/package.json /usr/src/app/packages_ts/libs/types/package.json
-COPY --from=build /usr/src/app/packages_ts/libs/types/dist /usr/src/app/packages_ts/libs/types/dist
+# COPY --from=build /usr/src/app/packages_ts/libs/types/package.json /usr/src/app/packages_ts/libs/types/package.json
+# COPY --from=build /usr/src/app/packages_ts/libs/types/dist /usr/src/app/packages_ts/libs/types/dist
 
-COPY --from=build /usr/src/app/packages_ts/libs/constants/package.json /usr/src/app/packages_ts/libs/constants/package.json
-COPY --from=build /usr/src/app/packages_ts/libs/constants/dist /usr/src/app/packages_ts/libs/constants/dist
+# COPY --from=build /usr/src/app/packages_ts/libs/constants/package.json /usr/src/app/packages_ts/libs/constants/package.json
+# COPY --from=build /usr/src/app/packages_ts/libs/constants/dist /usr/src/app/packages_ts/libs/constants/dist
 
+COPY packages_clj/common /usr/src/app/packages_clj/common
 COPY packages_clj/clarity /usr/src/app/packages_clj/clarity
 
 WORKDIR /usr/src/app/packages_clj/clarity
 
 # Expose both the application and nREPL ports
-EXPOSE 3002
-EXPOSE 7888
+EXPOSE 2176
+EXPOSE 7892
 
 CMD ["clojure", "-M:dev"]

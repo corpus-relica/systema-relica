@@ -106,7 +106,7 @@
       (println "Connecting to WebSocket server at" (:uri options))
 
       (let [handlers (or (:handlers options) {})
-            format (or (:format options) "edn")
+            format (or (:format options) "nippy")
             language (or (:language options) "clojure")
             client-info {:format format :language language}
             base-uri (URI. (:uri options))
@@ -143,7 +143,7 @@
                 ;; If auto-reconnect is enabled and we're not already reconnecting
                 (when (and (:auto-reconnect options) (not (:reconnecting @state)))
                   (let [reconnect-delay (or (:reconnect-delay options) 5000)]
-                    (println "Starting reconnection process with delay of" (/ reconnect-delay 1000) "seconds")
+                    ;; (println "Starting reconnection process with delay of" (/ reconnect-delay 1000) "seconds")
                     ;; Mark that we're in reconnection mode
                     (swap! state assoc :reconnecting true)
 
@@ -151,7 +151,7 @@
                           (go-loop [attempts 1]
                             (when (:reconnecting @state) ;; Check if we should still be reconnecting
                               (<! (timeout reconnect-delay))
-                              (println "Reconnection attempt" attempts)
+                              ;; (println "Reconnection attempt" attempts)
                               ;;(try
                                 ;; Attempt reconnection
                               (when-not (:client @state) ;; Only if we don't already have a client
@@ -164,7 +164,7 @@
                                   (swap! state dissoc :reconnecting)
                                   true) ;; Exit loop on success
                                 (do
-                                  (println "Reconnection failed, will retry in" (/ reconnect-delay 1000) "seconds")
+                                  ;; (println "Reconnection failed, will retry in" (/ reconnect-delay 1000) "seconds")
                                   (recur (inc attempts))))
                                 ;;(catch Exception e
                                 ;;  (log/error "Error during reconnection attempt:" (.getMessage e))
@@ -267,7 +267,10 @@
       true))
 
   (send-message! [this type payload timeout-ms]
-    (let [result-chan (chan 1)
+    (println "BEGIN Sending message type " type " to " (:service-name options))
+    (println "using format: " (:format options))
+    (let [t (System/currentTimeMillis)
+          result-chan (chan 1)
           message-id (new-message-id)]
 
       ;; Register response handler
@@ -282,9 +285,10 @@
               client-info {:format (:format options "edn")
                            :language (:language options "clojure")}
               message-str (format/serialize-message client-info message)]
-          (log/debug "Sending request:" message)
+          ;; (log/debug "Sending request:" message)
           (.send client message-str)
-
+          ;; (println "SENT message to " (:service-name options) " in " (- (System/currentTimeMillis) t) "ms")
+;; (println "-----------------------------------------------------------")
           ;; Wait for response with timeout
           (go
             (alt!
@@ -320,6 +324,7 @@
 
    Options:
    - :uri              - WebSocket server URI (e.g., \"ws://localhost:3000/ws\")
+   - :service-name     - Name of the service to which the client connects:\"archivist\", \"clarity\", etc.
    - :auto-reconnect   - Whether to automatically reconnect (default: true)
    - :reconnect-delay  - Delay before reconnecting in ms (default: 5000)
    - :heartbeat        - Whether to send heartbeat messages (default: true)
@@ -333,7 +338,7 @@
                          :reconnect-delay 5000
                          :heartbeat true
                          :heartbeat-interval 30000
-                         :format "edn"
+                         :format "nippy"
                          :language "clojure"}
         full-options (merge default-options options)]
     (->JsonWebSocketClient full-options (atom {:connected false}))))

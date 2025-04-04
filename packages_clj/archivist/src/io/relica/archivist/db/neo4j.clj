@@ -4,24 +4,6 @@
             [io.relica.archivist.db.queries :as queries])
   (:import (java.net URI)))
 
-;;
-
-;; (neo4j/defquery match-entities
-;;   "MATCH (n) WHERE n.uid IN $uids RETURN n")
-
-;; ;;(neo4j/defquery match-entities-by-uid
-;; (neo4j/defquery uid-search-query
-;;   "MATCH (kind:Entity)--(r:Fact)-->(parent:Entity)
-;;    WHERE r.rel_type_uid IN $relTypeUIDs
-;;    AND r.lh_object_uid = $searchTerm
-;;    AND ($collectionUID = '' OR r.collection_uid = $collectionUID)
-;;    RETURN r
-;;    ORDER BY r.lh_object_name
-;;    SKIP $skip LIMIT $pageSize")
-
-
-;;
-
 
 (defprotocol Neo4jOperations
   (execute-query [this query params])
@@ -97,4 +79,25 @@
                                                                       :pageSize 10})
 
   (stop)
+  )
+
+(comment
+
+;;
+
+;; (neo4j/defquery match-entities
+;;   "MATCH (n) WHERE n.uid IN $uids RETURN n")
+
+;; ;;(neo4j/defquery match-entities-by-uid
+;; (neo4j/defquery uid-search-query
+;;   "MATCH (kind:Entity)--(r:Fact)-->(parent:Entity)
+;;    WHERE r.rel_type_uid IN $relTypeUIDs
+;;    AND r.lh_object_uid = $searchTerm
+;;    AND ($collectionUID = '' OR r.collection_uid = $collectionUID)
+;;    RETURN r
+;;    ORDER BY r.lh_object_name
+;;    SKIP $skip LIMIT $pageSize")
+
+
+;;
   )

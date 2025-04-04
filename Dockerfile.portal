@@ -11,5 +11,6 @@ RUN clojure -P  # Download dependencies
 COPY ./packages_clj/portal .
 
 EXPOSE 2174
+EXPOSE 7890
 
 CMD ["clojure", "-M:dev"]

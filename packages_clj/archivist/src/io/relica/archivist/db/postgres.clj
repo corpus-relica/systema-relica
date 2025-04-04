@@ -1,7 +1,8 @@
 (ns io.relica.archivist.db.postgres
   (:require [mount.core :refer [defstate]]
             [next.jdbc :as jdbc]
-            [next.jdbc.result-set :as rs]))
+            [next.jdbc.result-set :as rs]
+            [io.relica.archivist.config :refer [db-config]]))
 
 (defprotocol PostgresOperations
   (execute-query [this query params])
@@ -45,12 +46,12 @@
 
 (comment
   (def db-spec
-    {:dbtype "postgresql"
-     :dbname "postgres"
-     :host "localhost"
-     :port 5432
-     :user "postgres"
-     :password "password"})
+    {:dbtype (get-in db-config [:postgres :dbtype])
+     :dbname (get-in db-config [:postgres :dbname])
+     :host (get-in db-config [:postgres :host])
+     :port (get-in db-config [:postgres :port])
+     :user (get-in db-config [:postgres :user])
+     :password (get-in db-config [:postgres :password])})
 
   (start db-spec)
 

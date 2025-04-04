@@ -4,7 +4,9 @@ import { resolve } from "path";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  root: "/usr/src/app/packages_ts/frontend/knowledge-integrator",
+  // Remove the absolute path for root - this is causing the problem
+  // root: "/usr/src/app/packages_ts/frontend/knowledge-integrator",
+
   plugins: [react(), tailwindcss()],
   resolve: {
     preserveSymlinks: true,
@@ -55,9 +57,8 @@ export default defineConfig({
       ],
     },
     rollupOptions: {
-      input: {
-        app: resolve(__dirname, "index.html"),
-      },
+      input: "index.html", // Simplified path to index.html
+      // external: ['react', 'react-dom', 'react/jsx-runtime', 'react-dom/client']
     },
     outDir: "dist",
     emptyOutDir: true,

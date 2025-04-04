@@ -179,23 +179,26 @@
          (async/close! scheduler))))
 
 ;; Factory function
-(defn create-client [server-uri opts]
-  (let [app-handlers (:handlers opts)
+(defn create-client
+  [{:keys [timeout handlers host port] :or {timeout 5000}}]
+  (let [uri (str "ws://" host ":" port "/ws")
+        default-handlers {:on-connect #(tap> {:event :app/connected})
+                          :on-disconnect #(tap> {:event :app/disconnected})
+                          :on-message (fn [event-type payload]
+                                        (tap> {:event :app/message-received
+                                               :type event-type}))}
+        merged-handlers (merge default-handlers handlers)
         base-client (ws/create-client
-                                      {:uri server-uri
-                                       :handlers
-                                       {:on-connect #(tap> {:event :app/connected})
-                                        :on-disconnect #(tap> {:event :app/disconnected})
-                                        :on-message (fn [event-type payload]
-                                                      (tap> {:event :app/message-received
-                                                             :type event-type}))}})
-        aperture-client (->ApertureClient base-client {:timeout 5000})]
+                                      {:service-name "aperture"
+                                       :uri uri
+                                       :handlers merged-handlers})
+        aperture-client (->ApertureClient base-client {:timeout timeout})]
 
     ;; Register application-specific event handlers
-    (ws/register-handler! base-client :facts/loaded (:handle-facts-loaded app-handlers))
-    (ws/register-handler! base-client :facts/unloaded (:handle-facts-unloaded app-handlers))
-    (ws/register-handler! base-client :entity/selected (:handle-entity-selected app-handlers))
-    (ws/register-handler! base-client :entity/selected-none (:handle-entity-selected-none app-handlers))
+    (ws/register-handler! base-client :facts/loaded (:handle-facts-loaded handlers))
+    (ws/register-handler! base-client :facts/unloaded (:handle-facts-unloaded handlers))
+    (ws/register-handler! base-client :entity/selected (:handle-entity-selected handlers))
+    (ws/register-handler! base-client :entity/selected-none (:handle-entity-selected-none handlers))
 
     ;; Connect to the server
     (ws/connect! base-client)

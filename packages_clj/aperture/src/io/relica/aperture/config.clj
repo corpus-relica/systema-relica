@@ -5,10 +5,13 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]))
 
-;; WebSocket Port Configuration
-(defn get-ws-port []
-  (or (some-> (System/getenv "APERTURE_WS_PORT") parse-long)
-      2175)) ; Default port
+(def app-config
+  {:ws-server {:port (or (System/getenv "APERTURE_WS_PORT") 2175)}
+
+   ;; Add configuration for external services that aperture depends on
+   :archivist {:host (or (System/getenv "ARCHIVIST_HOST") "localhost")
+               :port (or (System/getenv "ARCHIVIST_PORT") 3000)}})
+
 
 ;; Database configuration
 (def db-spec

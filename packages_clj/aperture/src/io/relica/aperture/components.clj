@@ -3,7 +3,7 @@
             [io.relica.aperture.io.ws-server :as ws-server]
             [io.relica.aperture.services.environment-service :as env-service]
             [io.relica.aperture.io.ws-handlers :as ws-handlers]
-            [io.relica.aperture.config :as config]
+            [io.relica.aperture.config :refer [app-config]]
             [io.relica.common.io.archivist-client :as archivist]
             [io.relica.aperture.io.client-instances :refer [archivist-client]]
             [clojure.tools.logging :as log]))
@@ -12,7 +12,7 @@
 (defstate websocket-server
   :start (do
            (log/info "Starting Aperture WebSocket server...")
-           (let [port (config/get-ws-port)]
+           (let [port (get-in app-config [:ws-server :port])]
              (ws-server/start! port)))
   :stop (do
           (log/info "Stopping Aperture WebSocket server...")
