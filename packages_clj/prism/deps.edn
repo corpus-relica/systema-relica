@@ -1,0 +1,23 @@
+{:paths ["src"]
+ :deps  {org.clojure/clojure {:mvn/version "1.11.1"}
+         ;; Neo4j Driver
+         io.github.protojure/neocons {:mvn/version "2.1.0"}
+
+         ;; XLS/XLSX Reading
+         dk.ative/docjure {:mvn/version "1.20.0"} ; For Apache POI based reading
+
+         ;; Logging
+         com.taoensso/timbre {:mvn/version "6.3.1"}
+
+         ;; CSV Handling (if needed as intermediate step)
+         org.clojure/data.csv {:mvn/version "1.1.0"}
+
+         ;; Configuration from Env Vars
+         environ/environ {:mvn/version "1.2.0"}
+
+         ;; Concurrency (optional, for potential optimizations)
+         ; org.clojure/core.async {:mvn/version "1.6.681"}
+        }
+ :aliases {:dev {:extra-paths ["dev"]}
+           :test {:extra-paths ["test"]
+                  :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}}}}}
