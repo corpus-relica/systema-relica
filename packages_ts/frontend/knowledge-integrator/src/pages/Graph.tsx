@@ -134,6 +134,7 @@ const Graph = observer(() => {
           }}
         >
           <FactTable
+            baseUrl={import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2174"}
             token={token}
             filter={null}
             callback={(res: any) => {

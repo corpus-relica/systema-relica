@@ -6,13 +6,14 @@ import Body from "./Body.js";
 import RootStoreContext from "./context/RootStoreContext.js";
 import rootStore from "./stores/RootStore.js";
 // import Box from "@mui/material/Box";
-import { updateAxiosInstance } from "./axiosInstance.js";
+import { initializeAxiosInstance } from "./axiosInstance.js";
 
 import { Box } from "@mui/material";
 
 const queryClient = new QueryClient();
 
 export interface FactTableProps {
+  baseUrl?: string;
   callback: (fact: Fact) => void;
   filter?: {
     type: string;
@@ -28,6 +29,7 @@ export interface FactTableProps {
 }
 
 const FactTable: React.FC<FactTableProps> = ({
+  baseUrl,
   callback,
   filter,
   initialQuery = "",
@@ -39,8 +41,14 @@ const FactTable: React.FC<FactTableProps> = ({
   token,
 }) => {
   React.useEffect(() => {
-    updateAxiosInstance(token);
-  }, [token]);
+    if (baseUrl) {
+      initializeAxiosInstance(baseUrl, token);
+    } else {
+      console.warn(
+        "FactTable component mounted without a 'baseUrl' prop. API calls may fail."
+      );
+    }
+  }, [baseUrl, token]);
 
   rootStore.filter = filter;
   rootStore.initialQuery = initialQuery;

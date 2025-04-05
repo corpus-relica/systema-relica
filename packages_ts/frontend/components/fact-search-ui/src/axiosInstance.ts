@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosInstance, CancelTokenSource } from "axios";
 //@ts-ignore
 import {
   COLLECTIONS_ENDPOINT,
@@ -12,17 +12,24 @@ import {
   INDIVIDUAL,
   ALL,
 } from "@relica/constants";
-import qs from "qs"; // You may need to install the 'qs' library
 
-// Create a function to initialize the axios instance with a token
-export const createAxiosInstance = (token?: string) => {
-  const url =
-    import.meta.env.VITE_RELICA_PORTAL_API_URL || "http://localhost:2174";
+// Internal variable to hold the singleton instance
+let instance: AxiosInstance | null = null;
+let currentCancelToken: CancelTokenSource | null = null;
 
-  const instance = axios.create({
-    baseURL: url,
+// Function to initialize the singleton instance
+export const initializeAxiosInstance = (baseURL: string, token?: string) => {
+  if (!baseURL) {
+    console.error("Axios instance cannot be initialized without a baseURL.");
+    // Or throw an error, depending on desired strictness
+    // throw new Error("Axios instance cannot be initialized without a baseURL.");
+    return; // Prevent initialization if baseURL is missing
+  }
+  instance = axios.create({
+    baseURL: baseURL, // Use the provided baseURL
   });
 
+  // Add request interceptor to inject the token
   instance.interceptors.request.use((config) => {
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
@@ -30,42 +37,49 @@ export const createAxiosInstance = (token?: string) => {
     return config;
   });
 
+  // Optional: Add response interceptors if needed (e.g., error handling)
+  // instance.interceptors.response.use(...);
+
+  console.log(`Axios instance initialized with baseURL: ${baseURL}`);
+};
+
+// Function to get the initialized instance
+export const getAxiosInstance = (): AxiosInstance => {
+  if (!instance) {
+    throw new Error(
+      "Axios instance has not been initialized. Call initializeAxiosInstance first."
+    );
+  }
   return instance;
 };
 
-// Export a default instance for cases where no token is needed
-let axiosInstance = createAxiosInstance();
-
-// Export a function to update the instance when token changes
-export const updateAxiosInstance = (token?: string) => {
-  axiosInstance = createAxiosInstance(token);
-};
-
-export default axiosInstance;
+// --- API Call Functions --- (Now use getAxiosInstance)
 
 export const uidSearch = async (
   searchTerm: string,
   collectionUID: string = ""
 ) => {
   try {
+    const axiosInstance = getAxiosInstance(); // Get the initialized instance
     const response = await axiosInstance.get(UID_SEARCH_ENDPOINT, {
       params: { searchTerm, collectionUID },
     });
     const { facts } = response.data;
     return facts;
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in uidSearch:", error);
     throw error;
   }
 };
 
 export const getCollections = async () => {
   try {
+    const axiosInstance = getAxiosInstance(); // Get the initialized instance
     const response = await axiosInstance.get(COLLECTIONS_ENDPOINT);
     const collections = response.data;
     return collections;
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in getCollections:", error);
     throw error;
   }
 };
@@ -74,27 +88,24 @@ function isIntegerString(str: string) {
   return Number.isInteger(Number(str));
 }
 
-// Create a variable to store the current cancel token
-let cancelToken: any;
-
 export const performSearch = async (
   searchTerm: string,
   page: number,
   pageSize: number,
-  // config: any
   filter: { type: string; uid: number } | undefined
 ) => {
-  const searchType: string = ""; //KIND;
+  const axiosInstance = getAxiosInstance(); // Get the initialized instance
+  const searchType: string = ""; // KIND;
   const selectedCollName = ALL;
   const selectedCollUID = "";
 
   // Check if there are any previous pending requests
-  if (typeof cancelToken != typeof undefined) {
-    cancelToken.cancel("Operation canceled due to new request.");
+  if (currentCancelToken) {
+    currentCancelToken.cancel("Operation canceled due to new request.");
   }
 
   // Save the new request for cancellation
-  cancelToken = axios.CancelToken.source();
+  currentCancelToken = axios.CancelToken.source();
 
   try {
     const isUID = isIntegerString(searchTerm);
@@ -121,10 +132,11 @@ export const performSearch = async (
           pageSize,
           filter,
         },
-        cancelToken: cancelToken.token, // Assign the cancel token to this request
+        cancelToken: currentCancelToken.token, // Assign the cancel token to this request
       });
 
-      console.log("response.data", response.data);
+      console.log("performSearch response.data", response.data);
+      currentCancelToken = null; // Clear token after successful request
       return {
         facts: response.data.facts,
         count: response.data.totalCount,
@@ -136,8 +148,16 @@ export const performSearch = async (
       count: 0,
     };
   } catch (error) {
-    console.error("Error:", error);
-    throw error;
+    if (axios.isCancel(error)) {
+      console.log("Request canceled:", error.message);
+    } else {
+      console.error("Error in performSearch:", error);
+    }
+    currentCancelToken = null; // Clear token on error
+    // Depending on how you want to handle cancellations, you might re-throw or return empty
+    // For now, let's just return empty to avoid breaking the UI on cancellation
+    // throw error;
+    return { facts: [], count: 0 }; // Return empty on error/cancellation
   }
 };
 
@@ -147,10 +167,7 @@ export const performQuery = async (
   pageSize: number = 50
 ) => {
   try {
-    // const response = await axiosInstance.get("/query/queryString", {
-    //   params: { queryString: query },
-    // });
-    // POST
+    const axiosInstance = getAxiosInstance(); // Get the initialized instance
     const response = await axiosInstance.post("/query/queryString", {
       queryString: query,
       page,
@@ -158,7 +175,7 @@ export const performQuery = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in performQuery:", error);
     throw error;
   }
 };

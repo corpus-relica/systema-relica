@@ -88,7 +88,7 @@ export const App = () => {
 
   const { setCategories } = factDataStore;
 
-  console.log ('WHAT THE FUCK APP')
+  console.log ('APP STARTUP');
 
   return (
     <QueryClientProvider client={queryClient}>
