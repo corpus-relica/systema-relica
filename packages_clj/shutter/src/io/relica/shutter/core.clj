@@ -47,12 +47,14 @@
     result))
 
 (defn verify-user [email password]
+  (println (str "Verifying user:" email))
+  (println (str "Password:" password))
   (try
     (when-let [user (jdbc/execute-one! ds
                       ["SELECT * FROM users WHERE email = ?" email]
                       {:builder-fn rs/as-unqualified-maps})]
-      (log/info "Found user:" (dissoc user :password_hash))
-      (log/info "Password hash:" (:password_hash user))
+      (println (str "Found user:" (dissoc user :password_hash)))
+      (println (str "Password hash:" (:password_hash user)))
       (when (:is_active user)
         ;; Use buddy.hashers/check instead of bcrypt-clj
         (if (hashers/check password (:password_hash user))
@@ -114,9 +116,13 @@
   {:name ::login
    :enter
    (fn [context]
+     (println "HANDLING LOGIN")
      (let [raw-body (-> context :request :body slurp)
            body (json/parse-string raw-body true)
            {:keys [email password]} body]
+        (println "Parsed body:" body)
+        (println "Email:" email)
+        (println "Password:" password)
        (if-let [user (verify-user email password)]
          (let [claims {:user-id (:id user)
                       :email (:email user)
