@@ -6,22 +6,22 @@
             [taoensso.timbre :as log]
             [clojure.string :as str]))
 
-(defn- remove-commas [s]
+(defn remove-commas [s]
   (when s (str/replace s "," "")))
 
-(defn- normalize-value [index value]
+(defn normalize-value [_ value] 
   ;; Apply specific normalization based on column index if needed
   ;; For now, just remove commas from all string values
   (if (string? value)
     (remove-commas value)
     value))
 
-(defn- try-parse-long [s]
+(defn try-parse-long [s]
   (try
     (Long/parseLong (remove-commas (str s)))
     (catch NumberFormatException _ nil)))
 
-(defn- resolve-temp-uids
+(defn resolve-temp-uids
   "Resolves temporary UIDs based on configured ranges.
    Takes the current uid-map state and the row vector, returns [updated-map new-row-vector].
    The uid-map state should contain {:mappings {} :next-free-uid Long :next-free-fact-uid Long}."
@@ -58,8 +58,7 @@
         ;; Base case: no more indices to check
         [current-map current-row]))))
 
-
-(defn- process-row
+(defn process-row
   "Processes a single row: skips header/empty rows, normalizes values, resolves UIDs.
    Takes uid-map-atom, row-data, and uid-config. Returns processed row vector or nil."
   [uid-map-atom row-data uid-config header-rows-to-skip]
