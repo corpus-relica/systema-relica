@@ -134,7 +134,7 @@ class PortalWebSocketClient extends EventEmitter {
       // First get our socket token
       console.log("Requesting socket token...");
       const wsAuthResponse = await fetch(
-        `${import.meta.env.VITE_PORTAL_URL || "http://localhost:2174"}/ws-auth`,
+        `${import.meta.env.VITE_PORTAL_WS_URL || "http://localhost:2174"}/ws-auth`,
         {
           method: "POST",
           headers: {
