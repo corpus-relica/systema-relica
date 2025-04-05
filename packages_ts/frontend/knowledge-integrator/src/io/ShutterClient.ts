@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const shutterClient = axios.create({
-  baseURL: import.meta.env.VITE_SHUTTER_API_URL || "http://localhost:9999",
+  baseURL: import.meta.env.VITE_SHUTTER_API_URL || "http://localhost:2173",
 });
 
 shutterClient.interceptors.request.use(
