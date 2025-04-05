@@ -34,6 +34,28 @@
 ;; Database setup
 (def ds (jdbc/get-datasource (:db-spec env)))
 
+(defn foo []
+  (try
+    (jdbc/execute-one! ds ["SELECT 1"])
+    (catch Exception e
+      (log/error e "Database connection failed"))))
+
+;; test db connection
+(defn test-db-connection []
+  (try
+    (do
+      (jdbc/execute-one! ds ["SELECT 1"])
+      (println "- Database connection successful")
+      (log/info "-> Database connection successful")
+      true)
+    (catch Exception e
+      (do
+        (println (e "- Database connection failed"))
+        (log/error e "-> Database connection failed")
+        false))))
+
+(test-db-connection)
+
 (defn create-test-user! [email username password]
   (let [password-hash (hashers/derive password {:algorithm :bcrypt})  ; Just :bcrypt, not :bcrypt+sha512
         result (jdbc/execute-one! ds
