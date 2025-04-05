@@ -79,7 +79,7 @@
       (println (str "Password hash:" (:password_hash user)))
       (when (:is_active user)
         ;; Use buddy.hashers/check instead of bcrypt-clj
-        (if (hashers/check password (:password_hash user))
+        (if (hashers/verify password (:password_hash user))
           (select-keys user [:id :username :email :is_admin])
           (do
             (log/info "Password verification failed")
