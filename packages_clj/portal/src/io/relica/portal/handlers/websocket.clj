@@ -159,6 +159,11 @@
   (go
     (try
       (let [environment-id (get-environment-id client-id)
+            _ (print "CHAT USER INPUT")
+            _ (print message)
+            _ (print user-id)
+            _ (print client-id)
+            _ (print environment-id)
             result (<! (nous/user-input nous-client user-id environment-id message))]
         {:success true
          :message "Chat user input processed"
@@ -283,7 +288,7 @@
                                :type "portal:finalAnswer"
                                :payload {
                                          :type (:type payload)
-                                         :answer (:message (:payload payload))
+                                         :answer (:payload payload)
                                          :user_id 7
                                          :environment_id 1
                                          }})))

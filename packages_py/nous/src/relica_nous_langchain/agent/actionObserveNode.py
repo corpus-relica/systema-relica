@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3o
+import os
+
+# from groq import Groq
+from langchain_groq import ChatGroq
+
 from datetime import datetime
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import AIMessage
-
-#
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_groq import ChatGroq
-#
 
 from src.relica_nous_langchain.agent.Common import (
     localModel,
@@ -19,78 +20,21 @@ from src.relica_nous_langchain.agent.Common import (
     ACTION_CONTINUE,
     ACTION_THINK,
     ACTION_ACT,
-    )
-from src.relica_nous_langchain.agent.Templates import (background_info,
-                                                       FULL_TEMPLATES)
-from src.relica_nous_langchain.agent.Tools import (
-    converted_tools,
-    tool_descriptions,
-    tool_names,
-    tools,
-    )
+)
+from src.relica_nous_langchain.agent.Templates import (background_info, FULL_TEMPLATES)
+from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
 
-# from src.relica_nous_langchain.services.CCComms import ccComms
-from src.relica_nous_langchain.SemanticModel import semantic_model
+# client = Groq(
+#     api_key=os.environ.get("GROQ_API_KEY"),
+# )
 
-# Create a ToolNode instance with your tools
-tool_node = ToolNode(tools)
-
-# Set up the model with tools
-# action_llm = ChatAnthropic(
-#     model=anthropicModel,
-#     temperature=0.7,
-#     max_tokens=500,
-#     timeout=None,
-#     max_retries=2,
-#     stop=['\nObservation',
-#           '\nFinal Answer',
-#           '\nThought',
-#           '\nAction']
-#     ).bind_tools(converted_tools)
-
-# action_llm = ChatOpenAI(
-#     model=openAIModel,
-#     # temperature=0.6,
-#     # base_url="http://127.0.0.1:1234/v1",
-#     # openai_api_key="dummy_value",
-#     # model_name=localModel,
-#     max_tokens=1000,
-#     timeout=None,
-#     max_retries=2,
-#     stop=['\nObservation',
-#           '\nFinal Answer',
-#           '\nThought',
-#           '\nAction']
-#     ).bind_tools(tools)
-
-# action_llm = ChatOpenAI(
-#     # model=openAIModel,
-#     temperature=0,
-#     base_url="http://127.0.0.1:1234/v1",
-#     openai_api_key="dummy_value",
-#     model_name=localModel,
-#     max_tokens=1000,
-#     timeout=None,
-#     max_retries=2,
-#     stop=['\nObservation',
-#           '\nFinal Answer',
-#           '\nThought',
-#           '\nAction']
-#     ).bind_tools(tools)
-
-action_llm = ChatGroq(
-    model_name="qwen-qwq-32b",
-    temperature=0.7,
-    max_tokens=1000,
-    timeout=None,
-    max_retries=2,
-    stop=['\nObservation',
-          '\nFinal Answer',
-          '\nThought',
-          '\nAction']
-    ).bind_tools(converted_tools)
-
-async def action_observe(state):
+async def action_observe(state, aperture_client: ApertureClientProxy, semantic_model, tools, converted_tools, tool_descriptions, tool_names):
+    """Invokes the LLM to decide on an action, executes the tool, and updates the state."""
+    
+    user_id = state['user_id']
+    # Access env_id directly, assuming it's now reliably propagated
+    print("Accessing env_id from state:", state)
+    env_id = state['env_id']
 
     input = state['input']
     scratchpad = state['scratchpad']
@@ -98,11 +42,11 @@ async def action_observe(state):
     loop_idx = state.get('loop_idx', 1)
 
     prompt = FULL_TEMPLATES["action"].format(
+        user_id=user_id,
+        env_id=env_id,
+
         curr_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
         background_info=background_info,
-        # semantic_model=semantic_model.getModelRepresentation(semantic_model.selectedEntity),
-        # semantic_model=semantic_model.format_relationships(),
-        # context=semantic_model.context,
         environment=semantic_model.format_relationships(),
         selected_entity=semantic_model.selectedEntity,
         tools=converted_tools,
@@ -113,6 +57,27 @@ async def action_observe(state):
     )
 
     print("/////////////////// ACTION BEGIN /////////////////////")
+
+    # Set up the action LLM with the *specific* tools for this instance
+    # Note: LLM instantiation might ideally happen once in NOUSAgent.__init__
+    # and passed here, but for now, we create it here with bound tools.
+    action_llm = ChatGroq(
+        model_name="qwen-qwq-32b",
+        temperature=0.7,
+        max_tokens=1000,
+        timeout=None,
+        max_retries=2,
+        stop=['\nObservation',
+              '\nFinal Answer',
+              '\nThought',
+              '\nAction']
+    ).bind_tools(tools) # Use the passed-in tools list
+
+    # Create a ToolNode instance with the passed-in tools
+    # This ToolNode is used specifically for executing the chosen tool later
+    tool_node = ToolNode(tools)
+
+    print("/////////////////// ACTION OBSERVE BEGIN /////////////////////")
 
     # Invoke the model with the prompt
     response = action_llm.invoke([("system", prompt), ("human", input)])
@@ -164,7 +129,9 @@ async def action_observe(state):
             "loop_idx": loop_idx,
             "cut_to_final": True,
             "answer": final_answer,
-            "next_step": ACTION_FINAL_ANSWER
+            "next_step": ACTION_FINAL_ANSWER,
+            "user_id": user_id, # Propagate user_id
+            "env_id": env_id    # Propagate env_id
         }
 
     print("/////////////////// ACTION/OBSERVE AGENT TOOL CALLS /////////////////////")
@@ -172,42 +139,35 @@ async def action_observe(state):
 
     # Handle regular tool calls if present (not cutToFinalAnswer)
     if has_tool_calls:
-        # Get the first tool call that isn't cutToFinalAnswer
-        for tool_call in response.tool_calls:
-            if tool_call["name"] != "cutToFinalAnswer":
-                action_name = tool_call["name"]
-                action_arguments = tool_call["args"]
+        # Important: Pass the AIMessage with tool_calls directly to tool_node
+        print(f"Input to tool_node.ainvoke: Type={type(response)}, Content={response}") # Debug
 
-                # Execute the tool
-                ai_message = AIMessage(
-                    content="",
-                    tool_calls=[
-                        {
-                            "name": action_name,
-                            "args": action_arguments,
-                            "id": tool_call.get("id", "tool_call_id"),
-                            "type": "tool_call",
-                        }
-                    ],
-                )
+        # Extract the tool_calls list from the AIMessage
+        extracted_tool_calls = response.tool_calls
+        print(f"Extracted tool_calls: {extracted_tool_calls}") # Debug
 
-                # Get the tool response
-                tool_result = await tool_node.ainvoke({"messages": [ai_message]})
-                tool_messages = tool_result.get("messages", [])
-                tool_response = tool_messages[0].content if tool_messages else "No response from tool"
+        scratchpad += f"\n<Action>"
+        scratchpad += f"\n<ActionName>{extracted_tool_calls[0]['name']}</ActionName>"
+        scratchpad += f"\n<ActionArgs>"
+        for arg in extracted_tool_calls[0]['args']:
+            scratchpad += f"\n<Arg>{arg}: {extracted_tool_calls[0]['args'][arg]}</Arg>"
+        scratchpad += "\n</ActionArgs>"
+        scratchpad += f"\n</Action>"
 
-                # Update scratchpad with action and observation
-                new_scratchpad = scratchpad + f"""
-<Action>{action_name}</Action>
-<ActionInput>{action_arguments}</ActionInput>
-<Observation>\n{tool_response}\n</Observation>
-"""
+        # Pass the extracted list of tool calls directly to ToolNode
+        tool_messages = await tool_node.ainvoke(extracted_tool_calls)
 
-                return {
-                    "scratchpad": new_scratchpad,
-                    "loop_idx": loop_idx,
-                    "next_step": ACTION_THINK
-                }
+        print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+        print(tool_messages)
+        print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+
+        return {
+            "messages": messages, # + [response] + tool_messages['messages'],
+            "scratchpad": scratchpad + f"\n<Observation>\n{response.content}\n</Observation>", # Observation is added via messages
+            "next_step": ACTION_THINK, # Always return to thought after action/observation
+            "user_id": user_id, # Propagate user_id
+            "env_id": env_id    # Propagate env_id
+        }
 
     # Fallback if no tool calls or final answer is detected
     return {
@@ -215,5 +175,7 @@ async def action_observe(state):
         "loop_idx": loop_idx,
         "next_step": ACTION_FINAL_ANSWER,
         "cut_to_final": True,
-        # "answer": "I'm not sure how to proceed with this request. Could you provide more information or clarify what you're looking for?"
+        # "answer": "I'm not sure how to proceed with this request. Could you provide more information or clarify what you're looking for?",
+        "user_id": user_id, # Propagate user_id
+        "env_id": env_id    # Propagate env_id
     }

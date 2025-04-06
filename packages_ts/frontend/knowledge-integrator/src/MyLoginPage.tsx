@@ -10,7 +10,6 @@ const MyLoginPage = ({ theme }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("fdasfdsafdsafdsfdsafsa")
     login({ email, password }).catch(() => notify("Invalid email or password"));
   };
 

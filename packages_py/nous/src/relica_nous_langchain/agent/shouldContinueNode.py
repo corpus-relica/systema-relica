@@ -64,7 +64,8 @@ client = instructor.from_groq(Groq(
 
 # Define the function that determines whether to continue or not
 def should_continue(state):
-    print("/////////////////// SHOULD CONTINUE /////////////////////")
+    # No external dependencies here, just checks the last 'thought' message in the state
+    print("/////////////////// SHOULD CONTINUE CHECK /////////////////////")
 
     input = state['input']
     last_message = state['thought']

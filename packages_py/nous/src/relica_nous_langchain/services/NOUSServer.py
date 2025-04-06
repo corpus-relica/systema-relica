@@ -38,7 +38,13 @@ class NOUSServer:
         logger.info(f"!!!!!!!!!!!!!1111 Client ID: {client_id}")
         # Call the provided handler with the input
         if self.handle_user_input_func:
-            await self.handle_user_input_func(payload['message'])
+            try:
+                await self.handle_user_input_func(payload['user-id'], payload['env-id'], payload['message'], client_id)
+            except Exception as e:
+                logger.error(f"Error processing message in handler: {e}", exc_info=True)
+                # Send an error response back to the specific client
+                if client_id:
+                    await self.send_error_message(client_id, f"Error processing your request: {e}")
 
     async def heartbeat(self, message, client_id):
         """Handle heartbeat message from browser client"""
@@ -60,9 +66,12 @@ class NOUSServer:
         client_count = await ws_server.broadcast(message)
         logger.info(f"Chat history sent to {client_count} clients")
 
-    async def send_final_answer(self, final_answer):
-        """Send final answer to all browser clients"""
-        logger.info(f"Sending final answer")
+    async def send_final_answer(self, client_id: str, final_answer: str):
+        """Send final answer to a specific browser client (Currently broadcasts to all)"""
+        # TODO: Implement sending to specific client_id if ws_server supports it.
+        # For now, broadcasting to all connected clients.
+        logger.info(f"Broadcasting final answer (intended for client '{client_id}')")
+        logger.info(f"Final answer: {final_answer} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111")
 
         # Create the message in the format expected by broadcast
         message = {
@@ -73,7 +82,16 @@ class NOUSServer:
 
         # Call broadcast with the properly formatted message
         client_count = await ws_server.broadcast(message)
-        logger.info(f"Final answer sent to {client_count} clients")
+        logger.info(f"Final answer broadcasted to {client_count} clients.")
+
+    async def send_error_message(self, client_id: str, error_message: str):
+        """Sends an error message back to a specific client (Currently broadcasts to all)."""
+        # TODO: Implement sending to specific client_id if ws_server supports it.
+        # For now, broadcasting to all connected clients.
+        logger.warning(f"Broadcasting error message (intended for client {client_id}): {error_message}")
+        payload = {"error": error_message}
+        client_count = await ws_server.broadcast({"id": "nous-server", "type": "error", "payload": payload})
+        logger.info(f"Error message broadcasted to {client_count} clients.")
 
 nous_server = NOUSServer()
 ws_server.register_handler("app/user-input", nous_server.handle_user_input)

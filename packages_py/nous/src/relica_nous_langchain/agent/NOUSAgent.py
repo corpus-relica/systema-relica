@@ -3,14 +3,29 @@ import json
 import os
 import getpass
 import uuid
+import functools
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TypedDict, Annotated, Sequence
+from langgraph.graph import StateGraph
 
-# from langgraph.checkpoint.memory import MemorySaver
+# Import bifurcated agent nodes
+# from src.relica_nous_langchain.agent.reactAgentNode import (
+    # route_after_thought,
+    # route_after_action,
+    # should_continue_or_finish
+# )
+
+def route_after_action(state):
+    return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_THINK
+
+from src.relica_nous_langchain.agent.thoughtNode import thought as thought_node_func
+from src.relica_nous_langchain.agent.actionObserveNode import action_observe as action_observe_node_func
+from src.relica_nous_langchain.agent.shouldContinueNode import should_continue as should_continue_node_func
+from src.relica_nous_langchain.agent.finalAnswerNode import final_answer as final_answer_node_func
 
 from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
-
-from src.relica_nous_langchain.SemanticModel import semantic_model
+from src.relica_nous_langchain.SemanticModel import SemanticModel
+from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
 
 from src.relica_nous_langchain.agent.Common import (
     ACTION_CONTINUE,
@@ -19,38 +34,10 @@ from src.relica_nous_langchain.agent.Common import (
     ACTION_ACT,
 )
 
-from typing import TypedDict, Annotated, Sequence
-from langgraph.graph import StateGraph
-
-# Import bifurcated agent nodes
-from src.relica_nous_langchain.agent.reactAgentNode import (
-    # thought_agent,
-    # action_observe_agent,
-    route_after_thought,
-    route_after_action,
-    should_continue_or_finish
-)
-
-from src.relica_nous_langchain.agent.thoughtNode import thought
-from src.relica_nous_langchain.agent.actionObserveNode import action_observe
-from src.relica_nous_langchain.agent.shouldContinueNode import should_continue
-
-
-from src.relica_nous_langchain.agent.finalAnswerNode import final_answer
-
-# Set API keys if not present
-if not os.environ.get("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter your OpenAI API key: ")
-if not os.environ.get("ANTHROPIC_API_KEY"):
-    os.environ["ANTHROPIC_API_KEY"] = getpass.getpass("Enter your Anthropic API key: ")
-
-# Initialize memory saver
-# memory = MemorySaver()
-
-###############################
-
 # Simplified state definition
 class AgentState(TypedDict):
+    user_id: int
+    env_id: int
     input: str
     messages: Annotated[list[dict], operator.add]  # Chat history
     scratchpad: str
@@ -61,162 +48,145 @@ class AgentState(TypedDict):
     loop_idx: int  # Keep for iteration tracking
     next_step: str  # Added to track routing between nodes
 
-###############################
-
-# Create new bifurcated workflow
-workflow = StateGraph(AgentState)
-
-# Add nodes for thought, action/observe, and final_answer
-workflow.add_node("thought_agent", thought)
-workflow.add_node("action_observe_agent", action_observe)
-workflow.add_node("final_answer", final_answer)
-
-# Set entry point to thought_agent
-workflow.set_entry_point("thought_agent")
-
-workflow.add_conditional_edges(
-    "thought_agent",
-    should_continue,
-    {
-        ACTION_CONTINUE: "action_observe_agent",
-        ACTION_FINAL_ANSWER: "final_answer"
-    }
-)
-
-# Add conditional edge from thought_agent based on the returned next_step
-# workflow.add_conditional_edges(
-#     "thought_agent",
-#     route_after_thought,
-#     {
-#         ACTION_ACT: "action_observe_agent",
-#         ACTION_FINAL_ANSWER: "final_answer"
-#     }
-# )
-
-# Add conditional edge from action_observe_agent based on the returned next_step
-workflow.add_conditional_edges(
-    "action_observe_agent",
-    route_after_action,
-    {
-        ACTION_THINK: "thought_agent",
-        ACTION_FINAL_ANSWER: "final_answer"
-    }
-)
-
-# Set finish point
-workflow.set_finish_point("final_answer")
-
-# Compile the workflow
-app = workflow.compile(
-    # checkpointer=memory
-)
-
-# Comment out the ASCII drawing that's causing errors
-# print(app.get_graph().draw_ascii())
-
-###############################
+# Set API keys if not present
+if not os.environ.get("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter your OpenAI API key: ")
+if not os.environ.get("ANTHROPIC_API_KEY"):
+    os.environ["ANTHROPIC_API_KEY"] = getpass.getpass("Enter your Anthropic API key: ")
 
 class NOUSAgent:
-    def __init__(self):
+    def __init__(self,
+                 aperture_client: ApertureClientProxy,
+                 semantic_model: SemanticModel,
+                 tools: list,
+                 converted_tools: list,
+                 tool_descriptions: list,
+                 tool_names: list):
         self.emitter = EventEmitter()
         self.conversation_history: List[Dict[str, Any]] = []
-        self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this conversation
-        print("NOUS AGENT", self.conversation_id)
 
-    async def handleInput(self, user_input):
-        try:
-            # Ensure user_input is a string
-            if not isinstance(user_input, str):
-                user_input = str(user_input)
-                
-            print(f"Processing user input: {user_input}")
-            
-            # Add user message to conversation history if not a duplicate
-            is_duplicate = False
-            if self.conversation_history and self.conversation_history[-1]["role"] == "user" and self.conversation_history[-1]["content"] == user_input:
-                is_duplicate = True
-                print("Duplicate user message detected, not adding to history")
-            
-            if not is_duplicate:
-                user_message = {"role": "user", "content": user_input}
-                self.conversation_history.append(user_message)
-            
-            # Create a clean copy of the conversation history for the model
-            # This prevents the model from getting confused by duplicate messages
-            clean_history = []
-            seen_messages = set()
-            
-            for msg in self.conversation_history:
-                # Create a unique key for each message based on role and content
-                msg_key = f"{msg['role']}:{msg['content'][:50]}"
-                if msg_key not in seen_messages:
-                    clean_history.append(msg)
-                    seen_messages.add(msg_key)
-            
-            # Initialize state with the clean history
-            inputs = {
-                "input": user_input,
-                "loop_idx": 0,
-                "selected_entity": semantic_model.selectedEntity,
-                "messages": clean_history,
-                "scratchpad": "",
-                "thought": "",
-                "answer": None,
-                "cut_to_final": False,
-                "next_step": ACTION_THINK
+        # Store dependencies
+        self.aperture_client = aperture_client
+        self.semantic_model = semantic_model
+        self.tools = tools
+        self.converted_tools = converted_tools
+        self.tool_descriptions = tool_descriptions
+        self.tool_names = tool_names
+
+        # --- Define and compile the workflow *within* init --- #
+        workflow = StateGraph(AgentState)
+
+        # Bind instance-specific context to node functions using partial
+        bound_thought_node = functools.partial(
+            thought_node_func,
+            aperture_client=self.aperture_client,
+            semantic_model=self.semantic_model,
+            tools=self.tools,
+            converted_tools=self.converted_tools,
+            tool_descriptions=self.tool_descriptions,
+            tool_names=self.tool_names
+        )
+        bound_action_observe_node = functools.partial(
+            action_observe_node_func,
+            aperture_client=self.aperture_client,
+            semantic_model=self.semantic_model,
+            tools=self.tools,
+            converted_tools=self.converted_tools,
+            tool_descriptions=self.tool_descriptions,
+            tool_names=self.tool_names
+        )
+        bound_final_answer_node = functools.partial(
+            final_answer_node_func,
+            semantic_model=self.semantic_model
+        )
+
+        # Add nodes using the bound functions
+        workflow.add_node("thought_agent", bound_thought_node)
+        workflow.add_node("action_observe_agent", bound_action_observe_node)
+        workflow.add_node("final_answer", bound_final_answer_node) # Use bound final answer
+
+        # Set entry point
+        workflow.set_entry_point("thought_agent")
+
+        # Add edges
+        workflow.add_conditional_edges(
+            "thought_agent",
+            should_continue_node_func, # should_continue only needs state
+            {
+                ACTION_CONTINUE: "action_observe_agent",
+                ACTION_FINAL_ANSWER: "final_answer"
             }
+        )
 
-            fa = ""
-            print("///////////////////// INPUT /////////////////////")
-            print(f"Conversation history length: {len(clean_history)}")
+        workflow.add_conditional_edges(
+            "action_observe_agent",
+            route_after_action, # route_after_action only needs state (check implementation if unsure)
+            {
+                ACTION_THINK: "thought_agent",
+                ACTION_FINAL_ANSWER: "final_answer"
+            }
+        )
 
-            config = {"configurable": {"thread_id": self.conversation_id}}
+        # Set finish point
+        workflow.set_finish_point("final_answer")
 
-            # Process the input through the workflow
-            async for output in app.astream(inputs, config):
-                print("///////////////////// OUTPUT /////////////////////")
-                print(output)
-                for key, value in output.items():
-                    if key == "final_answer":
-                        # Format the final answer as a message
-                        fa = value["answer"]
-                        message = {"role": "assistant", "content": fa}
-                        
-                        # Only add if not a duplicate of the last assistant message
-                        should_add = True
-                        for i in range(len(self.conversation_history) - 1, -1, -1):
-                            if self.conversation_history[i]["role"] == "assistant":
-                                if self.conversation_history[i]["content"] == fa:
-                                    should_add = False
-                                break
-                        
-                        if should_add:
-                            self.conversation_history.append(message)
-                        
-                        # Always emit the chat history and final answer
-                        self.emitter.emit('chatHistory', self.conversation_history)
-                        self.emitter.emit('final_answer', message)
+        # Compile the workflow and store it as an instance variable
+        self.app = workflow.compile()
+        # print(self.app.get_graph().draw_ascii()) # Optional: Draw graph for debugging
 
-            # Ensure we have a fallback response if something goes wrong
-            if not fa:
-                fa = "I'm sorry, I wasn't able to process your request properly. Could you please try again?"
-                fallback_message = {"role": "assistant", "content": fa}
-                self.conversation_history.append(fallback_message)
-                self.emitter.emit('final_answer', fallback_message)
+        self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this agent instance
+        print(f"NOUS Agent Initialized (ID: {self.conversation_id})")
 
-            # Print conversation history for debugging
-            print("///////////////////// CONVERSATION HISTORY /////////////////////")
-            for idx, msg in enumerate(self.conversation_history):
-                print(f"{idx}. {msg['role']}: {msg['content'][:50]}...")
+    async def handleInput(self, user_input: str):
+        # Note: user_id and env_id are now part of self.aperture_client
+        # They might still be needed for the initial state if nodes rely on them directly from state
+        user_id = self.aperture_client.user_id
+        env_id = self.aperture_client.env_id
 
-            return fa
+        print("==================== NOUS AGENT HANDLE INPUT ===================")
+        print(f"User ID: {user_id}")
+        print(f"Env ID: {env_id}")
+
+        # Initial state for the LangGraph workflow
+        initial_state = AgentState(
+            input=user_input,
+            messages=[{"role": "user", "content": user_input}], # Start with the user message
+            scratchpad="",  # Initialize empty scratchpad
+            thought=None,
+            answer=None,   # Initialize answer as None
+            selected_entity=self.semantic_model.selected_entity, # Get current selection
+            cut_to_final=False, # Initialize cut_to_final
+            loop_idx=0, # Start loop index at 0
+            user_id=user_id, # Include user_id if nodes need it from state
+            env_id=env_id, # Include env_id if nodes need it from state
+            next_step="" # Initial next step is empty
+        )
+
+        # Use the instance-specific compiled graph (self.app)
+        # config = {"configurable": {"thread_id": self.conversation_id}} # Config for checkpointers if used
+
+        # Stream the response from the LangGraph workflow
+        final_state = None
+        print("Invoking agent graph...")
+        try:
+            final_state = await self.app.ainvoke(
+                initial_state,
+                # config=config # Include config if using checkpointers
+            )
 
         except Exception as e:
-            print("An error occurred:", str(e))
-            print("Full error:", e)  # Add full error info
-            error_message = {'role': 'assistant', "content": f"Error: {str(e)}"}
-            self.conversation_history.append(error_message)
-            self.emitter.emit('final_answer', error_message)
-            return f"Error: {str(e)}"
+            print(f"Error invoking agent graph: {e}")
+            import traceback
+            traceback.print_exc()
+            # Handle error, maybe return an error message or raise
+            return f"An error occurred during agent execution: {e}"
 
-nousAgent = NOUSAgent()
+        print("Agent graph invocation complete.")
+
+        if final_state:
+            print("Final State:", final_state)
+            # Extract the final answer from the state
+            final_answer = final_state.get('answer', "No answer generated.")
+            return final_answer
+        else:
+            return "Agent did not produce a final answer."

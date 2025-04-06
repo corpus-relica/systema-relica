@@ -31,6 +31,7 @@ const cats = {
 };
 
 export const MyLayout = (props) => {
+
   const redirect = useRedirect();
   const rootStore: any = useStores();
 
@@ -48,6 +49,8 @@ export const MyLayout = (props) => {
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
 
   const socketInitialized = React.useRef(false);
+
+  const [userId, setUserId] = React.useState<number | null>(null);
 
   const [messages, setMessages] = React.useState<Message[]>([]);
   /*
@@ -237,6 +240,7 @@ export const MyLayout = (props) => {
         await establishCats();
         const foo = await authProvider.getIdentity();
         console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo);
+        setUserId(foo.id);
 
         const env = await portalClient.retrieveEnvironment();
         console.log("vvvv - ENVIRONMENT foo vvvv:", env);
@@ -275,9 +279,8 @@ export const MyLayout = (props) => {
   }, []);
 
   const onUserInputSubmit = (message: string) => {
-    console.log(message);
     setMessages(prevMessages => [...prevMessages, { role: 'user', content: message }]);
-    portalWs.send("chatUserInput", { message });
+    portalWs.send("chatUserInput", { message, "user-id": userId });
   };
 
   const replHeight = "40vh"; // Adjust as needed

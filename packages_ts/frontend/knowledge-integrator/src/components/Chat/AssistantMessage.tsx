@@ -12,16 +12,17 @@ const AssistantMessage = ({ content }: AssistantMessageProps) => {
       sx={{
         p: 2,
         bgcolor: 'background.paper',
+        color: 'rgb(144, 202, 249)',
         maxWidth: '90%',
         alignSelf: 'flex-start',
         borderRadius: '1rem',
         borderTopLeftRadius: '0.05rem',
-        boxShadow: 1,
+        boxShadow: 2,
         fontSize: { xs: '0.875rem', sm: '0.875rem', md: '0.875rem', lg: '0.875rem' },
         lineHeight: { xs: 1.5, sm: 1.55, md: 1.55, lg: 1.55 }
       }}
     >
-      <Box className="prose prose-slate">
+      <Box className="prose" style={{color:'#fff'}}>
         <ReactMarkdown>
           {content}
           </ReactMarkdown>
