@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   // Remove the absolute path for root - this is causing the problem
-  // root: "/usr/src/app/packages_ts/frontend/knowledge-integrator",
+  // root: "/usr/src/app/packages_ts/frontend/viewfinder",
 
   plugins: [react(), tailwindcss()],
   resolve: {

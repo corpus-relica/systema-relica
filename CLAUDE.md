@@ -6,7 +6,7 @@
   - Lint: `yarn lint`
   - Test: `yarn test`
   - Single test: `cd packages_ts/<package> && yarn test -t "test name"`
-  - Dev server: `cd packages_ts/frontend/knowledge-integrator && yarn dev`
+  - Dev server: `cd packages_ts/frontend/viewfinder && yarn dev`
   - Type check: `yarn workspaces run type-check`
 
 - **Clojure (packages_clj):**

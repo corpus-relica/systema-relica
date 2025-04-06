@@ -256,11 +256,11 @@ services:
         aliases:
           - shutter
 
-  knowledge-integrator:
-    container_name: knowledge-integrator
+  viewfinder:
+    container_name: viewfinder
     build:
       context: .
-      dockerfile: Dockerfile.knowledge-integrator
+      dockerfile: Dockerfile.viewfinder
     restart: always
     ports:
       - "80:80" # or whatever port you prefer
@@ -270,7 +270,7 @@ services:
     networks:
       rlc-net:
         aliases:
-          - knowledge-integrator
+          - viewfinder
 
 networks:
   rlc-net:
