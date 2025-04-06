@@ -14,7 +14,7 @@
       "packages_ts/backend/clarity-core",
       "packages_ts/frontend/components/3d-graph-ui",
       "packages_ts/frontend/components/fact-search-ui",
-      "packages_ts/frontend/knowledge-integrator"
+      "packages_ts/frontend/viewfinder"
     ]
   },
   "scripts": {
