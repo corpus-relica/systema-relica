@@ -13,8 +13,6 @@ import { ccSocket, portalWs, initializeWebSocket } from "./socket.js";
 import { portalClient } from "./io/PortalClient.js";
 import { authProvider } from "./providers/AuthProvider.js";
 
-import "./style.css";
-
 // const memStore = localStorageStore();
 
 const cats = {
