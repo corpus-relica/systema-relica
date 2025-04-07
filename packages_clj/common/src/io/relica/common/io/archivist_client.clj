@@ -115,7 +115,7 @@
 
   (get-kinds [this opts]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :kinds/get
+    (ws/send-message! client :kinds/list
                       opts
                       (:timeout options)))
 
