@@ -44,7 +44,8 @@ const styles = {
     borderRadius: "0.25rem",
     border: "1px solid #ddd",
     fontSize: "1rem",
-    boxSizing: "border-box"
+    boxSizing: "border-box",
+    color: "#333"
   },
   button: {
     width: "100%",
