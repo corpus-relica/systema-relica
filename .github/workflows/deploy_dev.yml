@@ -23,7 +23,7 @@ jobs:
         uses: patoroco/doorkeeper@master
         with:
           digitaloceanToken: ${{ secrets.DIGITALOCEAN_TOKEN }}
-          firewallName: "dev-firewall"
+          firewallName: "web-firewall"
           actionToDo: "add"
           dryRun: false
 
@@ -83,6 +83,6 @@ jobs:
         uses: patoroco/doorkeeper@master
         with:
           digitaloceanToken: ${{ secrets.DIGITALOCEAN_TOKEN }}
-          firewallName: "dev-firewall"
+          firewallName: "web-firewall"
           actionToDo: "remove"
           dryRun: false
