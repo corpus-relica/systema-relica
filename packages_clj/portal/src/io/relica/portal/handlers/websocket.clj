@@ -140,7 +140,7 @@
         (log/error "Failed to unload entities:" e)
         {:error "Failed to unload entities"}))))
 
-(defn handle-load-subtypes-cone[{:keys [uid client-id] :as message}]
+(defn handle-load-subtypes-cone [{:keys [uid client-id] :as message}]
   (tap> "LOAD SUBTYPES CONE")
   (tap> uid)
   (tap> message)
@@ -154,6 +154,22 @@
       (catch Exception e
         (log/error "Failed to load subtypes cone:" e)
         {:error "Failed to load subtypes cone"}))))
+
+(defn handle-unload-subtypes-cone [{:keys [uid client-id] :as message}]
+  (tap> "UNLOAD SUBTYPES CONE")
+  (tap> uid)
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            ;; Since we don't have a dedicated function for unloading subtypes cone,
+            ;; we'll unload the entity itself which will effectively clear its subtypes
+            result (<! (aperture/unload-entity aperture-client (:user-id message) environment-id uid))]
+        {:success true
+         :message "Subtypes cone unloaded"})
+      (catch Exception e
+        (log/error "Failed to unload subtypes cone:" e)
+        {:error "Failed to unload subtypes cone"}))))
 
 (defn handle-chat-user-input [{:keys [client-id message user-id]}]
   (go
@@ -353,6 +369,7 @@
    "loadEntities" handle-load-entities
    "unloadEntities" handle-unload-entities
    "loadSubtypesCone" handle-load-subtypes-cone
+   "unloadSubtypesCone" handle-unload-subtypes-cone
    ;;----
    "loadComposition" handle-load-composition
    "loadCompositionIn" handle-load-composition-in

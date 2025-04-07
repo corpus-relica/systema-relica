@@ -366,16 +366,17 @@
   ;;   const payload = { facts: result, models };
   ;;   return payload;
   ;; }
-  (load-subtypes-cone [this user-id env-id entity-uid ]
+  (load-subtypes-cone [this user-id env-id entity-uid]
     (go
       (try
-        (let [result (<! (archivist/get-subtypes-cone archivist-client entity-uid))
+        (let [_ (log/info "Loading subtypes cone for entity:" entity-uid)
+              result (<! (archivist/get-subtypes-cone archivist-client entity-uid))
               env-id (or env-id (:id (get-default-environment user-id)))
               env (get-user-environment user-id env-id)
               old-facts (:facts env)
               facts (:facts result)
-              _ (tap> "FUCKING SUBTYPES CONE")
-              _ (tap> facts)
+              _ (log/debug "Retrieved subtypes cone facts:" (count facts))
+              _ (tap> {:event :subtypes-cone-facts :count (count facts)})
               combined-facts (concat old-facts facts)
               new-facts (deduplicate-facts combined-facts)
               updated-env (when facts
