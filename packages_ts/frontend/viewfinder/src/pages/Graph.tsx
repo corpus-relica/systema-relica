@@ -8,7 +8,7 @@ import { useStore } from "react-admin";
 
 import { sockSendCC, sendSocketMessage, portalWs } from "../socket.js";
 
-import { Drawer, IconButton, Paper, Slide } from "@mui/material";
+import { Drawer, IconButton, Paper, Slide, useTheme } from "@mui/material";
 
 import Box from "@mui/material/Box";
 
@@ -36,6 +36,7 @@ const SELECT_ENTITY = "selectEntity";
 const SELECT_NONE = "selectNone";
 
 const Graph = observer(() => {
+  const theme = useTheme();
   const { factDataStore,
           colorPaletteStore,
           userDataStore,
@@ -145,8 +146,8 @@ const Graph = observer(() => {
       >
         <Box
           sx={{
-            bgcolor: "#515151",
-            border: "2px solid #000",
+            bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#515151',
+            border: `2px solid ${theme.palette.mode === 'dark' ? '#333' : '#000'}`,
             p: 2,
           }}
         >
@@ -221,7 +222,7 @@ const Graph = observer(() => {
               position: "fixed",
               height: "calc(100vh - 64px)",
               top: 64,
-              borderLeft: "1px solid rgba(0, 0, 0, 0.12)",
+              borderLeft: theme.palette.mode === 'dark' ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.12)",
               transition: "transform 0.3s ease",
               transform: chatOpen ? "translateX(0)" : "translateX(380px)",
             },
@@ -236,7 +237,7 @@ const Graph = observer(() => {
               bottom: 0,
               width: "24px",
               borderRadius: 0,
-              borderRight: "1px solid rgba(0, 0, 0, 0.12)",
+              borderRight: theme.palette.mode === 'dark' ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.12)",
               backgroundColor: "background.paper",
               "&:hover": {
                 backgroundColor: "action.hover",
