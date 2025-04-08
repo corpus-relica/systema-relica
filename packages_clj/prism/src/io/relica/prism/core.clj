@@ -3,14 +3,18 @@
             [io.relica.prism.db :as db]
             [io.relica.prism.xls :as xls]
             [io.relica.prism.config :as config]
-            [clojure.java.io :as io]))
+            [io.relica.prism.setup :as setup]
+            [io.relica.prism.api :as api]
+            [clojure.java.io :as io])
+  (:gen-class))
 
 (log/set-level! (config/log-level))
 
 (defn initialize-database-if-needed
-  "Checks if the database is empty and performs initial seeding if necessary."
+  "Legacy method: Checks if the database is empty and performs initial seeding if necessary.
+   This is the original non-interactive approach."
   []
-  (log/info "Checking database initialization status...")
+  (log/info "Checking database initialization status (legacy method)...")
   (try
     (let [db-empty? (db/database-empty?)]
       (if db-empty?
@@ -43,13 +47,52 @@
       ;; Decide if we should re-throw or handle differently
       (throw e))))
 
+(defn start-interactive-setup
+  "Starts the interactive setup process with web UI."
+  []
+  (log/info "Starting interactive setup process...")
+  
+  ;; Initialize the setup module
+  (setup/init!)
+  
+  ;; Start the API server
+  (api/start-server)
+  
+  (log/info "Interactive setup ready. API server is running on port" (config/api-server-port))
+  (log/info "Visit http://localhost:" (config/api-server-port) " to complete setup"))
+
+(defn stop-services
+  "Stops all Prism services."
+  []
+  (log/info "Stopping Prism services...")
+  (api/stop-server)
+  (log/info "All Prism services stopped."))
+
 (defn start-prism-services
-  "Main entry point for Prism logic (e.g., called on app startup)."
+  "Main entry point for Prism logic (called on app startup)."
   []
   (log/info "Prism package starting...")
-  (initialize-database-if-needed)
-  ; Add other initialization if needed (e.g., setting up API endpoints for manual import/export later)
+  
+  ;; Start the interactive setup process
+  (start-interactive-setup)
+  
   (log/info "Prism package started."))
 
-;; Example of how it might be called (e.g., from main app)
-;; (start-prism-services)
+(defn -main
+  "Entry point when run as a standalone application."
+  [& args]
+  (log/info "Starting Prism as standalone application...")
+  (start-prism-services)
+  
+  ;; Keep the application running
+  (let [running (promise)]
+    ;; Add shutdown hook to gracefully stop services
+    (.addShutdownHook (Runtime/getRuntime)
+                     (Thread. (fn []
+                               (log/info "Shutdown hook triggered")
+                               (stop-services)
+                               (deliver running :shutdown))))
+    
+    ;; Wait for termination
+    @running
+    (log/info "Prism application terminated.")))

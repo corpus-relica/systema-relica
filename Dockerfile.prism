@@ -17,9 +17,10 @@ RUN clojure -P
 # Copy the rest of the prism package source code
 COPY ./packages_clj/prism .
 
-# Define the command to run the application
-# This will execute the main seeding function when the container starts
-# Assumes the necessary environment variables are passed via docker-compose.yml
-CMD ["clojure", "-X", "io.relica.prism.core/initialize-database-if-needed"]
+# Expose the API port
+EXPOSE 3333
 
-# No EXPOSE needed as this service doesn't run a persistent server
+# Define the command to run the application
+# This will start the interactive setup sequence with API server
+# Assumes the necessary environment variables are passed via docker-compose.yml
+CMD ["clojure", "-M:run"]

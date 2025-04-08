@@ -38,6 +38,10 @@
    :min-free-fact-uid (Integer/parseInt (get-env "PRISM_MIN_FREE_FACT_UID" "2000000000"))
    :max-temp-uid      (Integer/parseInt (get-env "PRISM_MAX_TEMP_UID" "1000"))
 
+   ;; API server settings
+   :api-server-port  (Integer/parseInt (get-env "PRISM_API_PORT" "3333"))
+   :api-server-host  (get-env "PRISM_API_HOST" "0.0.0.0")
+   
    ;; Logging level
    :log-level        (keyword (get-env "PRISM_LOG_LEVEL" "info"))})
 
@@ -48,6 +52,8 @@
 (defn seed-xls-dir [] (:seed-xls-dir config))
 (defn neo4j-import-dir [] (:neo4j-import-dir config))
 (defn csv-output-dir [] (:csv-output-dir config))
+(defn api-server-port [] (:api-server-port config))
+(defn api-server-host [] (:api-server-host config))
 (defn uid-ranges [] (select-keys config [:min-free-uid :min-free-fact-uid :max-temp-uid]))
 (defn log-level [] (:log-level config))
 
