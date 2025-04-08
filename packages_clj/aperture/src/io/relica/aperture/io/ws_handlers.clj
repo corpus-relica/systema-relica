@@ -198,6 +198,26 @@
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/unload-subtypes-cone
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (println "UNLOADING SUBTYPES CONE")
+    (let [result (<! (env-service/unload-subtypes-cone
+                     @environment-service
+                     (:user-id ?data)
+                     (:environment-id ?data)
+                     (:entity-uid ?data)))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/unloaded
+          :fact-uids (:fact-uids-removed result)
+          :model-uids (:model-uids-removed result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/load-composition
   [{:keys [?data ?reply-fn] :as msg}]
   (go
