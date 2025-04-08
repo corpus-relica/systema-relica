@@ -23,7 +23,7 @@
   [cache-service rel-type-uid]
   (go
     (try
-      (let [subtypes (<! (cache/all-descendants-of cache-service rel-type-uid))]
+      (let [subtypes (cache/all-descendants-of cache-service rel-type-uid)]
         (conj subtypes rel-type-uid))
       (catch Exception e
         (log/error "Error expanding relation subtypes:" (ex-message e))
@@ -144,7 +144,7 @@
   (go
     (try
       (let [;; Get all descendants
-            subtypes (<! (cache/all-descendants-of cache-service uid))
+            subtypes (cache/all-descendants-of cache-service uid)
             
             ;; Get facts about the root entity itself
             root-facts (subtypes-fn uid)

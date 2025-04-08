@@ -64,10 +64,9 @@
             total (graph/exec-query
                         graph-service
                         queries/count-kinds
-                        {})
-            ]
+                        {})]
         {:data result
-         :total (:total(first  total))} ; Assuming total is the first element
+         :total (:total(first total))} ; Assuming total is the first element
         )
       (catch Exception e
         (tap> {:event :get-kinds-list-error
