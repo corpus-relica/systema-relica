@@ -18,9 +18,9 @@ import {
   useStoreContext,
 } from "react-admin";
 
-import { Route } from "react-router-dom";
+import { Route, BrowserRouter, Routes } from "react-router-dom";
 
-import { authProvider } from "./providers/AuthProvider.js";
+import { authProvider, isSetupNeeded } from "./providers/AuthProvider.js";
 
 import EnvDataProvider from "./providers/EnvDataProvider.js";
 import FactsDataProvider from "./providers/FactsDatProvider.js";
@@ -40,6 +40,7 @@ import Settings from "./pages/Settings.js";
 import Modelling from "./pages/Modelling/index.js";
 import Workflows from "./pages/Workflows/index.js";
 import Dashboard from "./Dashboard.js";
+import SetupWizard from "./pages/Setup";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -67,29 +68,40 @@ const dataProvider = new Proxy(defaultDataProvider, {
   },
 });
 
-// const cats = {
-//   730044: "Physical Object",
-//   193671: "Occurrence",
-//   160170: "Role",
-//   790229: "Aspect",
-//   //970002: "Information",
-//   2850: "Relation",
-// };
-
 const memStore = localStorageStore();
 
 console.log("vvvv - MEMSTORE vvvv:");
 console.log(memStore);
 
+// Main App with conditional rendering based on setup needs
 export const App = () => {
   const rootStore: any = useStores();
-
   const { factDataStore } = rootStore;
-
   const { setCategories } = factDataStore;
+  
+  // Check if we need to show the setup wizard
+  const [showSetup, setShowSetup] = useState(false);
+  
+  // Effect to check setup status on mount
+  useEffect(() => {
+    // If auth provider already checked and determined setup is needed
+    setShowSetup(isSetupNeeded());
+  }, []);
+  
+  console.log('APP STARTUP', { showSetup });
+  
+  // If setup is needed, show the setup wizard outside of Admin
+  if (showSetup) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={<SetupWizard />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
 
-  console.log ('APP STARTUP');
-
+  // Otherwise, show the normal admin interface
   return (
     <QueryClientProvider client={queryClient}>
       <Admin
@@ -99,6 +111,7 @@ export const App = () => {
         dataProvider={dataProvider}
         authProvider={authProvider}
         store={memStore}
+        disableTelemetry
       >
         <Resource name="db/kinds" list={ListGuesser} />
         <CustomRoutes>
@@ -106,6 +119,7 @@ export const App = () => {
           {/*<Route path="/modelling" element={<Modelling />} />
           <Route path="/workflows" element={<Workflows />} />*/}
           <Route path="/settings" element={<Settings />} />
+          <Route path="/setup" element={<SetupWizard />} />
         </CustomRoutes>
       </Admin>
     </QueryClientProvider>
