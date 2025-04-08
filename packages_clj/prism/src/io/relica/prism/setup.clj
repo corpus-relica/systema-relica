@@ -107,7 +107,7 @@
                             "CREATE (r:Role {name: 'admin', permissions: ['READ', 'WRITE', 'ADMIN']}) RETURN r"
                             {})
           assign-role-result (db/execute-query!
-                             "MATCH (u:User {username: $username}), (r:Role {name: 'admin'}) CREATE (u)-[:HAS_ROLE]->(r)"
+                             "MATCH (u:User {username: $username}), (r:Role {name: 'admin'}) CREATE (u)-[:HAS_ROLE]->(r) RETURN u, r"
                              {:username username})]
       
       (if (and (:success create-result) 
@@ -184,7 +184,8 @@
     (let [subtype-cache-result (db/execute-query! 
                               "MATCH (sub:Entity)-[:role]->(:Fact {rel_type_uid: 1146})-[:role]->(super:Entity)
                                WITH sub, super
-                               MERGE (sub)-[:SUBTYPE_OF]->(super)"
+                               MERGE (sub)-[:SUBTYPE_OF]->(super)
+                               RETURN count(*) as cache_count"
                               {})
           
           ;; Add more cache building queries here as needed

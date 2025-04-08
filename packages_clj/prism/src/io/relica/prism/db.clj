@@ -1,21 +1,51 @@
 (ns io.relica.prism.db
-  (:require [neocons.core :as neocons]
+  (:require [neo4j-clj.core :as neo4j]
             [io.relica.prism.config :as config]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log])
+  (:import (org.neo4j.driver.exceptions TransientException)))
 
-;; Configuration map for neocons functions
-(defn- neocons-config []
+;; Connection configuration
+(def db-config
   {:uri (config/neo4j-uri)
    :user (config/neo4j-user)
    :password (config/neo4j-password)})
 
+;; Define a Neo4j connection
+(def default-driver (neo4j/connect db-config))
+
+;; Define a connection function with retry logic
+(defn with-retry
+  "Execute a function with Neo4j session with retries on transient errors"
+  [f & [max-retries]]
+  (let [max-retries (or max-retries 3)]
+    (loop [retries 0]
+      (let [[success result] (try
+                               [true (neo4j/with-session default-driver session
+                                       (f session))]
+                               (catch TransientException e
+                                 (if (< retries max-retries)
+                                   [false e]
+                                   (throw e)))
+                               (catch Exception e
+                                 (throw e)))]
+        (if success
+          result
+          (do
+            (log/warnf "Transient Neo4j error, retrying (%d/%d): %s" 
+                     (inc retries) max-retries (.getMessage result))
+            (Thread/sleep (+ 200 (* retries 100))) ; Exponential backoff
+            (recur (inc retries))))))))
+
 (defn execute-query!
-  "Executes a Cypher query with parameters using neocons/run!.
+  "Executes a Cypher query with parameters using neo4j-clj.
    Logs query and handles basic errors."
   [query params]
   (log/debugf "Executing Cypher: %s\nParams: %s" query params)
   (try
-    (neocons/run! (neocons-config) query params)
+    (with-retry
+      (fn [session]
+        (neo4j/execute session query params))
+      3)
     (log/debug "Cypher execution successful.")
     {:success true}
     (catch Exception e
@@ -23,18 +53,19 @@
       {:success false :error (.getMessage e)})))
 
 (defn execute-query
-  "Executes a Cypher query with parameters using neocons/query.
-   Returns results and handles basic errors."
+  "Executes a Cypher query with parameters and returns results."
   [query params]
   (log/debugf "Executing Cypher: %s\nParams: %s" query params)
   (try
-    (let [results (neocons/query (neocons-config) query params)]
+    (let [results (with-retry
+                    (fn [session]
+                      (neo4j/execute session query params))
+                    3)]
       (log/debugf "Cypher query returned %d results." (count results))
       {:success true :results results})
     (catch Exception e
       (log/errorf e "Error executing Cypher query: %s" query)
       {:success false :error (.getMessage e)})))
-
 
 (defn database-empty?
   "Checks if the Neo4j database has any nodes."
@@ -43,13 +74,13 @@
   (let [query "MATCH (n) RETURN count(n) AS node_count LIMIT 1"
         {:keys [success results error]} (execute-query query {})]
     (if success
-      (let [count (get-in (first results) [:node_count] 0)]
+      (let [first-result (first results)
+            count (or (:node_count first-result) 0)]
         (log/infof "Database node count: %d" count)
         (zero? count))
       (do
         (log/error "Failed to check if database is empty:" error)
         (throw (ex-info "Failed to query database node count" {:error error}))))))
-
 
 (defn load-nodes-from-csv!
   "Loads nodes from a CSV file using LOAD CSV.
@@ -167,4 +198,13 @@ RETURN count(rel)
         " fileName)]
     (execute-query! cypher {})))
 
+;; Close resources when application shuts down
+(defn shutdown []
+  (log/info "Shutting down Neo4j connection...")
+  (neo4j/disconnect default-driver))
+
 (log/info "Prism DB namespace loaded.")
+
+;; Register shutdown hook
+(.addShutdownHook (Runtime/getRuntime) 
+                  (Thread. shutdown))

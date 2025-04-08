@@ -1,7 +1,7 @@
 {:paths ["src"]
  :deps  {org.clojure/clojure {:mvn/version "1.11.1"}
-         ;; Neo4j Driver
-         clojurewerkz/neocons {:mvn/version "3.2.0"}
+         ;; Neo4j Driver - matching what's used in Archivist
+         gorillalabs/neo4j-clj {:mvn/version "5.0.0"}
 
          ;; XLS/XLSX Reading
          dk.ative/docjure {:mvn/version "1.20.0"} ; For Apache POI based reading
