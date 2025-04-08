@@ -378,10 +378,13 @@
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :kinds/list
   [{:keys [?data ?reply-fn kind-s] :as msg}]
+  (println ?data)
   (when ?reply-fn
     (try
       (let [result "SUCKIT FOOL!"
-            res-too (kind-service/get-list kind-s (:data ?data))];;(kind-service/get-list xxx ?data)]
+            res-too (kind-service/get-list kind-s ?data)];;(kind-service/get-list xxx ?data)]
+        (println "RESULT: " result)
+        (println "rRES TOO: " res-too)
         (?reply-fn {:resolved true :data res-too}))
       (catch Exception e
         (tap> {:event :websocket/sending-kinds-list-response
