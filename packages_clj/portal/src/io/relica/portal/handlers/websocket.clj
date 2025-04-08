@@ -162,9 +162,8 @@
   (go
     (try
       (let [environment-id (get-environment-id client-id)
-            ;; Since we don't have a dedicated function for unloading subtypes cone,
-            ;; we'll unload the entity itself which will effectively clear its subtypes
-            result (<! (aperture/unload-entity aperture-client (:user-id message) environment-id uid))]
+            ;; Now we have a dedicated function for unloading subtypes cone in aperture
+            result (<! (aperture/unload-subtypes-cone aperture-client (:user-id message) environment-id uid))]
         {:success true
          :message "Subtypes cone unloaded"})
       (catch Exception e

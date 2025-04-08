@@ -15,6 +15,7 @@
   (load-entities [this user-id env-id entity-uids])
   (unload-entities [this user-id env-id entity-uids])
   (load-subtypes-cone [this user-id env-id entity-uid])
+  (unload-subtypes-cone [this user-id env-id entity-uid])
   (load-composition [this user-id env-id entity-uid])
   (load-composition-in [this user-id env-id entity-uid])
   (load-connections [this user-id env-id entity-uid])
@@ -92,6 +93,14 @@
   (load-subtypes-cone [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
     (ws/send-message! ws-client :environment/load-subtypes-cone
+                      {:user-id user-id
+                       :environment-id env-id
+                       :entity-uid entity-uid}
+                      (:timeout options)))
+                      
+  (unload-subtypes-cone [this user-id env-id entity-uid]
+    (when-not (ws/connected? ws-client) (ws/connect! this))
+    (ws/send-message! ws-client :environment/unload-subtypes-cone
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
