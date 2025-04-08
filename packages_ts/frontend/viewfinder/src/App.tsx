@@ -20,7 +20,7 @@ import {
 
 import { Route, BrowserRouter, Routes } from "react-router-dom";
 
-import { authProvider, isSetupNeeded } from "./providers/AuthProvider.js";
+import { authProvider } from "./providers/AuthProvider.js";
 
 import EnvDataProvider from "./providers/EnvDataProvider.js";
 import FactsDataProvider from "./providers/FactsDatProvider.js";
@@ -30,8 +30,8 @@ import ArchivistDataProvider from "./providers/ArchivistDataProvider.js";
 import { useStores } from "./context/RootStoreContext.js";
 
 import { resolveUIDs } from "./io/ArchivistBaseClient.js";
-
 import { retrieveEnvironment } from "./io/CCBaseClient.js";
+import { prismApi } from "./io/PrismClient.js";
 
 import { MyLayout } from "./MyLayout.js";
 import MyLoginPage from "./MyLoginPage.js";
@@ -79,19 +79,47 @@ export const App = () => {
   const { factDataStore } = rootStore;
   const { setCategories } = factDataStore;
   
-  // Check if we need to show the setup wizard
-  const [showSetup, setShowSetup] = useState(false);
+  // State for setup status
+  const [setupState, setSetupState] = useState<'loading' | 'needed' | 'complete'>('loading');
   
   // Effect to check setup status on mount
   useEffect(() => {
-    // If auth provider already checked and determined setup is needed
-    setShowSetup(isSetupNeeded());
+    const checkSetupStatus = async () => {
+      try {
+        const status = await prismApi.getSetupStatus();
+        
+        if (status.stage !== 'complete') {
+          setSetupState('needed');
+        } else {
+          setSetupState('complete');
+        }
+      } catch (err) {
+        console.warn("Failed to check setup status, assuming setup is complete:", err);
+        setSetupState('complete');
+      }
+    };
+    
+    checkSetupStatus();
   }, []);
   
-  console.log('APP STARTUP', { showSetup });
+  console.log('APP STARTUP', { setupState });
+  
+  // Loading state while checking setup
+  if (setupState === 'loading') {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>Checking system status...</div>
+      </div>
+    );
+  }
   
   // If setup is needed, show the setup wizard outside of Admin
-  if (showSetup) {
+  if (setupState === 'needed') {
     return (
       <BrowserRouter>
         <Routes>

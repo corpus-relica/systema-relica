@@ -22,9 +22,9 @@ const SetupWizard: React.FC = () => {
       const state = await prismApi.getSetupStatus();
       setSetupState(state);
       
-      // If setup is complete, redirect to login page
+      // If setup is complete, reload the app to show the login screen
       if (state.stage === 'complete') {
-        navigate('/login');
+        window.location.href = '/'; // Force full page reload to restart the app
       }
     } catch (err) {
       console.error('Error fetching setup state:', err);
@@ -55,9 +55,9 @@ const SetupWizard: React.FC = () => {
       const response = await prismApi.processStage();
       setSetupState(response.state);
       
-      // If setup is complete after processing, redirect to login page
+      // If setup is complete after processing, reload the app
       if (response.state.stage === 'complete') {
-        navigate('/login');
+        window.location.href = '/'; // Force full page reload to restart the app
       }
     } catch (err: any) {
       console.error('Error processing stage:', err);
