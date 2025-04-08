@@ -13,9 +13,6 @@
 
 (defonce default-driver (atom nil))
 
-;; Define common queries we'll use
-(neo4j/defquery count-nodes-query "MATCH (n) RETURN count(n) AS node_count LIMIT 1")
-
 ;; Initialize connection
 (defn init-connection! []
   (log/info "Initializing Neo4j connection to:" neo4j-uri)
@@ -29,47 +26,9 @@
     @default-driver
     (init-connection!)))
 
-;; Define a connection function with retry logic for transactions
-(defn with-retry
-  "Execute a function with Neo4j transaction with retries on transient errors"
-  [f & [max-retries]]
-  (let [max-retries (or max-retries 3)
-        driver (get-driver)]
-    (loop [retries 0]
-      (let [[success result] (try
-                               [true (neo4j/with-transaction driver tx
-                                       (f tx))]
-                               (catch TransientException e
-                                 (if (< retries max-retries)
-                                   [false e]
-                                   (throw e)))
-                               (catch Exception e
-                                 (throw e)))]
-        (if success
-          result
-          (do
-            (log/warnf "Transient Neo4j error, retrying (%d/%d): %s" 
-                     (inc retries) max-retries (.getMessage result))
-            (Thread/sleep (+ 200 (* retries 100))) ; Exponential backoff
-            (recur (inc retries))))))))
-
-(defn database-empty?
-  "Checks if the Neo4j database has any nodes."
-  []
-  (log/info "Checking if database is empty...")
-  (try
-    (let [driver (get-driver)
-          results (neo4j/with-transaction driver tx
-                    (let [query-results (count-nodes-query tx {})]
-                      ;; Fully realize results inside the transaction
-                      (doall query-results)))
-          first-result (first results)
-          count (or (:node_count first-result) 0)]
-      (log/infof "Database node count: %d" count)
-      (zero? count))
-    (catch Exception e
-      (log/error e "Failed to check if database is empty")
-      (throw (ex-info "Failed to query database node count" {:error (.getMessage e)})))))
+;; Define common queries we'll use
+(neo4j/defquery count-nodes-query "MATCH (n) RETURN count(n) AS node_count LIMIT 1")
+(neo4j/defquery execute-cypher-query "CALL apoc.cypher.run($cypher, $params) YIELD value RETURN value")
 
 ;; Define specific named queries for csv loading
 (neo4j/defquery load-nodes-from-csv-query
@@ -135,6 +94,62 @@
    CALL apoc.create.relationship(rel, 'role', {}, rh) YIELD rel AS bar
    RETURN count(rel) as count")
 
+;; Define a connection function with retry logic for transactions
+(defn with-retry
+  "Execute a function with Neo4j transaction with retries on transient errors"
+  [f & [max-retries]]
+  (let [max-retries (or max-retries 3)
+        driver (get-driver)]
+    (loop [retries 0]
+      (let [[success result] (try
+                               [true (neo4j/with-transaction driver tx
+                                       (f tx))]
+                               (catch TransientException e
+                                 (if (< retries max-retries)
+                                   [false e]
+                                   (throw e)))
+                               (catch Exception e
+                                 (throw e)))]
+        (if success
+          result
+          (do
+            (log/warnf "Transient Neo4j error, retrying (%d/%d): %s" 
+                     (inc retries) max-retries (.getMessage result))
+            (Thread/sleep (+ 200 (* retries 100))) ; Exponential backoff
+            (recur (inc retries))))))))
+
+;; For compatibility with setup.clj
+(defn execute-query!
+  "Executes a raw Cypher query with parameters. Used by setup.clj."
+  [cypher params]
+  (try
+    (let [driver (get-driver)
+          result (neo4j/with-transaction driver tx
+                   (let [session-result (neo4j/execute tx cypher params)]
+                     (doall session-result)))]
+      {:success true :results result})
+    (catch Exception e
+      (log/error e "Failed to execute Cypher query")
+      {:success false :error (.getMessage e)})))
+
+(defn database-empty?
+  "Checks if the Neo4j database has any nodes."
+  []
+  (log/info "Checking if database is empty...")
+  (try
+    (let [driver (get-driver)
+          results (neo4j/with-transaction driver tx
+                    (let [query-results (count-nodes-query tx {})]
+                      ;; Fully realize results inside the transaction
+                      (doall query-results)))
+          first-result (first results)
+          count (or (:node_count first-result) 0)]
+      (log/infof "Database node count: %d" count)
+      (zero? count))
+    (catch Exception e
+      (log/error e "Failed to check if database is empty")
+      (throw (ex-info "Failed to query database node count" {:error (.getMessage e)})))))
+
 (defn load-nodes-from-csv!
   "Loads nodes from a CSV file using LOAD CSV.
    fileName should be relative to Neo4j's import directory."
@@ -149,10 +164,10 @@
                       (doall query-result)))
             count (:count (first result))]
         (log/infof "Successfully loaded nodes from CSV file. Created/matched %d nodes." count)
-        true)
+        {:success true})
       (catch Exception e
         (log/error e "Failed to load nodes from CSV file")
-        (throw (ex-info "Failed to load nodes from CSV" {:file fileName :error (.getMessage e)}))))))
+        {:success false :error (.getMessage e)}))))
 
 (defn load-relationships-from-csv!
   "Loads facts and relationships from a CSV file using LOAD CSV.
@@ -168,10 +183,10 @@
                       (doall query-result)))
             count (:count (first result))]
         (log/infof "Successfully loaded relationships from CSV file. Created %d relationships." count)
-        true)
+        {:success true})
       (catch Exception e
         (log/error e "Failed to load relationships from CSV file")
-        (throw (ex-info "Failed to load relationships from CSV" {:file fileName :error (.getMessage e)}))))))
+        {:success false :error (.getMessage e)}))))
 
 ;; Close resources when application shuts down
 (defn shutdown []
