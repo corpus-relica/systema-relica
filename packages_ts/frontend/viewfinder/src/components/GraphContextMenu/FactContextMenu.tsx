@@ -9,7 +9,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
-import { sockSendCC } from "../../socket";
+import { sendSocketMessage } from "../../socket";
 
 const CLEAR_ALL = "Clear all";
 const REM_THIS = "rem this";
@@ -38,14 +38,14 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     setWarnIsOpen,
     relType,
   } = props;
-  console.log("MUTHERFUCING FACT CONTEXT MENU SUCKER -- ", uid);
+  console.log("Fact context menu opened for uid:", uid);
 
   const handleItemClick = (e) => {
     const value = e.currentTarget.getAttribute("value");
     switch (value) {
       case CLEAR_ALL:
         console.log("CLEAR ALL");
-        sockSendCC("user", "clearEntities", {});
+        sendSocketMessage("clearEnvironmentEntities", {});
         handleClose();
         break;
       case DELETE_THIS:
@@ -54,8 +54,9 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
         handleClose();
         break;
       case REIFY:
-        sockSendCC("user", "loadSpecializationHierarchy", { uid: relType });
-        sockSendCC("user", "selectEntity", { uid: relType });
+        console.log("Reifying relation type:", relType);
+        sendSocketMessage("loadSpecializationHierarchy", { uid: relType });
+        sendSocketMessage("selectEntity", { uid: relType });
         handleClose();
         break;
       default:

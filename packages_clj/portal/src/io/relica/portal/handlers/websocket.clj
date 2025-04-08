@@ -140,7 +140,7 @@
         (log/error "Failed to unload entities:" e)
         {:error "Failed to unload entities"}))))
 
-(defn handle-load-subtypes-cone[{:keys [uid client-id] :as message}]
+(defn handle-load-subtypes-cone [{:keys [uid client-id] :as message}]
   (tap> "LOAD SUBTYPES CONE")
   (tap> uid)
   (tap> message)
@@ -155,10 +155,30 @@
         (log/error "Failed to load subtypes cone:" e)
         {:error "Failed to load subtypes cone"}))))
 
+(defn handle-unload-subtypes-cone [{:keys [uid client-id] :as message}]
+  (tap> "UNLOAD SUBTYPES CONE")
+  (tap> uid)
+  (tap> message)
+  (go
+    (try
+      (let [environment-id (get-environment-id client-id)
+            ;; Now we have a dedicated function for unloading subtypes cone in aperture
+            result (<! (aperture/unload-subtypes-cone aperture-client (:user-id message) environment-id uid))]
+        {:success true
+         :message "Subtypes cone unloaded"})
+      (catch Exception e
+        (log/error "Failed to unload subtypes cone:" e)
+        {:error "Failed to unload subtypes cone"}))))
+
 (defn handle-chat-user-input [{:keys [client-id message user-id]}]
   (go
     (try
       (let [environment-id (get-environment-id client-id)
+            _ (print "CHAT USER INPUT")
+            _ (print message)
+            _ (print user-id)
+            _ (print client-id)
+            _ (print environment-id)
             result (<! (nous/user-input nous-client user-id environment-id message))]
         {:success true
          :message "Chat user input processed"
@@ -283,7 +303,7 @@
                                :type "portal:finalAnswer"
                                :payload {
                                          :type (:type payload)
-                                         :answer (:message (:payload payload))
+                                         :answer (:payload payload)
                                          :user_id 7
                                          :environment_id 1
                                          }})))
@@ -348,6 +368,7 @@
    "loadEntities" handle-load-entities
    "unloadEntities" handle-unload-entities
    "loadSubtypesCone" handle-load-subtypes-cone
+   "unloadSubtypesCone" handle-unload-subtypes-cone
    ;;----
    "loadComposition" handle-load-composition
    "loadCompositionIn" handle-load-composition-in

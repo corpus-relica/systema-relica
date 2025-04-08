@@ -1,0 +1,88 @@
+name: Deploy Dev
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.DEV_SSH_KNOWN_HOSTS }}
+
+      # Add runner's IP to existing firewall first
+      - name: Doorkeeper open
+        uses: patoroco/doorkeeper@master
+        with:
+          digitaloceanToken: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          firewallName: "dev-firewall"
+          actionToDo: "add"
+          dryRun: false
+
+      - name: Deploy to Digital Ocean
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          command_timeout: "30m" # Increased timeout
+          script: |
+            # Export secrets as environment variables for docker-compose
+            export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+            export ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+            export GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}"
+
+            # Ensure directory exists
+            mkdir -p /root/systema_relica_dev
+            cd /root/systema_relica_dev
+
+            # Add GitHub's host key first
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Add GitHub SSH key if not already added
+            if [ ! -f ~/.ssh/github ]; then
+              echo "${{ secrets.GH_SSH_KEY }}" > ~/.ssh/github
+              chmod 600 ~/.ssh/github
+              echo -e "Host github.com\n  IdentityFile ~/.ssh/github\n  StrictHostKeyChecking no" > ~/.ssh/config
+            fi
+
+            # Clean up old deployment
+            docker-compose down || true
+
+            # Test GitHub SSH connection
+            ssh -T git@github.com || true
+
+            # Clone or pull repository
+            if [ ! -d ".git" ]; then
+              echo "Cloning repository..."
+              git clone -b develop git@github.com:corpus-relica/systema-relica.git .
+            else
+              echo "Updating repository..."
+              git fetch origin
+              git reset --hard origin/develop
+            fi
+
+            # Start the application
+            echo "Starting docker compose..."
+            docker-compose down || true
+            docker-compose build
+            docker-compose up -d
+
+      # Remove runner's IP from new firewall
+      - name: Doorkeeper close
+        if: always()
+        uses: patoroco/doorkeeper@master
+        with:
+          digitaloceanToken: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          firewallName: "dev-firewall"
+          actionToDo: "remove"
+          dryRun: false

@@ -34,6 +34,7 @@
   (load-entities [this user-id env-id entity-uids])
   (unload-entities [this user-id env-id entity-uids])
   (load-subtypes-cone [this user-id entity-uid env-id])
+  (unload-subtypes-cone [this user-id entity-uid env-id])
   (load-composition [this user-id entity-uid env-id])
   (load-composition-in [this user-id entity-uid env-id])
   (load-connections [this user-id entity-uid env-id])
@@ -43,6 +44,51 @@
   ;; Entity selection
   (select-entity [this user-id env-id entity-uid])
   (deselect-entity [this user-id env-id]))
+
+;; Helper function to remove subtypes cone recursively
+(defn- remove-subtypes-cone-recursive
+  "Recursively remove subtypes of a given entity from the environment"
+  [user-id env-id entity-uid env]
+  (let [facts (:facts env)
+        ;; Find facts where this entity is the RH (parent type in subtyping relation)
+        facts-to-remove (filter #(= entity-uid (:rh_object_uid %)) facts)
+        ;; Find remaining facts
+        remaining-facts (remove #(= entity-uid (:rh_object_uid %)) facts)
+        
+        ;; Get UIDs of facts to remove
+        fact-uids-to-remove (mapv :fact_uid facts-to-remove)
+        
+        ;; Collect entity UIDs to check for removal
+        lh-uids (into #{} (map :lh_object_uid facts-to-remove))
+        rh-uids (into #{} (map :rh_object_uid facts-to-remove))
+        candidate-entity-uids (into lh-uids rh-uids)
+        
+        ;; Remove entities from candidates if they're still referenced in remaining facts
+        entities-to-remove (loop [entities candidate-entity-uids
+                                 remaining remaining-facts]
+                            (if (empty? remaining)
+                              entities
+                              (let [fact (first remaining)
+                                    lh-uid (:lh_object_uid fact)
+                                    rh-uid (:rh_object_uid fact)
+                                    entities (cond-> entities
+                                               (contains? entities lh-uid) (disj lh-uid)
+                                               (contains? entities rh-uid) (disj rh-uid))]
+                                (recur entities (rest remaining)))))
+        
+        ;; Find subtyping facts (rel_type_uid 1146 is the subtyping relation)
+        subtyping-facts (filter #(and (= 1146 (:rel_type_uid %)) 
+                                     (= entity-uid (:rh_object_uid %)))
+                               facts-to-remove)
+        
+        ;; Get the child entity UIDs for recursive processing
+        child-entity-uids (mapv :lh_object_uid subtyping-facts)]
+    
+    ;; Return the result map
+    {:fact-uids-removed fact-uids-to-remove
+     :entity-uids-removed (vec entities-to-remove)
+     :child-entity-uids child-entity-uids
+     :remaining-facts remaining-facts}))
 
 ;; Implementation of environment service
 (defrecord EnvironmentService [archivist-client]
@@ -366,16 +412,17 @@
   ;;   const payload = { facts: result, models };
   ;;   return payload;
   ;; }
-  (load-subtypes-cone [this user-id env-id entity-uid ]
+  (load-subtypes-cone [this user-id env-id entity-uid]
     (go
       (try
-        (let [result (<! (archivist/get-subtypes-cone archivist-client entity-uid))
+        (let [_ (log/info "Loading subtypes cone for entity:" entity-uid)
+              result (<! (archivist/get-subtypes-cone archivist-client entity-uid))
               env-id (or env-id (:id (get-default-environment user-id)))
               env (get-user-environment user-id env-id)
               old-facts (:facts env)
               facts (:facts result)
-              _ (tap> "FUCKING SUBTYPES CONE")
-              _ (tap> facts)
+              _ (log/debug "Retrieved subtypes cone facts:" (count facts))
+              _ (tap> {:event :subtypes-cone-facts :count (count facts)})
               combined-facts (concat old-facts facts)
               new-facts (deduplicate-facts combined-facts)
               updated-env (when facts
@@ -483,6 +530,61 @@
         (catch Exception e
           (log/error e "Failed to clear entities")
           {:error "Failed to clear entities"}))))
+
+  (unload-subtypes-cone [this user-id env-id entity-uid]
+    (go
+      (try
+        (log/info "Unloading subtypes cone for entity:" entity-uid)
+        (let [env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              
+              ;; Get initial set of subtypes to remove
+              initial-result (remove-subtypes-cone-recursive user-id env-id entity-uid env)
+              fact-uids-removed (:fact-uids-removed initial-result)
+              entity-uids-removed (:entity-uids-removed initial-result)
+              remaining-facts (:remaining-facts initial-result)
+              
+              ;; Process child entities recursively
+              child-uids (:child-entity-uids initial-result)
+              updated-env (assoc env :facts remaining-facts)
+              
+              ;; Create a recursive function to process each child
+              result (loop [children child-uids
+                           current-env updated-env
+                           all-fact-uids fact-uids-removed
+                           all-entity-uids entity-uids-removed]
+                      (if (empty? children)
+                        {:env current-env
+                         :fact-uids-removed all-fact-uids
+                         :entity-uids-removed all-entity-uids}
+                        (let [child (first children)
+                              child-result (remove-subtypes-cone-recursive 
+                                            user-id 
+                                            env-id 
+                                            child 
+                                            current-env)
+                              next-env (assoc current-env :facts (:remaining-facts child-result))
+                              next-fact-uids (concat all-fact-uids (:fact-uids-removed child-result))
+                              next-entity-uids (concat all-entity-uids (:entity-uids-removed child-result))
+                              next-children (concat (rest children) (:child-entity-uids child-result))]
+                          (recur next-children
+                                next-env
+                                next-fact-uids
+                                next-entity-uids))))
+              
+              ;; Update the environment with the new facts
+              final-facts (:facts (:env result))
+              updated-env (update-user-environment! user-id env-id {:facts final-facts})]
+          
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :fact-uids-removed (vec (distinct (:fact-uids-removed result)))
+             :model-uids-removed (vec (distinct (:entity-uids-removed result)))}
+            {:error "Failed to unload subtypes cone"}))
+        (catch Exception e
+          (log/error e "Failed to unload subtypes cone")
+          {:error "Failed to unload subtypes cone"}))))
   
   ;; Entity selection
   (select-entity [this user-id env-id entity-uid]

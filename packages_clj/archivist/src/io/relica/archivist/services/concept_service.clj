@@ -16,25 +16,25 @@
     (go
       (try
         ;; Get all facts involving the entity
-        (let [fact-uids (<! (cache/all-facts-involving-entity cache-service uid))
+        (let [fact-uids (cache/all-facts-involving-entity cache-service uid)
               facts (map #(gellish/get-fact gellish-base-service %) fact-uids)]
           (log/debug "FACT UIDS" fact-uids)
           
           ;; Delete each fact and update cache
           (doseq [fact facts]
             (log/debug "FACT" fact)
-            (<! (cache/remove-from-facts-involving-entity cache-service 
-                                                        (:lh_object_uid fact) 
-                                                        (:fact_uid fact)))
-            (<! (cache/remove-from-facts-involving-entity cache-service 
-                                                        (:rh_object_uid fact) 
-                                                        (:fact_uid fact)))
+              (cache/remove-from-facts-involving-entity cache-service
+                                                           (:lh_object_uid fact)
+                                                           (:fact_uid fact))
+              (cache/remove-from-facts-involving-entity cache-service
+                                                             (:rh_object_uid fact)
+                                                             (:fact_uid fact))
             (graph/exec-write-query graph-service
                                   queries/delete-fact
                                   {:uid (:fact_uid fact)}))
           
           ;; Remove entity from cache
-          (<! (cache/remove-entity cache-service uid))
+          (cache/remove-entity cache-service uid)
           
           ;; Delete the entity node
           (graph/exec-write-query graph-service

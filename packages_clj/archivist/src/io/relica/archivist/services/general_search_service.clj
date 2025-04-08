@@ -16,7 +16,7 @@
     (go
       (try
         (let [descendants (when filter
-                           (<! (cache/all-descendants-of cache-service (:uid filter))))
+                            (cache/all-descendants-of cache-service (:uid filter)))
               rel-type-uids [1146 1726 1981 1225]
               skip (* (dec page) page-size)
               results (graph/exec-query graph-service
@@ -48,7 +48,7 @@
     (go
       (try
         (let [descendants (when filter
-                           (<! (cache/all-descendants-of cache-service (:uid filter))))
+                            (cache/all-descendants-of cache-service (:uid filter)))
               rel-type-uids [1146 1726 1981 1225]
               skip (* (dec page) page-size)
               results (graph/exec-query graph-service

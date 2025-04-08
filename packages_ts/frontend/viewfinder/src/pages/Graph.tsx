@@ -6,12 +6,18 @@ import { observer } from "mobx-react";
 
 import { useStore } from "react-admin";
 
-import { sockSendCC, sendSocketMessage } from "../socket.js";
+import { sockSendCC, sendSocketMessage, portalWs } from "../socket.js";
+
+import { Drawer, IconButton, Paper, Slide } from "@mui/material";
 
 import Box from "@mui/material/Box";
 
 import Fab from "@mui/material/Fab";
 import CopyAllIcon from "@mui/icons-material/CopyAll.js";
+import {
+  ChevronLeft,
+  ChevronRight,
+} from "@mui/icons-material";
 
 //TODO: rename "FactTable" to something more descriptive
 import { FactTable } from "@relica/fact-search-ui";
@@ -22,6 +28,7 @@ import GraphAndSelectionLayout from "./GraphToo.js";
 import { Fact } from "../types.js";
 
 import { getAuthToken } from "../providers/AuthProvider.js";
+import Chat, { Message } from "../components/Chat/index.js";
 
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
@@ -29,15 +36,20 @@ const SELECT_ENTITY = "selectEntity";
 const SELECT_NONE = "selectNone";
 
 const Graph = observer(() => {
-  const { factDataStore, colorPaletteStore } = useStores();
+  const { factDataStore,
+          colorPaletteStore,
+          userDataStore,
+          nousDataStore} = useStores();
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
 
   const [selectedNode] = useStore("selectedNode");
   const [selectedEdge] = useStore("selectedEdge");
 
+  const [chatOpen, setChatOpen] = useState(true);
   const [searchUIOpen, setSearchUIOpen] = useState(false);
   const [filter, setFilter] = useState<number>(0);
+
 
   const token = getAuthToken();
 
@@ -110,6 +122,11 @@ const Graph = observer(() => {
     navigator.clipboard.writeText(factStrs.join("\n"));
   };
 
+  const onUserInputSubmit = (message: string) => {
+    nousDataStore.addMessage('user', message)
+    portalWs.send("chatUserInput", { message, "user-id": userDataStore.userID });
+  };
+
   return (
     <Box
       sx={{
@@ -134,6 +151,7 @@ const Graph = observer(() => {
           }}
         >
           <FactTable
+            baseUrl={import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2174"}
             token={token}
             filter={null}
             callback={(res: any) => {
@@ -191,6 +209,62 @@ const Graph = observer(() => {
           paletteMap={paletteMap}
           setSearchUIOpen={setSearchUIOpen}
         />
+        <Drawer
+          variant="permanent"
+          anchor="right"
+          open={chatOpen}
+          sx={{
+            width: chatOpen ? 400 : 400,
+            flexShrink: 0,
+            "& .MuiDrawer-paper": {
+              width: 400,
+              position: "fixed",
+              height: "calc(100vh - 64px)",
+              top: 64,
+              borderLeft: "1px solid rgba(0, 0, 0, 0.12)",
+              transition: "transform 0.3s ease",
+              transform: chatOpen ? "translateX(0)" : "translateX(380px)",
+            },
+          }}
+        >
+          <IconButton
+            onClick={() => setChatOpen(!chatOpen)}
+            sx={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: "24px",
+              borderRadius: 0,
+              borderRight: "1px solid rgba(0, 0, 0, 0.12)",
+              backgroundColor: "background.paper",
+              "&:hover": {
+                backgroundColor: "action.hover",
+              },
+            }}
+          >
+            {chatOpen ? <ChevronRight /> : <ChevronLeft />}
+          </IconButton>
+          <Paper
+            elevation={0}
+            sx={{
+              ml: 3,
+              height: "100%",
+              p: 2,
+            }}
+          >
+            <div
+              style={{
+                height: "calc(100% - 40px)",
+                backgroundColor: "rgba(0, 0, 0, 0.04)",
+                borderRadius: 1,
+                padding: 2,
+              }}
+            >
+              <Chat messages={nousDataStore.messages} onSubmit={onUserInputSubmit} />
+            </div>
+          </Paper>
+        </Drawer>
       </Box>
     </Box>
   );

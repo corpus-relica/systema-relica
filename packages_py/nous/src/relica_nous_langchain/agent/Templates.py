@@ -215,6 +215,15 @@ if you think you have the final answer mention use of 'cutToFinalAnswer' tool
 use xml tags to wrap your response `<thought> </thought>`. Do it literally as written, the system will add numerical indexing to your thoughts.
 </instructions>
 
+<user_info>
+<user_id>
+{user_id}
+</user_id>
+<environment_id>
+{env_id}
+</environment_id>
+</user_info>
+
 <available_tools>
 {tool_descriptions}
 
@@ -241,6 +250,15 @@ Consider:
 if you think you have enough information to answer the question, *or if the right tool to use is unclear*, use the cutToFinalAnswer tool to cut to the final answer.
 always use one of the tools available to you.
 </instructions>
+
+<user_info>
+<user_id>
+{user_id}
+</user_id>
+<environment_id>
+{env_id}
+</environment_id>
+</user_info>
 
 <available_tools>
 {tool_descriptions}

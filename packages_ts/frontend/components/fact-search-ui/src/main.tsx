@@ -16,6 +16,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         autoload={true}
         height="100%"
         mode="query"
+        baseUrl={"http://localhost:2174"}
+        token={""}
       />
     </Box>
   </React.StrictMode>

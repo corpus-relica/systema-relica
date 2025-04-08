@@ -117,7 +117,7 @@ export class EventsGateway {
   //   return;
   // }
 
-  // CLIENT(knowledge-integrator) REPL
+  // CLIENT(viewfinder) REPL
   // @SubscribeMessage('repl:eval')
   // async replEval(@MessageBody('command') command: string): Promise<string> {
   //   this.logger.log('REPL:EVAL');

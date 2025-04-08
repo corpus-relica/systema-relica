@@ -23,14 +23,8 @@ from src.relica_nous_langchain.agent.Common import (
 
 from src.relica_nous_langchain.agent.Templates import (background_info,
                                                        FULL_TEMPLATES)
-from src.relica_nous_langchain.agent.Tools import (
-    converted_tools,
-    tool_descriptions,
-    tool_names,
-    )
 
-# from src.relica_nous_langchain.services.CCComms import ccComms
-from src.relica_nous_langchain.SemanticModel import semantic_model
+from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy 
 
 ################################################################################## THOUGHT
 
@@ -96,29 +90,38 @@ client = Groq(
 MAX_ITERATIONS = 4
 
 
-def thought(state):
+def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, converted_tools, tool_descriptions, tool_names):
+    """Generates the thought process for the agent, deciding the next step."""
     loop_idx = state.get('loop_idx', 0) + 1
+    user_id = state.get("user_id", "default_user") 
+    env_id = state.get("env_id", "default_env") 
     messages = state['messages']
     input = state['input']
     scratchpad = state['scratchpad']
 
     if loop_idx > MAX_ITERATIONS:
-        return {
-            "scratchpad": state.get('scratchpad', '') + f"\n\n!!!ATTENTION!!! : Reached maximum iteration limit ({MAX_ITERATIONS}). Moving to final answer.",
+        message = "Loop limit exceeded. Terminating."
+        # Optionally, format as a final answer structure if needed
+        return { 
+            "messages": state["messages"] + [("assistant", message)],
+            "scratchpad": state["scratchpad"] + f"\nLoop limit reached. Forcing final answer.",
+            "thought": message, # Ensure this signals termination to should_continue/final_answer
+            "next_step": ACTION_FINAL_ANSWER,
+            "cut_to_final": True,
             "loop_idx": loop_idx,
-            # "cut_to_final": True
-            "next_step": ACTION_FINAL_ANSWER
-        }
+            "answer": message, # Provide the termination message as the answer
+            "user_id": user_id, # Propagate user_id
+            "env_id": env_id    # Propagate env_id
+            }
 
     prompt = FULL_TEMPLATES["thought"].format(
+        user_id=user_id,
+        env_id=env_id,
         curr_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
         background_info=background_info,
-        # semantic_model=semanticModel.getModelRepresentation(ccComms.selectedEntity),
-        # semantic_model=semantic_model.format_relationships(),
-        # context=semantic_model.context,
         environment=semantic_model.format_relationships(),
         selected_entity=semantic_model.selectedEntity,
-        tools=converted_tools,
+        tools=tools,
         tool_descriptions=tool_descriptions,
         tool_names=tool_names,
         agent_scratchpad=scratchpad,
@@ -127,7 +130,6 @@ def thought(state):
 
     print("/////////////////// THOUGHT BEGIN /////////////////////")
 
-    # response = thought_llm.invoke([("system", prompt),("human", input)])
     chat_completion = client.chat.completions.create(
         model="qwen-qwq-32b",
         messages=[
@@ -145,40 +147,32 @@ def thought(state):
         stop=['</thought>'],
         )
 
-
-
     print("/////////////////// THOUGHT COMPLETE /////////////////////")
     print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-    # print(response)
     print(chat_completion.choices[0].message.content)
     print("%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     print(chat_completion.choices[0].message.reasoning)
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    message = chat_completion.choices[0].message.content #response.content
-    # strip message of leading xml tags
+    message = chat_completion.choices[0].message.content 
     message = message.split("</thought>")[0].split("<thought>")[-1]
 
     new_scratchpad = scratchpad + f"<thought>\n{message}\n</thought>"
 
-    # Check if thought suggests we have enough info for a final answer
     if "final answer" in message.lower() or "sufficient information" in message.lower() or "enough information" in message.lower():
         return {
             "scratchpad": new_scratchpad,
             "thought": message,
             "loop_idx": loop_idx,
-            "next_step": ACTION_FINAL_ANSWER
+            "next_step": ACTION_FINAL_ANSWER,
+            "user_id": user_id, # Propagate user_id
+            "env_id": env_id    # Propagate env_id
         }
 
-    # Otherwise, move to action step
     return {
         "scratchpad": new_scratchpad,
         "thought": message,
         "loop_idx": loop_idx,
-        "next_step": ACTION_ACT
+        "next_step": ACTION_ACT,
+        "user_id": user_id, # Propagate user_id
+        "env_id": env_id    # Propagate env_id
     }
-
-    # return {
-    #     "scratchpad": scratchpad + f"\n{message} + </thought>",
-    #     # "messages": [{"role": "assistant", "content": f"Thought: {message}"}],
-    #     "loop_idx": loop_idx
-    # }

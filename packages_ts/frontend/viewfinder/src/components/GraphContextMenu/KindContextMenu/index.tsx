@@ -15,8 +15,7 @@ import KindContextRoleSubmenu from "./submenu/Role";
 import KindContextRelationSubmenu from "./submenu/Relation";
 import KindContextOccurrenceSubmenu from "./submenu/Occurrence";
 
-import { sockSendCC,
-         sendSocketMessage} from "../../../socket";
+import { sendSocketMessage } from "../../../socket";
 
 import {
   portalClient
@@ -243,7 +242,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       </MenuItem>
       <Divider />
       <MenuItem value={UNLOAD_THIS} onClick={handleItemClick}>
-        unoad this
+        unload this
       </MenuItem>
       <MenuItem value={UNLOAD_SUBTYPES_CONE} onClick={handleItemClick}>
         unload subtypes cone

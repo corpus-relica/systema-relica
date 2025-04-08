@@ -1,4 +1,4 @@
-name: Deploy to Digital Ocean
+name: Deploy Stage
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: prod
+    environment: stage
 
     steps:
       - name: Install SSH key
@@ -28,13 +28,18 @@ jobs:
           dryRun: false
 
       - name: Deploy to Digital Ocean
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: "30m" # Increased timeout
           script: |
+            # Export secrets as environment variables for docker-compose
+            export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+            export ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+            export GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}"
+
             # Ensure directory exists
             mkdir -p /root/systema_relica
             cd /root/systema_relica

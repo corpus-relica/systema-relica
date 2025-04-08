@@ -14,14 +14,8 @@ from src.relica_nous_langchain.agent.Common import (
     format_chat_history,
     )
 from src.relica_nous_langchain.agent.Templates import FULL_TEMPLATES
-# from src.relica_nous_langchain.agent.Tools import (
-#     converted_tools,
-#     tool_descriptions,
-#     tool_names,
-#     )
 from src.relica_nous_langchain.SemanticModel import semantic_model
-# from src.relica_nous_langchain.agent.reactAgentNode import format_conversation_for_prompt
-
+from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy # Not strictly needed here
 
 ################################################################################## FINAL ANSWER
 
@@ -76,12 +70,12 @@ final_answer_llm = ChatGroq(
 #           '\nAction'],
 #     )
 
-def final_answer(state):
+def final_answer(state, semantic_model):
     """
     Generate the final answer to the user's query.
-    
-    If the state already has an answer from the react_agent, use it.
-    Otherwise, generate a final answer based on all previous interactions.
+
+    If the state already has an answer (e.g., from loop limit or specific tool call), use it.
+    Otherwise, generate a final answer based on all previous interactions using the LLM.
     """
     print("/////////////////// FINAL ANSWER NODE BEGIN /////////////////////")
     
@@ -120,7 +114,5 @@ Based on the conversation history and the current question, provide a final, com
         message = message.split("</think>")[-1]
         print(message)
 
-    # Return just the message content
-    return {
-        "answer": message
-    }
+    # Return the final answer in the state dictionary
+    return {"answer": message}

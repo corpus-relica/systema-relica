@@ -61,8 +61,13 @@
             result (map (fn [record]
                           (serialize-record (:r record)))
                         raw-result)
-            ]
-        result)
+            total (graph/exec-query
+                        graph-service
+                        queries/count-kinds
+                        {})]
+        {:data result
+         :total (:total(first total))} ; Assuming total is the first element
+        )
       (catch Exception e
         (tap> {:event :get-kinds-list-error
                :error e})

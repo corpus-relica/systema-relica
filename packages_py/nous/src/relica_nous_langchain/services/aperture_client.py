@@ -433,7 +433,7 @@ class ApertureClient:
             logger.error(f"Error loading entity: {e}")
             return {"error": f"Failed to load entity: {str(e)}"}
 
-    async def textSearchLoad(self, term):
+    async def textSearchLoad(self, user_id, env_id, term):
         """Load entity data by text search term"""
         if not self.connected:
             await self.connect()
@@ -441,7 +441,10 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/text-search-load", {"term": term})
+            response = await self.client.send("environment/text-search-load", {
+                "user-id": user_id,
+                "environment-id": env_id,
+                "term": term})
             print("//////////////////////////////// TEXT SEARCH LOAD RESPONSE ////////////////////////////////")
             print(response['payload'])
             return response['payload']
@@ -467,16 +470,121 @@ class ApertureClient:
 # Create a singleton instance
 aperture_client = ApertureClient()
 
+class ApertureClientProxy:
+    """A proxy class for ApertureClient that automatically injects user/env context."""
+    def __init__(self, user_id, env_id):
+        self.user_id = user_id
+        self.env_id = env_id
+        # Hold a reference to the singleton client
+        self._target_client = aperture_client
+
+    async def _proxy_call(self, method_name, *args, **kwargs):
+        """Injects context and calls the target client's method."""
+        target_method = getattr(self._target_client, method_name)
+
+        # --- Corrected Argument Injection --- 
+        # Assume target methods requiring context expect (user_id, env_id, ...actual_args)
+        # Construct the final arguments by prepending user_id and env_id
+        final_args = (self.user_id, self.env_id) + args
+        final_kwargs = kwargs # Pass kwargs through as is
+
+        logger.debug(f"Proxying call to {method_name} with args: {final_args}, kwargs: {final_kwargs}")
+        return await target_method(*final_args, **final_kwargs)
+
+    # --- Define proxy methods for each ApertureClient method --- #
+    # --- We need to explicitly define each one to maintain async/await --- #
+
+    async def connect(self, *args, **kwargs):
+        # Connection doesn't usually need user context, forward directly
+        return await self._target_client.connect(*args, **kwargs)
+
+    async def disconnect(self, *args, **kwargs):
+        return await self._target_client.disconnect(*args, **kwargs)
+
+    async def retrieveEnvironment(self, *args, **kwargs):
+        return await self._proxy_call('retrieveEnvironment', *args, **kwargs)
+
+    async def listEnvironments(self, *args, **kwargs):
+        return await self._proxy_call('listEnvironments', *args, **kwargs)
+
+    async def createEnvironment(self, *args, **kwargs):
+        return await self._proxy_call('createEnvironment', *args, **kwargs)
+
+    async def loadSpecializationHierarchy(self, *args, **kwargs):
+        return await self._proxy_call('loadSpecializationHierarchy', *args, **kwargs)
+
+    async def clearEnvironmentEntities(self, *args, **kwargs):
+        return await self._proxy_call('clearEnvironmentEntities', *args, **kwargs)
+
+    async def loadAllRelatedFacts(self, *args, **kwargs):
+        return await self._proxy_call('loadAllRelatedFacts', *args, **kwargs)
+
+    async def unloadEntity(self, *args, **kwargs):
+        return await self._proxy_call('unloadEntity', *args, **kwargs)
+
+    async def loadEntities(self, *args, **kwargs):
+        return await self._proxy_call('loadEntities', *args, **kwargs)
+
+    async def loadSubtypesCone(self, *args, **kwargs):
+        return await self._proxy_call('loadSubtypesCone', *args, **kwargs)
+
+    async def unloadEntities(self, *args, **kwargs):
+        return await self._proxy_call('unloadEntities', *args, **kwargs)
+
+    async def selectEntity(self, *args, **kwargs):
+        return await self._proxy_call('selectEntity', *args, **kwargs)
+
+    async def deselectEntity(self, *args, **kwargs):
+        # Ensure correct target method name if it differs (e.g., selectEntityNone)
+        # Check ApertureClient for the actual method name for deselecting.
+        # Assuming it's 'selectEntityNone' based on previous code exploration
+        return await self._proxy_call('selectEntityNone', *args, **kwargs)
+
+    async def loadFactHierarchy(self, *args, **kwargs):
+        return await self._proxy_call('loadFactHierarchy', *args, **kwargs)
+
+    async def loadEntity(self, *args, **kwargs):
+        # This method didn't seem to take user/env id, check signature in ApertureClient
+        return await self._proxy_call('loadEntity', *args, **kwargs)
+
+    async def textSearchLoad(self, *args, **kwargs):
+        return await self._proxy_call('textSearchLoad', *args, **kwargs)
+
+    async def emit_event(self, *args, **kwargs):
+        return await self._proxy_call('emit_event', *args, **kwargs)
+
+    # Add other methods as needed, ensuring they call _proxy_call
+
 # For testing directly
-# async def test_aperture_client():
-#     client = ApertureClient()
-#     connected = await client.connect()
+async def main():
+    # Example usage of the proxy (replace with actual test logic if needed)
+    user_id_test = 123
+    env_id_test = 'test-env-proxy'
+    proxy_client = ApertureClientProxy(user_id_test, env_id_test)
 
-#     if connected:
-#         logger.info("Connection successful!")
-#         env = await client.retrieveEnvironment(7)  # Pass user_id as required
-#         logger.info(f"Environment: {env}")
+    connected = await proxy_client.connect()
+    if connected:
+        logger.info(f"Proxy connected successfully for user {user_id_test}")
 
-#         await client.disconnect()
-#     else:
-#         logger.error("Failed to connect to Aperture")
+        # Test retrieving environment via proxy (will use user_id=123, env_id=test-env-proxy)
+        env = await proxy_client.retrieveEnvironment()
+        logger.info(f"Proxy retrieved environment: {env}")
+
+        # Test listing environments via proxy (will use user_id=123)
+        envs = await proxy_client.listEnvironments()
+        logger.info(f"Proxy listed environments: {envs}")
+
+        # Test creating environment via proxy (will use user_id=123)
+        # created_env = await proxy_client.createEnvironment(env_name="proxy-created-env")
+        # logger.info(f"Proxy created environment: {created_env}")
+
+        await proxy_client.disconnect()
+        logger.info("Proxy disconnected.")
+    else:
+        logger.error("Proxy failed to connect.")
+
+# If you want to run this test main:
+# if __name__ == "__main__":
+#     import asyncio
+#     logging.basicConfig(level=logging.INFO)
+#     asyncio.run(main())

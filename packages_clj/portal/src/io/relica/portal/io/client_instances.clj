@@ -54,8 +54,8 @@
 
 (def nous-handlers
   {:handle-final-answer (fn [msg]
-                          (println "Final answer:")
-                          (println msg)
+                          ;; (println "Final answer:")
+                          ;; (println msg)
                           (events/publish-event {:type :final-answer
                                                  :payload msg}))
    ;; "heartbeat" (fn [msg]

@@ -50,9 +50,11 @@
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/text-search-load
   [{:keys [?data ?reply-fn] :as msg}]
+  (println "TEXT SEARCH LOAD -- **************************************")
+  (println ?data)
   (go
     (let [result (<! (env-service/text-search-load @environment-service
-                                                   (or (:user-id ?data) 7)
+                                                 (:user-id ?data)
                                                  (:term ?data)))]
       (?reply-fn {:environment (:environment result)
                   :facts (:facts result)})
@@ -60,8 +62,8 @@
         (ws/broadcast!
          {:type :facts/loaded
           :facts (:facts result)
-          :user-id 7;;(:user-id ?data)
-          :environment-id 1;;(:environment-id ?data)}
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)
           }
          10)))))
 
@@ -191,6 +193,26 @@
         (ws/broadcast!
          {:type :facts/loaded
           :facts (:facts result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/unload-subtypes-cone
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (println "UNLOADING SUBTYPES CONE")
+    (let [result (<! (env-service/unload-subtypes-cone
+                     @environment-service
+                     (:user-id ?data)
+                     (:environment-id ?data)
+                     (:entity-uid ?data)))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/unloaded
+          :fact-uids (:fact-uids-removed result)
+          :model-uids (:model-uids-removed result)
           :user-id (:user-id ?data)
           :environment-id (:environment-id ?data)}
          10)))))

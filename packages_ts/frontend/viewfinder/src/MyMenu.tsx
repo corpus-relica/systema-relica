@@ -14,7 +14,7 @@ export const MyMenu = () => (
       primaryText="Graph"
       leftIcon={<BlurCircularIcon />}
     />
-    <Menu.Item
+    {/*<Menu.Item
       to="/modelling"
       primaryText="Modelling"
       leftIcon={<PlumbingIcon />}
@@ -23,6 +23,6 @@ export const MyMenu = () => (
       to="/workflows"
       primaryText="Workflows"
       leftIcon={<FoundationIcon />}
-    />
+    />*/}
   </Menu>
 );

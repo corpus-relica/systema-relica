@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Layout, useRedirect, useStore } from "react-admin";
 import { Drawer, IconButton, Paper, Slide } from "@mui/material";
 import {
-  ChevronLeft,
-  ChevronRight,
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
@@ -14,9 +12,6 @@ import { useStores } from "./context/RootStoreContext.js";
 import { ccSocket, portalWs, initializeWebSocket } from "./socket.js";
 import { portalClient } from "./io/PortalClient.js";
 import { authProvider } from "./providers/AuthProvider.js";
-import Chat, { Message } from "./components/Chat/index.js";
-
-import "./style.css";
 
 // const memStore = localStorageStore();
 
@@ -31,15 +26,15 @@ const cats = {
 };
 
 export const MyLayout = (props) => {
+
   const redirect = useRedirect();
   const rootStore: any = useStores();
 
   console.log("vvvv - ROOT STORAGE vvvv:");
   console.log(rootStore);
-  const { factDataStore } = rootStore;
+  const { factDataStore, userDataStore, nousDataStore} = rootStore;
 
   const [replOpen, setReplOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(true);
 
   const { addFacts, addConcepts, setCategories, categories } = factDataStore;
   // const [isConnected, setIsConnected] = useState(false);
@@ -49,7 +44,8 @@ export const MyLayout = (props) => {
 
   const socketInitialized = React.useRef(false);
 
-  const [messages, setMessages] = React.useState<Message[]>([]);
+  // const [userId, setUserId] = React.useState<number | null>(null);
+
   /*
     const messages = [
     { role: 'user', content: 'Explain quantum computing in simple terms' },
@@ -217,10 +213,10 @@ export const MyLayout = (props) => {
       }
     };
 
-    const onFinalAnswer = (d) => {
+    const onFinalAnswer = (d:any) => {
       console.log("FINAL ANSWER");
       console.log(d);
-      setMessages(prevMessages => [...prevMessages, { role: 'assistant', content: d.answer }]);
+      nousDataStore.addMessage('assistant', d.answer);
     }
 
   useEffect(() => {
@@ -237,6 +233,7 @@ export const MyLayout = (props) => {
         await establishCats();
         const foo = await authProvider.getIdentity();
         console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo);
+        userDataStore.userID = foo.id;
 
         const env = await portalClient.retrieveEnvironment();
         console.log("vvvv - ENVIRONMENT foo vvvv:", env);
@@ -274,15 +271,7 @@ export const MyLayout = (props) => {
     };
   }, []);
 
-  const onUserInputSubmit = (message: string) => {
-    console.log(message);
-    setMessages(prevMessages => [...prevMessages, { role: 'user', content: message }]);
-    portalWs.send("chatUserInput", { message });
-  };
-
   const replHeight = "40vh"; // Adjust as needed
-
-
 
   return (
     <Layout
@@ -291,68 +280,12 @@ export const MyLayout = (props) => {
       appBar={MyAppBar}
       sx={{
         "& .RaLayout-content": {
-          paddingRight: chatOpen ? "400px" : 0,
+          paddingRight: 0,
           transition: "padding-right 0.3s ease",
         },
       }}
     >
       {props.children}
-      <Drawer
-        variant="permanent"
-        anchor="right"
-        open={chatOpen}
-        sx={{
-          width: chatOpen ? 400 : 400,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: 400,
-            position: "fixed",
-            height: "calc(100vh - 64px)",
-            top: 64,
-            borderLeft: "1px solid rgba(0, 0, 0, 0.12)",
-            transition: "transform 0.3s ease",
-            transform: chatOpen ? "translateX(0)" : "translateX(380px)",
-          },
-        }}
-      >
-        <IconButton
-          onClick={() => setChatOpen(!chatOpen)}
-          sx={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: "24px",
-            borderRadius: 0,
-            borderRight: "1px solid rgba(0, 0, 0, 0.12)",
-            backgroundColor: "background.paper",
-            "&:hover": {
-              backgroundColor: "action.hover",
-            },
-          }}
-        >
-          {chatOpen ? <ChevronRight /> : <ChevronLeft />}
-        </IconButton>
-        <Paper
-          elevation={0}
-          sx={{
-            ml: 3,
-            height: "100%",
-            p: 2,
-          }}
-        >
-          <div
-            style={{
-              height: "calc(100% - 40px)",
-              backgroundColor: "rgba(0, 0, 0, 0.04)",
-              borderRadius: 1,
-              padding: 2,
-            }}
-          >
-            <Chat messages={messages} onSubmit={onUserInputSubmit} />
-          </div>
-        </Paper>
-      </Drawer>
       <Slide direction="up" in={replOpen} mountOnEnter unmountOnExit>
         <div
           style={{
@@ -382,9 +315,7 @@ export const MyLayout = (props) => {
               <ExpandMore />
             </IconButton>
           </div>
-          <div style={{ flexGrow: 1, overflow: "auto" }}>
-            <LispREPL />
-          </div>
+          <div style={{ flexGrow: 1, overflow: "auto" }}> <LispREPL /> </div>
         </div>
       </Slide>
       <IconButton
