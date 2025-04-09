@@ -91,15 +91,19 @@
   (log/infof "Processing XLS file: %s -> %s" xls-file-path csv-output-path)
   (try
     (let [workbook (excel/load-workbook xls-file-path)
-          ;; Get all available sheet names from the workbook
-          available-sheets (excel/sheet-names workbook)
-          _ (log/infof "Available sheets in %s: %s" xls-file-path available-sheets)
+          ;; Get sheets from the workbook using sheet-seq
+          all-sheets (excel/sheet-seq workbook)
           
-          ;; Use the first sheet by default instead of trying to select by name
-          sheet (if (seq available-sheets)
+          ;; Get sheet names for logging
+          sheet-names (map #(.getSheetName %) all-sheets)
+          _ (log/infof "Available sheets in %s: %s" xls-file-path (vec sheet-names))
+          
+          ;; Use the first sheet by default
+          sheet (if (seq all-sheets)
                   (do
-                    (log/infof "Using first sheet: %s" (first available-sheets))
-                    (excel/select-sheet (first available-sheets) workbook))
+                    (let [first-sheet (first all-sheets)]
+                      (log/infof "Using first sheet: %s" (.getSheetName first-sheet))
+                      first-sheet))
                   (throw (IllegalArgumentException. 
                           (format "No sheets found in workbook %s" xls-file-path))))
           
