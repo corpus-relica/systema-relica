@@ -91,7 +91,18 @@
   (log/infof "Processing XLS file: %s -> %s" xls-file-path csv-output-path)
   (try
     (let [workbook (excel/load-workbook xls-file-path)
-          sheet (excel/select-sheet sheet-name workbook)
+          ;; Get all available sheet names from the workbook
+          available-sheets (excel/sheet-names workbook)
+          _ (log/infof "Available sheets in %s: %s" xls-file-path available-sheets)
+          
+          ;; Use the first sheet by default instead of trying to select by name
+          sheet (if (seq available-sheets)
+                  (do
+                    (log/infof "Using first sheet: %s" (first available-sheets))
+                    (excel/select-sheet (first available-sheets) workbook))
+                  (throw (IllegalArgumentException. 
+                          (format "No sheets found in workbook %s" xls-file-path))))
+          
           ;; Correctly extract header: read first N rows, find first non-empty, non-skipped one
           raw-rows (excel/row-seq sheet)
           ;; Initialize UID map atom with starting counters
@@ -131,8 +142,9 @@
   (let [seed-dir (config/seed-xls-dir)
         csv-dir (config/csv-output-dir)
         uid-config (config/uid-ranges)
-        ;; Specifics from TS code (adjust if needed)
-        sheet-name "0"
+        ;; Don't use a specific sheet name - we'll just use the first sheet
+        ;; in each workbook automatically
+        sheet-name nil  
         header-rows-to-skip 2]
     
     (log/infof "Searching for XLS(X) files in: %s" seed-dir)
@@ -176,6 +188,6 @@
                                        xls-files))]
                 (let [valid-results (filterv some? results)]
                   (log/infof "Successfully processed %d of %d XLS files" (count valid-results) (count xls-files))
-                  valid-results)))))))
+                  valid-results)))))))))
 
 (log/info "Prism XLS namespace loaded.")
