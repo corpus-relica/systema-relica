@@ -62,27 +62,44 @@
   "Processes a single row: skips header/empty rows, normalizes values, resolves UIDs.
    Takes uid-map-atom, row-data, and uid-config. Returns processed row vector or nil."
   [uid-map-atom row-data uid-config header-rows-to-skip]
-  (let [row-number (:row (meta row-data)) ; Docjure provides row number
-        ;; Convert row map values to a vector. Assuming keys are sequential like :A, :B...
-        ;; A more robust approach might be needed if keys aren't guaranteed order/presence
-        row-vec (mapv val (sort-by key row-data))]
-    (cond
-      (<= row-number header-rows-to-skip) ; Skip header rows (adjusting for 1-based row-number from docjure?)
-      nil
-
-      (every? #(or (nil? %) (and (string? %) (str/blank? %))) row-vec) ; Skip empty rows
-      nil
-
-      :else
-      (let [;; 1. Normalize basic values (e.g., remove commas)
-            normalized-row (map-indexed normalize-value row-vec)
-            ;; 2. Resolve temporary UIDs (needs state)
-            ;; Pass current map state, get back updated map and resolved row
-            [updated-map resolved-row] (resolve-temp-uids @uid-map-atom normalized-row uid-config)]
-        ;; Update the atom state with the new map
-        (reset! uid-map-atom updated-map)
-        ;; Return the resolved row
-        resolved-row))))
+  (try
+    (let [;; Get row number and cell values using excel/cell-seq
+          row-idx (.getRowNum row-data) ; Get 0-based row index
+          cell-values (vec (map excel/read-cell (excel/cell-seq row-data)))]
+      
+      (log/debugf "Processing row %d with %d cells" row-idx (count cell-values))
+      
+      (cond
+        ;; Skip header rows - row-idx is 0-based while header-rows-to-skip is a count
+        (< row-idx header-rows-to-skip)
+        (do
+          (log/debugf "Skipping header row %d" row-idx)
+          nil)
+        
+        ;; Skip empty rows
+        (empty? cell-values) 
+        (do
+          (log/debugf "Skipping empty row %d" row-idx)
+          nil)
+        
+        (every? #(or (nil? %) (and (string? %) (str/blank? %))) cell-values)
+        (do
+          (log/debugf "Skipping blank row %d" row-idx)
+          nil)
+        
+        :else
+        (let [;; 1. Normalize basic values (e.g., remove commas)
+              normalized-row (map-indexed normalize-value cell-values)
+              ;; 2. Resolve temporary UIDs (needs state)
+              ;; Pass current map state, get back updated map and resolved row
+              [updated-map resolved-row] (resolve-temp-uids @uid-map-atom normalized-row uid-config)]
+          ;; Update the atom state with the new map
+          (reset! uid-map-atom updated-map)
+          ;; Return the resolved row
+          resolved-row)))
+    (catch Exception e
+      (log/errorf e "Error processing row: %s" (.toString row-data))
+      nil)))
 
 (defn xls-to-csv
   "Reads an XLS(X) file, processes rows, and writes to a CSV file.

@@ -98,26 +98,6 @@
     :else
     {:valid true}))
 
-;; -- Create a default environment for the admin
-;; INSERT INTO public.environments (
-;;     name
-;; ) VALUES (
-;;     'Default Environment'
-;; );
-
-;; -- Link the default environment to the admin user
-;; INSERT INTO public.user_environments (
-;;     user_id,
-;;     environment_id,
-;;     is_owner,
-;;     can_write
-;; ) VALUES (
-;;     1, -- Assuming the admin user has ID 1
-;;     1, -- Assuming the default environment has ID 1
-;;     true,
-;;     true
-;; );
-
 (defn create-admin-user!
   "Creates the admin user with the given credentials."
   [username password]
@@ -220,8 +200,10 @@
           true)
         (do
           (update-status! "No seed files found. Database seeding skipped.")
-          (advance-stage!) ; Skip to next stage anyway
-          true)))
+          (log/warn "XLS processing did not generate any CSV files. Setup cannot proceed to cache building.")
+          (log/warn "Setup will remain in the db-seed stage until seed files are processed correctly.")
+          ;; Do NOT advance stage when no seed files are found - this is an error condition
+          false)))
     (catch Exception e
       (set-error! (str "Error during database seeding: " (.getMessage e)))
       false)))
