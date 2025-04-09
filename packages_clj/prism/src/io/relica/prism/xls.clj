@@ -161,9 +161,34 @@
         ;; Don't throw error, just return nil as no CSV is generated
         (log/info "No CSV file generated as no data rows were processed.")
         (-> {:status :no-data :file xls-file-path}))
-
-      (with-open [writer (io/writer csv-output-path)]
-        (csv/write-csv writer processed-data-rows)) ; Write just the processed data
+      
+      ;; HARD ASSUMPTION: All well-formed Gellish XLS files have exactly 3 header rows:
+      ;; 1. Title row (ignore)
+      ;; 2. Column IDs row (extract and use as CSV header)
+      ;; 3. Column names row (ignore)
+      
+      ;; Extract the column IDs from the second row (index 1)
+      (when (< (count header-rows) 3)
+        (log/warn "Expected 3 header rows in Gellish format XLS, but found only " (count header-rows))
+        (log/warn "Proceeding anyway, but CSV may not be correctly formatted"))
+      
+      (let [column-id-row (when (> (count header-rows) 1)
+                           (let [raw-header-row (nth header-rows 1)
+                                 header-cells (excel/cell-seq raw-header-row)
+                                 header-values (mapv #(let [val (excel/read-cell %)]
+                                                      (str val)) ; Convert all values to strings
+                                                   header-cells)]
+                             (log/infof "Using column IDs as CSV headers: %s" (str/join ", " header-values))
+                             header-values))]
+        
+        ;; Write CSV with column IDs as the header row
+        (with-open [writer (io/writer csv-output-path)]
+          ;; First write the column ID row as header
+          (when column-id-row
+            (csv/write-csv writer [column-id-row]))
+          
+          ;; Then write all data rows
+          (csv/write-csv writer processed-data-rows)))
 
       (log/infof "Successfully generated CSV: %s (%d data rows)" csv-output-path (count processed-data-rows))
       {:status :success :csv-path csv-output-path})
