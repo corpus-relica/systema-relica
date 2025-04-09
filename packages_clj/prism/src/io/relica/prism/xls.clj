@@ -70,10 +70,11 @@
       (log/debugf "Processing row %d with %d cells" row-idx (count cell-values))
       
       (cond
-        ;; Skip header rows - row-idx is 0-based while header-rows-to-skip is a count
-        (< row-idx header-rows-to-skip)
+        ;; Skip any residual header rows - though they should already be filtered out
+        ;; by the xls-to-csv function before this gets called
+        (and (> header-rows-to-skip 0) (< row-idx header-rows-to-skip))
         (do
-          (log/debugf "Skipping header row %d" row-idx)
+          (log/debugf "Skipping additional header row %d" row-idx)
           nil)
         
         ;; Skip empty rows
@@ -124,14 +125,29 @@
                   (throw (IllegalArgumentException. 
                           (format "No sheets found in workbook %s" xls-file-path))))
           
-          ;; Correctly extract header: read first N rows, find first non-empty, non-skipped one
-          raw-rows (excel/row-seq sheet)
+          ;; Get all rows from the sheet
+          all-rows (excel/row-seq sheet)
+          
+          ;; Extract header rows (we'll need them for debugging)
+          header-rows (take header-rows-to-skip all-rows)
+          _ (log/infof "Found %d header rows" (count header-rows))
+          
+          ;; IMPORTANT: For Gellish format, we need the column IDs from the second row
+          ;; which is at index 1 (0-based) - this row contains numeric column IDs
+          column-ids-row (when (> (count header-rows) 1) 
+                           (nth header-rows 1 nil))
+          
+          ;; Skip header rows and get data rows
+          data-rows (drop header-rows-to-skip all-rows)
+          
           ;; Initialize UID map atom with starting counters
           uid-map-atom (atom {:mappings {}
                               :next-free-uid (:min-free-uid uid-config)
                               :next-free-fact-uid (:min-free-fact-uid uid-config)})
-          ;; Process rows using keep and the stateful atom
-          processed-data-rows (doall (keep #(process-row uid-map-atom % uid-config header-rows-to-skip) raw-rows))
+          
+          ;; Process only the data rows (skip header rows in our processing logic)
+          ;; Pass 0 as header-rows-to-skip since we've already skipped them
+          processed-data-rows (doall (keep #(process-row uid-map-atom % uid-config 0) data-rows))
 
           ;; Re-read the header row(s) separately if needed, assuming simple structure for now
           ;; Let's assume the first row *before* skipping is the header we need for CSV
