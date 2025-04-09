@@ -18,9 +18,18 @@
     value))
 
 (def config
-  {:neo4j-uri        "bolt://localhost:7687" ;(get-required-env "PRISM_NEO4J_URI") ; e.g., "neo4j+s://xxxx.databases.neo4j.io"
+  {:neo4j-uri        "bolt://neo4j:7687" ;(get-required-env "PRISM_NEO4J_URI") ; e.g., "neo4j+s://xxxx.databases.neo4j.io"
    :neo4j-user       "neo4j" ;(get-required-env "PRISM_NEO4J_USER") ; e.g., "neo4j"
    :neo4j-password   "password" ;(get-required-env "PRISM_NEO4J_PASSWORD")
+
+   ;; PostgreSQL configuration for user management
+   :db-spec          {:dbtype "postgresql"
+                     :dbname (get-env "POSTGRES_DB" "postgres")
+                     :host (get-env "POSTGRES_HOST" "postgres")
+                     :user (get-env "POSTGRES_USER" "postgres")
+                     :password (get-env "POSTGRES_PASSWORD" "password")
+                     :port (Integer/parseInt (get-env "POSTGRES_PORT" "5432"))}
+   :jwt-secret       (get-env "JWT_SECRET" "your-dev-secret-change-me")
 
    ;; Path within the container where seed XLS files are located
    :seed-xls-dir     (get-env "PRISM_SEED_XLS_DIR" "/usr/src/app/seed_xls")
@@ -38,7 +47,8 @@
    :min-free-fact-uid (Integer/parseInt (get-env "PRISM_MIN_FREE_FACT_UID" "2000000000"))
    :max-temp-uid      (Integer/parseInt (get-env "PRISM_MAX_TEMP_UID" "1000"))
 
-   ;; API server settings
+   ;; Server settings
+   :ws-server        {:port (Integer/parseInt (get-env "PRISM_PORT" "3333"))}
    :api-server-port  (Integer/parseInt (get-env "PRISM_API_PORT" "3333"))
    :api-server-host  (get-env "PRISM_API_HOST" "0.0.0.0")
    
@@ -49,11 +59,14 @@
 (defn neo4j-uri [] (:neo4j-uri config))
 (defn neo4j-user [] (:neo4j-user config))
 (defn neo4j-password [] (:neo4j-password config))
+(defn db-spec [] (:db-spec config))
+(defn jwt-secret [] (:jwt-secret config))
 (defn seed-xls-dir [] (:seed-xls-dir config))
 (defn neo4j-import-dir [] (:neo4j-import-dir config))
 (defn csv-output-dir [] (:csv-output-dir config))
 (defn api-server-port [] (:api-server-port config))
 (defn api-server-host [] (:api-server-host config))
+(defn ws-server-port [] (get-in config [:ws-server :port]))
 (defn uid-ranges [] (select-keys config [:min-free-uid :min-free-fact-uid :max-temp-uid]))
 (defn log-level [] (:log-level config))
 

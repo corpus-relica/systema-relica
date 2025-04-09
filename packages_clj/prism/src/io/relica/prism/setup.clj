@@ -4,7 +4,10 @@
             [io.relica.prism.xls :as xls]
             [io.relica.prism.config :as config]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [next.jdbc :as jdbc]
+            [next.jdbc.result-set :as rs]
+            [buddy.hashers :as hashers]))
 
 ;; Setup state tracking
 (defonce setup-state (atom {:stage :not-started
@@ -40,7 +43,11 @@
   "Updates the setup status message."
   [status-message]
   (swap! setup-state assoc :status status-message)
-  (log/info status-message))
+  (log/info status-message)
+  ;; We'll add a call to broadcast the update via WebSocket
+  ;; This will be implemented later and injected to avoid circular dependencies
+  (when-let [broadcast-fn (resolve 'io.relica.prism.websocket/broadcast-setup-update)]
+    (broadcast-fn)))
 
 (defn set-error!
   "Sets an error in the setup state."
@@ -98,21 +105,21 @@
   (update-status! (str "Creating admin user: " username))
   
   (try
-    ;; Execute the Cypher query to create the admin user
-    (let [create-result (db/execute-query! 
-                         "CREATE (u:User {username: $username, password: $password, isAdmin: true, createdAt: datetime()}) RETURN u"
-                         {:username username
-                          :password password})
-          create-role-result (db/execute-query!
-                            "CREATE (r:Role {name: 'admin', permissions: ['READ', 'WRITE', 'ADMIN']}) RETURN r"
-                            {})
-          assign-role-result (db/execute-query!
-                             "MATCH (u:User {username: $username}), (r:Role {name: 'admin'}) CREATE (u)-[:HAS_ROLE]->(r) RETURN u, r"
-                             {:username username})]
+    ;; Create PostgreSQL admin user
+    (let [email (str username "@relica.io") ; Generate an email based on username
+          password-hash (buddy.hashers/derive password {:algorithm :bcrypt})
+          jdbc-conn (jdbc/get-connection (config/db-spec))
+          pg-result (jdbc/execute-one! jdbc-conn
+                     ["INSERT INTO users
+                       (email, username, password_hash, is_active, is_admin, first_name, last_name)
+                       VALUES (?, ?, ?, true, true, 'Admin', 'User')
+                       RETURNING id, email, username, is_active, is_admin"
+                      email username password-hash]
+                     {:builder-fn next.jdbc.result-set/as-unqualified-maps})]
       
-      (if (and (:success create-result) 
-               (:success create-role-result)
-               (:success assign-role-result))
+      (log/info "Created admin user in PostgreSQL:" (dissoc pg-result :password_hash))
+      
+      (if pg-result
         (do
           (update-status! (str "Admin user " username " created successfully"))
           (swap! setup-state assoc :master-user username)
