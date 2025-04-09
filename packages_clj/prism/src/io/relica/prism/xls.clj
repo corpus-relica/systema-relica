@@ -133,24 +133,49 @@
         uid-config (config/uid-ranges)
         ;; Specifics from TS code (adjust if needed)
         sheet-name "0"
-        header-rows-to-skip 2
-        xls-files (filter #(and (.isFile %) (re-find #"\.xlsx?$" (.getName %)))
-                          (file-seq (io/file seed-dir)))]
+        header-rows-to-skip 2]
+    
     (log/infof "Searching for XLS(X) files in: %s" seed-dir)
-    (when (empty? xls-files)
-      (log/warnf "No XLS(X) files found in seed directory: %s" seed-dir)
-      [])
-
-    (log/infof "Found %d XLS(X) files. Processing..." (count xls-files))
-    (let [results (doall (pmap (fn [xls-file] ; Use pmap for potential parallelism
-                                 (let [base-name (str/replace (.getName xls-file) #"\.xlsx?$" "")
-                                       csv-file-name (str base-name ".csv")
-                                       csv-path (str csv-dir "/" csv-file-name)
-                                       result-map (xls-to-csv (.getAbsolutePath xls-file) csv-path sheet-name header-rows-to-skip uid-config)]
-                                  ;; Return the path on success, nil otherwise
-                                   (when (= (:status result-map) :success)
-                                     (:csv-path result-map))))
-                               xls-files))]
-      (filterv some? results))))
+    (log/infof "CSV output directory: %s" csv-dir)
+    
+    ;; Ensure seed directory exists
+    (let [seed-dir-file (io/file seed-dir)]
+      (if (not (.exists seed-dir-file))
+        (do 
+          (log/errorf "Seed directory not found: %s" seed-dir)
+          [])
+        
+        ;; Directory exists, find XLS files
+        (let [xls-files (filter #(and (.isFile %) (re-find #"\.xlsx?$" (.getName %)))
+                              (file-seq seed-dir-file))]
+          (if (empty? xls-files)
+            (do
+              (log/warnf "No XLS(X) files found in seed directory: %s" seed-dir)
+              [])
+            
+            ;; Process the XLS files
+            (do
+              (log/infof "Found %d XLS(X) files. Processing..." (count xls-files))
+              (log/debugf "XLS files: %s" (map #(.getName %) xls-files))
+              
+              ;; Ensure CSV output directory exists
+              (let [csv-dir-file (io/file csv-dir)]
+                (when (not (.exists csv-dir-file))
+                  (log/infof "Creating CSV output directory: %s" csv-dir)
+                  (.mkdirs csv-dir-file)))
+              
+              (let [results (doall (pmap (fn [xls-file] ; Use pmap for potential parallelism
+                                         (let [base-name (str/replace (.getName xls-file) #"\.xlsx?$" "")
+                                               csv-file-name (str base-name ".csv")
+                                               csv-path (str csv-dir "/" csv-file-name)
+                                               _ (log/debugf "Processing %s to %s" (.getAbsolutePath xls-file) csv-path)
+                                               result-map (xls-to-csv (.getAbsolutePath xls-file) csv-path sheet-name header-rows-to-skip uid-config)]
+                                          ;; Return the path on success, nil otherwise
+                                           (when (= (:status result-map) :success)
+                                             (:csv-path result-map))))
+                                       xls-files))]
+                (let [valid-results (filterv some? results)]
+                  (log/infof "Successfully processed %d of %d XLS files" (count valid-results) (count xls-files))
+                  valid-results)))))))
 
 (log/info "Prism XLS namespace loaded.")

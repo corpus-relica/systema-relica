@@ -32,7 +32,7 @@
    :jwt-secret       (get-env "JWT_SECRET" "your-dev-secret-change-me")
 
    ;; Path within the container where seed XLS files are located
-   :seed-xls-dir     (get-env "PRISM_SEED_XLS_DIR" "/usr/src/app/seed_xls")
+   :seed-xls-dir     (get-env "PRISM_SEED_XLS_DIR" "/seed_xls")
 
    ;; Path within the container where Neo4j can import CSVs from 
    ;; Note: This MUST match Neo4j's configured `server.directories.import` path
