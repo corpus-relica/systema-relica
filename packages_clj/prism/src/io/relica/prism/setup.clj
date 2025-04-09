@@ -98,6 +98,26 @@
     :else
     {:valid true}))
 
+;; -- Create a default environment for the admin
+;; INSERT INTO public.environments (
+;;     name
+;; ) VALUES (
+;;     'Default Environment'
+;; );
+
+;; -- Link the default environment to the admin user
+;; INSERT INTO public.user_environments (
+;;     user_id,
+;;     environment_id,
+;;     is_owner,
+;;     can_write
+;; ) VALUES (
+;;     1, -- Assuming the admin user has ID 1
+;;     1, -- Assuming the default environment has ID 1
+;;     true,
+;;     true
+;; );
+
 (defn create-admin-user!
   "Creates the admin user with the given credentials."
   [username password]
@@ -109,24 +129,50 @@
     (let [email (str username "@relica.io") ; Generate an email based on username
           password-hash (buddy.hashers/derive password {:algorithm :bcrypt})
           jdbc-conn (jdbc/get-connection (config/db-spec))
-          pg-result (jdbc/execute-one! jdbc-conn
+          
+          ;; Create user
+          user-result (jdbc/execute-one! jdbc-conn
                      ["INSERT INTO users
                        (email, username, password_hash, is_active, is_admin, first_name, last_name)
                        VALUES (?, ?, ?, true, true, 'Admin', 'User')
                        RETURNING id, email, username, is_active, is_admin"
                       email username password-hash]
-                     {:builder-fn next.jdbc.result-set/as-unqualified-maps})]
+                     {:builder-fn next.jdbc.result-set/as-unqualified-maps})
+          
+          ;; Create a default environment
+          env-result (when user-result
+                       (jdbc/execute-one! jdbc-conn
+                        ["INSERT INTO environments (name) 
+                          VALUES ('Default Environment')
+                          RETURNING id"]
+                        {:builder-fn next.jdbc.result-set/as-unqualified-maps}))
+          
+          ;; Link user to environment
+          user-env-result (when (and user-result env-result)
+                            (jdbc/execute-one! jdbc-conn
+                              ["INSERT INTO user_environments
+                                (user_id, environment_id, is_owner, can_write)
+                                VALUES (?, ?, true, true)
+                                RETURNING id"
+                               (:id user-result) (:id env-result)]
+                              {:builder-fn next.jdbc.result-set/as-unqualified-maps}))]
       
-      (log/info "Created admin user in PostgreSQL:" (dissoc pg-result :password_hash))
+      (log/info "Created admin user in PostgreSQL:" (dissoc user-result :password_hash))
+      (when env-result (log/info "Created default environment with ID:" (:id env-result)))
+      (when user-env-result (log/info "Linked user to environment"))
       
-      (if pg-result
+      (if (and user-result env-result user-env-result)
         (do
-          (update-status! (str "Admin user " username " created successfully"))
+          (update-status! (str "Admin user " username " created successfully with default environment"))
           (swap! setup-state assoc :master-user username)
           (advance-stage!) ; Move to :db-seed
           true)
         (do
-          (set-error! "Failed to create admin user")
+          (set-error! (str "Failed to create admin user"
+                          (when (and user-result (not env-result))
+                            " - environment creation failed")
+                          (when (and user-result env-result (not user-env-result))
+                            " - user-environment link failed")))
           false)))
     (catch Exception e
       (set-error! (str "Error creating admin user: " (.getMessage e)))
