@@ -30,6 +30,7 @@ class PortalClient {
     const baseURL = import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2174";
     this.axiosInstance = axios.create({
       baseURL,
+      timeout: 900000,  // 15 minutes
     });
 
     // Add request interceptor to inject token

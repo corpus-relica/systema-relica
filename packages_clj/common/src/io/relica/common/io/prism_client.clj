@@ -32,7 +32,7 @@
   
   (process-setup-stage [this]
     (log/info "Processing current setup stage")
-    (ws/send-message! ws-client "setup/process-stage" {} 5000))
+    (ws/send-message! ws-client "setup/process-stage" {} 900000)) ;; 15 minutes
   
   (connected? [this]
     (ws/connected? ws-client)))

@@ -179,7 +179,7 @@
           (let [total-files (count csv-file-paths)
                 progress-increment (/ 40 total-files)] ; 40% of progress bar for this stage
 ;; {:status :success, :csv-path /import/0.csv, :rows 5263}
-            (doseq [[idx csv-path] (map-indexed vector csv-file-paths)
+            (doseq [[idx {:keys [csv-path]}] (map-indexed vector csv-file-paths) ; Destructure map here
                     :let [file-name (.getName (io/file csv-path))]]
 
               (update-status! (str "Importing " file-name " (" (inc idx) "/" total-files ")..."))
