@@ -2,9 +2,11 @@
   (:require [taoensso.timbre :as log]
             [io.relica.prism.db :as db]
             [io.relica.prism.xls :as xls]
+            [io.relica.prism.xls-transform :as xls-transform]
             [io.relica.prism.config :as config]
             [io.relica.prism.setup :as setup]
-            [io.relica.prism.api :as api]
+            ;; [io.relica.prism.api :as api]
+            [io.relica.prism.websocket :as websocket]
             [clojure.java.io :as io])
   (:gen-class))
 
@@ -56,16 +58,20 @@
   (setup/init!)
   
   ;; Start the API server
-  (api/start-server)
+  ;; (api/start-server)
+
+  ;; Start the WebSocket server
+  (websocket/start-server)
   
-  (log/info "Interactive setup ready. API server is running on port" (config/api-server-port))
+  (log/info "Interactive setup ready. API server and WebSocket server are running on port" (config/api-server-port))
   (log/info "Visit http://localhost:" (config/api-server-port) " to complete setup"))
 
 (defn stop-services
   "Stops all Prism services."
   []
   (log/info "Stopping Prism services...")
-  (api/stop-server)
+  ;; (api/stop-server)
+  (websocket/stop-server)
   (log/info "All Prism services stopped."))
 
 (defn start-prism-services
@@ -82,8 +88,9 @@
   "Entry point when run as a standalone application."
   [& args]
   (log/info "Starting Prism as standalone application...")
+
   (start-prism-services)
-  
+
   ;; Keep the application running
   (let [running (promise)]
     ;; Add shutdown hook to gracefully stop services
@@ -96,3 +103,20 @@
     ;; Wait for termination
     @running
     (log/info "Prism application terminated.")))
+
+(comment
+
+
+  ;; (xls/process-seed-directory)
+  (xls-transform/transform-seed-xls!)
+
+  (db/database-empty?)
+
+  (db/load-nodes-from-csv! "0.csv")
+
+  ;; Example usage:
+  ;; (start-prism-services)
+  ;; (stop-services)
+  ;; (-main)
+
+  )

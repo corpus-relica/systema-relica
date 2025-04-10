@@ -2,7 +2,8 @@
   (:require [clojure.core.async :refer [take!]]
             [clojure.string :as clojure.string]
             [io.relica.portal.auth.jwt :as jwt]
-            [org.httpkit.server :as http]))
+            [org.httpkit.server :as http]
+            [cheshire.core :as json]))
 
 (defn wrap-async-handler [handler]
   (fn [request]
@@ -46,3 +47,21 @@
         (handler (assoc request :identity {:user-id user-id}))
         {:status 401 :body "Invalid token"})
       {:status 401 :body "No token provided"})))
+
+;; JSON body middleware to parse request bodies
+(defn wrap-json-body [handler]
+  (fn [request]
+    (if-let [body (:body request)]
+      (let [body-str (slurp body)]
+        (if (clojure.string/blank? body-str)
+          (handler request)
+          (try
+            (let [json-params (json/parse-string body-str true)]
+              (handler (assoc request :json-params json-params)))
+            (catch Exception e
+              {:status 400
+               :headers {"Content-Type" "application/json"}
+               :body (json/generate-string
+                       {:error "Invalid JSON in request body"
+                        :message (.getMessage e)})}))))
+      (handler request))))

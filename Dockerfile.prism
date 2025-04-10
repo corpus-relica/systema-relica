@@ -19,8 +19,9 @@ COPY ./packages_clj/prism .
 
 # Expose the API port
 EXPOSE 3333
+EXPOSE 7893
 
 # Define the command to run the application
 # This will start the interactive setup sequence with API server
 # Assumes the necessary environment variables are passed via docker-compose.yml
-CMD ["clojure", "-M:run"]
+CMD ["clojure", "-M:dev"]

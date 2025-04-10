@@ -31,7 +31,8 @@ import { useStores } from "./context/RootStoreContext.js";
 
 import { resolveUIDs } from "./io/ArchivistBaseClient.js";
 import { retrieveEnvironment } from "./io/CCBaseClient.js";
-import { prismApi } from "./io/PrismClient.js";
+import { portalClient } from "./io/PortalClient.js";
+import { initializeWebSocket, portalWs } from "./socket.js";
 
 import { MyLayout } from "./MyLayout.js";
 import MyLoginPage from "./MyLoginPage.js";
@@ -80,13 +81,50 @@ export const App = () => {
   const { setCategories } = factDataStore;
   
   // State for setup status
-  const [setupState, setSetupState] = useState<'loading' | 'needed' | 'complete'>('loading');
+  const [setupState, setSetupState] = useState<'loading' | 'needed' | 'complete' | 'error'>('loading');
   
-  // Effect to check setup status on mount
+  // Effect to initialize WebSocket and check setup status
   useEffect(() => {
     const checkSetupStatus = async () => {
       try {
-        const status = await prismApi.getSetupStatus();
+        // Try to get token for guest access during setup
+        let token;
+        try {
+          // For setup, we use a special guest token from Shutter that doesn't require authentication
+          const shutterUrl = import.meta.env.VITE_SHUTTER_URL || "http://localhost:2173";
+          const guestAuthResponse = await fetch(
+            `${shutterUrl}/api/guest-auth`,
+            { 
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              }
+            }
+          );
+          
+          if (guestAuthResponse.ok) {
+            const authData = await guestAuthResponse.json();
+            token = authData.token;
+            console.log("Got guest auth token for setup");
+          } else {
+            console.warn("Guest auth response not OK:", guestAuthResponse.status);
+          }
+        } catch (err) {
+          console.warn("Failed to get guest token, proceeding without WebSocket:", err);
+        }
+        
+        // Initialize WebSocket if we have a token
+        if (token) {
+          try {
+            await initializeWebSocket(token);
+            console.log("WebSocket initialized for setup");
+          } catch (wsErr) {
+            console.warn("WebSocket initialization failed:", wsErr);
+          }
+        }
+        
+        // Check setup status directly through Portal REST API
+        const status = await portalClient.getSetupStatus();
         
         if (status.stage !== 'complete') {
           setSetupState('needed');
@@ -94,12 +132,18 @@ export const App = () => {
           setSetupState('complete');
         }
       } catch (err) {
-        console.warn("Failed to check setup status, assuming setup is complete:", err);
-        setSetupState('complete');
+        console.error("Failed to check setup status:", err);
+        // Going to error state rather than assuming complete
+        setSetupState('error');
       }
     };
     
     checkSetupStatus();
+    
+    // Cleanup function
+    return () => {
+      // We don't completely close WebSocket here as it may be needed after setup
+    };
   }, []);
   
   console.log('APP STARTUP', { setupState });
@@ -126,6 +170,57 @@ export const App = () => {
           <Route path="*" element={<SetupWizard />} />
         </Routes>
       </BrowserRouter>
+    );
+  }
+
+  // Show error/lockout screen if we couldn't connect to the setup services
+  if (setupState === 'error') {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        padding: '0 20px',
+        textAlign: 'center',
+        backgroundColor: '#f8f9fa'
+      }}>
+        <div style={{
+          maxWidth: '500px',
+          padding: '30px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+          backgroundColor: 'white'
+        }}>
+          <h1 style={{ color: '#d32f2f', marginBottom: '16px' }}>System Setup Error</h1>
+          <p style={{ fontSize: '16px', lineHeight: '1.5', marginBottom: '24px' }}>
+            We couldn't connect to the necessary system components to check or perform setup. This may be because:
+          </p>
+          <ul style={{ textAlign: 'left', marginBottom: '24px' }}>
+            <li>The backend services are not running</li>
+            <li>There's a network connectivity issue</li>
+            <li>The system configuration is incorrect</li>
+          </ul>
+          <p style={{ fontSize: '16px', lineHeight: '1.5', marginBottom: '24px' }}>
+            Please contact your system administrator or try refreshing the page.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: '#1976d2',
+              color: 'white',
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '16px'
+            }}
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
     );
   }
 

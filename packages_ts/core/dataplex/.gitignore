@@ -6,5 +6,6 @@ tmp/
 data_import/
 dumps/
 data/
+data_bak/
 
 certs/

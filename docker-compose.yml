@@ -81,6 +81,7 @@ services:
       - PRISM_API_HOST=0.0.0.0
     ports:
       - "3333:3333"  # Expose the API port to the host for setup UI access
+      - "7893:7893"
     volumes:
       # Mount the seed data directory (read-only for Prism)
       - ./seed_xls:/seed_xls:ro
@@ -218,11 +219,15 @@ services:
 
       - NOUS_HOST=nous
       - NOUS_PORT=2204
+      
+      - PRISM_HOST=prism
+      - PRISM_PORT=3333
     depends_on:
-      #   - shutter
+      - shutter
       - archivist
       - clarity
       - aperture
+      - prism
     networks:
       rlc-net:
         aliases:

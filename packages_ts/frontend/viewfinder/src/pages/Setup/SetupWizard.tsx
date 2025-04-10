@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Paper, CircularProgress, Alert } from '@mui/material';
-import { prismApi, SetupState } from '../../io/PrismClient';
+import { portalClient, SetupState } from '../../io/PortalClient';
 import UserSetupForm from './UserSetupForm';
 import ProgressStage from './ProgressStage';
 
@@ -15,11 +15,11 @@ const SetupWizard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Function to fetch the current setup state from Prism
+  // Function to fetch the current setup state from Portal
   const fetchSetupState = async () => {
     try {
       setLoading(true);
-      const state = await prismApi.getSetupStatus();
+      const state = await portalClient.getSetupStatus();
       setSetupState(state);
       
       // If setup is complete, reload the app to show the login screen
@@ -38,7 +38,7 @@ const SetupWizard: React.FC = () => {
   const startSetup = async () => {
     try {
       setLoading(true);
-      await prismApi.startSetup();
+      await portalClient.startSetup();
       await fetchSetupState();
     } catch (err) {
       console.error('Error starting setup:', err);
@@ -52,7 +52,7 @@ const SetupWizard: React.FC = () => {
   const processCurrentStage = async () => {
     try {
       setLoading(true);
-      const response = await prismApi.processStage();
+      const response = await portalClient.processSetupStage();
       setSetupState(response.state);
       
       // If setup is complete after processing, reload the app
@@ -74,10 +74,30 @@ const SetupWizard: React.FC = () => {
     }
   };
 
+  // Handler for WebSocket setup updates
+  const handleSetupUpdate = useCallback((event: CustomEvent) => {
+    const updatedState = event.detail;
+    console.log('Received setup update via WebSocket:', updatedState);
+    setSetupState(updatedState);
+    
+    // If setup is complete, reload the app
+    if (updatedState.stage === 'complete') {
+      window.location.href = '/'; // Force full page reload to restart the app
+    }
+  }, []);
+
   // Initial load - fetch setup state
   useEffect(() => {
     fetchSetupState();
-  }, []);
+    
+    // Register WebSocket update listener - portal: prefix comes from our socket.ts event dispatching
+    document.addEventListener('portal:setup-update', handleSetupUpdate as EventListener);
+    
+    // Cleanup listener
+    return () => {
+      document.removeEventListener('portal:setup-update', handleSetupUpdate as EventListener);
+    };
+  }, [handleSetupUpdate]);
 
   // When setup state changes to a new stage, automatically process non-user stages
   useEffect(() => {

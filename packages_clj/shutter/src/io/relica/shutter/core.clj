@@ -78,7 +78,6 @@
       (println (str "Found user:" (dissoc user :password_hash)))
       (println (str "Password hash:" (:password_hash user)))
       (when (:is_active user)
-        ;; Use buddy.hashers/check instead of bcrypt-clj
         (if (hashers/verify password (:password_hash user))
           (select-keys user [:id :username :email :is_admin])
           (do
@@ -164,6 +163,39 @@
                  :body (json/generate-string
                         {:error "Invalid credentials"})}))))})
 
+;; Guest auth handler - provides limited token for setup process
+(def guest-auth-handler 
+  {:name ::guest-auth
+   :enter
+   (fn [context]
+     (println "HANDLING GUEST AUTH")
+     ;; Create a guest token with minimal permissions
+     (let [claims {:user-id "guest"
+                   :email "guest"
+                   :roles ["setup"]
+                   :guest true
+                   ;; Short expiration time for security
+                   :exp (+ (System/currentTimeMillis) (* 30 60 1000))} ; 30 minutes
+           token (jwt/sign claims (:jwt-secret env))]
+       (assoc context :response
+              {:status 200
+               :headers {"Content-Type" "application/json"
+                         "Access-Control-Allow-Origin" "*"}
+               :body (json/generate-string
+                      {:token token
+                       :user {:id "guest"
+                              :username "guest"
+                              :roles ["setup"]}})})))
+   :error
+   (fn [context e]
+     (log/error e "Guest auth error")
+     (assoc context :response
+            {:status 500
+             :headers {"Content-Type" "application/json"
+                       "Access-Control-Allow-Origin" "*"}
+             :body (json/generate-string
+                    {:error "Guest authentication failed"})}))})
+
 (def routes
   #{["/health" :get
      (fn [_]
@@ -181,6 +213,19 @@
                    {:status "unhealthy"
                     :db "disconnected"})})))
      :route-name :health-check]
+    
+    ["/api/guest-auth" :post
+     guest-auth-handler
+     :route-name :guest-auth]
+    
+    ["/api/guest-auth" :options
+     (fn [_]
+       {:status 200
+        :headers {"Access-Control-Allow-Origin" "*"
+                  "Access-Control-Allow-Methods" "POST, OPTIONS"
+                  "Access-Control-Allow-Headers" "Content-Type, Authorization"
+                  "Access-Control-Max-Age" "3600"}})
+     :route-name :guest-auth-options]
 
     ["/api/login" :post
      (assoc login-handler

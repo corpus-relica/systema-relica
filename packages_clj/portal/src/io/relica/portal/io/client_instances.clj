@@ -3,6 +3,7 @@
             [io.relica.common.io.clarity-client :as clarity]
             [io.relica.common.io.aperture-client :as aperture]
             [io.relica.common.io.nous-client :as nous]
+            [io.relica.common.io.prism-client :as prism]
             ;; [io.relica.common.websocket.client :as ws]
             [io.relica.common.events.core :as events]
             [clojure.tools.logging :as log]
@@ -86,3 +87,29 @@
                                                  (tap> "Received message from NOUS")
                                                  (events/publish-event {:type :nous-message-received
                                                                         :payload payload}))})}))
+
+;; PRISM
+
+(def prism-handlers
+  {:setup/update (fn [msg]
+                    (tap> "Prism setup update:")
+                    (tap> msg)
+                    (events/publish-event {:type :prism-setup-update
+                                           :payload msg}))
+   ;; Add heartbeat handler
+   "heartbeat" (fn [msg]
+                 (log/debug "Received heartbeat from Prism"))
+   "ping" (fn [msg]
+            (log/debug "Received ping from Prism"))})
+
+(defonce prism-client (prism/create-client
+                        {:host (get-in app-config [:prism :host])
+                         :port (get-in app-config [:prism :port])
+                         :handlers (merge
+                                    prism-handlers
+                                    {:on-connect (fn []
+                                                   (tap> "Connected to PRISM")
+                                                   (events/publish-event {:type :prism-connected}))
+                                     :on-disconnect (fn []
+                                                      (tap> "Disconnected from PRISM")
+                                                      (events/publish-event {:type :prism-disconnected}))})}))

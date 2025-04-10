@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Typography, Alert } from '@mui/material';
-import { prismApi, AdminUserCredentials } from '../../io/PrismClient';
+import { portalClient } from '../../io/PortalClient';
 
 interface UserSetupFormProps {
   onSuccess: () => void;
@@ -49,14 +49,8 @@ const UserSetupForm: React.FC<UserSetupFormProps> = ({ onSuccess, onError }) => 
     try {
       setLoading(true);
       
-      // Create the admin user
-      const credentials: AdminUserCredentials = {
-        username,
-        password,
-        confirmPassword
-      };
-      
-      const response = await prismApi.createAdminUser(credentials);
+      // Create the admin user via Portal client
+      const response = await portalClient.createAdminUser(username, password, confirmPassword);
       
       if (response.success) {
         onSuccess();

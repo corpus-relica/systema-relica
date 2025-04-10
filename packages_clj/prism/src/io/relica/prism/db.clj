@@ -79,6 +79,43 @@
        approval_status: line['8'],
        successor_uid: toInteger(replace(line['78'], ',', '')),
        reason: line['24'],
+       effective_from: date(
+           CASE
+               WHEN apoc.date.parse(line['9'], 'ms', 'yyyy-MM-dd') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['9'], 'ms', 'yyyy-MM-dd'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['9'], 'ms', 'MM/dd/yyyy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['9'], 'ms', 'MM/dd/yyyy'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['9'], 'ms', 'dd-MMM-yy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['9'], 'ms', 'dd-MMM-yy'), 'ms', 'yyyy-MM-dd')
+               ELSE NULL
+           END
+       ),
+       creator_uid: toInteger(replace(line['13'], ',', '')),
+       latest_update: date(
+           CASE
+               WHEN apoc.date.parse(line['10'], 'ms', 'yyyy-MM-dd') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['10'], 'ms', 'yyyy-MM-dd'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['10'], 'ms', 'MM/dd/yyyy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['10'], 'ms', 'MM/dd/yyyy'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['10'], 'ms', 'dd-MMM-yy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['10'], 'ms', 'dd-MMM-yy'), 'ms', 'yyyy-MM-dd')
+               ELSE NULL
+           END
+       ),
+       author_uid: toInteger(replace(line['6'], ',', '')),
+       author: line['12'],
+       copy_date: date(
+           CASE
+               WHEN apoc.date.parse(line['22'], 'ms', 'yyyy-MM-dd') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['22'], 'ms', 'yyyy-MM-dd'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['22'], 'ms', 'MM/dd/yyyy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['22'], 'ms', 'MM/dd/yyyy'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['22'], 'ms', 'dd-MMM-yy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['22'], 'ms', 'dd-MMM-yy'), 'ms', 'yyyy-MM-dd')
+               ELSE NULL
+           END
+       ),
+       availability_date: date(
+           CASE
+               WHEN apoc.date.parse(line['23'], 'ms', 'yyyy-MM-dd') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['23'], 'ms', 'yyyy-MM-dd'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['23'], 'ms', 'MM/dd/yyyy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['23'], 'ms', 'MM/dd/yyyy'), 'ms', 'yyyy-MM-dd')
+               WHEN apoc.date.parse(line['23'], 'ms', 'dd-MMM-yy') IS NOT NULL THEN apoc.date.format(apoc.date.parse(line['23'], 'ms', 'dd-MMM-yy'), 'ms', 'yyyy-MM-dd')
+               ELSE NULL
+           END
+       ),
+       addressee_uid: toInteger(replace(line['178'], ',', '')),
+       addressee_name: line['179'],
        creator_uid: toInteger(replace(line['13'], ',', '')),
        author_uid: toInteger(replace(line['6'], ',', '')),
        author: line['12'],

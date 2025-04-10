@@ -28,10 +28,13 @@
  
  :mvn/repos {"clojars" {:url "https://repo.clojars.org/"}}
 
- :aliases {:dev {:extra-paths ["dev"]}
+ :aliases {:dev {:extra-paths ["dev"]
+                 :extra-deps {cider/cider-nrepl  {:mvn/version "0.37.1"}
+                             binaryage/devtools  {:mvn/version "1.0.7"}
+                             org.clojure/tools.namespace {:mvn/version "1.4.4"}}
+                :main-opts ["-m" "user"]}
            :test {:extra-paths ["test"]
                   :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}}
                   :main-opts ["-m" "io.relica.prism.xls-test"]}
            :run {:main-opts ["-m" "io.relica.prism.core"]}
-           }
- }
+           }}
