@@ -8,7 +8,8 @@
             [clojure.string :as str]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [buddy.hashers :as hashers]))
+            [buddy.hashers :as hashers]
+            [io.relica.prism.cache :as cache]))
 
 ;; Setup state tracking
 (defonce setup-state (atom {:stage :not-started
@@ -169,13 +170,15 @@
     (let [csv-file-paths (xls-transform/transform-seed-xls!)
           ;; csv-file-paths (xls/process-seed-directory)
           ]
+      (print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      (print csv-file-paths)
       (if (seq csv-file-paths)
         (do
           (update-status! (str "Processed " (count csv-file-paths) " seed files. Importing data..."))
 
           (let [total-files (count csv-file-paths)
                 progress-increment (/ 40 total-files)] ; 40% of progress bar for this stage
-
+;; {:status :success, :csv-path /import/0.csv, :rows 5263}
             (doseq [[idx csv-path] (map-indexed vector csv-file-paths)
                     :let [file-name (.getName (io/file csv-path))]]
 
@@ -212,33 +215,29 @@
       false)))
 
 (defn build-caches!
-  "Builds necessary caches for the application."
+  "Builds necessary caches for the application (Entity Facts, Lineage, Subtypes)."
   []
   (log/info "Building database caches...")
   (update-status! "Building database caches...")
 
   (try
-    ;; Execute cache building queries
-    (let [subtype-cache-result (db/execute-query!
-                                "MATCH (sub:Entity)-[:role]->(:Fact {rel_type_uid: 1146})-[:role]->(super:Entity)
-                               WITH sub, super
-                               MERGE (sub)-[:SUBTYPE_OF]->(super)
-                               RETURN count(*) as cache_count"
-                                {})
-
-          ;; Add more cache building queries here as needed
-          ]
-
-      (if (:success subtype-cache-result)
-        (do
-          (update-status! "Database caches built successfully")
-          (advance-stage!) ; Move to :complete
-          true)
-        (do
-          (set-error! "Failed to build database caches")
-          false)))
+    ;; Build the caches sequentially
+    (if (and (cache/build-entity-facts-cache!)
+             (cache/build-entity-lineage-cache!)
+             (cache/build-subtypes-cache!))
+      (do
+        (update-status! "Database caches built successfully")
+        (log/info "All caches built successfully.")
+        (advance-stage!) ; Move to :complete
+        true)
+      (do
+        (set-error! "Failed to build one or more database caches")
+        (log/error "Failed to build one or more database caches.")
+        false))
     (catch Exception e
-      (set-error! (str "Error building database caches: " (.getMessage e)))
+      (let [error-msg (str "Error building database caches: " (.getMessage e))]
+        (log/error e error-msg)
+        (set-error! error-msg))
       false)))
 
 (defn complete-setup!
