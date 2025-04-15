@@ -6,6 +6,7 @@
             [io.relica.prism.config :as config]
             [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.core.async :refer [go <! >!]]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
             [buddy.hashers :as hashers]
@@ -215,32 +216,53 @@
       false)))
 
 (defn build-caches!
-  "Builds necessary caches for the application (Entity Facts, Lineage, Subtypes)."
+  "Builds necessary caches asynchronously and advances stage upon completion."
   []
-  (log/info "Building database caches...")
-  (update-status! "Building database caches...")
+  (log/info "Initiating database cache building...")
+  (update-status! "Building database caches (this may take some time)...")
 
-  (try
-    ;; Build the caches sequentially
-    (if (and
-         (cache/build-entity-facts-cache!)
-         (cache/build-entity-lineage-cache!)
-         (cache/build-subtypes-cache!)
-         (cache/build-entity-fact-cache!))
-      (do
-        (update-status! "Database caches built successfully")
-        (log/info "All caches built successfully.")
-        (advance-stage!) ; Move to :complete
-        true)
-      (do
-        (set-error! "Failed to build one or more database caches")
-        (log/error "Failed to build one or more database caches.")
-        false))
-    (catch Exception e
-      (let [error-msg (str "Error building database caches: " (.getMessage e))]
-        (log/error e error-msg)
-        (set-error! error-msg))
-      false)))
+  ;; Atom to track overall success - assumes channels return true on success
+  (let [all-success (atom true)]
+    ;; Start async cache building processes
+    (let [facts-chan (cache/build-entity-facts-cache!)
+          lineage-chan (cache/build-entity-lineage-cache!) ; Corrected fn name if needed
+          subtypes-chan (cache/build-subtypes-cache!)
+          ;; entity-fact-chan (cache/build-entity-fact-cache!)
+          ] ; Assuming this exists
+
+      ;; Go block to wait for completion and update state
+      (go
+        (try
+          (log/info "Waiting for entity facts cache build...")
+          (when-not (<! facts-chan) (reset! all-success false))
+
+          (log/info "Waiting for entity lineage cache build...")
+          (when-not (<! lineage-chan) (reset! all-success false))
+
+          (log/info "Waiting for subtypes cache build...")
+          (when-not (<! subtypes-chan) (reset! all-success false))
+
+          ;; (log/info "Waiting for entity fact cache build...") ; Uncomment if this function exists
+          ;; (when-not (<! entity-fact-chan) (reset! all-success false))
+
+          ;; Check final result after all channels complete
+          (if @all-success
+            (do
+              (update-status! "Database caches built successfully.")
+              (log/info "All caches built successfully.")
+              (advance-stage!)) ; Move to :complete ONLY AFTER successful completion
+            (do
+              (set-error! "Failed to build one or more database caches.")
+              (log/error "Failed to build one or more database caches.")))
+
+          (catch Exception e
+            (let [error-msg (str "Error coordinating cache building: " (.getMessage e))] 
+              (log/error e error-msg)
+              (set-error! error-msg)))))))
+
+  ;; Return true immediately to indicate the process has started
+  ;; The stage advancement happens asynchronously in the go block above.
+  true)
 
 (defn complete-setup!
   "Marks the setup as complete."

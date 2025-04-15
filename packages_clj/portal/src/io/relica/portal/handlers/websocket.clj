@@ -373,6 +373,20 @@
         {:success false
          :error (.getMessage e)}))))
 
+(defn handle-prism-setup-status [payload]
+  (println "PRISM SETUP STATUS")
+  (println payload)
+  ;; (go
+  ;;   (try
+  ;;     (let [result (<! (prism/get-setup-status prism-client))]
+  ;;       {:success true
+  ;;        :status result})
+  ;;     (catch Exception e
+  ;;       (log/error "Error getting Prism setup status:" e)
+  ;;       {:success false
+  ;;        :error (.getMessage e)})))
+  )
+
 ;; Core
 
 (defn handle-ping [_]
@@ -447,6 +461,7 @@
    "prism/startSetup" handle-prism-start-setup
    "prism/createUser" handle-prism-create-user
    "prism/processStage" handle-prism-process-stage
+   "setup/update" handle-prism-setup-update-event
    })
 
 ;; Set up event listener
