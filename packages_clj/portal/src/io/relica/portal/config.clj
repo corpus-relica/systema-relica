@@ -18,4 +18,6 @@
    :aperture {:host (or (System/getenv "APERTURE_HOST") "localhost")
              :port (or (System/getenv "APERTURE_PORT") 2175)}
    :nous {:host (or (System/getenv "NOUS_HOST") "localhost")
-          :port (or (System/getenv "NOUS_PORT") 2177)}})
+          :port (or (System/getenv "NOUS_PORT") 2177)}
+   :prism {:host (or (System/getenv "PRISM_HOST") "prism")
+          :port (or (System/getenv "PRISM_PORT") 3333)}})

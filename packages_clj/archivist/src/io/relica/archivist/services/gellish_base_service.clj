@@ -4,7 +4,7 @@
             [next.jdbc.result-set :as rs]
             [io.relica.archivist.db.queries :as queries]
             [io.relica.archivist.services.graph-service :as graph]
-            [io.relica.archivist.services.cache-service :as cache]
+            [io.relica.common.services.cache-service :as cache]
             [clojure.tools.logging :as log]
             [clojure.set :as set]
             [clojure.string :as str])

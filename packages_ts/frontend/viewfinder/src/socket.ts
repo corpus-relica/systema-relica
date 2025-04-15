@@ -94,8 +94,30 @@ class PortalWebSocketClient extends EventEmitter {
     try {
       const message = JSON.parse(event.data);
       console.log("Parsed message:", message);
-      // Let the event system handle all messages including client registration
+      
+      // Emit to our internal event system
       this.emit(message.type, message.payload);
+      
+      // Handle client registration
+      if (message.type === "system:clientRegistered") {
+        console.log("Client registered with ID:", message.payload.clientID);
+        this.clientId = message.payload.clientID;
+      }
+      
+      // Dispatch message as a DOM event for components to listen to
+      const eventName = message.type.replace(/:/g, '-');
+      const customEvent = new CustomEvent(`portal:${eventName}`, { 
+        detail: message.payload 
+      });
+      document.dispatchEvent(customEvent);
+      
+      // For handling response messages from our request-response pattern
+      if (message.type === 'response') {
+        const responseEvent = new CustomEvent('ws:response', { 
+          detail: message 
+        });
+        document.dispatchEvent(responseEvent);
+      }
     } catch (error) {
       console.error("Error parsing WebSocket message:", error);
     }

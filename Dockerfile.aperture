@@ -1,5 +1,6 @@
 FROM clojure:temurin-21-tools-deps-jammy
-MAINTAINER Marc <xtof@relica.io>
+# MAINTAINER Marc <xtof@relica.io>
+LABEL maintainer="Marc <xtof@relica.io>"
 
 # WORKDIR /usr/src/app/packages_clj/aperture
 

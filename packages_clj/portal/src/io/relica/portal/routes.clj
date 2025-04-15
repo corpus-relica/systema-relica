@@ -2,6 +2,8 @@
   (:require
    [compojure.core :refer [defroutes GET POST OPTIONS]]
    [compojure.route :as route]
+   [cheshire.core :as json]
+   [clojure.core.async :refer [go <!]]
    [io.relica.portal.handlers.http :refer [ws-handler
                                            handle-ws-auth
                                            handle-resolve-uids
@@ -17,6 +19,8 @@
                                            handle-get-subtypes
                                            handle-get-subtypes-cone
                                            ]]
+   [io.relica.portal.handlers.websocket :as ws-handlers]
+   [io.relica.portal.handlers.prism :as prism-handlers]
    [io.relica.portal.middleware :refer [wrap-jwt-auth
                                         wrap-async-handler]]))
 
@@ -26,6 +30,7 @@
   (GET "/chsk" [] ws-handler)
   (POST "/ws-auth" [] (wrap-jwt-auth
                        handle-ws-auth))
+
 
   (GET "/kinds" [] (->  handle-get-kinds
                         wrap-async-handler
@@ -153,6 +158,49 @@
 
   ;;
 
+  ;; Prism setup endpoints
+  (OPTIONS "/api/prism/setup/status" []
+    {:status 200
+     :headers {"Access-Control-Allow-Origin" "*"
+               "Access-Control-Allow-Methods" "GET, OPTIONS"
+               "Access-Control-Allow-Headers" "Content-Type, Authorization"
+               "Access-Control-Max-Age" "3600"}})
+  (GET "/api/prism/setup/status" [] (-> prism-handlers/handle-setup-status
+                                      wrap-async-handler))
+  
+  (OPTIONS "/api/prism/setup/start" []
+    {:status 200
+     :headers {"Access-Control-Allow-Origin" "*"
+               "Access-Control-Allow-Methods" "POST, OPTIONS"
+               "Access-Control-Allow-Headers" "Content-Type, Authorization"
+               "Access-Control-Max-Age" "3600"}})
+  (POST "/api/prism/setup/start" [] (-> prism-handlers/handle-start-setup
+                                      wrap-async-handler
+                                      ;; wrap-json-body
+                                      ))
+  
+  (OPTIONS "/api/prism/setup/user" []
+    {:status 200
+     :headers {"Access-Control-Allow-Origin" "*"
+               "Access-Control-Allow-Methods" "POST, OPTIONS"
+               "Access-Control-Allow-Headers" "Content-Type, Authorization"
+               "Access-Control-Max-Age" "3600"}})
+  (POST "/api/prism/setup/user" [] (-> prism-handlers/handle-create-user
+                                     wrap-async-handler
+                                     ;; wrap-json-body
+                                     ))
+  
+  (OPTIONS "/api/prism/setup/process-stage" []
+    {:status 200
+     :headers {"Access-Control-Allow-Origin" "*"
+               "Access-Control-Allow-Methods" "POST, OPTIONS"
+               "Access-Control-Allow-Headers" "Content-Type, Authorization"
+               "Access-Control-Max-Age" "3600"}})
+  (POST "/api/prism/setup/process-stage" [] (-> prism-handlers/handle-process-stage
+                                              wrap-async-handler
+                                              ;; wrap-json-body
+                                              ))
+  
   (GET "/health" [] {:status 200 :body "healthy"})
   (OPTIONS "/*" [] {:status 200
                     :headers {"Access-Control-Allow-Origin" "*"

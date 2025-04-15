@@ -9,7 +9,7 @@
             [io.relica.archivist.services.gellish-base-service :as gellish-base-service]
             [io.relica.archivist.services.kind-service :as kind-service]
             [io.relica.archivist.services.linearization-service :as linearization-service]
-            [io.relica.archivist.services.cache-service :as cache-service]
+            [io.relica.common.services.cache-service :as cache-service]
             [io.relica.archivist.services.fact-service :as fact-service]
             [io.relica.archivist.services.concept-service :as concept-service]
             [io.relica.archivist.services.graph-service :as graph-service]

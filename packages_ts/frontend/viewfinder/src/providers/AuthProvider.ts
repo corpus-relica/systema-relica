@@ -5,23 +5,23 @@ import { initializeWebSocket, closeWebSocket } from "../socket.js";
 export const authProvider: AuthProvider = {
   login: async ({ email, password }: { email: string; password: string }) => {
     try {
+      // Normal login process
       const { data } = await shutterClient.post("/api/login", {
         email,
         password,
       });
       console.log("Login response:", data);
-      console.log(typeof data);
       // Note: backend sends 'token' in response, not 'access_token'
       const { token, user } = data;
       localStorage.setItem("access_token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
       // Initialize WebSocket connection after successful login
-      // await initializeWebSocket(token);
+      await initializeWebSocket(token);
 
       return Promise.resolve(data);
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (error: any) {
+      console.error("Login error:", error);      
       throw new HttpError("Unauthorized", 401, {
         message: "Invalid email or password",
       });
@@ -49,9 +49,12 @@ export const authProvider: AuthProvider = {
   checkAuth: async () => {
     const token = localStorage.getItem("access_token");
     console.log("Checking auth with token:", token);
+        
+    // If no token, auth fails
     if (!token) {
       return Promise.reject();
     }
+    
     try {
       // Validate token with backend - use the verify endpoint
       await shutterClient.post("/api/validate");

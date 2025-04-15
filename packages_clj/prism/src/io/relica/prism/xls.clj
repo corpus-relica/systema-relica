@@ -1,0 +1,290 @@
+(ns io.relica.prism.xls
+  (:require [dk.ative.docjure.spreadsheet :as excel]
+            [clojure.data.csv :as csv]
+            [clojure.java.io :as io]
+            [io.relica.prism.config :as config]
+            ;;[clojure.tools.logging :as log]
+            [taoensso.timbre :as log]
+            [clojure.string :as str])
+  (:import [java.util Date]
+           [java.time LocalDate ZoneId]
+           [java.time.format DateTimeFormatter]
+           [org.apache.poi.ss.usermodel DateUtil]))
+
+(defn remove-commas [s]
+  (when s (str/replace s "," "")))
+
+(def ^:private date-formatter (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
+
+
+(defn- format-date [value]
+  (cond
+    (instance? Date value)
+    (-> value
+        .toInstant
+        (.atZone (ZoneId/systemDefault))
+        .toLocalDate
+        (.format date-formatter))
+    ;; Handle Excel numeric dates (days since 1900-01-01, sometimes 1904-01-01)
+    (and (number? value) (DateUtil/isCellDateFormatted nil)) ; We don't have the cell here, this check might not be reliable.
+                                                             ; A safer check might be based on column index AND numeric type.
+                                                             ; Or rely solely on column index if we know they *should* be dates.
+    (try ; Attempt to convert Excel number to LocalDate
+      (let [date (DateUtil/getJavaDate value)]
+        (-> date
+            .toInstant
+            (.atZone (ZoneId/systemDefault))
+            .toLocalDate
+            (.format date-formatter)))
+      (catch Exception _ (str value))) ; Return original stringified number if conversion fails
+    :else (str value))) ; Default to string conversion
+
+(defn normalize-value [col-idx value]
+  (cond
+    ;; Date normalization for columns 9 and 10 (indices 8 and 9)
+    (or (= col-idx 8) (= col-idx 9))
+    (format-date value)
+
+    ;; Existing comma removal for strings
+    (string? value)
+    (remove-commas value)
+
+    ;; Default: just convert to string if not already
+    :else
+    (str value)))
+
+(defn try-parse-long [s]
+  (try
+    (Long/parseLong (remove-commas (str s)))
+    (catch NumberFormatException _ nil)))
+
+(defn resolve-temp-uids
+  "Resolves temporary UIDs based on configured ranges.
+   Takes the current uid-map state and the row vector, returns [updated-map new-row-vector].
+   The uid-map state should contain {:mappings {} :next-free-uid Long :next-free-fact-uid Long}."
+  [uid-map row uid-config]
+  (let [{:keys [max-temp-uid]} uid-config
+        ;; 0-based indices for UID columns
+        fact-uid-idx 1
+        lh-obj-uid-idx 2
+        rh-obj-uid-idx 15
+        rel-type-uid-idx 60
+        uid-indices [fact-uid-idx lh-obj-uid-idx rh-obj-uid-idx rel-type-uid-idx]]
+
+    (loop [current-row row
+           current-map uid-map
+           indices-to-check uid-indices]
+      (if-let [idx (first indices-to-check)]
+        (let [raw-value (get current-row idx)
+              temp-uid (try-parse-long raw-value)]
+          (if (and temp-uid (< temp-uid max-temp-uid))
+            (if-let [perm-uid (get (:mappings current-map) temp-uid)]
+              ;; Temp UID already mapped
+              (recur (assoc current-row idx perm-uid) current-map (rest indices-to-check))
+              ;; New Temp UID found
+              (let [is-fact-uid? (= idx fact-uid-idx)
+                    counter-key (if is-fact-uid? :next-free-fact-uid :next-free-uid)
+                    next-perm-uid (get current-map counter-key)
+                    updated-map (-> current-map
+                                    (assoc-in [:mappings temp-uid] next-perm-uid)
+                                    (update counter-key inc))]
+                (log/tracef "Mapping temp UID %d (col %d) to permanent UID %d" temp-uid idx next-perm-uid)
+                (recur (assoc current-row idx next-perm-uid) updated-map (rest indices-to-check))))
+            ;; Not a temp UID or not parseable, skip to next index
+            (recur current-row current-map (rest indices-to-check))))
+        ;; Base case: no more indices to check
+        [current-map current-row]))))
+
+(defn process-row
+  "Processes a single row: skips header/empty rows, normalizes values, resolves UIDs.
+   Takes uid-map-atom, row-data, and uid-config. Returns processed row vector or nil."
+  [uid-map-atom row-data uid-config header-rows-to-skip]
+  (try
+    (let [;; Get row number and cell values using excel/cell-seq
+          row-idx (.getRowNum row-data) ; Get 0-based row index
+          cell-values (vec (map excel/read-cell (excel/cell-seq row-data)))]
+
+      (log/debugf "Processing row %d with %d cells" row-idx (count cell-values))
+
+      (cond
+        ;; Skip any residual header rows - though they should already be filtered out
+        ;; by the xls-to-csv function before this gets called
+        ;; (and (> header-rows-to-skip 0) (< row-idx header-rows-to-skip))
+        ;; (do
+        ;;   (log/debugf "Skipping additional header row %d" row-idx)
+        ;;   nil)
+
+        ;; Skip empty rows
+        (empty? cell-values)
+        (do
+          (log/debugf "Skipping empty row %d" row-idx)
+          nil)
+
+        (every? #(or (nil? %) (and (string? %) (str/blank? %))) cell-values)
+        (do
+          (log/debugf "Skipping blank row %d" row-idx)
+          nil)
+
+        :else
+        (let [;; 1. Normalize basic values (e.g., remove commas)
+              normalized-row (map-indexed normalize-value cell-values)
+              ;; 2. Resolve temporary UIDs (needs state)
+              ;; Pass current map state, get back updated map and resolved row
+              [updated-map resolved-row] (resolve-temp-uids @uid-map-atom normalized-row uid-config)]
+          ;; Update the atom state with the new map
+          (reset! uid-map-atom updated-map)
+          ;; Return the resolved row
+          resolved-row)))
+    (catch Exception e
+      (log/errorf e "Error processing row: %s" (.toString row-data))
+      nil)))
+
+(defn xls-to-csv
+  "Reads an XLS(X) file, processes rows, and writes to a CSV file.
+   Returns the path to the generated CSV file or nil on error."
+  [xls-file-path csv-output-path sheet-name uid-config]
+  (log/infof "Processing XLS file: %s -> %s" xls-file-path csv-output-path)
+  (try
+    (let [header-rows-to-skip 3
+          workbook (excel/load-workbook xls-file-path)
+          ;; Get sheets from the workbook using sheet-seq
+          all-sheets (excel/sheet-seq workbook)
+
+          ;; Get sheet names for logging
+          sheet-names (map #(.getSheetName %) all-sheets)
+          _ (log/infof "Available sheets in %s: %s" xls-file-path (vec sheet-names))
+
+          ;; Use the first sheet by default
+          sheet (if (seq all-sheets)
+                  (do
+                    (let [first-sheet (first all-sheets)]
+                      (log/infof "Using first sheet: %s" (.getSheetName first-sheet))
+                      first-sheet))
+                  (throw (IllegalArgumentException.
+                          (format "No sheets found in workbook %s" xls-file-path))))
+
+          ;; Get all rows from the sheet
+          all-rows (excel/row-seq sheet)
+
+          ;; Extract header rows (we'll need them for debugging)
+          header-rows (take header-rows-to-skip all-rows)
+          _ (log/infof "Found %d header rows" (count header-rows))
+
+          ;; IMPORTANT: For Gellish format, we need the column IDs from the second row
+          ;; which is at index 1 (0-based) - this row contains numeric column IDs
+          raw-column-ids-row (nth header-rows 1 nil)
+
+          ;; Skip header rows and get data rows
+          data-rows (drop header-rows-to-skip all-rows)
+
+          ;; Initialize UID map atom with starting counters
+          uid-map-atom (atom {:mappings {}
+                              :next-free-uid (:min-free-uid uid-config)
+                              :next-free-fact-uid (:min-free-fact-uid uid-config)})
+
+          ;; Process only the data rows (skip header rows in our processing logic)
+          ;; Pass 0 as header-rows-to-skip since we've already skipped them
+          processed-data-rows (doall (keep #(process-row uid-map-atom % uid-config 0) data-rows))
+
+          ;; Re-read the header row(s) separately if needed, assuming simple structure for now
+          ;; Let's assume the first row *before* skipping is the header we need for CSV
+          ;; A better approach might parse headers explicitly before processing data.
+          ;; For now, let's just write the processed data rows.
+          ;; We might need the original header later if columns shift.
+          ]
+
+      (when (empty? processed-data-rows)
+        (log/warnf "No data rows found or processed in %s (sheet: %s) after skipping %d headers." xls-file-path sheet-name header-rows-to-skip)
+        ;; Don't throw error, just return nil as no CSV is generated
+        (log/info "No CSV file generated as no data rows were processed.")
+        (-> {:status :no-data :file xls-file-path}))
+
+      ;; HARD ASSUMPTION: All well-formed Gellish XLS files have exactly 3 header rows:
+      ;; 1. Title row (ignore)
+      ;; 2. Column IDs row (extract and use as CSV header)
+      ;; 3. Column names row (ignore)
+
+      ;; Extract the column IDs from the second row (index 1)
+      ;; (when (< (count header-rows) 3)
+      ;;   (log/warn "Expected 3 header rows in Gellish format XLS, but found only " (count header-rows))
+      ;;   (log/warn "Proceeding anyway, but CSV may not be correctly formatted"))
+
+      (let [column-id-row (let [header-cells (excel/cell-seq raw-column-ids-row)
+                                header-values (mapv #(let [val (excel/read-cell %)]
+                                                       (if (and (number? val) (== val (int val)))
+                                                         (str (int val)) ; Format integers without decimal places
+                                                         (str val))) ; Handle other values normally
+                                                    header-cells)]
+                            (log/infof "Using column IDs as CSV headers: %s" (str/join ", " header-values))
+                            header-values)]
+
+        ;; Write CSV with column IDs as the header row
+        (with-open [writer (io/writer csv-output-path)]
+          ;; First write the column ID row as header
+          (when column-id-row
+            (csv/write-csv writer [column-id-row]))
+
+          ;; Then write all data rows
+          (csv/write-csv writer processed-data-rows)))
+
+      (log/infof "Successfully generated CSV: %s (%d data rows)" csv-output-path (count processed-data-rows))
+      {:status :success :csv-path csv-output-path})
+
+    (catch Exception e
+      (log/errorf e "Failed to process XLS file: %s" xls-file-path)
+      {:status :error :file xls-file-path :error e})))
+
+(defn process-seed-directory
+  "Finds all .xls and .xlsx files in the seed directory, converts them to CSV.
+   Returns a list of paths to the generated CSV files."
+  []
+  (let [seed-dir (config/seed-xls-dir)
+        csv-dir (config/csv-output-dir)
+        uid-config (config/uid-ranges)
+        ;; Don't use a specific sheet name - we'll just use the first sheet
+        ;; in each workbook automatically
+        sheet-name nil]
+
+    (log/infof "Searching for XLS(X) files in: %s" seed-dir)
+    (log/infof "CSV output directory: %s" csv-dir)
+
+    ;; Ensure seed directory exists
+    (let [seed-dir-file (io/file seed-dir)]
+      (if (not (.exists seed-dir-file))
+        (do
+          (log/errorf "Seed directory not found: %s" seed-dir)
+          [])
+
+        ;; Directory exists, find XLS files
+        (let [xls-files (filter #(and (.isFile %) (re-find #"\.xlsx?$" (.getName %)))
+                                (file-seq seed-dir-file))]
+          (if (empty? xls-files)
+            (do
+              (log/warnf "No XLS(X) files found in seed directory: %s" seed-dir)
+              [])
+
+            ;; Process the XLS files
+            (do
+              (log/infof "Found %d XLS(X) files. Processing..." (count xls-files))
+              (log/debugf "XLS files: %s" (map #(.getName %) xls-files))
+
+              ;; Ensure CSV output directory exists
+              (let [csv-dir-file (io/file csv-dir)]
+                (when (not (.exists csv-dir-file))
+                  (log/infof "Creating CSV output directory: %s" csv-dir)
+                  (.mkdirs csv-dir-file)))
+
+              (let [results (doall (map-indexed (fn [idx xls-file] ; Use map-indexed to get sequential index
+                                                  (let [csv-file-name (str idx ".csv") ; Use sequential numbering (0.csv, 1.csv, etc.)
+                                                        csv-path (str csv-dir "/" csv-file-name)
+                                                        _ (log/debugf "Processing %s to %s" (.getAbsolutePath xls-file) csv-path)
+                                                        result-map (xls-to-csv (.getAbsolutePath xls-file) csv-path sheet-name uid-config)]
+                                          ;; Return the path on success, nil otherwise
+                                                    (when (= (:status result-map) :success)
+                                                      (:csv-path result-map))))
+                                                xls-files))]
+                (let [valid-results (filterv some? results)]
+                  (log/infof "Successfully processed %d of %d XLS files" (count valid-results) (count xls-files))
+                  valid-results)))))))))
+
+(log/info "Prism XLS namespace loaded.")

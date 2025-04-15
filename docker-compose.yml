@@ -63,6 +63,44 @@ services:
     networks:
       - rlc-net
 
+  prism:
+    container_name: prism
+    build:
+      context: ./
+      dockerfile: Dockerfile.prism
+    restart: always
+    environment:
+      - PRISM_NEO4J_URI=neo4j+s://neo4j:7687 # Adjust scheme (neo4j/neo4j+s) if needed
+      - PRISM_NEO4J_USER=neo4j
+      - PRISM_NEO4J_PASSWORD=password
+      - PRISM_SEED_XLS_DIR=/seed_xls
+      - PRISM_CSV_OUTPUT_DIR=/import # Must match Neo4j's import volume
+      - PRISM_NEO4J_IMPORT_DIR=/import # Neo4j needs this to find the CSVs
+      - PRISM_LOG_LEVEL=info # Or debug
+      - PRISM_API_PORT=3333
+      - PRISM_API_HOST=0.0.0.0
+
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
+    ports:
+      - "3333:3333"  # Expose the API port to the host for setup UI access
+      - "7893:7893"
+    volumes:
+      # Mount the seed data directory (read-only for Prism)
+      - ./seed_xls:/seed_xls:ro
+      # Mount the shared import directory (read-write for Prism)
+      - ./seed_csv:/import:rw # Ensure this matches Neo4j volume mount for /import
+    depends_on:
+      neo4j:
+        condition: service_healthy # Wait for Neo4j to be ready
+    networks:
+      - rlc-net
+
   archivist:
     container_name: archivist
     build:
@@ -189,11 +227,15 @@ services:
 
       - NOUS_HOST=nous
       - NOUS_PORT=2204
+      
+      - PRISM_HOST=prism
+      - PRISM_PORT=3333
     depends_on:
-      #   - shutter
+      - shutter
       - archivist
       - clarity
       - aperture
+      - prism
     networks:
       rlc-net:
         aliases:

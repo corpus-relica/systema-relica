@@ -13,7 +13,7 @@
            :user (or (System/getenv "REDIS_USER") "default")
            :password (or (System/getenv "REDIS_PASSWORD") "redis")}
 
-   :neo4j {:host (or (System/getenv "NEO4J_HOST") "neo4j")
+   :neo4j {:host (or (System/getenv "NEO4J_HOST") "localhost")
            :port (or (System/getenv "NEO4J_PORT") 7687)
            :user (or (System/getenv "NEO4J_USER") "neo4j")
            :password (or (System/getenv "NEO4J_PASSWORD") "password")}})

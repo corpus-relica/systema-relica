@@ -3,7 +3,7 @@
             [clojure.core.async :refer [<! go]]
             [io.relica.archivist.services.gellish-base-service :as gellish]
             [io.relica.archivist.services.graph-service :as graph]
-            [io.relica.archivist.services.cache-service :as cache]
+            [io.relica.common.services.cache-service :as cache]
             [io.relica.archivist.services.concept-service :as concept]
             [io.relica.archivist.services.uid-service :as uid]
             [io.relica.archivist.utils.traversal :as traversal]
@@ -11,7 +11,18 @@
 
 ;; Using the traversal/await-all function instead
 
+(defn serialize-record [record]
+  (reduce-kv (fn [m k v]
+               (assoc m k
+                     (cond
+                       (instance? java.time.LocalDate v) (.toString v)
+                       :else v)))
+             {}
+             record))
+
 (defprotocol FactOperations
+  (get-batch [this conf])
+  (get-count [this])
   (get-subtypes [this uid])
   (get-subtypes-cone [this uid])
   (get-classified [this uid recursive])
@@ -36,6 +47,40 @@
 
 (defrecord FactService [graph-service gellish-base-service cache-service concept-service uid-service]
   FactOperations
+
+  (get-batch [this {:keys [skip range rel-type-uids]}]
+    (println "------------------- GET BATCH -------------------")
+    (try
+      (let [resolved-conf {:skip skip
+                           :range range
+                           :relationTypeUIDs rel-type-uids}
+            _ (println "RESOLVED CONF " resolved-conf)
+            func (if (nil? rel-type-uids)
+                             queries/get-facts-batch
+                             queries/get-facts-batch-on-relation-type)
+            _ (println "FUNC " func)
+            raw-result (graph/exec-query
+                           graph-service
+                           func
+                           resolved-conf)
+            _ (println "RAW RESULT " raw-result)
+            result (map (fn [record]
+                          (serialize-record (:r record)))
+                        raw-result)]
+        {:facts result})
+      (catch Exception e
+        (println {:event :get-kinds-list-error
+                  :error e})
+        nil)))
+
+  (get-count [this]
+    (let [result (graph/exec-query graph-service queries/get-facts-count {})
+          transformed-result (-> result
+                               first
+                               :count)]
+      (println transformed-result)
+      transformed-result))
+
   (get-subtypes [_ uid]
     (let [result (graph/exec-query graph-service queries/subtypes {:uid uid})
           transformed-result (graph/transform-results result)]
@@ -471,7 +516,6 @@
                                    uid]}]
   (->FactService graph gellish-base cache concept uid))
 
-
 (defonce fact-service (atom nil))
 
 (defn start [services]
@@ -485,9 +529,23 @@
 
 
 (comment
+  (require '[io.relica.archivist.components :refer [graph-service
+                                                    gellish-base-service
+                                                    cache-service
+                                                    concept-service
+                                                    cache-service]])
+
   ;; Test operations
-  (let [test-service (create-fact-service graph-service nil cache-service nil nil)]
-    (get-classified test-service 970178))
+  (let [test-service (create-fact-service {:graph graph-service
+                                           :gellish-base nil
+                                           :cache cache-service
+                                           :concept nil
+                                           :uid nil})
+        results (get-batch test-service {:skip 0, :range 5, :relationTypeUIDs [1146 1726]})
+        ]
+    ;; (get-classified test-service 970178)
+    ;; (print results)
+    )
 
   @fact-service
 

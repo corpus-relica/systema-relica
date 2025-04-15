@@ -11,7 +11,8 @@
             [io.relica.portal.auth.jwt :refer [validate-jwt]]
             [io.relica.common.io.aperture-client :as aperture]
             [io.relica.common.io.nous-client :as nous]
-            [io.relica.portal.io.client-instances :refer [aperture-client nous-client]]
+            [io.relica.common.io.prism-client :as prism]
+            [io.relica.portal.io.client-instances :refer [aperture-client nous-client prism-client]]
             [io.relica.common.events.core :as events]))
 
 (declare ws-handlers)
@@ -41,6 +42,18 @@
          :token socket-token
          :user-id user-id})
       {:error "Invalid JWT"})))
+
+(defn handle-guest-auth [_]
+  (go
+    (let [socket-token (generate-socket-token)
+          guest-id "guest-user"]
+      (swap! socket-tokens assoc socket-token
+             {:user-id guest-id
+              :created-at (System/currentTimeMillis)
+              :is-guest true})
+      {:success true
+       :token socket-token
+       :user-id guest-id})))
 
 (defn handle-select-entity [{:keys [uid client-id] :as message}]
   (go
@@ -308,6 +321,72 @@
                                          :environment_id 1
                                          }})))
 
+;; Prism setup handlers
+
+(defn handle-prism-setup-update-event [payload]
+  (broadcast-to-environment nil
+                           {:id "system"
+                            :type "portal:prismSetupUpdate"
+                            :payload payload}))
+
+(defn handle-prism-setup-status [_]
+  (go
+    (try
+      (let [result (<! (prism/get-setup-status prism-client))]
+        {:success true
+         :status result})
+      (catch Exception e
+        (log/error "Error getting Prism setup status:" e)
+        {:success false
+         :error (.getMessage e)}))))
+
+(defn handle-prism-start-setup [_]
+  (go
+    (try
+      (let [result (<! (prism/start-setup prism-client))]
+        {:success true
+         :result result})
+      (catch Exception e
+        (log/error "Error starting Prism setup:" e)
+        {:success false
+         :error (.getMessage e)}))))
+
+(defn handle-prism-create-user [{:keys [username password confirmPassword]}]
+  (go
+    (try
+      (let [result (<! (prism/create-admin-user prism-client username password confirmPassword))]
+        {:success true
+         :result result})
+      (catch Exception e
+        (log/error "Error creating Prism admin user:" e)
+        {:success false
+         :error (.getMessage e)}))))
+
+(defn handle-prism-process-stage [_]
+  (go
+    (try
+      (let [result (<! (prism/process-setup-stage prism-client))]
+        {:success true
+         :result result})
+      (catch Exception e
+        (log/error "Error processing Prism setup stage:" e)
+        {:success false
+         :error (.getMessage e)}))))
+
+(defn handle-prism-setup-status [payload]
+  (println "PRISM SETUP STATUS")
+  (println payload)
+  ;; (go
+  ;;   (try
+  ;;     (let [result (<! (prism/get-setup-status prism-client))]
+  ;;       {:success true
+  ;;        :status result})
+  ;;     (catch Exception e
+  ;;       (log/error "Error getting Prism setup status:" e)
+  ;;       {:success false
+  ;;        :error (.getMessage e)})))
+  )
+
 ;; Core
 
 (defn handle-ping [_]
@@ -377,6 +456,12 @@
 
    "chatUserInput" handle-chat-user-input
 
+   ;; Prism setup handlers
+   "prism/setupStatus" handle-prism-setup-status
+   "prism/startSetup" handle-prism-start-setup
+   "prism/createUser" handle-prism-create-user
+   "prism/processStage" handle-prism-process-stage
+   "setup/update" handle-prism-setup-update-event
    })
 
 ;; Set up event listener
@@ -392,8 +477,8 @@
           :facts-unloaded (handle-facts-unloaded-event (:payload event))
           :entity-selected (handle-entity-selected-event (:payload event))
           :entity-selected-none (handle-entity-selected-none-event (:payload event))
-          ;; other event types
           :final-answer (handle-final-answer-event (:payload event))
+          :prism-setup-update (handle-prism-setup-update-event (:payload event))
           ;; finally
           (tap> "Unknown event type:" (:type event)))
         (recur)))))

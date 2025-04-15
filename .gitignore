@@ -29,3 +29,7 @@ temp.*
 # Clojure deps and Maven
 .m2/
 .maven/
+**/CLAUDE.local.md
+
+seed_xls_bak
+seed_xls/.~*

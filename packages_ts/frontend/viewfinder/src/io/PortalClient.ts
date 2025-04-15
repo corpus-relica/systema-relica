@@ -12,6 +12,15 @@ import {
   SUBTYPES_CONE_ENDPOINT,
 } from "@relica/constants";
 
+// Types for Prism setup
+export interface SetupState {
+  stage: "not-started" | "db-check" | "user-setup" | "db-seed" | "cache-build" | "complete";
+  masterUser: string | null;
+  status: string;
+  progress: number;
+  error: string | null;
+}
+
 console.log("Creating PortalClient instance...");
 
 class PortalClient {
@@ -21,6 +30,7 @@ class PortalClient {
     const baseURL = import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2174";
     this.axiosInstance = axios.create({
       baseURL,
+      timeout: 900000,  // 15 minutes
     });
 
     // Add request interceptor to inject token
@@ -206,6 +216,56 @@ class PortalClient {
       params: { uid },
     });
     return response.data;
+  }
+
+  /////////////////////////// PRISM SETUP ///////////////////////////
+
+  // Get the current setup status
+  async getSetupStatus(): Promise<SetupState> {
+    try {
+      const response = await this.axiosInstance.get("/api/prism/setup/status");
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get setup status:', error);
+      throw error;
+    }
+  }
+
+  // Start the setup sequence
+  async startSetup(): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await this.axiosInstance.post("/api/prism/setup/start");
+      return response.data;
+    } catch (error) {
+      console.error('Failed to start setup:', error);
+      throw error;
+    }
+  }
+
+  // Create admin user during setup
+  async createAdminUser(username: string, password: string, confirmPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await this.axiosInstance.post("/api/prism/setup/user", {
+        username,
+        password,
+        confirmPassword
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create admin user:', error);
+      throw error;
+    }
+  }
+
+  // Process current setup stage
+  async processSetupStage(): Promise<{ success: boolean; message: string; state: SetupState }> {
+    try {
+      const response = await this.axiosInstance.post("/api/prism/setup/process-stage");
+      return response.data;
+    } catch (error) {
+      console.error('Failed to process setup stage:', error);
+      throw error;
+    }
   }
 }
 
