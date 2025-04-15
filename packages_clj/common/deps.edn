@@ -12,6 +12,8 @@
         compojure/compojure {:mvn/version "1.7.1"}
         ring/ring-core {:mvn/version "1.10.0"}
         ring-cors/ring-cors {:mvn/version "0.1.13"}
+        mount/mount {:mvn/version "0.1.17"}
+        com.taoensso/carmine                              {:mvn/version "3.4.1"}
 
         }
 

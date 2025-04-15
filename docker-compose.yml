@@ -79,6 +79,14 @@ services:
       - PRISM_LOG_LEVEL=info # Or debug
       - PRISM_API_PORT=3333
       - PRISM_API_HOST=0.0.0.0
+
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
     ports:
       - "3333:3333"  # Expose the API port to the host for setup UI access
       - "7893:7893"

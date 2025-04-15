@@ -1,12 +1,15 @@
 (ns io.relica.prism.cache
   (:require [taoensso.timbre :as log]
-            [io.relica.prism.cache.stubs :as stubs] ; Using stubs for now
-            ; [io.relica.prism.db :as db] ; Stubbed
-            ; [io.relica.prism.redis :as cache] ; Stubbed
-            ; [io.relica.prism.lineage :as lineage] ; Stubbed
-            ))
+            [io.relica.common.services.cache-service :refer [cache-service-comp start] :as common-cache]
+            [io.relica.common.io.archivist-client :as archivist]
+            [io.relica.prism.cache.stubs :as stubs]
+            [io.relica.prism.io.client-instances :refer [request-lineage archivist-client]]
+            [clojure.core.async :refer [go <! >!]]))
 
-(def ^:const BATCH_SIZE 10) ; Smaller batch size for demonstration
+(def ^:const BATCH_SIZE 100) ; Smaller batch size for demonstration
+
+(if (nil? @cache-service-comp)
+     (io.relica.common.services.cache-service/start "suck a dick") nil)
 
 ;; --- Entity Facts Cache ---
 
@@ -14,82 +17,201 @@
   "Processes a batch of facts to update the entity facts cache."
   [facts]
   (doseq [{:keys [lh_object_uid rh_object_uid fact_uid]} facts]
+    (println "Processing fact:" fact_uid
+           "lh_object_uid:" lh_object_uid
+           "rh_object_uid:" rh_object_uid)
     (when (and lh_object_uid rh_object_uid fact_uid)
-      ;; In Redis, this would likely be sadd or similar
-      (stubs/add-to-entity-facts-cache! lh_object_uid fact_uid)
-      (stubs/add-to-entity-facts-cache! rh_object_uid fact_uid))))
+      ;; Use common cache service
+      (common-cache/add-to-entity-facts-cache @cache-service-comp lh_object_uid fact_uid)
+      (common-cache/add-to-entity-facts-cache @cache-service-comp rh_object_uid fact_uid))))
 
 (defn build-entity-facts-cache!
   "Builds a cache mapping entity UIDs to the set of fact UIDs they participate in.
    Iterates through all :Fact nodes."
   []
   (log/info "Building entity facts cache...")
-  (stubs/clear-entity-facts-cache!)
-  (loop [offset 0]
-    (let [facts-batch (stubs/fetch-all-fact-details-batched BATCH_SIZE offset)]
-      (if (empty? facts-batch)
-        (do
-          (log/info "Finished building entity facts cache.")
-          true) ; Signal completion
-        (do
-          (log/debugf "Processing facts batch (offset %d, size %d)" offset (count facts-batch))
-          (process-facts-batch-for-facts-cache! facts-batch)
-          (recur (+ offset BATCH_SIZE)))))))
+  ;; Use common cache service
+  ;; (common-cache/clear-entity-facts-cache-complete @common-cache/cache-service-comp)
+  (go
+    (loop [offset 0]
+      (let [facts-batch-res (<! (archivist/get-batch-facts archivist-client {:range BATCH_SIZE :skip offset}))
+            facts-batch (:facts facts-batch-res)]
+        (if (empty? facts-batch)
+          (do
+            (log/info "Finished building entity facts cache.")
+            true) ; Signal completion
+          (do
+            (println (str "Processing facts batch (offset " count ", size " (count facts-batch) ")"))
+            ;; (println "Facts batch:" facts-batch)
+            (process-facts-batch-for-facts-cache! facts-batch)
+            (recur (+ offset BATCH_SIZE))))))))
 
 ;; --- Entity Lineage Cache ---
 
-(defn- process-entities-batch-for-lineage!
-  "Processes a batch of entity UIDs to update the entity lineage cache."
-  [entity-uids]
-  ;; Note: The TS version fetches facts, then gets lh_object_uid.
-  ;; This version assumes we can get relevant entity UIDs directly or via facts.
-  ;; Here, we'll simulate getting entity UIDs directly for simplicity.
-  (doseq [entity-uid entity-uids]
-    (let [lineage (stubs/calculate-lineage entity-uid)] ; Needs actual lineage calculation
-       (stubs/add-to-entity-lineage-cache! entity-uid lineage))))
+(defn- process-facts-batch-for-lineage-cache!
+  "Processes a batch of facts to update the entity lineage cache."
+  [facts]
+  (go
+  (doseq [{:keys [lh_object_uid fact_uid]} facts]
+    (let [lineage-res (<! (request-lineage lh_object_uid))
+          success (:success lineage-res)
+          lineage (:data lineage-res)] ; Assuming request-lineage is async
+      (println "Processing fact:" fact_uid
+             "lh_object_uid:" lh_object_uid)
+      (when (and lh_object_uid (not-empty lineage) success)
+        ;; Use common cache service
+        (common-cache/add-to-entity-lineage-cache @cache-service-comp lh_object_uid lineage))))))
 
+(defn process-nodes-lc
+  []
+  (go
+    (loop [skip 0]
+        (let [_ (println "Processing batch " (/ skip (+ BATCH_SIZE 1)) "...")
+              facts-batch-res (<! (archivist/get-batch-facts archivist-client {:range BATCH_SIZE
+                                                                               :skip skip
+                                                                               :rel-type-uids [1146 1726]}))
+              facts-batch (:facts facts-batch-res)]
+          (if (empty? facts-batch)
+            "eat shit"
+            (do
+              (println (str "Processing facts batch (offset " count ", size " (count facts-batch) ")"))
+              ;; (println "Facts batch:" facts-batch)
+              (process-facts-batch-for-lineage-cache! facts-batch)
+              (recur (+ skip BATCH_SIZE)))
+          )
+        )
+      )
+    )
+  )
 
 (defn build-entity-lineage-cache!
-  "Builds a cache mapping entity UIDs to their supertype lineage (ordered list of UIDs)."
+  "Builds a cache mapping entity UIDs to their supertype lineage (ordered list of UIDs).
+   Returns a channel that yields true on completion."
   []
   (log/info "Building entity lineage cache...")
-  (stubs/clear-entity-lineage-cache!)
-  ;; This assumes we fetch *entity* UIDs to calculate lineage for.
-  ;; Adjust if lineage calculation starts differently (e.g., from facts).
-  (loop [offset 0]
-     (let [entity-uids-batch (stubs/fetch-all-entity-uids-batched BATCH_SIZE offset)]
-       (if (empty? entity-uids-batch)
-         (do
-           (log/info "Finished building entity lineage cache.")
-           true) ; Signal completion
-         (do
-           (log/debugf "Processing entity lineage batch (offset %d, size %d)" offset (count entity-uids-batch))
-           (process-entities-batch-for-lineage! entity-uids-batch)
-           (recur (+ offset BATCH_SIZE)))))))
+  (go
+    (let [count (<! (archivist/get-facts-count archivist-client))]
+      (println "BUILDING ENTITY LINEAGE CACHE")
+      (println "Total Facts:" count)
 
+      ;; (common-cache/clear-entity-lineage-cache-complete @common-cache/cache-service-comp)
+
+      (process-nodes-lc)
+
+      (println "COMPLETED BUILDING ENTITY LINEAGE CACHE")
+    )
+  ))
 
 ;; --- Subtypes Cache ---
 
-(defn- process-entities-batch-for-subtypes!
-  "Processes a batch of entity UIDs to update the subtypes cache."
-  [entity-uids]
-   (doseq [entity-uid entity-uids]
-     (let [subtypes (stubs/calculate-all-subtypes entity-uid)] ; Needs actual subtype calculation (recursive graph query)
-       (stubs/add-to-subtypes-cache! entity-uid subtypes))))
+(defn- process-facts-batch-for-subtypes-cache!
+  "Processes a batch of facts to update the entity lineage cache."
+  [facts]
+  (go
+  (doseq [{:keys [lh_object_uid fact_uid]} facts]
+    (let [lineage-res (<! (request-lineage lh_object_uid))
+          success (:success lineage-res)
+          lineage (:data lineage-res)] ; Assuming request-lineage is async
+      (println "Processing fact:" fact_uid
+             "lh_object_uid:" lh_object_uid
+             "lineage:" lineage)
+      (when (and lh_object_uid (not-empty lineage) success)
+        ;; Use common cache service
+        (doseq [ancestor-uid lineage] ; Assuming lineage is a collection of UIDs
+          (println "Adding to subtypes cache:" lh_object_uid "->" ancestor-uid)
+          ;; Use common cache service, treating subtypes as descendants
+          (common-cache/add-descendant-to @cache-service-comp  ancestor-uid lh_object_uid)))))))
+        ;; (common-cache/add-descendant-to @cache-service-comp lh_object_uid lineage))))))
+
+
+(defn process-nodes-sc
+  []
+  (go
+    (loop [skip 0]
+        (let [_ (println "Processing batch " (/ skip (+ BATCH_SIZE 1)) "...")
+              facts-batch-res (<! (archivist/get-batch-facts archivist-client {:range BATCH_SIZE
+                                                                               :skip skip
+                                                                               :rel-type-uids [1146 1726]}))
+              facts-batch (:facts facts-batch-res)]
+          (if (empty? facts-batch)
+            "eat shit"
+            (do
+              (println (str "Processing facts batch (offset " count ", size " (count facts-batch) ")"))
+              ;; (println "Facts batch:" facts-batch)
+              (process-facts-batch-for-subtypes-cache! facts-batch)
+              (recur (+ skip BATCH_SIZE)))
+          )
+        )
+      )
+    )
+  )
 
 (defn build-subtypes-cache!
   "Builds a cache mapping entity UIDs to the set of all their recursive subtype UIDs."
   []
-  (log/info "Building subtypes cache...")
-  (stubs/clear-subtypes-cache!)
-  ;; This assumes we iterate through entities to find their subtypes.
-  (loop [offset 0]
-    (let [entity-uids-batch (stubs/fetch-all-entity-uids-batched BATCH_SIZE offset)]
-      (if (empty? entity-uids-batch)
-        (do
-          (log/info "Finished building subtypes cache.")
-          true) ; Signal completion
-        (do
-          (log/debugf "Processing subtypes batch (offset %d, size %d)" offset (count entity-uids-batch))
-          (process-entities-batch-for-subtypes! entity-uids-batch)
-          (recur (+ offset BATCH_SIZE)))))))
+  (log/info "Building entity subtypes cache...")
+  (go
+    (let [count (<! (archivist/get-facts-count archivist-client))]
+      (println "BUILDING ENTITY SUBTYPES CACHE")
+      (println "Total Facts:" count)
+
+      ;; (common-cache/clear-entity-lineage-cache-complete @common-cache/cache-service-comp)
+
+      (process-nodes-sc)
+
+      (println "COMPLETED BUILDING ENTITY LINEAGE CACHE")
+    )
+  ))
+
+;; --- Facts Cache ---
+
+(defn- process-facts-batch-for-entity-facts-cache!
+  "Processes a batch of facts to update the entity facts cache."
+  [facts]
+  (doseq [{:keys [lh_object_uid rh_object_uid fact_uid]} facts]
+    (println "Processing fact:" fact_uid
+           "lh_object_uid:" lh_object_uid
+           "rh_object_uid:" rh_object_uid)
+    (when (and lh_object_uid rh_object_uid fact_uid)
+      ;; Use common cache service
+      (common-cache/add-to-entity-facts-cache @cache-service-comp lh_object_uid fact_uid)
+      (common-cache/add-to-entity-facts-cache @cache-service-comp rh_object_uid fact_uid))))
+
+(defn process-nodes-fc
+  []
+  (go
+    (loop [skip 0]
+        (let [_ (println "Processing batch " (/ skip (+ BATCH_SIZE 1)) "...")
+              facts-batch-res (<! (archivist/get-batch-facts archivist-client {:range BATCH_SIZE
+                                                                               :skip skip}))
+              facts-batch (:facts facts-batch-res)]
+          (if (empty? facts-batch)
+            "eat shit"
+            (do
+              (println (str "Processing facts batch (offset " count ", size " (count facts-batch) ")"))
+              ;; (println "Facts batch:" facts-batch)
+              (process-facts-batch-for-entity-facts-cache! facts-batch)
+              (recur (+ skip BATCH_SIZE)))
+          )
+        )
+      )
+    )
+  )
+
+(defn build-entity-fact-cache!
+  "Builds a cache mapping entity UIDs to the set of all fact-uids it participates in directly.
+   Returns a channel that yields true on completion."
+  []
+  (log/info "Building entity subtypes cache...")
+  (go
+    (let [count (<! (archivist/get-facts-count archivist-client))]
+      (println "BUILDING ENTITY FACTS CACHE")
+      (println "Total Facts:" count)
+
+      ;; (common-cache/clear-entity-lineage-cache-complete @common-cache/cache-service-comp)
+
+      (process-nodes-fc)
+
+      (println "COMPLETED BUILDING ENTITY LINEAGE CACHE")
+    )
+  ))

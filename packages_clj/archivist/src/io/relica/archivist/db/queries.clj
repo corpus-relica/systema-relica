@@ -285,6 +285,28 @@
 
 ;;/////////////////////////////////////////////////////////////
 
+(neo4j/defquery get-facts-batch
+  "MATCH (r:Fact)
+   RETURN r
+   ORDER BY r.fact_uid ASC
+   SKIP $skip
+   LIMIT $range"
+  )
+
+(neo4j/defquery get-facts-batch-on-relation-type
+  "MATCH (r:Fact)
+   WHERE r.rel_type_uid IN $relationTypeUIDs
+   RETURN r
+   ORDER BY r.fact_uid ASC
+   SKIP $skip
+   LIMIT $range"
+  )
+
+(neo4j/defquery get-facts-count
+  "MATCH (n:Fact) RETURN count(n) as count")
+
+;;//////
+
 (neo4j/defquery get-lists-of-kinds
   "MATCH (a)--(r)-->()
   WHERE r.rel_type_uid = 1146 OR r.rel_type_uid = 1726

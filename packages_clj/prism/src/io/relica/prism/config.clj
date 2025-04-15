@@ -53,7 +53,12 @@
    :api-server-host  (get-env "PRISM_API_HOST" "0.0.0.0")
 
    ;; Logging level
-   :log-level        (keyword (get-env "PRISM_LOG_LEVEL" "info"))})
+   :log-level        (keyword (get-env "PRISM_LOG_LEVEL" "info"))
+
+   :archivist {:host (or (System/getenv "ARCHIVIST_HOST") "localhost")
+               :port (or (System/getenv "ARCHIVIST_PORT") 3000)}
+
+   })
 
   ;; (def config
   ;;   {

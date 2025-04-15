@@ -108,7 +108,7 @@
 
   (try
     ;; Create PostgreSQL admin user
-    (let [email (str username "@relica.io") ; Generate an email based on username
+    (let [email username ; Generate an email based on username
           password-hash (buddy.hashers/derive password {:algorithm :bcrypt})
           jdbc-conn (jdbc/get-connection (config/db-spec))
 
@@ -222,9 +222,11 @@
 
   (try
     ;; Build the caches sequentially
-    (if (and (cache/build-entity-facts-cache!)
-             (cache/build-entity-lineage-cache!)
-             (cache/build-subtypes-cache!))
+    (if (and
+         (cache/build-entity-facts-cache!)
+         (cache/build-entity-lineage-cache!)
+         (cache/build-subtypes-cache!)
+         (cache/build-entity-fact-cache!))
       (do
         (update-status! "Database caches built successfully")
         (log/info "All caches built successfully.")

@@ -2,7 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [clojure.core.async :refer [<! go]]
             [io.relica.archivist.services.graph-service :as graph]
-            [io.relica.archivist.services.cache-service :as cache]
+            [io.relica.common.services.cache-service :as cache]
             [io.relica.archivist.db.queries :as queries]))
 
 (defprotocol GeneralSearchOperations

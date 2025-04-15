@@ -8,8 +8,8 @@
             [io.relica.archivist.services.entity-retrieval-service :as entity]
             [io.relica.archivist.services.general-search-service :as general-search]
             [io.relica.archivist.services.fact-service :as fact-service]
-            [io.relica.archivist.services.graph-service :as graph-service]))
-
+            [io.relica.archivist.services.graph-service :as graph-service]
+            [io.relica.archivist.services.linearization-service :as linearization-service]))
 
 ;; GRAPH SERVICE
 
@@ -31,6 +31,41 @@
                         :error "Failed to execute query"})))))))
 
 ;; FACT SERVICE
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/get-batch
+  [{:keys [?data ?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [result (fact-service/get-batch fact-s ?data)]
+            (println "Facts: " (:facts result))
+            (?reply-fn {:success true
+                        :facts (:facts result)}))
+          (catch Exception e
+            (log/error e "Failed to get batch facts")
+            (?reply-fn {:success false
+                        :error "Failed to get batch facts"})))))))
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :fact/count
+  [{:keys [?reply-fn fact-s] :as msg}]
+  (when ?reply-fn
+    (if (nil? fact-s)
+      (?reply-fn {:success false
+                  :error "fact service not initialized"})
+      (go
+        (try
+          (let [result (fact-service/get-count fact-s)]
+            (?reply-fn {:success true
+                        :count result}))
+          (catch Exception e
+            (log/error e "Failed to count facts")
+            (?reply-fn {:success false
+                        :error "Failed to count facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :fact/get-all-related
@@ -450,3 +485,24 @@
             (log/error e "Failed to get specialization hierarchy")
             (?reply-fn {:success false
                         :error "Failed to get specialization hierarchy"})))))))
+
+;; LINEAGE SERVICE
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :lineage/get
+  [{:keys [?data ?reply-fn] :as msg}]
+  (when ?reply-fn
+    (let [service @linearization-service/linearization-service-comp]
+      (if (nil? service)
+        (?reply-fn {:success false
+                    :error "Linearization service not initialized"})
+        (try
+          (let [uid (:uid ?data)]
+            (if (nil? uid)
+              (?reply-fn {:success false :error "Missing UID in request data"})
+              (let [lineage (linearization-service/calculate-lineage service uid)]
+                (?reply-fn {:success true :data lineage}))))
+          (catch Exception e
+            (log/error e "Failed to calculate lineage for UID:" (:uid ?data))
+            (?reply-fn {:success false
+                       :error "Failed to calculate lineage"})))))))

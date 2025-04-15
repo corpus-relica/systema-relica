@@ -7,6 +7,8 @@
 (def ^:private default-timeout 5000)
 
 (defprotocol ArchivistOperations
+  (get-batch-facts [this config])
+  (get-facts-count [this])
   (execute-query [this query params])
   (resolve-uids [this uids])
   (get-kinds [this opts])
@@ -82,7 +84,11 @@
 
   ;; Validation operations
   (validate-entity [this entity-data])
-  (send-heartbeat! [this]))
+  (send-heartbeat! [this])
+
+  ;; Lineage operations
+  (get-lineage [this uid])
+  )
 
 (defprotocol ConnectionManagement
   (connect! [this])
@@ -101,6 +107,15 @@
     (ws/connected? client))
 
   ArchivistOperations
+
+  (get-batch-facts [this config]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/get-batch config (:timeout options)))
+
+  (get-facts-count [this]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :fact/count {} (:timeout options)))
+
   (execute-query [this query params]
     (when-not (connected? this) (connect! this))
     (ws/send-message! client :graph/execute-query
@@ -365,7 +380,13 @@
     (tap> {:event :app/sending-heartbeat})
     (ws/send-message! client :app/heartbeat
                             {:timestamp (System/currentTimeMillis)}
-                            30000)))
+                            30000))
+
+  ;; Lineage operations
+
+  (get-lineage [this uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :lineage/get {:uid uid} (:timeout options))))
 
 
 ;; Heartbeat scheduler

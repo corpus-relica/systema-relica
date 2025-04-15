@@ -3,7 +3,8 @@
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
             [io.relica.archivist.db.queries :as queries]
-            [io.relica.archivist.services.cache-service :as cache]
+            [io.relica.common.services.cache-service :as cache]
+            ;; [io.relica.archivist.services.cache-service :as cache]
             [io.relica.archivist.services.graph-service :as graph]
             )
   (:import (java.net URI))
