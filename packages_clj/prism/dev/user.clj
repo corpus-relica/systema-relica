@@ -4,8 +4,8 @@
             [io.relica.prism.core :as core]))
 
 (defn start-dev []
-  (println "Starting nREPL server on port 7893")
-  (nrepl/start-server :port 7893
+  (println "Starting nREPL server on port 7891")
+  (nrepl/start-server :port 7891
                      :bind "0.0.0.0"
                      :handler cider-nrepl-handler)
   (println "Starting Prism service")

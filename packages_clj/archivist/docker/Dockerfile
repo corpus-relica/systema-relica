@@ -13,6 +13,6 @@ WORKDIR /usr/src/app/packages_clj/archivist
 
 # Expose both the application and nREPL ports
 EXPOSE 3000
-EXPOSE 7890
+EXPOSE 7894
 
 CMD ["clojure", "-M:run"]

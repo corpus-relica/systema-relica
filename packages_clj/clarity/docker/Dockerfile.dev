@@ -11,6 +11,6 @@ WORKDIR /usr/src/app/packages_clj/clarity
 
 # Expose both the application and nREPL ports
 EXPOSE 2176
-EXPOSE 7892
+EXPOSE 7893
 
 CMD ["clojure", "-M:dev"]

@@ -16,6 +16,6 @@ RUN clojure -P
 
 # Expose the API port and REPL port
 EXPOSE 3333
-EXPOSE 7893
+EXPOSE 7891
 
 CMD ["clojure", "-M:run"]

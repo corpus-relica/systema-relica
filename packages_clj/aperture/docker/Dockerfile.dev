@@ -11,6 +11,6 @@ WORKDIR /usr/src/app/packages_clj/aperture
 
 # Expose both the application and nREPL ports
 EXPOSE 2175
-EXPOSE 7891
+EXPOSE 7892
 
 CMD ["clojure", "-M:dev"]
