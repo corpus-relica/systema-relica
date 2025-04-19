@@ -10,7 +10,7 @@ services:
       - ./packages_ts/core/dataplex/data/redis:/data
     ports:
       - "6379:6379"
-    # No network defined to use default bridge with localhost access
+    network_mode: "host"
 
   postgres:
     container_name: postgres
@@ -28,7 +28,7 @@ services:
       - ./packages_ts/core/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
-    # No network defined to use default bridge with localhost access
+    network_mode: "host"
 
   neo4j:
     container_name: neo4j
@@ -59,44 +59,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # No network defined to use default bridge with localhost access
-
-  prism:
-    container_name: prism
-    build:
-      context: ./packages_clj/prism
-      dockerfile: docker/Dockerfile.dev
-    restart: always
-    environment:
-      - PRISM_NEO4J_URI=neo4j+s://localhost:7687 # Use localhost
-      - PRISM_NEO4J_USER=neo4j
-      - PRISM_NEO4J_PASSWORD=password
-      - PRISM_SEED_XLS_DIR=/seed_xls
-      - PRISM_CSV_OUTPUT_DIR=/import # Must match Neo4j's import volume
-      - PRISM_NEO4J_IMPORT_DIR=/import # Neo4j needs this to find the CSVs
-      - PRISM_LOG_LEVEL=info # Or debug
-      - PRISM_API_PORT=3333
-      - PRISM_API_HOST=0.0.0.0
-      # Use localhost for other services
-      - ARCHIVIST_HOST=localhost
-      - ARCHIVIST_PORT=3000
-      - REDIS_HOST=localhost
-      - REDIS_PORT=6379
-      - REDIS_USER=default
-      - REDIS_PASSWORD=redis
-    ports:
-      - "3333:3333"  # Expose the API port to the host for setup UI access
-      - "7893:7893"  # nREPL port
-    volumes:
-      # Mount code for hot reloading
-      - ./packages_clj/common:/usr/src/app/packages_clj/common
-      - ./packages_clj/prism:/usr/src/app/packages_clj/prism
-      # Mount seed data
-      - ./seed_xls:/seed_xls:ro
-      - ./seed_csv:/import:rw
-    depends_on:
-      neo4j:
-        condition: service_healthy
+    network_mode: "host"
 
   archivist:
     container_name: archivist
@@ -129,7 +92,7 @@ services:
       - ./seed_csv:/usr/src/app/packages_clj/archivist/seed_csv:rw
     ports:
       - "3000:3000"
-      - "7890:7890"  # nREPL port
+      - "7894:7894" # nREPL port
     depends_on:
       neo4j:
         condition: service_healthy
@@ -137,6 +100,7 @@ services:
         condition: service_started
       postgres:
         condition: service_started
+    network_mode: "host"
 
   clarity:
     container_name: clarity
@@ -151,13 +115,14 @@ services:
       - ./packages_clj/clarity:/usr/src/app/packages_clj/clarity
     ports:
       - "2176:2176"
-      - "7892:7892"  # nREPL port
+      - "7893:7893" # nREPL port
     environment:
       # Use localhost for dependencies
       - ARCHIVIST_HOST=localhost
       - ARCHIVIST_PORT=3000
     depends_on:
       - archivist
+    network_mode: "host"
 
   aperture:
     container_name: aperture
@@ -172,7 +137,7 @@ services:
       - ./packages_clj/aperture:/usr/src/app/packages_clj/aperture
     ports:
       - "2175:2175"
-      - "7891:7891"  # nREPL port
+      - "7892:7892" # nREPL port
     environment:
       # Use localhost for dependencies
       - ARCHIVIST_HOST=localhost
@@ -186,6 +151,45 @@ services:
     depends_on:
       - postgres
       - archivist
+    network_mode: "host"
+
+  prism:
+    container_name: prism
+    build:
+      context: ./packages_clj/prism
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    environment:
+      - PRISM_NEO4J_URI=neo4j+s://localhost:7687 # Use localhost
+      - PRISM_NEO4J_USER=neo4j
+      - PRISM_NEO4J_PASSWORD=password
+      - PRISM_SEED_XLS_DIR=/seed_xls
+      - PRISM_CSV_OUTPUT_DIR=/import # Must match Neo4j's import volume
+      - PRISM_NEO4J_IMPORT_DIR=/import # Neo4j needs this to find the CSVs
+      - PRISM_LOG_LEVEL=info # Or debug
+      - PRISM_API_PORT=3333
+      - PRISM_API_HOST=0.0.0.0
+      # Use localhost for other services
+      - ARCHIVIST_HOST=localhost
+      - ARCHIVIST_PORT=3000
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
+    ports:
+      - "3333:3333" # Expose the API port to the host for setup UI access
+      - "7891:7891" # nREPL port
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/common:/usr/src/app/packages_clj/common
+      - ./packages_clj/prism:/usr/src/app/packages_clj/prism
+      # Mount seed data
+      - ./seed_xls:/seed_xls:ro
+      - ./seed_csv:/import:rw
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    network_mode: "host"
 
   portal:
     container_name: portal
@@ -200,7 +204,7 @@ services:
       - ./packages_clj/portal:/usr/src/app/packages_clj/portal
     ports:
       - "2174:2174"
-      - "7890:7890"  # nREPL port
+      - "7890:7890" # nREPL port
     environment:
       - JWT_SECRET=changeme
       # Use localhost for dependencies
@@ -220,6 +224,32 @@ services:
       - clarity
       - aperture
       - prism
+    network_mode: "host"
+
+  shutter:
+    container_name: shutter
+    build:
+      context: ./packages_clj/shutter
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/shutter:/usr/src/app/packages_clj/shutter
+    ports:
+      - "2173:2173"
+      - "7889:7889" # nREPL port
+    environment:
+      # Use localhost for dependencies
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
+    depends_on:
+      - postgres
+    network_mode: "host"
 
   nous:
     container_name: nous
@@ -247,30 +277,7 @@ services:
     depends_on:
       - clarity
       - aperture
-
-  shutter:
-    container_name: shutter
-    build:
-      context: ./packages_clj/shutter
-      dockerfile: docker/Dockerfile.dev
-    restart: always
-    command: ["clojure", "-M:dev"]
-    volumes:
-      # Mount code for hot reloading
-      - ./packages_clj/shutter:/usr/src/app/packages_clj/shutter
-    ports:
-      - "2173:2173"
-      - "7889:7889"  # nREPL port
-    environment:
-      # Use localhost for dependencies
-      - POSTGRES_HOST=localhost
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-      - JWT_SECRET=changeme
-    depends_on:
-      - postgres
+    network_mode: "host"
 
   viewfinder:
     container_name: viewfinder
@@ -279,7 +286,7 @@ services:
       dockerfile: docker/Dockerfile.dev
     restart: always
     ports:
-      - "5173:5173"  # Vite dev server port
+      - "5173:5173" # Vite dev server port
     volumes:
       # Mount all necessary code for hot reloading
       - ./packages_ts/frontend/viewfinder:/usr/src/app/packages_ts/frontend/viewfinder
@@ -302,5 +309,4 @@ services:
       - clarity
       - portal
       - shutter
-
-# No custom network - using default bridge network to allow localhost access
+    network_mode: "host"
