@@ -1,0 +1,16 @@
+FROM clojure:temurin-17-tools-deps
+LABEL maintainer="Marc <xtof@relica.io>"
+
+WORKDIR /usr/src/app
+
+# For development, we don't copy files - they will be mounted as volumes
+# in docker-compose.dev.yml for both common and archivist packages
+# This allows for hot reloading of all code changes
+
+WORKDIR /usr/src/app/packages_clj/archivist
+
+# Expose both the application and nREPL ports
+EXPOSE 3000
+EXPOSE 7890
+
+CMD ["clojure", "-M:dev"]
