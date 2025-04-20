@@ -4,10 +4,10 @@ LABEL maintainer="Marc <xtof@relica.io>"
 WORKDIR /usr/src/app
 
 # Copy common dependency
-COPY ../../common /usr/src/app/packages_clj/common
+COPY packages_clj/common /usr/src/app/packages_clj/common
 
 # Copy portal code
-COPY ../ /usr/src/app/packages_clj/portal
+COPY packages_clj/portal /usr/src/app/packages_clj/portal
 
 WORKDIR /usr/src/app/packages_clj/portal
 

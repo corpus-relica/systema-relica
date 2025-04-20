@@ -4,7 +4,7 @@ LABEL maintainer="Marc <xtof@relica.io>"
 WORKDIR /usr/src/app
 
 # Copy shutter code
-COPY ../ /usr/src/app/packages_clj/shutter
+COPY packages_clj/shutter /usr/src/app/packages_clj/shutter
 
 WORKDIR /usr/src/app/packages_clj/shutter
 

@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python package
-COPY ../ /usr/src/app/packages_py/nous
+COPY packages_py/nous /usr/src/app/packages_py/nous
 
 # Set the working directory to the nous package
 WORKDIR /usr/src/app/packages_py/nous

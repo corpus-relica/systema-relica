@@ -4,10 +4,10 @@ LABEL maintainer="Marc <xtof@relica.io>"
 WORKDIR /usr/src/app
 
 # Copy common dependency
-COPY ../../common /usr/src/app/packages_clj/common
+COPY packages_clj/common /usr/src/app/packages_clj/common
 
 # Copy prism code
-COPY ../ /usr/src/app/packages_clj/prism
+COPY packages_clj/prism /usr/src/app/packages_clj/prism
 
 WORKDIR /usr/src/app/packages_clj/prism
 

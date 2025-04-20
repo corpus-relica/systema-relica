@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   redis:
     container_name: redis
@@ -16,8 +14,8 @@ services:
   postgres:
     container_name: postgres
     build:
-      context: ./packages_ts/core/dataplex/docker
-      dockerfile: Dockerfile.postgres
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_ts/core/dataplex/docker/Dockerfile.postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -63,11 +61,95 @@ services:
     networks:
       - rlc-net
 
+  archivist:
+    container_name: archivist
+    build:
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/archivist/docker/Dockerfile
+    restart: always
+    environment:
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    command: ["clojure", "-M:run"]
+    ports:
+      - "3000:3000"
+      - "7894:7894"
+    volumes:
+      - ./seed_xls:/usr/src/app/packages_clj/archivist/seed_xls:ro
+      - ./seed_csv:/usr/src/app/packages_clj/archivist/seed_csv:rw
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+    networks:
+      - rlc-net
+
+  clarity:
+    container_name: clarity
+    build:
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/clarity/docker/Dockerfile
+    restart: always
+    command: ["clojure", "-M:run"]
+    ports:
+      - "2176:2176"
+      - "7893:7893"
+    environment:
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+    depends_on:
+      - archivist
+    networks:
+      rlc-net:
+        aliases:
+          - clarity
+
+  aperture:
+    container_name: aperture
+    build:
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/aperture/docker/Dockerfile
+    restart: always
+    command: ["clojure", "-M:run"]
+    ports:
+      - "2175:2175"
+      - "7892:7892"
+    environment:
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
+    depends_on:
+      - postgres
+      - archivist
+    networks:
+      rlc-net:
+        aliases:
+          - aperture
+
   prism:
     container_name: prism
     build:
-      context: ./packages_clj/prism
-      dockerfile: docker/Dockerfile
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/prism/docker/Dockerfile
     restart: always
     environment:
       - PRISM_NEO4J_URI=neo4j+s://neo4j:7687
@@ -87,7 +169,7 @@ services:
       - REDIS_PASSWORD=redis
     ports:
       - "3333:3333"
-      - "7893:7893"
+      - "7891:7891"
     volumes:
       - ./seed_xls:/seed_xls:ro
       - ./seed_csv:/import:rw
@@ -97,95 +179,11 @@ services:
     networks:
       - rlc-net
 
-  archivist:
-    container_name: archivist
-    build:
-      context: ./packages_clj/archivist
-      dockerfile: docker/Dockerfile
-    restart: always
-    environment:
-      - NEO4J_HOST=neo4j
-      - NEO4J_PORT=7687
-      - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=password
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_USER=default
-      - REDIS_PASSWORD=redis
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-    command: ["clojure", "-M:run"]
-    ports:
-      - "3000:3000"
-      - "7890:7890"
-    volumes:
-      - ./seed_xls:/usr/src/app/packages_clj/archivist/seed_xls:ro
-      - ./seed_csv:/usr/src/app/packages_clj/archivist/seed_csv:rw
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      postgres:
-        condition: service_started
-    networks:
-      - rlc-net
-
-  clarity:
-    container_name: clarity
-    build:
-      context: ./packages_clj/clarity
-      dockerfile: docker/Dockerfile
-    restart: always
-    command: ["clojure", "-M:run"]
-    ports:
-      - "2176:2176"
-      - "7892:7892"
-    environment:
-      - ARCHIVIST_HOST=archivist
-      - ARCHIVIST_PORT=3000
-    depends_on:
-      - archivist
-    networks:
-      rlc-net:
-        aliases:
-          - clarity
-
-  aperture:
-    container_name: aperture
-    build:
-      context: ./packages_clj/aperture
-      dockerfile: docker/Dockerfile
-    restart: always
-    command: ["clojure", "-M:run"]
-    ports:
-      - "2175:2175"
-      - "7891:7891"
-    environment:
-      - ARCHIVIST_HOST=archivist
-      - ARCHIVIST_PORT=3000
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-      - JWT_SECRET=changeme
-    depends_on:
-      - postgres
-      - archivist
-    networks:
-      rlc-net:
-        aliases:
-          - aperture
-
   portal:
     container_name: portal
     build:
-      context: ./packages_clj/portal
-      dockerfile: docker/Dockerfile
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/portal/docker/Dockerfile
     restart: always
     command: ["clojure", "-M:run"]
     ports:
@@ -214,11 +212,35 @@ services:
         aliases:
           - portal
 
+  shutter:
+    container_name: shutter
+    build:
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/shutter/docker/Dockerfile
+    restart: always
+    command: ["clojure", "-M:run"]
+    ports:
+      - "2173:2173"
+      - "7889:7889"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
+    depends_on:
+      - postgres
+    networks:
+      rlc-net:
+        aliases:
+          - shutter
+
   nous:
     container_name: nous
     build:
-      context: ./packages_py/nous
-      dockerfile: docker/Dockerfile
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_py/nous/docker/Dockerfile
     restart: always
     command: ["python", "main.py"]
     ports:
@@ -241,35 +263,11 @@ services:
         aliases:
           - nous
 
-  shutter:
-    container_name: shutter
-    build:
-      context: ./packages_clj/shutter
-      dockerfile: docker/Dockerfile
-    restart: always
-    command: ["clojure", "-M:run"]
-    ports:
-      - "2173:2173"
-      - "7889:7889"
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-      - JWT_SECRET=changeme
-    depends_on:
-      - postgres
-    networks:
-      rlc-net:
-        aliases:
-          - shutter
-
   viewfinder:
     container_name: viewfinder
     build:
-      context: ./packages_ts/frontend/viewfinder
-      dockerfile: docker/Dockerfile
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_ts/frontend/viewfinder/docker/Dockerfile
     restart: always
     ports:
       - "80:80"

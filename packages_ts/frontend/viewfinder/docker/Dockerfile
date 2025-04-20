@@ -5,20 +5,20 @@ LABEL maintainer="Marc <xtof@relica.io>"
 WORKDIR /usr/src/app
 
 # Copy root package files first
-COPY ../../../../package.json .
-COPY ../../../../yarn.lock .
+COPY package.json .
+COPY yarn.lock .
 
 # Copy all the required packages and configs
-COPY ../../../../packages_ts/libs/types ./packages_ts/libs/types
-COPY ../../../../packages_ts/libs/constants ./packages_ts/libs/constants
-COPY ../../../../packages_ts/frontend/components/fact-search-ui ./packages_ts/frontend/components/fact-search-ui
-COPY ../../../../packages_ts/frontend/components/3d-graph-ui ./packages_ts/frontend/components/3d-graph-ui
-COPY ../../../../packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
-COPY ../../../../packages_ts/frontend/viewfinder ./packages_ts/frontend/viewfinder
-COPY ../../../../packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
-COPY ../../../../packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
-COPY ../../../../packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
-COPY ../../../../packages_ts/config/tsconfig.frontend.json ./packages_ts/config/tsconfig.frontend.json
+COPY packages_ts/libs/types ./packages_ts/libs/types
+COPY packages_ts/libs/constants ./packages_ts/libs/constants
+COPY packages_ts/frontend/components/fact-search-ui ./packages_ts/frontend/components/fact-search-ui
+COPY packages_ts/frontend/components/3d-graph-ui ./packages_ts/frontend/components/3d-graph-ui
+COPY packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
+COPY packages_ts/frontend/viewfinder ./packages_ts/frontend/viewfinder
+COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
+COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
+COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json
+COPY packages_ts/config/tsconfig.frontend.json ./packages_ts/config/tsconfig.frontend.json
 
 # Install dependencies
 RUN yarn install --pure-lockfile --non-interactive --network-timeout 100000

@@ -4,10 +4,10 @@ LABEL maintainer="Marc <xtof@relica.io>"
 WORKDIR /usr/src/app
 
 # Copy common dependency
-COPY ../../common /usr/src/app/packages_clj/common
+COPY packages_clj/common /usr/src/app/packages_clj/common
 
 # Copy clarity code
-COPY ../ /usr/src/app/packages_clj/clarity
+COPY packages_clj/clarity /usr/src/app/packages_clj/clarity
 
 WORKDIR /usr/src/app/packages_clj/clarity
 

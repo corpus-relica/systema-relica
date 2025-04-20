@@ -4,10 +4,10 @@ LABEL maintainer="Marc <xtof@relica.io>"
 WORKDIR /usr/src/app
 
 # Copy common dependency first 
-COPY ../../common /usr/src/app/packages_clj/common
+COPY packages_clj/common /usr/src/app/packages_clj/common
 
 # Copy aperture code
-COPY ../ /usr/src/app/packages_clj/aperture
+COPY packages_clj/aperture /usr/src/app/packages_clj/aperture
 
 WORKDIR /usr/src/app/packages_clj/aperture
 
