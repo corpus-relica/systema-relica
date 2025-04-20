@@ -1,15 +1,15 @@
 (ns io.relica.shutter.core
   (:require[io.pedestal.http :as http]
-            [io.pedestal.http.route :as route]
-            [io.pedestal.http.cors :as cors]
-            [io.pedestal.interceptor :refer [interceptor]]
-            [cheshire.core :as json]
-            [buddy.sign.jwt :as jwt]
-            [buddy.hashers :as hashers]
-            [next.jdbc :as jdbc]
-            [next.jdbc.result-set :as rs]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log])
+           [io.pedestal.http.route :as route]
+           [io.pedestal.http.cors :as cors]
+           [io.pedestal.interceptor :refer [interceptor]]
+           [cheshire.core :as json]
+           [buddy.sign.jwt :as jwt]
+           [buddy.hashers :as hashers]
+           [next.jdbc :as jdbc]
+           [next.jdbc.result-set :as rs]
+           [clojure.string :as str]
+           [clojure.tools.logging :as log])
   (:gen-class))
 
 (def cors-config
@@ -99,9 +99,9 @@
                  (catch Exception e
                    (log/warn e "Token validation failed")
                    (assoc context :response {:status 401
-                                           :body {:error "Invalid token"}})))
+                                             :body {:error "Invalid token"}})))
                (assoc context :response {:status 401
-                                       :body {:error "No token provided"}})))
+                                         :body {:error "No token provided"}})))
     :error (fn [context e]
              (log/error e "Authentication error")
              (assoc context :response
@@ -120,7 +120,7 @@
                       (assoc-in context [:request :json-params] json-body)))
                   (catch Exception e
                     (assoc context :response {:status 400
-                                            :body {:error "Invalid JSON"}})))))}))
+                                              :body {:error "Invalid JSON"}})))))}))
 
 (def json-response-interceptor
   (interceptor
@@ -146,8 +146,8 @@
         (println "Password:" password)
        (if-let [user (verify-user email password)]
          (let [claims {:user-id (:id user)
-                      :email (:email user)
-                      :admin (:is_admin user)}
+                       :email (:email user)
+                       :admin (:is_admin user)}
                token (jwt/sign claims (:jwt-secret env)
                               {:exp (+ (System/currentTimeMillis)
                                      (* 24 60 60 1000))})]
@@ -267,15 +267,15 @@
        ::http/mime-types {"application/json" :json}
        ::http/secure-headers nil  ; Disable secure headers for CORS
        ::http/body-params {:edn :edn-string
-                          :json json/decode}
+                           :json json/decode}
        ::http/json-body {:encoder json/encode
-                        :decoder json/decode
-                        :decode-key-fn keyword}}
+                         :decoder json/decode
+                         :decode-key-fn keyword}}
       http/default-interceptors
-      (update ::http/interceptors conj
-              (cors/allow-origin cors-config))
+      (update ::http/interceptors conj (cors/allow-origin cors-config))
       (update ::http/interceptors conj json-response-interceptor)
-      (update ::http/interceptors conj (cors/allow-origin cors-config))))
+      ))
+
 
 (defonce server (atom nil))
 
@@ -308,11 +308,11 @@
   ;; Test user verification
   (verify-user "suck.muhdik@gmail.com" "changeme")
 
-  (verify-user "doesnt.exist@gmail.com","whatever")
+  (verify-user "doesnt.exist@gmail.com","whatever"))
 
   ;; (create-test-user!
   ;;   "suck.muhdik@gmail.com"
   ;;   "john"
   ;;   "changeme")
 
-  )
+  
