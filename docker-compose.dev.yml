@@ -1,0 +1,369 @@
+services:
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    command: /bin/sh -c "redis-server --requirepass redis"
+    volumes:
+      - ./packages_ts/core/dataplex/data/redis:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  postgres:
+    container_name: postgres
+    build:
+      context: ./packages_ts/core/dataplex/docker
+      dockerfile: Dockerfile.postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    command: ["bash", "/docker-entrypoint-initdb.d/init-postgres.sh"]
+    volumes:
+      - ./packages_ts/core/dataplex/data/postgres:/var/lib/postgresql/data
+      - ./packages_ts/core/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  neo4j:
+    container_name: neo4j
+    image: neo4j:5.12.0
+    restart: always
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
+      # Use container name for other containers, but still listen on all interfaces
+      - NEO4J_dbms_connector_bolt_advertised__address=neo4j:7687
+      - NEO4J_dbms_connector_bolt_listen__address=0.0.0.0:7687
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    volumes:
+      - ./packages_ts/core/dataplex/data/neo4j:/data
+      - ./seed_csv:/var/lib/neo4j/import:rw
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cypher-shell -u neo4j -p password 'MATCH (n) RETURN COUNT(n);' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  archivist:
+    container_name: archivist
+    build:
+      context: ./packages_clj/archivist
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    environment:
+      # Use container names for data services
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      # These will be used when services are pulled out to run locally
+      - CLARITY_HOST=clarity
+      - PORTAL_HOST=portal
+      - NOUS_HOST=nous
+      - SHUTTER_HOST=shutter
+    command: ["clojure", "-M:dev"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/common:/usr/src/app/packages_clj/common
+      - ./packages_clj/archivist:/usr/src/app/packages_clj/archivist
+      # Mount seed data
+      - ./seed_xls:/usr/src/app/packages_clj/archivist/seed_xls:ro
+      - ./seed_csv:/usr/src/app/packages_clj/archivist/seed_csv:rw
+    ports:
+      - "3000:3000"
+      - "7894:7894" # nREPL port
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "clarity:host-gateway"
+      - "portal:host-gateway"
+      - "nous:host-gateway"
+      - "shutter:host-gateway"
+
+  clarity:
+    container_name: clarity
+    build:
+      context: ./packages_clj/clarity
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/common:/usr/src/app/packages_clj/common
+      - ./packages_clj/clarity:/usr/src/app/packages_clj/clarity
+    ports:
+      - "2176:2176"
+      - "7893:7893" # nREPL port
+    environment:
+      # Use container name for archivist
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+    depends_on:
+      - archivist
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "archivist:host-gateway"
+
+  aperture:
+    container_name: aperture
+    build:
+      context: ./packages_clj/aperture
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/common:/usr/src/app/packages_clj/common
+      - ./packages_clj/aperture:/usr/src/app/packages_clj/aperture
+    ports:
+      - "2175:2175"
+      - "7892:7892" # nREPL port
+    environment:
+      # Use container names for dependencies
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
+    depends_on:
+      - postgres
+      - archivist
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "archivist:host-gateway"
+
+  prism:
+    container_name: prism
+    build:
+      context: ./packages_clj/prism
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    environment:
+      - PRISM_NEO4J_URI=neo4j+s://neo4j:7687 # Use container name
+      - PRISM_NEO4J_USER=neo4j
+      - PRISM_NEO4J_PASSWORD=password
+      - PRISM_SEED_XLS_DIR=/seed_xls
+      - PRISM_CSV_OUTPUT_DIR=/import # Must match Neo4j's import volume
+      - PRISM_NEO4J_IMPORT_DIR=/import # Neo4j needs this to find the CSVs
+      - PRISM_LOG_LEVEL=info # Or debug
+      - PRISM_API_PORT=3333
+      - PRISM_API_HOST=0.0.0.0
+      # Use container names for other services
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
+    ports:
+      - "3333:3333" # Expose the API port to the host for setup UI access
+      - "7891:7891" # nREPL port
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/common:/usr/src/app/packages_clj/common
+      - ./packages_clj/prism:/usr/src/app/packages_clj/prism
+      # Mount seed data
+      - ./seed_xls:/seed_xls:ro
+      - ./seed_csv:/import:rw
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "archivist:host-gateway"
+
+  portal:
+    container_name: portal
+    build:
+      context: ./packages_clj/portal
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/common:/usr/src/app/packages_clj/common
+      - ./packages_clj/portal:/usr/src/app/packages_clj/portal
+    ports:
+      - "2174:2174"
+      - "7890:7890" # nREPL port
+    environment:
+      - JWT_SECRET=changeme
+      # Use container names for services
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - CLARITY_HOST=clarity
+      - CLARITY_PORT=2176
+      - APERTURE_HOST=aperture
+      - APERTURE_PORT=2175
+      - NOUS_HOST=nous
+      - NOUS_PORT=2204
+      - PRISM_HOST=prism
+      - PRISM_PORT=3333
+    depends_on:
+      - shutter
+      - archivist
+      - clarity
+      - aperture
+      - prism
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "archivist:host-gateway"
+      - "clarity:host-gateway"
+      - "aperture:host-gateway"
+      - "nous:host-gateway"
+      - "prism:host-gateway"
+      - "shutter:host-gateway"
+
+  shutter:
+    container_name: shutter
+    build:
+      context: ./packages_clj/shutter
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    command: ["clojure", "-M:dev"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_clj/shutter:/usr/src/app/packages_clj/shutter
+    ports:
+      - "2173:2173"
+      - "7889:7889" # nREPL port
+    environment:
+      # Use container names for data services
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
+      - PORT=2173
+    depends_on:
+      - postgres
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  nous:
+    container_name: nous
+    build:
+      context: ./packages_py/nous
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    command: ["python", "main.py"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_py/nous:/usr/src/app/packages_py/nous
+    ports:
+      - "2204:2204"
+    environment:
+      - PYTHONPATH=/usr/src/app
+      - PYTHONUNBUFFERED=1
+      # Use container names for dependencies
+      - CLARITY_HOST=clarity
+      - CLARITY_PORT=2176
+      - APERTURE_HOST=aperture
+      - APERTURE_PORT=2175
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    depends_on:
+      - clarity
+      - aperture
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "clarity:host-gateway"
+      - "aperture:host-gateway"
+
+  viewfinder:
+    container_name: viewfinder
+    build:
+      context: ./packages_ts/frontend/viewfinder
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    ports:
+      - "5173:5173" # Vite dev server port
+    volumes:
+      # Mount all necessary code for hot reloading
+      - ./packages_ts/frontend/viewfinder:/usr/src/app/packages_ts/frontend/viewfinder
+      - ./packages_ts/frontend/components:/usr/src/app/packages_ts/frontend/components
+      - ./packages_ts/libs:/usr/src/app/packages_ts/libs
+      - ./packages_ts/config:/usr/src/app/packages_ts/config
+      - ./node_modules:/usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+      # Connect to services by host:port as they're all exposed via ports
+      - VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000
+      - VITE_RELICA_CC_API_URL=http://localhost:2176
+      - VITE_RELICA_CC_SOCKET_URL=ws://localhost:2176
+      - VITE_PORTAL_API_URL=http://localhost:2174
+      - VITE_PORTAL_WS_URL=ws://localhost:2174
+      - VITE_SHUTTER_API_URL=http://localhost:2173
+      - VITE_RELICA_NOUS_SOCKET_URL=ws://localhost:2204
+    depends_on:
+      - archivist
+      - clarity
+      - portal
+      - shutter
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  rlc-net:
+    name: rlc-net
+    driver: bridge

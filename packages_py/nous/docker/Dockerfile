@@ -1,4 +1,5 @@
 FROM python:3.11-slim
+LABEL maintainer="Marc <xtof@relica.io>"
 
 WORKDIR /usr/src/app
 
@@ -7,17 +8,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python package requirements
-COPY packages_py/nous/requirements.txt ./requirements.txt
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the Python package
+# Copy Python package
 COPY packages_py/nous /usr/src/app/packages_py/nous
 
 # Set the working directory to the nous package
 WORKDIR /usr/src/app/packages_py/nous
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Set environment variables
 ENV PYTHONPATH=/usr/src/app

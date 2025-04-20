@@ -1,6 +1,6 @@
 # Build stage
 FROM node:latest as build
-MAINTAINER Marc <marc@speculum-obscurum>
+LABEL maintainer="Marc <xtof@relica.io>"
 
 WORKDIR /usr/src/app
 
@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 
-# Copy all the packages and configs
+# Copy all the required packages and configs
 COPY packages_ts/libs/types ./packages_ts/libs/types
 COPY packages_ts/libs/constants ./packages_ts/libs/constants
 COPY packages_ts/frontend/components/fact-search-ui ./packages_ts/frontend/components/fact-search-ui
@@ -34,7 +34,6 @@ WORKDIR /usr/src/app/packages_ts/core/hsm-manager
 RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/fact-search-ui
-# RUN echo "VITE_RELICA_ARCHIVIST_API_URL=http://64.23.130.139:3000" > .env && \
 RUN echo "VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000" > .env && \
     yarn build
 
@@ -43,13 +42,6 @@ RUN yarn build
 
 # Build the main application
 WORKDIR /usr/src/app/packages_ts/frontend/viewfinder
-# RUN echo "VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000" > .env && \
-#     echo "VITE_RELICA_CC_API_URL=http://localhost:3001" >> .env && \
-#     echo "VITE_RELICA_CC_SOCKET_URL=http://localhost:3001" >> .env && \
-#     echo "VITE_RELICA_NOUS_SOCKET_URL=http://localhost:8080" >> .env && \
-#     echo "VITE_SHUTTER_API_URL=http://localhost:2173" >> .env && \
-#     echo "VITE_PORTAL_API_URL=ws://localhost:2174" >> .env && \
-#     echo "VITE_PORTAL_WS_URL=ws://localhost:2174" >> .env && \
 RUN echo "VITE_RELICA_ARCHIVIST_API_URL=/api/archivist" > .env && \
     echo "VITE_RELICA_CC_API_URL=/api/clarity" >> .env && \
     echo "VITE_RELICA_CC_SOCKET_URL=/ws/clarity" >> .env && \
@@ -62,13 +54,7 @@ RUN echo "VITE_RELICA_ARCHIVIST_API_URL=/api/archivist" > .env && \
 # Production stage
 FROM nginx:alpine
 
-# Copy nginx config if you need it (commented out for now)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy the built files from build stage to nginx serving directory
-COPY --from=build /usr/src/app/packages_ts/frontend/viewfinder/dist /usr/share/nginx/html
-
-# Basic nginx configuration for SPA with Reverse Proxy
+# Add nginx configuration for SPA with Reverse Proxy
 RUN echo 'server { \
     listen 80; \
     server_name _; \
@@ -159,6 +145,9 @@ RUN echo 'server { \
     root /usr/share/nginx/html; \
     } \
     }' > /etc/nginx/conf.d/default.conf
+
+# Copy the built files from build stage to nginx serving directory
+COPY --from=build /usr/src/app/packages_ts/frontend/viewfinder/dist /usr/share/nginx/html
 
 EXPOSE 80
 

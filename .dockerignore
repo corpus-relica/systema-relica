@@ -1,0 +1,39 @@
+# Exclude data directories with potential permission issues
+packages_ts/core/dataplex/data/
+packages_ts/core/dataplex/data_bak/
+**/data/neo4j/
+**/data/postgres/
+**/data/redis/
+**/data_bak/neo4j/
+**/data_bak/postgres/
+**/data_bak/redis/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build output
+**/dist/
+**/target/
+**/build/
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+**/*.swp
+**/*.swo
+
+# Clojure
+**/.cpcache/
+**/.lein-repl-history
+**/.nrepl-port
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore

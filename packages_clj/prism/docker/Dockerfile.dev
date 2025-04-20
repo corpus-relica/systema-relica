@@ -1,0 +1,16 @@
+FROM clojure:temurin-21-tools-deps-jammy
+LABEL maintainer="Marc <xtof@relica.io>"
+
+WORKDIR /usr/src/app
+
+# For development, we don't copy files - they will be mounted as volumes
+# in docker-compose.dev.yml for both common and prism packages
+# This allows for hot reloading of all code changes
+
+WORKDIR /usr/src/app/packages_clj/prism
+
+# Expose the API port and REPL port
+EXPOSE 3333
+EXPOSE 7891
+
+CMD ["clojure", "-M:dev"]

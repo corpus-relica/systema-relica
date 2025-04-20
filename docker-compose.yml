@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   redis:
     container_name: redis
@@ -16,8 +14,8 @@ services:
   postgres:
     container_name: postgres
     build:
-      context: .
-      dockerfile: Dockerfile.postgres
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_ts/core/dataplex/docker/Dockerfile.postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -63,75 +61,33 @@ services:
     networks:
       - rlc-net
 
-  prism:
-    container_name: prism
-    build:
-      context: ./
-      dockerfile: Dockerfile.prism
-    restart: always
-    environment:
-      - PRISM_NEO4J_URI=neo4j+s://neo4j:7687 # Adjust scheme (neo4j/neo4j+s) if needed
-      - PRISM_NEO4J_USER=neo4j
-      - PRISM_NEO4J_PASSWORD=password
-      - PRISM_SEED_XLS_DIR=/seed_xls
-      - PRISM_CSV_OUTPUT_DIR=/import # Must match Neo4j's import volume
-      - PRISM_NEO4J_IMPORT_DIR=/import # Neo4j needs this to find the CSVs
-      - PRISM_LOG_LEVEL=info # Or debug
-      - PRISM_API_PORT=3333
-      - PRISM_API_HOST=0.0.0.0
-
-      - ARCHIVIST_HOST=archivist
-      - ARCHIVIST_PORT=3000
-
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_USER=default
-      - REDIS_PASSWORD=redis
-    ports:
-      - "3333:3333"  # Expose the API port to the host for setup UI access
-      - "7893:7893"
-    volumes:
-      # Mount the seed data directory (read-only for Prism)
-      - ./seed_xls:/seed_xls:ro
-      # Mount the shared import directory (read-write for Prism)
-      - ./seed_csv:/import:rw # Ensure this matches Neo4j volume mount for /import
-    depends_on:
-      neo4j:
-        condition: service_healthy # Wait for Neo4j to be ready
-    networks:
-      - rlc-net
-
   archivist:
     container_name: archivist
     build:
-      context: ./
-      dockerfile: Dockerfile.archivist
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/archivist/docker/Dockerfile
     restart: always
     environment:
       - NEO4J_HOST=neo4j
       - NEO4J_PORT=7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password
-
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_USER=default
       - REDIS_PASSWORD=redis
-
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
-    command: ["clojure", "-M:dev"]
-    # command: ["yarn", "start:dev"]
-    volumes:
-      - ./packages_ts/backend/archivist:/usr/src/app/packages_ts/backend/archivist
-      - ./seed_xls:/usr/src/app/packages_ts/backend/archivist/seed_xls:ro
-      - ./seed_csv:/usr/src/app/packages_ts/backend/archivist/seed_csv:rw
-      - /usr/src/app/packages_ts/backend/archivist/node_modules
+    command: ["clojure", "-M:run"]
     ports:
       - "3000:3000"
+      - "7894:7894"
+    volumes:
+      - ./seed_xls:/usr/src/app/packages_clj/archivist/seed_xls:ro
+      - ./seed_csv:/usr/src/app/packages_clj/archivist/seed_csv:rw
     depends_on:
       neo4j:
         condition: service_healthy
@@ -145,19 +101,13 @@ services:
   clarity:
     container_name: clarity
     build:
-      context: ./
-      dockerfile: Dockerfile.clarity-clj
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/clarity/docker/Dockerfile
     restart: always
-    command: ["clojure", "-M:dev"]
-    # command: ["clojure", "-M:run"]
-    volumes:
-      - ./packages_clj/clarity:/usr/src/app/packages_clj/clarity
-      - /usr/src/app/.m2
+    command: ["clojure", "-M:run"]
     ports:
       - "2176:2176"
-      # nREPL port
-      - "7892:7892"
-      # - "5555:5555"
+      - "7893:7893"
     environment:
       - ARCHIVIST_HOST=archivist
       - ARCHIVIST_PORT=3000
@@ -171,17 +121,13 @@ services:
   aperture:
     container_name: aperture
     build:
-      context: ./
-      dockerfile: Dockerfile.aperture
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/aperture/docker/Dockerfile
     restart: always
-    command: ["clojure", "-M:dev"]
-    volumes:
-      - ./packages_clj/aperture:/usr/src/app/packages_clj/aperture
-      - /usr/src/app/.m2
+    command: ["clojure", "-M:run"]
     ports:
       - "2175:2175"
-      # nREPL port
-      - "7891:7891"
+      - "7892:7892"
     environment:
       - ARCHIVIST_HOST=archivist
       - ARCHIVIST_PORT=3000
@@ -199,35 +145,60 @@ services:
         aliases:
           - aperture
 
+  prism:
+    container_name: prism
+    build:
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/prism/docker/Dockerfile
+    restart: always
+    environment:
+      - PRISM_NEO4J_URI=neo4j+s://neo4j:7687
+      - PRISM_NEO4J_USER=neo4j
+      - PRISM_NEO4J_PASSWORD=password
+      - PRISM_SEED_XLS_DIR=/seed_xls
+      - PRISM_CSV_OUTPUT_DIR=/import
+      - PRISM_NEO4J_IMPORT_DIR=/import
+      - PRISM_LOG_LEVEL=info
+      - PRISM_API_PORT=3333
+      - PRISM_API_HOST=0.0.0.0
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USER=default
+      - REDIS_PASSWORD=redis
+    ports:
+      - "3333:3333"
+      - "7891:7891"
+    volumes:
+      - ./seed_xls:/seed_xls:ro
+      - ./seed_csv:/import:rw
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - rlc-net
+
   portal:
     container_name: portal
     build:
-      context: ./
-      dockerfile: Dockerfile.portal
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/portal/docker/Dockerfile
     restart: always
-    command: ["clojure", "-M:dev"]
-    volumes:
-      - ./packages_clj/portal:/usr/src/app/packages_clj/portal
-      - /usr/src/app/.m2
+    command: ["clojure", "-M:run"]
     ports:
       - "2174:2174"
-      # nREPL port
       - "7890:7890"
     environment:
       - JWT_SECRET=changeme
-
       - ARCHIVIST_HOST=archivist
       - ARCHIVIST_PORT=3000
-
       - CLARITY_HOST=clarity
       - CLARITY_PORT=2176
-
       - APERTURE_HOST=aperture
       - APERTURE_PORT=2175
-
       - NOUS_HOST=nous
       - NOUS_PORT=2204
-      
       - PRISM_HOST=prism
       - PRISM_PORT=3333
     depends_on:
@@ -241,15 +212,37 @@ services:
         aliases:
           - portal
 
+  shutter:
+    container_name: shutter
+    build:
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_clj/shutter/docker/Dockerfile
+    restart: always
+    command: ["clojure", "-M:run"]
+    ports:
+      - "2173:2173"
+      - "7889:7889"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=changeme
+    depends_on:
+      - postgres
+    networks:
+      rlc-net:
+        aliases:
+          - shutter
+
   nous:
     container_name: nous
     build:
-      context: ./
-      dockerfile: Dockerfile.nous
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_py/nous/docker/Dockerfile
     restart: always
     command: ["python", "main.py"]
-    volumes:
-      - ./packages_py/nous:/usr/src/app/packages_py/nous
     ports:
       - "2204:2204"
     environment:
@@ -270,42 +263,14 @@ services:
         aliases:
           - nous
 
-  shutter:
-    container_name: shutter
-    build:
-      context: ./
-      dockerfile: Dockerfile.shutter
-    restart: always
-    command: ["clojure", "-M:dev"]
-    volumes:
-      - ./packages_clj/shutter:/usr/src/app/packages_clj/shutter
-      - /usr/src/app/.m2
-    ports:
-      - "2173:2173"
-      # nREPL port
-      - "7889:7889"
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-      - JWT_SECRET=changeme
-    depends_on:
-      - postgres
-    networks:
-      rlc-net:
-        aliases:
-          - shutter
-
   viewfinder:
     container_name: viewfinder
     build:
-      context: .
-      dockerfile: Dockerfile.viewfinder
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_ts/frontend/viewfinder/docker/Dockerfile
     restart: always
     ports:
-      - "80:80" # or whatever port you prefer
+      - "80:80"
     depends_on:
       - archivist
       - clarity

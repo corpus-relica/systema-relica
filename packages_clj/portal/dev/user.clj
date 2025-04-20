@@ -4,8 +4,8 @@
             [io.relica.portal.core :as core]))
 
 (defn start-dev []
-  (println "Starting nREPL server on port 7893")
-  (nrepl/start-server :port 7893
+  (println "Starting nREPL server on port 7890")
+  (nrepl/start-server :port 7890
                      :bind "0.0.0.0"
                      :handler cider-nrepl-handler)
   (println "Starting Portal service")
