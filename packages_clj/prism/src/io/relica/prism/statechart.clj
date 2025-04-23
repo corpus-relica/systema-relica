@@ -14,6 +14,22 @@
 (defn update-state [key val state event]
   (assoc state key val))
 
+;; Function to broadcast state updates via WebSocket
+(defn broadcast-state-update
+  "Broadcasts the current state via WebSocket, similar to the original setup/update-status! function."
+  [context _]
+  (log/info "[Action] Broadcasting state update:" (:status-message context))
+  ;; Use resolve to avoid circular dependencies, just like the original setup.clj
+  (when-let [broadcast-fn (resolve 'io.relica.prism.websocket/broadcast-setup-update)]
+    ;; We need to adapt our context to the format expected by the WebSocket system
+    ;; In a later implementation, we might want to update websocket.clj to work directly with our context
+    ;; For now, we can keep this simple
+    (broadcast-fn)))
+
+;; Helper to add broadcasting to any state transition
+(defn with-broadcast [actions]
+  (conj (if (sequential? actions) actions [actions]) #'broadcast-state-update))
+
 ;; Statechart Definition
 (def prism-setup-statechart
   (fsm/machine
@@ -32,80 +48,103 @@
     {:idle
      {:entry [(log-entry :idle)
               (fsm/assign (partial update-state :status-message "Idle"))
-              ]
-      :on {:START_SETUP :checking_db}}
+              #'broadcast-state-update]
+      :on {:START_SETUP {:target :checking_db
+                         :actions #'broadcast-state-update}}}
 
      :checking_db
      {:entry [(log-entry :checking_db)
               (fsm/assign (partial update-state :status-message "Checking database state...")) ; Update status message)
+              #'broadcast-state-update
               #'check-db-action]
       :exit (log-exit :checking_db)
       :on {:DB_CHECK_COMPLETE_EMPTY (-> {:target :awaiting_user_credentials
-                                         :actions [
-                                                   (fsm/assign (partial update-state :db-check-result :empty))
-                                                   ]})
+                                         :actions [(fsm/assign (partial update-state :db-check-result :empty))
+                                                   #'broadcast-state-update]})
            :DB_CHECK_COMPLETE_NOT_EMPTY (-> {:target :setup_complete
-                                             :actions [
-                                                       (fsm/assign (partial update-state :db-check-result :not-empty))
+                                             :actions [(fsm/assign (partial update-state :db-check-result :not-empty))
                                                        (fsm/assign (partial update-state :status-message "Database already contains data."))
-                                                       ]})
+                                                       #'broadcast-state-update]})
            :ERROR (-> {:target :error
-                       :actions [
-                                 (fsm/assign (partial update-state :db-check-result :error))
-                                 ]})}}
+                       :actions [(fsm/assign (partial update-state :db-check-result :error))
+                                 #'broadcast-state-update]})}}
 
      :awaiting_user_credentials
      {:entry [(log-entry :awaiting_user_credentials)
               (fsm/assign (partial update-state :status-message "Awaiting admin user credentials..."))
-              ]
+              #'broadcast-state-update]
       :exit (log-exit :awaiting_user_credentials)
       :on {:SUBMIT_CREDENTIALS (-> {:target :creating_admin_user
                                      ;; Guard could be added here later to validate
-                                    :actions [
-                                              ;; (fsm/assign (partial update-state :user-credentials (fn [_ _ event] (:data event))))
-                                              ]})}}
+                                    :actions [;; (fsm/assign (partial update-state :user-credentials (fn [_ _ event] (:data event))))
+                                              #'broadcast-state-update]})}}
 
      :creating_admin_user
      {:entry [(log-entry :creating_admin_user)
               (fsm/assign (partial update-state :status-message "Creating admin user..."))
+              #'broadcast-state-update
               #'create-user-action]
       :exit (log-exit :creating_admin_user)
       :on {:USER_CREATION_SUCCESS (-> {:target :seeding_db
-                                       :actions [
-                                                 ;; (fsm/assign (partial update-state :master-user (fn [ctx _ _] (get-in ctx [:user-credentials :username]))))
-                                                 ]})
-           :ERROR :error}}
+                                       :actions [;; (fsm/assign (partial update-state :master-user (fn [ctx _ _] (get-in ctx [:user-credentials :username]))))
+                                                 #'broadcast-state-update]})
+           :ERROR {:target :error
+                   :actions #'broadcast-state-update}}}
 
-     :seeding_db
-     {:entry [(log-entry :seeding_db)
-              (fsm/assign (partial update-state :status-message "Starting database seed..."))
-              #'seed-db-action]
-      :exit (log-exit :seeding_db)
-      ;; This might become a compound state later to track XLS->CSV and CSV->DB steps
-      :on {:SEEDING_COMPLETE :building_caches
-           :SEEDING_SKIPPED (-> {:target :building_caches ; Or maybe error? Design decision.
-                                 :actions [
-                                           (fsm/assign (partial update-state :status-message "Seeding skipped (no files?)"))
-                                           ]})
-           :ERROR :error}}
+     :seeding_db {:entry [(log-entry :seeding_db)
+                          (fsm/assign (partial update-state :status-message "Starting database seed..."))
+                          #'broadcast-state-update
+                          #'seed-db-action]
+                  :exit (log-exit :seeding_db)
+                  ;; This might become a compound state later to track XLS->CSV and CSV->DB steps
+                  :on {:SEEDING_COMPLETE {:target :building_caches
+                                          :actions [(fsm/assign (partial update-state :status-message "DB seeding complete."))
+                                                    #'broadcast-state-update]}
+                       :SEEDING_SKIPPED (-> {:target :building_caches ; Or maybe error? Design decision.
+                                             :actions [(fsm/assign (partial update-state :status-message "Seeding skipped (no files?)"))
+                                                       #'broadcast-state-update]})
+                       :ERROR {:target :error
+                               :actions #'broadcast-state-update}}}
 
-     :building_caches
-     {:entry [(log-entry :building_caches)
-              (fsm/assign (partial update-state :status-message "Building database caches..."))
-              #'build-caches-action]
-      :exit (log-exit :building_caches)
-      ;; This might become a parallel state later if caches can build independently
-      :on {:CACHE_BUILD_COMPLETE :setup_complete
-           :ERROR :error}}
+     :building_caches {:initial :facts_cache
+                       :states {:facts_cache {:entry [(fsm/assign (partial update-state :status-message "building entity-facts cache..."))
+                                                      #'broadcast-state-update]
+                                              :on {:FACTS_CACHE_COMPLETE {:target :lineage_cache
+                                                                    :actions [(fsm/assign (partial update-state :status-message "...finished building entity-facts cache."))
+                                                                              #'broadcast-state-update]}}}
+                                :lineage_cache {:entry [(fsm/assign (partial update-state :status-message "building entity-lineage cache..."))
+                                                        #'broadcast-state-update]
+                                                :on {:LINEAGE_CACHE_COMPLETE {:target :subtypes_cache
+                                                                        :actions [(fsm/assign (partial update-state :status-message "...finished building entity-lineage-cache."))
+                                                                                  #'broadcast-state-update]}}}
+                                :subtypes_cache {:entry [(fsm/assign (partial update-state :status-message "building entity-subtypes cache..."))
+                                                         #'broadcast-state-update]
+                                                 :on {:SUBTYPES_CACHE_COMPLETE {:target :complete
+                                                                          :actions [(fsm/assign (partial update-state :status-message "...finished building entity-subtypes-cache."))
+                                                                                    #'broadcast-state-update]}}}
+                                :complete {:on {:CACHE_BUILD_COMPLETE {:target [:> :setup_complete]
+                                                                       :actions [(fsm/assign (partial update-state :status-message "...finished building caches."))
+                                                                                 #'broadcast-state-update]}}}}}
+     ;; {:entry [(log-entry :building_caches)
+     ;;          (fsm/assign (partial update-state :status-message "Building database caches..."))
+     ;;          #'broadcast-state-update
+     ;;          #'build-caches-action]
+     ;;  :exit (log-exit :building_caches)
+     ;;  ;; This might become a parallel state later if caches can build independently
+     ;;  :on {:CACHE_BUILD_COMPLETE {:target :setup_complete
+     ;;                              :actions #'broadcast-state-update}
+     ;;       :ERROR {:target :error
+     ;;               :actions #'broadcast-state-update}}}
 
      :setup_complete
      {:entry [(log-entry :setup_complete)
               (fsm/assign (partial update-state :status-message "Setup complete."))
-              ]}
+              #'broadcast-state-update]}
 
      :error
      {:entry [(log-entry :error)
               ;; Update status based on context, assign action does this
+              #'broadcast-state-update
               #'report-error-action]
       ;; Might have transitions out of error state, e.g., RETRY?
       }}}))
@@ -130,6 +169,8 @@
   (fsm/start setup-service)
 
   (println (fsm/value setup-service))
+  (println (fsm/state setup-service))
+
 
   (fsm/send setup-service :START_SETUP)
 
@@ -141,6 +182,32 @@
 
   (fsm/send setup-service :SEEDING_COMPLETE)
 
+  (fsm/send setup-service :FACTS_CACHE_COMPLETE)
+
+  (fsm/send setup-service :LINEAGE_CACHE_COMPLETE)
+
+  (fsm/send setup-service :SUBTYPES_CACHE_COMPLETE)
+
   (fsm/send setup-service :CACHE_BUILD_COMPLETE)
 
   )
+
+;; Helper functions to extract state from service for websocket
+(defn get-setup-state
+  "Returns the current setup state for external APIs in a format compatible with the original setup/get-setup-state."
+  [service]
+  (let [context (fsm/state service)
+        state-value (fsm/value service)]
+    {:stage (keyword state-value)
+     :master-user (:master-user context)
+     :status (:status-message context)
+     :progress (case (keyword state-value)
+                 :idle 0
+                 :checking_db 10
+                 :awaiting_user_credentials 20
+                 :creating_admin_user 30
+                 :seeding_db 40
+                 :building_caches 70
+                 :setup_complete 100
+                 :error (or (:progress context) 0))
+     :error (:error-message context)}))
