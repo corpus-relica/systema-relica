@@ -7,6 +7,14 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Create required data directories
+function create_data_dirs {
+  echo -e "${BLUE}Ensuring data directories exist...${NC}"
+  mkdir -p packages_ts/core/dataplex/data/{postgres,neo4j,redis}
+  mkdir -p seed_csv
+  echo -e "${GREEN}Data directories ready${NC}"
+}
+
 # Display usage information
 function show_help {
   echo -e "${BLUE}Relica Development Environment Helper${NC}"
@@ -53,9 +61,11 @@ case $cmd in
   start)
     if [ $# -eq 0 ]; then
       echo -e "${YELLOW}Starting all development services...${NC}"
+      create_data_dirs
       docker-compose -f docker-compose.dev.yml up -d
     else
       echo -e "${YELLOW}Starting services: $@${NC}"
+      create_data_dirs
       docker-compose -f docker-compose.dev.yml up -d "$@"
     fi
     ;;
@@ -74,6 +84,7 @@ case $cmd in
     if [ $# -eq 0 ]; then
       echo -e "${YELLOW}Restarting all development services...${NC}"
       docker-compose -f docker-compose.dev.yml down
+      create_data_dirs
       docker-compose -f docker-compose.dev.yml up -d
     else
       echo -e "${YELLOW}Restarting services: $@${NC}"
