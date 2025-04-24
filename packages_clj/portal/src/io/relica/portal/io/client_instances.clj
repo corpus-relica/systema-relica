@@ -91,7 +91,7 @@
 ;; PRISM
 
 (def prism-handlers
-  {:setup/update (fn [msg]
+  {:handle-setup-state-update (fn [msg]
                     (tap> "Prism setup update:")
                     (tap> msg)
                     (events/publish-event {:type :prism-setup-update

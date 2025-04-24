@@ -81,7 +81,8 @@ export const App = () => {
   const { setCategories } = factDataStore;
   
   // State for setup status
-  const [setupState, setSetupState] = useState<'loading' | 'needed' | 'complete' | 'error'>('loading');
+  const [setupStatus, setSetupStatus] = useState<'loading' | 'needed' | 'complete' | 'error'>('loading');
+  const [setupState, setSetupState] = useState<any>(null);
   
   // Effect to initialize WebSocket and check setup status
   useEffect(() => {
@@ -126,15 +127,16 @@ export const App = () => {
         // Check setup status directly through Portal REST API
         const status = await portalClient.getSetupStatus();
         
-        if (status.stage !== 'complete') {
-          setSetupState('needed');
+        if (status.state.id !== 'setup_complete') {
+          setSetupStatus('needed');
+          setSetupState(status);
         } else {
-          setSetupState('complete');
+          setSetupStatus('complete');
         }
       } catch (err) {
         console.error("Failed to check setup status:", err);
         // Going to error state rather than assuming complete
-        setSetupState('error');
+        setSetupStatus('error');
       }
     };
     
@@ -146,10 +148,10 @@ export const App = () => {
     };
   }, []);
   
-  console.log('APP STARTUP', { setupState });
+  console.log('APP STARTUP', { setupStatus });
   
   // Loading state while checking setup
-  if (setupState === 'loading') {
+  if (setupStatus === 'loading') {
     return (
       <div style={{ 
         display: 'flex', 
@@ -163,18 +165,18 @@ export const App = () => {
   }
   
   // If setup is needed, show the setup wizard outside of Admin
-  if (setupState === 'needed') {
+  if (setupStatus === 'needed') {
     return (
       <BrowserRouter>
         <Routes>
-          <Route path="*" element={<SetupWizard />} />
+          <Route path="*" element={<SetupWizard initialState={setupState}/>} />
         </Routes>
       </BrowserRouter>
     );
   }
 
   // Show error/lockout screen if we couldn't connect to the setup services
-  if (setupState === 'error') {
+  if (setupStatus === 'error') {
     return (
       <div style={{ 
         display: 'flex', 

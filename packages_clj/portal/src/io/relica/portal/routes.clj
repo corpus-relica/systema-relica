@@ -165,7 +165,7 @@
                "Access-Control-Allow-Methods" "GET, OPTIONS"
                "Access-Control-Allow-Headers" "Content-Type, Authorization"
                "Access-Control-Max-Age" "3600"}})
-  (GET "/api/prism/setup/status" [] (-> prism-handlers/handle-setup-status
+  (GET "/api/prism/setup/status" [] (-> prism-handlers/get-setup-status
                                       wrap-async-handler))
   
   (OPTIONS "/api/prism/setup/start" []
@@ -190,17 +190,17 @@
                                      ;; wrap-json-body
                                      ))
   
-  (OPTIONS "/api/prism/setup/process-stage" []
-    {:status 200
-     :headers {"Access-Control-Allow-Origin" "*"
-               "Access-Control-Allow-Methods" "POST, OPTIONS"
-               "Access-Control-Allow-Headers" "Content-Type, Authorization"
-               "Access-Control-Max-Age" "3600"}})
-  (POST "/api/prism/setup/process-stage" [] (-> prism-handlers/handle-process-stage
-                                              wrap-async-handler
-                                              ;; wrap-json-body
-                                              ))
-  
+  ;; (OPTIONS "/api/prism/setup/process-stage" []
+  ;;   {:status 200
+  ;;    :headers {"Access-Control-Allow-Origin" "*"
+  ;;              "Access-Control-Allow-Methods" "POST, OPTIONS"
+  ;;              "Access-Control-Allow-Headers" "Content-Type, Authorization"
+  ;;              "Access-Control-Max-Age" "3600"}})
+  ;; (POST "/api/prism/setup/process-stage" [] (-> prism-handlers/handle-process-stage
+  ;;                                             wrap-async-handler
+  ;;                                             ;; wrap-json-body
+  ;;                                             ))
+
   (GET "/health" [] {:status 200 :body "healthy"})
   (OPTIONS "/*" [] {:status 200
                     :headers {"Access-Control-Allow-Origin" "*"

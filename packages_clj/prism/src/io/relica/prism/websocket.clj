@@ -2,6 +2,7 @@
   (:require [io.relica.common.websocket.server :as ws-server]
             [io.relica.prism.config :as config]
             [io.relica.prism.setup :as setup]
+            [io.relica.prism.statechart :as statechart]
             [clojure.core.async :refer [go <!]]
             [taoensso.timbre :as log]))
 
@@ -21,15 +22,16 @@
         (?reply-fn {:success true
                     :timestamp (System/currentTimeMillis)}))
                     
-      :setup/status
+      :setup-status/get
       (do
         (log/debug "Handling setup status request")
-        (?reply-fn (setup/get-setup-state)))
+        (?reply-fn (statechart/get-setup-state)))
       
       :setup/start
       (do
         (log/info "Starting setup sequence via WebSocket")
-        (setup/start-setup-sequence!)
+        ;; (setup/start-setup-sequence!)
+        (statechart/start-setup-sequence!)
         (?reply-fn {:success true :message "Setup sequence started"}))
       
       :setup/create-user
@@ -38,7 +40,7 @@
         (if (and username password confirmPassword)
           (let [validation (setup/validate-credentials username password confirmPassword)]
             (if (:valid validation)
-              (if (setup/create-admin-user! username password)
+              (if (statechart/create-admin-user! username password)
                 (?reply-fn {:success true :message "Admin user created successfully"})
                 (?reply-fn {:success false :message "Failed to create admin user"}))
               (?reply-fn {:success false :message (:message validation)})))
@@ -91,10 +93,22 @@
     (log/info "WebSocket server stopped")))
 
 ;; Broadcast a message to all connected clients
-(defn broadcast-setup-update []
-  (when-let [server @server-instance]
-    (let [setup-state (setup/get-setup-state)]
-      (ws-server/broadcast! server {:id "server"
-                                    :type "setup/update"
-                                    :payload setup-state})
-      (log/debug "Broadcasted setup state update"))))
+;;
+;; (defn broadcast-setup-update
+(defn broadcast-setup-update
+  ([]
+   (broadcast-setup-update nil))
+  ([message]
+   (if (nil? message)
+     (when-let [server @server-instance]
+       (let [setup-state (setup/get-setup-state)]
+         (ws-server/broadcast! server {:id "server"
+                                       :type :setup/update
+                                       :payload setup-state})
+         (log/debug "Broadcasted setup state update")))
+     (do
+       (println @server-instance)
+       (ws-server/broadcast! @server-instance
+                             {:id "server"
+                              :type :setup/update
+                              :payload message})))))

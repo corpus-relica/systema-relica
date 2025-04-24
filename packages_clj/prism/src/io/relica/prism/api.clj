@@ -1,11 +1,13 @@
 (ns io.relica.prism.api
   (:require [org.httpkit.server :as http]
             [io.relica.prism.setup :as setup]
+            [io.relica.prism.statechart :as statechart]
             [io.relica.prism.config :as config]
             [taoensso.timbre :as log]
             [clojure.data.json :as json]
             [ring.middleware.params :refer [wrap-params]]
-            [ring.middleware.keyword-params :refer [wrap-keyword-params]]))
+            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+            ))
 
 (def server-state (atom nil))
 
@@ -19,7 +21,7 @@
 (defn- handle-status 
   "Handles GET /api/setup/status requests."
   [req]
-  (json-response (setup/get-setup-state) 200))
+  (json-response (statechart/get-setup-state) 200))
 
 (defn- handle-start-setup 
   "Handles POST /api/setup/start requests."

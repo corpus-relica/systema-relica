@@ -6,7 +6,7 @@
             [cheshire.core :as json]))
 
 ;; Get setup status from Prism
-(defn handle-setup-status [request]
+(defn get-setup-status [request]
   (go
     (try
       (let [result (<! (prism/get-setup-status prism-client))]
@@ -67,17 +67,17 @@
                  :message (str "Failed to create admin user: " (.getMessage e))})}))))
 
 ;; Process setup stage
-(defn handle-process-stage [request]
-  (go
-    (try
-      (let [result (<! (prism/process-setup-stage prism-client))]
-        {:status 200
-         :headers {"Content-Type" "application/json"}
-         :body (json/generate-string result)})
-      (catch Exception e
-        (log/error e "Error processing setup stage")
-        {:status 500
-         :headers {"Content-Type" "application/json"}
-         :body (json/generate-string 
-                {:success false
-                 :message (str "Failed to process setup stage: " (.getMessage e))})}))))
+;; (defn handle-process-stage [request]
+;;   (go
+;;     (try
+;;       (let [result (<! (prism/process-setup-stage prism-client))]
+;;         {:status 200
+;;          :headers {"Content-Type" "application/json"}
+;;          :body (json/generate-string result)})
+;;       (catch Exception e
+;;         (log/error e "Error processing setup stage")
+;;         {:status 500
+;;          :headers {"Content-Type" "application/json"}
+;;          :body (json/generate-string
+;;                 {:success false
+;;                  :message (str "Failed to process setup stage: " (.getMessage e))})}))))

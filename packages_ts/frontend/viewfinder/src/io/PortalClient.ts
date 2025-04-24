@@ -14,7 +14,10 @@ import {
 
 // Types for Prism setup
 export interface SetupState {
-  stage: "not-started" | "db-check" | "user-setup" | "db-seed" | "cache-build" | "complete";
+  // stage: "not-started" | "db-check" | "user-setup" | "db-seed" | "cache-build" | "complete";
+  state: {
+    id: "idle" | "checking_db" | "awaiting_user_credentials" | "creating_admin_user" | "seeding_db" | "building_caches" | "building_facts_cache" | "building_lineage_cache"| "building_subtypes_cache" | "building_caches_complete" | "setup_complete";
+  }
   masterUser: string | null;
   status: string;
   progress: number;
@@ -258,15 +261,15 @@ class PortalClient {
   }
 
   // Process current setup stage
-  async processSetupStage(): Promise<{ success: boolean; message: string; state: SetupState }> {
-    try {
-      const response = await this.axiosInstance.post("/api/prism/setup/process-stage");
-      return response.data;
-    } catch (error) {
-      console.error('Failed to process setup stage:', error);
-      throw error;
-    }
-  }
+  // async processSetupStage(): Promise<{ success: boolean; message: string; state: SetupState }> {
+  //   try {
+  //     const response = await this.axiosInstance.post("/api/prism/setup/process-stage");
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Failed to process setup stage:', error);
+  //     throw error;
+  //   }
+  // }
 }
 
 export const portalClient = new PortalClient();

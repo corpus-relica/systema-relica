@@ -21,21 +21,24 @@ const ProgressStage: React.FC<ProgressStageProps> = ({
 }) => {
   // Map stages to user-friendly labels
   const stageLabels = {
-    'not-started': 'Not Started',
-    'db-check': 'Database Check',
-    'user-setup': 'Admin User Setup',
-    'db-seed': 'Database Seeding',
-    'cache-build': 'Building Caches',
-    'complete': 'Setup Complete'
+    'idle': 'Not Started',
+    'checking_db': 'Database Check',
+    'awaiting_user_credentials': 'Admin User Setup',
+    'creating_admin_user': 'Creating Admin User',
+    'seeding_db': 'Database Seeding',
+    'building_caches': 'Building Caches',
+    'setup_complete': 'Setup Complete'
   };
 
   // Define the order of steps for the stepper
   const steps = [
-    { id: 'db-check', label: 'Database Check' },
-    { id: 'user-setup', label: 'Admin User Setup' },
-    { id: 'db-seed', label: 'Database Seeding' },
-    { id: 'cache-build', label: 'Building Caches' },
-    { id: 'complete', label: 'Complete' }
+    { id: 'idle', label: 'Start' },
+    { id: 'checking_db', label: 'Database Check' },
+    { id: 'awaiting_user_credentials', label: 'Admin User Setup' },
+    { id: 'creating_admin_user', label: 'Creating Admin User' },
+    { id: 'seeding_db', label: 'Database Seeding' },
+    { id: 'building_caches', label: 'Building Caches' },
+    { id: 'setup_complete', label: 'Complete' }
   ];
 
   // Find current step index
