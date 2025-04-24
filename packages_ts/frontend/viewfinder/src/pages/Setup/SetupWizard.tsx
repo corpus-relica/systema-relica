@@ -167,9 +167,11 @@ const SetupWizard: React.FC = (props) => {
                   Setup Complete! You can now access the system.
                 </Typography>
                 {/* Button to navigate to the main application */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                 <Button variant="contained" color="primary" onClick={onFinalizeSetup}>
                   Finalize Setup
                 </Button>
+              </Box>
               </Box>
             )}
           </>
@@ -181,9 +183,11 @@ const SetupWizard: React.FC = (props) => {
                   Setup not started. Click the button below to begin.
                 </Typography>
                 {/* Button to navigate to the main application */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                 <Button variant="contained" color="primary" onClick={onInitializeSetup}>
                   Initialize Setup
                 </Button>
+              </Box>
               </Box>
             )}
       </Paper>

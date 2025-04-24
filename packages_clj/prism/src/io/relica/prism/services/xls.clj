@@ -1,9 +1,8 @@
-(ns io.relica.prism.xls
+(ns io.relica.prism.services.xls
   (:require [dk.ative.docjure.spreadsheet :as excel]
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [io.relica.prism.config :as config]
-            ;;[clojure.tools.logging :as log]
             [taoensso.timbre :as log]
             [clojure.string :as str])
   (:import [java.util Date]

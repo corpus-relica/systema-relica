@@ -1,10 +1,9 @@
-(ns io.relica.prism.xls-transform
+(ns io.relica.prism.services.xls-transform
   (:require [dk.ative.docjure.spreadsheet :as excel]
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [io.relica.prism.config :as config]
             [taoensso.timbre :as log]
-            [clojure.java.shell :as shell]
             [clojure.string :as str])
   (:import [java.util Date]
            [java.time LocalDate ZoneId]

@@ -1,17 +1,11 @@
-(ns io.relica.prism.statechart
+(ns io.relica.prism.statechart.statechart
   (:require [statecharts.core :as fsm]
             [taoensso.timbre :as log]
-            [clojure.pprint :as pprint]
-            [io.relica.prism.db :as db]
-            [io.relica.prism.setup :as setup]
-            [io.relica.prism.cache :as cache]
-            [clojure.core.async :refer [go <!]]
-            [clojure.tools.logging :as logging]
-            ))
+            [io.relica.prism.setup :as setup]))
 
 
 ;; State definitions and service atom
-(def setup-service (atom nil))
+;; (def setup-service (atom nil))
 
 
 
@@ -24,14 +18,12 @@
   (assoc state key val))
 
 
-
-
 ;; Function to broadcast state updates via WebSocket
 (defn broadcast-state-update
   "Broadcasts the current state via WebSocket, similar to the original setup/update-status! function."
   [state event]
   (log/info "[Action] Broadcasting state update:" (:status-message state))
-  (when-let [broadcast-fn (resolve 'io.relica.prism.websocket/broadcast-setup-update)]
+  (when-let [broadcast-fn (resolve 'io.relica.prism.io.ws-server/broadcast-setup-update)]
     (let [formatted-state (setup/format-state-for-client state)]
       (broadcast-fn formatted-state)))
   )
@@ -148,15 +140,15 @@
       ;; Might have transitions out of error state, e.g., RETRY?
       }}}))
 
-(defn init!
-  "Initializes the state machine with the initial state."
-  []
+;; (defn init!
+;;   "Initializes the state machine with the initial state."
+;;   []
 
-  (reset! setup-service (fsm/service prism-setup-statechart))
+;;   (reset! setup-service (fsm/service prism-setup-statechart))
 
-  (fsm/start @setup-service))
+;;   (fsm/start @setup-service))
 
-;;
+;; interface mostly for the statechart controller
 (defn create-state-machine []
   (let [state-machine (fsm/service prism-setup-statechart)]
     state-machine))
@@ -175,26 +167,19 @@
 ;;
 
 
-(defn create-admin-user!
-  "Creates an admin user with the provided credentials."
-  [username password]
-  (let [res (setup/create-admin-user! username password)]
-    (if res
-      (do
-        (fsm/send @setup-service :SUBMIT_CREDENTIALS {:username username
-                                                       :password password})
-        true)
-      (do
-        (fsm/send @setup-service :ERROR)
-        false))))
+;; (defn create-admin-user!
+;;   "Creates an admin user with the provided credentials."
+;;   [username password]
+;;   (let [res (setup/create-admin-user! username password)]
+;;     (if res
+;;       (do
+;;         (fsm/send @setup-service :SUBMIT_CREDENTIALS {:username username
+;;                                                        :password password})
+;;         true)
+;;       (do
+;;         (fsm/send @setup-service :ERROR)
+;;         false))))
 
-;; (defn get-setup-state
-;;   "Returns the current state of the setup process."
-;;   []
-;;   (let [state (fsm/state @setup-service)]
-;;     (format-state-for-client state)))
-
-;; Example of how to create and interact with the state machine (for REPL usage)
 (comment
 
   ;; (def s1 (fsm/initialize prism-setup-statechart))
@@ -209,46 +194,46 @@
 
   (fsm/start setup-service)
 
-  (println (fsm/value @setup-service))
+  (println (fsm/value setup-service))
 
   (println (fsm/state setup-service))
 
 
-  (fsm/send @setup-service :START_SETUP)
+  (fsm/send setup-service :START_SETUP)
 
-  (fsm/send @setup-service :DB_CHECK_COMPLETE_EMPTY)
+  (fsm/send setup-service :DB_CHECK_COMPLETE_EMPTY)
 
-  (fsm/send @setup-service :SUBMIT_CREDENTIALS)
+  (fsm/send setup-service :SUBMIT_CREDENTIALS)
 
-  (fsm/send @setup-service :USER_CREATION_SUCCESS)
+  (fsm/send setup-service :USER_CREATION_SUCCESS)
 
-  (fsm/send @setup-service :SEEDING_COMPLETE)
+  (fsm/send setup-service :SEEDING_COMPLETE)
 
-  (fsm/send @setup-service :FACTS_CACHE_COMPLETE)
+  (fsm/send setup-service :FACTS_CACHE_COMPLETE)
 
-  (fsm/send @setup-service :LINEAGE_CACHE_COMPLETE)
+  (fsm/send setup-service :LINEAGE_CACHE_COMPLETE)
 
-  (fsm/send @setup-service :SUBTYPES_CACHE_COMPLETE)
+  (fsm/send setup-service :SUBTYPES_CACHE_COMPLETE)
 
-  (fsm/send @setup-service :CACHE_BUILD_COMPLETE)
+  (fsm/send setup-service :CACHE_BUILD_COMPLETE)
 
   (init!)
 
   (defn full-cycle []
     (init!)
 
-    (fsm/send @setup-service :DB_CHECK_COMPLETE_EMPTY)
+    (fsm/send setup-service :DB_CHECK_COMPLETE_EMPTY)
 
-    (fsm/send @setup-service :SUBMIT_CREDENTIALS)
+    (fsm/send setup-service :SUBMIT_CREDENTIALS)
 
-    (fsm/send @setup-service :USER_CREATION_SUCCESS)
+    (fsm/send setup-service :USER_CREATION_SUCCESS)
 
-    (fsm/send @setup-service :SEEDING_COMPLETE)
+    (fsm/send setup-service :SEEDING_COMPLETE)
 
-    (fsm/send @setup-service :FACTS_CACHE_COMPLETE)
+    (fsm/send setup-service :FACTS_CACHE_COMPLETE)
 
-    (fsm/send @setup-service :LINEAGE_CACHE_COMPLETE)
+    (fsm/send setup-service :LINEAGE_CACHE_COMPLETE)
 
-    (fsm/send @setup-service :SUBTYPES_CACHE_COMPLETE))
+    (fsm/send setup-service :SUBTYPES_CACHE_COMPLETE))
 
   (full-cycle))

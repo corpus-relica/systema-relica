@@ -1,16 +1,15 @@
 (ns io.relica.prism.setup
   (:require [taoensso.timbre :as log]
-            [io.relica.prism.db :as db]
-            [io.relica.prism.xls-transform :as xls-transform]
-            [io.relica.prism.xls :as xls]
-            [io.relica.prism.config :as config]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.core.async :refer [go <! >!]]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
             [buddy.hashers :as hashers]
-            [io.relica.prism.cache :as cache]))
+            [io.relica.prism.config :as config]
+            [io.relica.prism.services.db :as db]
+            [io.relica.prism.services.xls-transform :as xls-transform]
+            [io.relica.prism.services.cache :as cache]))
 
 (defn format-state-for-client
   "Creates a comprehensive state object that contains all information a client needs."

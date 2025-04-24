@@ -1,15 +1,10 @@
-(ns io.relica.prism.statechart-controller
-  (:require [io.relica.prism.websocket :as ws]
-            [io.relica.prism.config :as config]
-            [io.relica.prism.setup :as setup]
-            [io.relica.prism.cache :as cache]
-            [clojure.pprint :as pprint]
-            [io.relica.prism.db :as db]
-            [io.relica.prism.statechart :as statechart]
+(ns io.relica.prism.statechart.statechart-controller
+  (:require [io.relica.prism.setup :as setup]
+            [io.relica.prism.services.cache :as cache]
+            [io.relica.prism.services.db :as db]
+            [io.relica.prism.statechart.statechart :as statechart]
             [clojure.core.async :refer [go <!]]
-            [taoensso.timbre :as log]
-            [clojure.tools.logging :as logging]
-            [cheshire.core :as json]))
+            [taoensso.timbre :as log]))
 
 
 (def machine (atom nil))
@@ -27,6 +22,8 @@
                    :error-message (str "Database check failed: " (.getMessage e))}))))
 
 (defn create-user-activity [context event]
+  ;; TODO - maybe move this from the ws-handlers to here?
+  ;;
   ;; (log/info "[Activity] Creating admin user...")
   ;; (let [{:keys [username password]} (:data event)]
   ;;   (try

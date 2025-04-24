@@ -1,11 +1,9 @@
 (ns io.relica.prism.io.ws-handlers
   (:require [io.relica.common.websocket.server :as common-ws]
-            ;; [io.relica.clarity.services.semantic-model-service :as sms]
             [clojure.core.async :as async :refer [go <!]]
-            [io.relica.prism.statechart-controller :as statechart-controller]
+            [io.relica.prism.statechart.statechart-controller :as statechart-controller]
             [io.relica.prism.setup :as setup]
-            [clojure.tools.logging :as log]
-            [clojure.pprint :as pprint]))
+            [clojure.tools.logging :as log]))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :app/heartbeat

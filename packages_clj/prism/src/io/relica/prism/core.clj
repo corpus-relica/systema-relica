@@ -1,14 +1,13 @@
 (ns io.relica.prism.core
   (:require [taoensso.timbre :as log]
-            [io.relica.prism.db :as db]
-            [io.relica.prism.xls :as xls]
-            [io.relica.prism.xls-transform :as xls-transform]
             [io.relica.prism.config :as config]
-            [io.relica.prism.io.ws-handlers :as ws-handlers]
             [io.relica.prism.setup :as setup]
-            [io.relica.prism.statechart-controller :as statechart-controller]
-            ;; [io.relica.prism.api :as api]
-            [io.relica.prism.websocket :as websocket]
+            [io.relica.prism.services.db :as db]
+            [io.relica.prism.services.xls :as xls]
+            [io.relica.prism.services.xls-transform :as xls-transform]
+            [io.relica.prism.io.ws-server :as ws-server]
+            [io.relica.prism.io.ws-handlers :as ws-handlers] ;; need to be required to register the handlers
+            [io.relica.prism.statechart.statechart-controller :as statechart-controller]
             [clojure.java.io :as io])
   (:gen-class))
 
@@ -55,8 +54,8 @@
   []
   (log/info "Starting interactive setup process...")
   
-  ;; Start the WebSocket server
-  (websocket/start-server)
+  ;; Start the Ws-Server server
+  (ws-server/start-server)
 
   ;; Initialize the setup module
   ;; (setup/init!)
@@ -70,7 +69,7 @@
   []
   (log/info "Stopping Prism services...")
   ;; (api/stop-server)
-  (websocket/stop-server)
+  (ws-server/stop-server)
   (log/info "All Prism services stopped."))
 
 (defn start-prism-services

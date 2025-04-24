@@ -1,10 +1,9 @@
 (ns io.relica.prism.io.client-instances
-  (:require [mount.core :refer [defstate start stop]]
-            [clojure.core.async :as async :refer [go <! >! chan]]
+  (:require [clojure.core.async :as async :refer [go <! >! chan]]
             [clojure.tools.logging :as log]
             [io.relica.common.io.archivist-client :as archivist]
             [io.relica.prism.config :refer [config]] ; Assuming config system exists
-            [io.relica.common.websocket.client :as ws-client])) ; Assuming client helpers exist
+            )) ; Assuming client helpers exist
 
 (defonce archivist-client (archivist/create-client {:host (get-in config [:archivist :host])
                                                    :port (get-in config [:archivist :port])}))

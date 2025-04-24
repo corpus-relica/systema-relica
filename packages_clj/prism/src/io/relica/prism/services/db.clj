@@ -1,4 +1,4 @@
-(ns io.relica.prism.db
+(ns io.relica.prism.services.db
   (:require [neo4j-clj.core :as neo4j]
             [io.relica.prism.config :as config]
             [taoensso.timbre :as log])
