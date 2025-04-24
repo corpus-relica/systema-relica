@@ -18,29 +18,29 @@
     value))
 
 (def config
-  {:neo4j-uri        "bolt://neo4j:7687" ;(get-required-env "PRISM_NEO4J_URI") ; e.g., "neo4j+s://xxxx.databases.neo4j.io"
+  {:neo4j-uri        "bolt://localhost:7687" ;(get-required-env "PRISM_NEO4J_URI") ; e.g., "neo4j+s://xxxx.databases.neo4j.io"
    :neo4j-user       "neo4j" ;(get-required-env "PRISM_NEO4J_USER") ; e.g., "neo4j"
    :neo4j-password   "password" ;(get-required-env "PRISM_NEO4J_PASSWORD")
 
    ;; PostgreSQL configuration for user management
    :db-spec          {:dbtype "postgresql"
                      :dbname (get-env "POSTGRES_DB" "postgres")
-                     :host (get-env "POSTGRES_HOST" "postgres")
+                     :host (get-env "POSTGRES_HOST" "localhost")
                      :user (get-env "POSTGRES_USER" "postgres")
                      :password (get-env "POSTGRES_PASSWORD" "password")
                      :port (Integer/parseInt (get-env "POSTGRES_PORT" "5432"))}
    :jwt-secret       (get-env "JWT_SECRET" "your-dev-secret-change-me")
 
    ;; Path within the container where seed XLS files are located
-   :seed-xls-dir     (get-env "PRISM_SEED_XLS_DIR" "/seed_xls")
+   :seed-xls-dir     (get-env "PRISM_SEED_XLS_DIR" "../../seed_xls")
 
    ;; Path within the container where Neo4j can import CSVs from
    ;; Note: This MUST match Neo4j's configured `server.directories.import` path
-   :neo4j-import-dir (get-env "PRISM_NEO4J_IMPORT_DIR" "/import")
+   :neo4j-import-dir (get-env "PRISM_NEO4J_IMPORT_DIR" "../../seed_cv")
 
    ;; Path within the container where Prism can write intermediate CSVs
    ;; Often the same as :neo4j-import-dir, but could differ in some setups
-   :csv-output-dir   (get-env "PRISM_CSV_OUTPUT_DIR" "/import")
+   :csv-output-dir   (get-env "PRISM_CSV_OUTPUT_DIR" "../../seed_csv")
 
    ;; UID resolution settings (matching TS implementation defaults)
    :min-free-uid      (Integer/parseInt (get-env "PRISM_MIN_FREE_UID" "1000000000"))

@@ -1,12 +1,13 @@
 (ns io.relica.prism.core
   (:require [taoensso.timbre :as log]
-            [io.relica.prism.db :as db]
-            [io.relica.prism.xls :as xls]
-            [io.relica.prism.xls-transform :as xls-transform]
             [io.relica.prism.config :as config]
             [io.relica.prism.setup :as setup]
-            ;; [io.relica.prism.api :as api]
-            [io.relica.prism.websocket :as websocket]
+            [io.relica.prism.services.db :as db]
+            [io.relica.prism.services.xls :as xls]
+            [io.relica.prism.services.xls-transform :as xls-transform]
+            [io.relica.prism.io.ws-server :as ws-server]
+            [io.relica.prism.io.ws-handlers :as ws-handlers] ;; need to be required to register the handlers
+            [io.relica.prism.statechart.statechart-controller :as statechart-controller]
             [clojure.java.io :as io])
   (:gen-class))
 
@@ -17,8 +18,7 @@
    This is the original non-interactive approach."
   []
   (log/info "Checking database initialization status (legacy method)...")
-  (try
-    (let [db-empty? (db/database-empty?)]
+  (try (let [db-empty? (db/database-empty?)]
       (if db-empty?
         (do
           (log/info "Database is empty. Starting seeding process...")
@@ -54,15 +54,13 @@
   []
   (log/info "Starting interactive setup process...")
   
-  ;; Initialize the setup module
-  (setup/init!)
-  
-  ;; Start the API server
-  ;; (api/start-server)
+  ;; Start the Ws-Server server
+  (ws-server/start-server)
 
-  ;; Start the WebSocket server
-  (websocket/start-server)
-  
+  ;; Initialize the setup module
+  ;; (setup/init!)
+  (statechart-controller/init!)
+
   (log/info "Interactive setup ready. API server and WebSocket server are running on port" (config/api-server-port))
   (log/info "Visit http://localhost:" (config/api-server-port) " to complete setup"))
 
@@ -71,7 +69,7 @@
   []
   (log/info "Stopping Prism services...")
   ;; (api/stop-server)
-  (websocket/stop-server)
+  (ws-server/stop-server)
   (log/info "All Prism services stopped."))
 
 (defn start-prism-services
@@ -118,5 +116,13 @@
   ;; (start-prism-services)
   ;; (stop-services)
   ;; (-main)
+
+  (defn reset! []
+    (setup/clear-users-and-envs!)
+    (db/clear-db!)
+    (statechart-controller/init!)
+    )
+
+  (reset!)
 
   )

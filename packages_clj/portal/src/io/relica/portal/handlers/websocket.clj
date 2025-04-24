@@ -329,16 +329,16 @@
                             :type "portal:prismSetupUpdate"
                             :payload payload}))
 
-(defn handle-prism-setup-status [_]
-  (go
-    (try
-      (let [result (<! (prism/get-setup-status prism-client))]
-        {:success true
-         :status result})
-      (catch Exception e
-        (log/error "Error getting Prism setup status:" e)
-        {:success false
-         :error (.getMessage e)}))))
+;; (defn handle-prism-setup-status [_]
+;;   (go
+;;     (try
+;;       (let [result (<! (prism/get-setup-status prism-client))]
+;;         {:success true
+;;          :status result})
+;;       (catch Exception e
+;;         (log/error "Error getting Prism setup status:" e)
+;;         {:success false
+;;          :error (.getMessage e)}))))
 
 (defn handle-prism-start-setup [_]
   (go
@@ -373,19 +373,19 @@
         {:success false
          :error (.getMessage e)}))))
 
-(defn handle-prism-setup-status [payload]
-  (println "PRISM SETUP STATUS")
-  (println payload)
-  ;; (go
-  ;;   (try
-  ;;     (let [result (<! (prism/get-setup-status prism-client))]
-  ;;       {:success true
-  ;;        :status result})
-  ;;     (catch Exception e
-  ;;       (log/error "Error getting Prism setup status:" e)
-  ;;       {:success false
-  ;;        :error (.getMessage e)})))
-  )
+;; (defn handle-prism-setup-status [payload]
+;;   (println "PRISM SETUP STATUS")
+;;   (println payload)
+;;   ;; (go
+;;   ;;   (try
+;;   ;;     (let [result (<! (prism/get-setup-status prism-client))]
+;;   ;;       {:success true
+;;   ;;        :status result})
+;;   ;;     (catch Exception e
+;;   ;;       (log/error "Error getting Prism setup status:" e)
+;;   ;;       {:success false
+;;   ;;        :error (.getMessage e)})))
+;;   )
 
 ;; Core
 
@@ -457,7 +457,7 @@
    "chatUserInput" handle-chat-user-input
 
    ;; Prism setup handlers
-   "prism/setupStatus" handle-prism-setup-status
+   ;; "prism/setupStatus" handle-prism-setup-status
    "prism/startSetup" handle-prism-start-setup
    "prism/createUser" handle-prism-create-user
    "prism/processStage" handle-prism-process-stage

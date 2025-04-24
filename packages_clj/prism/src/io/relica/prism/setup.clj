@@ -1,83 +1,94 @@
 (ns io.relica.prism.setup
   (:require [taoensso.timbre :as log]
-            [io.relica.prism.db :as db]
-            [io.relica.prism.xls-transform :as xls-transform]
-            [io.relica.prism.xls :as xls]
-            [io.relica.prism.config :as config]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.core.async :refer [go <! >!]]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
             [buddy.hashers :as hashers]
-            [io.relica.prism.cache :as cache]))
+            [io.relica.prism.config :as config]
+            [io.relica.prism.services.db :as db]
+            [io.relica.prism.services.xls-transform :as xls-transform]
+            [io.relica.prism.services.cache :as cache]))
 
-;; Setup state tracking
-(defonce setup-state (atom {:stage :not-started
-                            :master-user nil
-                            :status "Setup has not been initiated."
-                            :progress 0
-                            :error nil}))
+(defn format-state-for-client
+  "Creates a comprehensive state object that contains all information a client needs."
+  [state]
+  (let [context state
+        value (:_state state)
+        current-state (if (vector? value)
+                        ;; Handle hierarchical states, e.g., [:building_caches :facts_cache]
+                        (let [parent (first value)
+                              child (second value)]
+                          {:id parent
+                           :substate child
+                           :full_path value})
+                        ;; Handle flat states
+                        {:id value
+                         :substate nil
+                         :full_path [value]})]
 
-;; Setup stages
-(def setup-stages [:db-check :user-setup :db-seed :cache-build :complete])
-
-(defn get-setup-state
-  "Returns the current setup state for external APIs."
-  []
-  @setup-state)
-
-(defn advance-stage!
-  "Advances the setup to the next stage."
-  []
-  (let [current-stage (:stage @setup-state)
-        current-index (when (keyword? current-stage)
-                        (.indexOf setup-stages current-stage))
-        next-index (inc current-index)
-        next-stage (if (and (number? next-index) (< next-index (count setup-stages)))
-                     (nth setup-stages next-index)
-                     :complete)]
-    (swap! setup-state assoc
-           :stage next-stage
-           :progress (if (= next-stage :complete) 100
-                         (* (/ (inc next-index) (count setup-stages)) 100)))))
+    ;; Create a complete state object with all necessary information
+    {:timestamp (System/currentTimeMillis)
+     :state current-state
+     :progress (case (keyword (if (vector? value) (first value) value))
+                 :idle 0
+                 :checking_db 10
+                 :awaiting_user_credentials 20
+                 :creating_admin_user 30
+                 :seeding_db 40
+                 :building_caches (+ 70
+                                     (case (keyword (second value))
+                                       :building_facts_cache 0
+                                       :building_lineage_cache 10
+                                       :building_subtypes_cache 20
+                                       :building_caches_complete 30
+                                       0))
+                 :setup_complete 100
+                 :error (or (:progress context) 0))
+     :status (:status-message context)
+     :master_user (:master-user context)
+     :error (:error-message context)
+     :data (dissoc context :status-message :error-message :master-user)}))
 
 (defn update-status!
   "Updates the setup status message."
   [status-message]
-  (swap! setup-state assoc :status status-message)
-  (log/info status-message)
-  ;; We'll add a call to broadcast the update via WebSocket
-  ;; This will be implemented later and injected to avoid circular dependencies
-  (when-let [broadcast-fn (resolve 'io.relica.prism.websocket/broadcast-setup-update)]
-    (broadcast-fn)))
+  ;; (swap! setup-state assoc :status status-message)
+  ;; (log/info status-message)
+  ;; ;; We'll add a call to broadcast the update via WebSocket
+  ;; ;; This will be implemented later and injected to avoid circular dependencies
+  ;; (when-let [broadcast-fn (resolve 'io.relica.prism.websocket/broadcast-setup-update)]
+  ;;   (broadcast-fn))
+  )
 
 (defn set-error!
   "Sets an error in the setup state."
   [error-message]
-  (log/error error-message)
-  (swap! setup-state assoc :error error-message))
+;;   (log/error error-message)
+;;   (swap! setup-state assoc :error error-message))
+  )
 
-(defn start-setup-sequence!
-  "Initiates the interactive setup sequence."
-  []
-  (log/info "Starting setup sequence...")
-  (swap! setup-state assoc
-         :stage :db-check
-         :error nil
-         :status "Checking database state..."
-         :progress 10)
+;; (defn start-setup-sequence!
+;;   "Initiates the interactive setup sequence."
+;;   []
+;;   (log/info "Starting setup sequence...")
+;;   (swap! setup-state assoc
+;;          :stage :db-check
+;;          :error nil
+;;          :status "Checking database state..."
+;;          :progress 10)
 
-  (try
-    (if (db/database-empty?)
-      (do
-        (update-status! "Database is empty. Ready for initial setup.")
-        (advance-stage!)) ; Move to :user-setup
-      (do
-        (update-status! "Database already contains data. Setup not required.")
-        (swap! setup-state assoc :stage :complete :progress 100)))
-    (catch Exception e
-      (set-error! (str "Error checking database state: " (.getMessage e))))))
+;;   (try
+;;     (if (db/database-empty?)
+;;       (do
+;;         (update-status! "Database is empty. Ready for initial setup.")
+;;         (advance-stage!)) ; Move to :user-setup
+;;       (do
+;;         (update-status! "Database already contains data. Setup not required.")
+;;         (swap! setup-state assoc :stage :complete :progress 100)))
+;;     (catch Exception e
+;;       (set-error! (str "Error checking database state: " (.getMessage e))))))
 
 (defn validate-credentials
   "Validates the admin user credentials."
@@ -104,14 +115,17 @@
 (defn create-admin-user!
   "Creates the admin user with the given credentials."
   [username password]
-  (log/info "Creating admin user:" username)
-  (update-status! (str "Creating admin user: " username))
+  (log/info "Creating admin user:" username password)
+  ;; (update-status! (str "Creating admin user: " username))
 
   (try
     ;; Create PostgreSQL admin user
     (let [email username ; Generate an email based on username
           password-hash (buddy.hashers/derive password {:algorithm :bcrypt})
           jdbc-conn (jdbc/get-connection (config/db-spec))
+
+          _ (log/info "Connecting to PostgreSQL database...")
+          _ (log/info jdbc-conn)
 
           ;; Create user
           user-result (jdbc/execute-one! jdbc-conn
@@ -147,8 +161,6 @@
       (if (and user-result env-result user-env-result)
         (do
           (update-status! (str "Admin user " username " created successfully with default environment"))
-          (swap! setup-state assoc :master-user username)
-          (advance-stage!) ; Move to :db-seed
           true)
         (do
           (set-error! (str "Failed to create admin user"
@@ -158,8 +170,29 @@
                              " - user-environment link failed")))
           false)))
     (catch Exception e
-      (set-error! (str "Error creating admin user: " (.getMessage e)))
+      (log/error e "Error creating admin user")
+      (set-error! (str "^^^^^^^^^^^^^^ Error creating admin user: " (.getMessage e)))
       false)))
+
+(defn clear-users-and-envs!
+  "Clears all users and environments from the database."
+  []
+  (log/info "Clearing all users and environments from the database...")
+  (try
+    (let [jdbc-conn (jdbc/get-connection (config/db-spec))]
+      ;; Clear user-environment links
+      (jdbc/execute! jdbc-conn ["DELETE FROM user_environments"])
+
+      ;; Clear environments
+      (jdbc/execute! jdbc-conn ["DELETE FROM environments"])
+
+      ;; Clear users
+      (jdbc/execute! jdbc-conn ["DELETE FROM users"])
+
+      (log/info "All users and environments cleared successfully."))
+    (catch Exception e
+      (log/error e "Error clearing users and environments")
+      (set-error! (str "Error clearing users and environments: " (.getMessage e))))))
 
 (defn seed-database!
   "Seeds the database with initial data from XLS files."
@@ -171,8 +204,8 @@
     (let [csv-file-paths (xls-transform/transform-seed-xls!)
           ;; csv-file-paths (xls/process-seed-directory)
           ]
-      (print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-      (print csv-file-paths)
+      (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      (println csv-file-paths)
       (if (seq csv-file-paths)
         (do
           (update-status! (str "Processed " (count csv-file-paths) " seed files. Importing data..."))
@@ -186,7 +219,7 @@
               (update-status! (str "Importing " file-name " (" (inc idx) "/" total-files ")..."))
 
               ;; Update progress after each file
-              (swap! setup-state update :progress + progress-increment)
+              ;; (swap! setup-state update :progress + progress-increment)
 
               ;; Create nodes
               (update-status! (str "Creating entities from " file-name "..."))
@@ -203,7 +236,7 @@
                                   {:file file-name :error (:error rel-result)}))))))
 
           (update-status! "Database seeding completed successfully")
-          (advance-stage!) ; Move to :cache-build
+          ;; (advance-stage!) ; Move to :cache-build
           true)
         (do
           (update-status! "No seed files found. Database seeding skipped.")
@@ -250,7 +283,8 @@
             (do
               (update-status! "Database caches built successfully.")
               (log/info "All caches built successfully.")
-              (advance-stage!)) ; Move to :complete ONLY AFTER successful completion
+              ;; (advance-stage!)
+              ) ; Move to :complete ONLY AFTER successful completion
             (do
               (set-error! "Failed to build one or more database caches.")
               (log/error "Failed to build one or more database caches.")))
@@ -264,29 +298,14 @@
   ;; The stage advancement happens asynchronously in the go block above.
   true)
 
-(defn complete-setup!
-  "Marks the setup as complete."
-  []
-  (log/info "Setup completed successfully.")
-  (update-status! "Setup completed successfully.")
-  (swap! setup-state assoc :stage :complete :progress 100))
 
-(defn handle-setup-stage!
-  "Handles the current setup stage based on the state."
-  []
-  (let [current-stage (:stage @setup-state)]
-    (case current-stage
-      :not-started (start-setup-sequence!)
-      :db-check (start-setup-sequence!) ; Re-run the check if needed
-      :user-setup nil ; Wait for user input via API
-      :db-seed (seed-database!)
-      :cache-build (build-caches!)
-      :complete (complete-setup!)
-      ;; Default case
-      (log/warn "Unknown setup stage:" current-stage))))
+(comment
 
-;; Initialize the setup
-(defn init!
-  "Initializes the setup module."
-  []
-  (log/info "Setup module initialized"))
+  (create-admin-user! "admin@admin.net" "password123")
+
+  (clear-users-and-envs!)
+
+  (seed-database!)
+
+
+  )

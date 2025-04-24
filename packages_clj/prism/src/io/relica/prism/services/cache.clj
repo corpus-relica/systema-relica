@@ -1,8 +1,7 @@
-(ns io.relica.prism.cache
+(ns io.relica.prism.services.cache
   (:require [taoensso.timbre :as log]
             [io.relica.common.services.cache-service :refer [cache-service-comp start] :as common-cache]
             [io.relica.common.io.archivist-client :as archivist]
-            [io.relica.prism.cache.stubs :as stubs]
             [io.relica.prism.io.client-instances :refer [request-lineage archivist-client]]
             [clojure.core.async :refer [go <! >!]]))
 

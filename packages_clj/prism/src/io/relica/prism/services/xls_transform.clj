@@ -1,10 +1,9 @@
-(ns io.relica.prism.xls-transform
+(ns io.relica.prism.services.xls-transform
   (:require [dk.ative.docjure.spreadsheet :as excel]
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [io.relica.prism.config :as config]
             [taoensso.timbre :as log]
-            [clojure.java.shell :as shell]
             [clojure.string :as str])
   (:import [java.util Date]
            [java.time LocalDate ZoneId]
@@ -354,6 +353,7 @@
                                            merged-config)))
                              xls-files))]
 
+
                 ;; Return valid results
                 (let [successful-results (filter #(= (:status %) :success) results)]
                   (log/infof "Successfully processed %d of %d XLS files"
@@ -363,3 +363,10 @@
                   ;; (reset-directory-permissions! csv-dir)
 
                   successful-results)))))))))
+
+(comment
+
+  (transform-seed-xls!)
+
+
+  )
