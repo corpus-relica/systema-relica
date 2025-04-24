@@ -354,6 +354,7 @@
                                            merged-config)))
                              xls-files))]
 
+
                 ;; Return valid results
                 (let [successful-results (filter #(= (:status %) :success) results)]
                   (log/infof "Successfully processed %d of %d XLS files"
@@ -363,3 +364,10 @@
                   ;; (reset-directory-permissions! csv-dir)
 
                   successful-results)))))))))
+
+(comment
+
+  (transform-seed-xls!)
+
+
+  )

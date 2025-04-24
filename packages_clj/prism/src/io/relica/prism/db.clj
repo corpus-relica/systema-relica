@@ -30,6 +30,11 @@
 (neo4j/defquery count-nodes-query "MATCH (n) RETURN count(n) AS node_count LIMIT 1")
 (neo4j/defquery execute-cypher-query "CALL apoc.cypher.run($cypher, $params) YIELD value RETURN value")
 
+(neo4j/defquery clear-db-query
+  "MATCH (n)
+   DETACH DELETE n
+   RETURN count(n) AS count")
+
 ;; Define specific named queries for csv loading - keeping this simpler to match the 
 ;; archivist TypeScript implementation
 (neo4j/defquery load-nodes-from-csv-query
@@ -134,6 +139,7 @@
    
    RETURN count(rel) as count")
 
+
 ;; Define a connection function with retry logic for transactions
 (defn with-retry
   "Execute a function with Neo4j transaction with retries on transient errors"
@@ -228,6 +234,24 @@
         (log/error e "Failed to load relationships from CSV file")
         {:success false :error (.getMessage e)}))))
 
+(defn clear-db!
+  "Clears the Neo4j database by deleting all nodes and relationships."
+  []
+  (log/info "Clearing database...")
+  (try
+    (let [driver (get-driver)
+          result (neo4j/with-transaction driver tx
+                   (let [query-result (clear-db-query tx {})]
+                     ;; Fully realize results inside the transaction
+                     (doall query-result)))
+          count (:count (first result))]
+      (log/infof "Successfully cleared database. Deleted %d nodes and relationships." count)
+      {:success true})
+    (catch Exception e
+      (log/error e "Failed to clear database")
+      {:success false :error (.getMessage e)}))
+  )
+
 ;; Close resources when application shuts down
 (defn shutdown []
   (log/info "Shutting down Neo4j connection...")
@@ -241,3 +265,9 @@
 ;; Register shutdown hook
 (.addShutdownHook (Runtime/getRuntime) 
                   (Thread. shutdown))
+
+(comment
+
+  (clear-db!)
+
+  )

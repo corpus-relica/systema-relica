@@ -1,15 +1,21 @@
 (ns io.relica.prism.statechart
   (:require [statecharts.core :as fsm]
             [taoensso.timbre :as log]
-            [clojure.pprint :as pprint]))
+            [clojure.pprint :as pprint]
+            [io.relica.prism.db :as db]
+            [io.relica.prism.setup :as setup]
+            [io.relica.prism.cache :as cache]
+            [clojure.core.async :refer [go <!]]
+            [clojure.tools.logging :as logging]
+            ))
 
 
-;; Placeholder actions - these will eventually trigger real work
-(defn check-db-action [& _] (log/info "[Action] Checking database..."))
-(defn create-user-action [& _] (log/info "[Action] Creating admin user..."))
-(defn seed-db-action [& _] (log/info "[Action] Starting DB seed..."))
-(defn build-caches-action [& _] (log/info "[Action] Starting cache build..."))
-(defn report-error-action [_ context event] (log/error "[Action] Error occurred:" (:error-message context) "Event:" event))
+;; State definitions and service atom
+(def setup-service (atom nil))
+
+
+
+(defn report-error-action [context event] (log/error "[Action] Error occurred:" (:error-message context) "Event:" event))
 (defn log-entry [state-id] (fn [& _] (log/info "[Entry]" state-id)))
 (defn log-exit [state-id] (fn [& _] (log/info "[Exit]" state-id)))
 
@@ -18,46 +24,6 @@
   (assoc state key val))
 
 
-(defn format-state-for-client
-  "Creates a comprehensive state object that contains all information a client needs."
-  [state]
-  (let [context state
-        value (:_state state)
-        current-state (if (vector? value)
-                        ;; Handle hierarchical states, e.g., [:building_caches :facts_cache]
-                        (let [parent (first value)
-                              child (second value)]
-                          {:id parent
-                           :substate child
-                           :full_path value})
-                        ;; Handle flat states
-                        {:id value
-                         :substate nil
-                         :full_path [value]})]
-
-    ;; Create a complete state object with all necessary information
-    {:timestamp (System/currentTimeMillis)
-     :state current-state
-     :progress (case (keyword (if (vector? value) (first value) value))
-                 :idle 0
-                 :checking_db 10
-                 :awaiting_user_credentials 20
-                 :creating_admin_user 30
-                 :seeding_db 40
-                 :building_caches (+ 70
-                                     (case (keyword (second value))
-                                       :building_facts_cache 0
-                                       :building_lineage_cache 10
-                                       :building_subtypes_cache 20
-                                       :building_caches_complete 30
-                                       0))
-                 :setup_complete 100
-                 :error (or (:progress context) 0))
-     :status (:status-message context)
-     :master_user (:master-user context)
-     :error (:error-message context)
-     :data (dissoc context :status-message :error-message :master-user)
-     }))
 
 
 ;; Function to broadcast state updates via WebSocket
@@ -66,8 +32,9 @@
   [state event]
   (log/info "[Action] Broadcasting state update:" (:status-message state))
   (when-let [broadcast-fn (resolve 'io.relica.prism.websocket/broadcast-setup-update)]
-    (let [formatted-state (format-state-for-client state)]
-      (broadcast-fn formatted-state))))
+    (let [formatted-state (setup/format-state-for-client state)]
+      (broadcast-fn formatted-state)))
+  )
 
 ;; Statechart Definition
 (def prism-setup-statechart
@@ -95,7 +62,8 @@
      {:entry [(log-entry :checking_db)
               (fsm/assign (partial update-state :status-message "Checking database state...")) ; Update status message)
               #'broadcast-state-update
-              #'check-db-action]
+              ;; #'check-db-action
+              ]
       :exit (log-exit :checking_db)
       :on {:DB_CHECK_COMPLETE_EMPTY (-> {:target :awaiting_user_credentials
                                          :actions [(fsm/assign (partial update-state :db-check-result :empty))
@@ -122,7 +90,8 @@
      {:entry [(log-entry :creating_admin_user)
               (fsm/assign (partial update-state :status-message "Creating admin user..."))
               #'broadcast-state-update
-              #'create-user-action]
+              ;; #'create-user-action
+              ]
       :exit (log-exit :creating_admin_user)
       :on {:USER_CREATION_SUCCESS (-> {:target :seeding_db
                                        :actions [;; (fsm/assign (partial update-state :master-user (fn [ctx _ _] (get-in ctx [:user-credentials :username]))))
@@ -133,7 +102,8 @@
      :seeding_db {:entry [(log-entry :seeding_db)
                           (fsm/assign (partial update-state :status-message "Starting database seed..."))
                           #'broadcast-state-update
-                          #'seed-db-action]
+                          ;; #'seed-db-action
+                          ]
                   :exit (log-exit :seeding_db)
                   ;; This might become a compound state later to track XLS->CSV and CSV->DB steps
                   :on {:SEEDING_COMPLETE {:target :building_caches
@@ -147,23 +117,23 @@
 
      :building_caches {:initial :building_facts_cache
                        :states {:building_facts_cache {:entry [(fsm/assign (partial update-state :status-message "building entity-facts cache..."))
-                                                      #'broadcast-state-update]
-                                              :on {:FACTS_CACHE_COMPLETE {:target :building_lineage_cache
-                                                                          :actions [(fsm/assign (partial update-state :status-message "...finished building entity-facts cache."))
-                                                                                    #'broadcast-state-update]}}}
+                                                               #'broadcast-state-update]
+                                                       :on {:FACTS_CACHE_COMPLETE {:target :building_lineage_cache
+                                                                                   :actions [(fsm/assign (partial update-state :status-message "...finished building entity-facts cache."))
+                                                                                             #'broadcast-state-update]}}}
                                 :building_lineage_cache {:entry [(fsm/assign (partial update-state :status-message "building entity-lineage cache..."))
-                                                        #'broadcast-state-update]
-                                                :on {:LINEAGE_CACHE_COMPLETE {:target :building_subtypes_cache
-                                                                              :actions [(fsm/assign (partial update-state :status-message "...finished building entity-lineage-cache."))
-                                                                                        #'broadcast-state-update]}}}
+                                                                 #'broadcast-state-update]
+                                                         :on {:LINEAGE_CACHE_COMPLETE {:target :building_subtypes_cache
+                                                                                       :actions [(fsm/assign (partial update-state :status-message "...finished building entity-lineage-cache."))
+                                                                                                 #'broadcast-state-update]}}}
                                 :building_subtypes_cache {:entry [(fsm/assign (partial update-state :status-message "building entity-subtypes cache..."))
-                                                         #'broadcast-state-update]
-                                                 :on {:SUBTYPES_CACHE_COMPLETE {:target :building_caches_complete
-                                                                                :actions [(fsm/assign (partial update-state :status-message "...finished building entity-subtypes-cache."))
-                                                                                          #'broadcast-state-update]}}}
+                                                                  #'broadcast-state-update]
+                                                          :on {:SUBTYPES_CACHE_COMPLETE {:target :building_caches_complete
+                                                                                         :actions [(fsm/assign (partial update-state :status-message "...finished building entity-subtypes-cache."))
+                                                                                                   #'broadcast-state-update]}}}
                                 :building_caches_complete {:on {:CACHE_BUILD_COMPLETE {:target [:> :setup_complete]
-                                                                       :actions [(fsm/assign (partial update-state :status-message "...finished building caches."))
-                                                                                 #'broadcast-state-update]}}}}}
+                                                                                       :actions [(fsm/assign (partial update-state :status-message "...finished building caches."))
+                                                                                                 #'broadcast-state-update]}}}}}
 
      :setup_complete
      {:entry [(log-entry :setup_complete)
@@ -178,32 +148,51 @@
       ;; Might have transitions out of error state, e.g., RETRY?
       }}}))
 
-(def setup-service (atom nil))
-
 (defn init!
   "Initializes the state machine with the initial state."
   []
 
   (reset! setup-service (fsm/service prism-setup-statechart))
 
-  (fsm/start @setup-service)
+  (fsm/start @setup-service))
 
-  )
+;;
+(defn create-state-machine []
+  (let [state-machine (fsm/service prism-setup-statechart)]
+    state-machine))
 
-(defn start-setup-sequence! []
-  (fsm/send @setup-service :START_SETUP))
+(defn start-state-machine! [machine]
+  (fsm/start machine))
+
+(defn send-event! [machine event]
+  (fsm/send machine event))
+
+(defn get-state [machine]
+  (fsm/state machine))
+
+(defn get-value [machine]
+  (fsm/value machine))
+;;
+
 
 (defn create-admin-user!
   "Creates an admin user with the provided credentials."
   [username password]
-  (fsm/send @setup-service :SUBMIT_CREDENTIALS {:username username
-                                               :password password}))
+  (let [res (setup/create-admin-user! username password)]
+    (if res
+      (do
+        (fsm/send @setup-service :SUBMIT_CREDENTIALS {:username username
+                                                       :password password})
+        true)
+      (do
+        (fsm/send @setup-service :ERROR)
+        false))))
 
-(defn get-setup-state
-  "Returns the current state of the setup process."
-  []
-  (let [state (fsm/state @setup-service)]
-    (format-state-for-client state)))
+;; (defn get-setup-state
+;;   "Returns the current state of the setup process."
+;;   []
+;;   (let [state (fsm/state @setup-service)]
+;;     (format-state-for-client state)))
 
 ;; Example of how to create and interact with the state machine (for REPL usage)
 (comment
@@ -262,6 +251,4 @@
 
     (fsm/send @setup-service :SUBTYPES_CACHE_COMPLETE))
 
-  (full-cycle)
-
-  )
+  (full-cycle))

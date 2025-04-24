@@ -4,8 +4,9 @@
             [io.relica.prism.xls :as xls]
             [io.relica.prism.xls-transform :as xls-transform]
             [io.relica.prism.config :as config]
+            [io.relica.prism.io.ws-handlers :as ws-handlers]
             [io.relica.prism.setup :as setup]
-            [io.relica.prism.statechart :as statechart]
+            [io.relica.prism.statechart-controller :as statechart-controller]
             ;; [io.relica.prism.api :as api]
             [io.relica.prism.websocket :as websocket]
             [clojure.java.io :as io])
@@ -59,7 +60,7 @@
 
   ;; Initialize the setup module
   ;; (setup/init!)
-  (statechart/init!)
+  (statechart-controller/init!)
 
   (log/info "Interactive setup ready. API server and WebSocket server are running on port" (config/api-server-port))
   (log/info "Visit http://localhost:" (config/api-server-port) " to complete setup"))
@@ -116,5 +117,13 @@
   ;; (start-prism-services)
   ;; (stop-services)
   ;; (-main)
+
+  (defn reset! []
+    (setup/clear-users-and-envs!)
+    (db/clear-db!)
+    (statechart-controller/init!)
+    )
+
+  (reset!)
 
   )

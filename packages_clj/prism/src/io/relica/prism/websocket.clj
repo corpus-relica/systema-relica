@@ -2,7 +2,6 @@
   (:require [io.relica.common.websocket.server :as ws-server]
             [io.relica.prism.config :as config]
             [io.relica.prism.setup :as setup]
-            [io.relica.prism.statechart :as statechart]
             [clojure.core.async :refer [go <!]]
             [taoensso.timbre :as log]))
 
@@ -10,66 +9,40 @@
 (defonce server-instance (atom nil))
 
 ;; Handler for WebSocket messages
-(defn handle-ws-message [event-msg]
-  (let [{:keys [id ?data client-id ?reply-fn]} event-msg]
-    (log/debug "Received WebSocket message:" id "from client:" client-id)
-    
-    (case id
-      ;; Handle heartbeat messages
-      :app/heartbeat
-      (do
-        (log/debug "Received heartbeat from client:" client-id)
-        (?reply-fn {:success true
-                    :timestamp (System/currentTimeMillis)}))
-                    
-      :setup-status/get
-      (do
-        (log/debug "Handling setup status request")
-        (?reply-fn (statechart/get-setup-state)))
-      
-      :setup/start
-      (do
-        (log/info "Starting setup sequence via WebSocket")
-        ;; (setup/start-setup-sequence!)
-        (statechart/start-setup-sequence!)
-        (?reply-fn {:success true :message "Setup sequence started"}))
-      
-      :setup/create-user
-      (let [{:keys [username password confirmPassword]} ?data]
-        (log/info "Creating admin user via WebSocket:" username)
-        (if (and username password confirmPassword)
-          (let [validation (setup/validate-credentials username password confirmPassword)]
-            (if (:valid validation)
-              (if (statechart/create-admin-user! username password)
-                (?reply-fn {:success true :message "Admin user created successfully"})
-                (?reply-fn {:success false :message "Failed to create admin user"}))
-              (?reply-fn {:success false :message (:message validation)})))
-          (?reply-fn {:success false :message "Missing required fields"})))
-      
-      :setup/process-stage
-      (let [current-state (setup/get-setup-state)
-            current-stage (:stage current-state)]
-        (if (= current-stage :user-setup)
-          (?reply-fn {:success false
-                      :message "User setup stage requires admin credentials"
-                      :requiresUserInput true})
-          (do
-            (setup/handle-setup-stage!)
-            (?reply-fn {:success true
-                        :message "Stage processed"
-                        :state (setup/get-setup-state)}))))
-      
-      ;; Ping/Heartbeat handling
-      :ping
-      (do
-        (log/debug "Received ping from client:" client-id)
-        (?reply-fn {:success true
-                    :timestamp (System/currentTimeMillis)}))
-                    
-      ;; Default case - unknown message type
-      (do
-        (log/warn "Unknown message type:" id)
-        (?reply-fn {:error (str "Unknown message type: " id)})))))
+;; (defn handle-ws-message [event-msg]
+;;   (let [{:keys [id ?data client-id ?reply-fn]} event-msg]
+;;     (log/debug "Received WebSocket message:" id "from client:" client-id)
+
+;;     (case id
+;;       ;; Handle heartbeat messages
+
+
+
+
+;;       ;; :setup/process-stage
+;;       ;; (let [current-state (setup/get-setup-state)
+;;       ;;       current-stage (:stage current-state)]
+;;       ;;   (if (= current-stage :user-setup)
+;;       ;;     (?reply-fn {:success false
+;;       ;;                 :message "User setup stage requires admin credentials"
+;;       ;;                 :requiresUserInput true})
+;;       ;;     (do
+;;       ;;       (setup/handle-setup-stage!)
+;;       ;;       (?reply-fn {:success true
+;;       ;;                   :message "Stage processed"
+;;       ;;                   :state (setup/get-setup-state)}))))
+
+;;       ;; Ping/Heartbeat handling
+;;       :ping
+;;       (do
+;;         (log/debug "Received ping from client:" client-id)
+;;         (?reply-fn {:success true
+;;                     :timestamp (System/currentTimeMillis)}))
+
+;;       ;; Default case - unknown message type
+;;       (do
+;;         (log/warn "Unknown message type:" id)
+;;         (?reply-fn {:error (str "Unknown message type: " id)})))))
 
 ;; Start the WebSocket server
 (defn start-server []
@@ -78,7 +51,7 @@
     (let [server (ws-server/create-server
                    {:port (config/ws-server-port)
                     :path "/ws"
-                    :event-msg-handler handle-ws-message})]
+                    :event-msg-handler ws-server/handle-ws-message})]
       (ws-server/start! server)
       (reset! server-instance server)
       (log/info "WebSocket server started")
@@ -93,22 +66,9 @@
     (log/info "WebSocket server stopped")))
 
 ;; Broadcast a message to all connected clients
-;;
-;; (defn broadcast-setup-update
 (defn broadcast-setup-update
-  ([]
-   (broadcast-setup-update nil))
-  ([message]
-   (if (nil? message)
-     (when-let [server @server-instance]
-       (let [setup-state (setup/get-setup-state)]
-         (ws-server/broadcast! server {:id "server"
-                                       :type :setup/update
-                                       :payload setup-state})
-         (log/debug "Broadcasted setup state update")))
-     (do
-       (println @server-instance)
-       (ws-server/broadcast! @server-instance
-                             {:id "server"
-                              :type :setup/update
-                              :payload message})))))
+  [message]
+  (ws-server/broadcast! @server-instance
+                        {:id "server"
+                         :type :setup/update
+                         :payload message}))
