@@ -8,8 +8,8 @@
   (:import [java.util Date]
            [java.time LocalDate ZoneId]
            [java.time.format DateTimeFormatter]
-           [org.apache.poi.ss.usermodel DateUtil Row Cell CellType WorkbookFactory Sheet]
-           [java.io File FileInputStream FileOutputStream]))
+           [org.apache.poi.ss.usermodel DateUtil CellType WorkbookFactory]
+           [java.io FileInputStream]))
 
 ;; --- Configuration ---
 
@@ -28,13 +28,12 @@
                 :min-free-fact-uid 2000000000
                 :max-temp-uid 1000}
    :header-row-index 1 ; 0-based index of the row containing column IDs
-   })
+  })
 
 ;; --- Helper Functions ---
 
 (defn- format-java-date
-  "Formats a java.util.Date object to yyyy-MM-dd string,
-   matching TypeScript ISO style date formatting."
+  "Formats a java.util.Date object to yyyy-MM-dd string"
   [^Date date]
   (if date
     (-> date
@@ -44,329 +43,242 @@
         (.format date-formatter))
     ""))
 
-(defn- excel-value->str
-  "Reads cell value robustly, handling types and formatting dates/integers.
-   Matches TypeScript's approach to cell value extraction."
+(defn- cell-value->str
+  "Extract cell value as string, properly handling different types"
   [cell]
-  ;; (println "Processing cell:" cell)
-  ;; Handle different input types
-  (cond
-    ;; Already a string
-    (string? cell) cell
+  (if (nil? cell)
+    ""
+    (let [value (excel/read-cell cell)]
+      (cond
+        ;; Handle date cells
+        (instance? Date value)
+        (format-java-date value)
+        
+        ;; Handle numeric cells - format integers without .0
+        (and (number? value) (== value (long value)))
+        (str (long value))
 
-    ;; Nil value
-    (nil? cell) ""
+        ;; (= (.getCellType cell) org.apache.poi.ss.usermodel.CellType/FORMULA)
+        (= :VALUE value)
+        (try
+          (let [cached-type (.getCachedFormulaResultType cell)]
+      ;; (pp/pprint "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+      ;; (pp/pprint value)
+      ;; (pp/pprint (excel/read-cell-value cell))
+      ;; (pp/pprint cell)
+      ;; (pp/pprint cached-type)
+            (cond
+              (= cached-type org.apache.poi.ss.usermodel.CellType/NUMERIC)
+              (do
+                ;; (pp/pprint "Numeric formula result:")
+                ;; (pp/pprint (.getNumericCellValue cell))
+                (let [num-val (.getNumericCellValue cell)]
+                  (if (== num-val (long num-val))
+                    (str (long num-val))  ;; Convert to long first to remove decimal for whole numbers
+                    (str num-val))))
 
-    ;; A proper cell object
-    :else
-    (when cell
-      (let [cell-type (.getCellType cell)]
-        (cond
-          ;; Handle Formula cells similar to TypeScript approach
-          (= cell-type CellType/FORMULA)
-          (try
-            ;; Use the cached value directly like the TS code does
-            (let [cached-value (excel/read-cell cell)]
-              (cond
-                (instance? Date cached-value) (format-java-date cached-value)
-                (number? cached-value) (if (== cached-value (long cached-value))
-                                        (str (long cached-value))
-                                        (str cached-value))
-                :else (str cached-value)))
-            (catch Exception e
-              (log/warnf "Error accessing formula cell: %s. Using empty string." (.getMessage e))
+              (= cached-type org.apache.poi.ss.usermodel.CellType/STRING)
+              (do
+                ;; (pp/pprint "String formula result:")
+                ;; (pp/pprint (.getNumericCellValue cell))
+                (.getStringCellValue cell))
+
+              (= cached-type org.apache.poi.ss.usermodel.CellType/BOOLEAN)
+              (.getBooleanCellValue cell)
+
+              ;; Default case
+              :else
               ""))
+          (catch Exception e
+            (println "Error evaluating formula cell:" (.getMessage e))
+            (.setCellValue cell "")))
 
-          ;; Handle date cells
-          (or (instance? Date (excel/read-cell cell))
-              (and (= cell-type CellType/NUMERIC) (DateUtil/isCellDateFormatted cell)))
-          (try
-            (format-java-date (excel/read-cell cell))
-            (catch Exception e
-              (log/warnf "Failed to format date: %s. Using raw value." (.getMessage e))
-              (str (excel/read-cell cell))))
-
-          ;; Handle numeric cells - format integers without .0
-          (= cell-type CellType/NUMERIC)
-          (let [num-val (excel/read-cell cell)]
-            (if (and num-val (== num-val (long num-val)))
-              (str (long num-val))
-              (str num-val)))
-
-          ;; Handle strings, trimming whitespace (matches TS behavior)
-          (= cell-type CellType/STRING)
-          (str/trim (str (excel/read-cell cell)))
-
-          ;; Default handling for other types
-          :else (str (excel/read-cell cell)))))))
-
-;; --- Column Handling (TypeScript equivalent) ---
-
-(defn- find-column-indices
-  "Find indices of important columns by header values,
-   similar to the TypeScript findSheetBounds+header combination."
-  [sheet header-row-idx]
-  (let [header-row (.getRow sheet header-row-idx)
-        header-cells (when header-row
-                      (mapv excel-value->str (excel/cell-seq header-row)))]
-
-    ;; Return a map of column names to their indices
-    (into {}
-          (keep-indexed
-           (fn [idx val]
-             (when (not (str/blank? val))
-               [val idx]))
-           header-cells))))
-
-;; --- Row Processing ---
+        ;; Everything else, just convert to string
+        :else (str value)))))
 
 (defn- is-row-empty?
-  "Check if a row is empty (all cells blank),
-   porting TypeScript's isRowEmpty function."
+  "Check if a row is empty (all cells blank)"
   [row]
-  (if row
-    (every? (fn [cell]
-              (let [val (excel-value->str cell)]
-                (or (nil? val) (str/blank? val))))
-            (excel/cell-seq row))
-    true))
+  (every? str/blank? row))
 
-(defn- fix-dates-in-worksheet
-  "Fix dates in specific columns, similar to the TypeScript fixDatesInWorksheet."
-  [sheet col-indices]
-  (let [date-col-1-idx (get col-indices "9")
-        date-col-2-idx (get col-indices "10")]
+;; --- Core XLS Processing ---
 
-    (when (and date-col-1-idx date-col-2-idx)
-      (doseq [row (excel/row-seq sheet)]
-        (when-let [row-num (.getRowNum row)]
-          ;; Skip header row
-          (when (> row-num 0)
-            ;; Process first date column (9)
-            (when-let [date-cell-1 (.getCell row date-col-1-idx)]
-              (when (or (= (.getCellType date-cell-1) CellType/STRING)
-                       (DateUtil/isCellDateFormatted date-cell-1))
-                (let [date-val (excel/read-cell date-cell-1)]
-                  (when (instance? Date date-val)
-                    ;; Set as ISO date string, like TypeScript does
-                    (.setCellValue date-cell-1 (format-java-date date-val))))))
-
-            ;; Process second date column (10)
-            (when-let [date-cell-2 (.getCell row date-col-2-idx)]
-              (when (or (= (.getCellType date-cell-2) CellType/STRING)
-                       (DateUtil/isCellDateFormatted date-cell-2))
-                (let [date-val (excel/read-cell date-cell-2)]
-                  (when (instance? Date date-val)
-                    ;; Set as ISO date string, like TypeScript does
-                    (.setCellValue date-cell-2 (format-java-date date-val))))))))))))
-
-;; --- UID Handling ---
+(defn- extract-worksheet-data
+  "Extract data from worksheet into Clojure vectors"
+  [sheet {:keys [header-row-index skip-rows remove-empty-rows?]}]
+  (log/info "Extracting worksheet data")
+  
+  ;; Extract header row directly from sheet
+  (let [header-row (.getRow sheet header-row-index)
+        headers (when header-row
+                 (let [last-cell-num (.getLastCellNum header-row)]
+                   (mapv (fn [j]
+                           (let [cell (.getCell header-row j)]
+                             (cell-value->str cell)))
+                         (range last-cell-num))))
+        
+        ;; Extract data rows directly from sheet
+        last-row-num (.getLastRowNum sheet)
+        all-rows (for [i (range (+ skip-rows 1) (inc last-row-num))
+                       :let [row (.getRow sheet i)]
+                       :when row]
+                   (let [last-cell-num (if row (.getLastCellNum row) 0)]
+                     (mapv (fn [j]
+                             (let [cell (when (and row (< j last-cell-num))
+                                          (.getCell row j))]
+                               (cell-value->str cell)))
+                           (range (max (if headers (count headers) 0)
+                                       (if row last-cell-num 0))))))
+        
+        ;; Apply filtering if needed
+        rows (if remove-empty-rows?
+               (into [] (remove is-row-empty?) all-rows)
+               (vec all-rows))]
+    
+    {:headers headers
+     :rows rows}))
 
 (defn- resolve-temp-uids
-  "Resolve temporary UIDs in specific columns,
-   equivalent to the TypeScript resolveTempUIDs function."
-  [sheet col-indices min-free-uid min-free-fact-uid max-temp-uid]
-  (let [lh-obj-idx (get col-indices "2")
-        rel-type-idx (get col-indices "60")
-        rh-obj-idx (get col-indices "15")
-        fact-idx (get col-indices "1")]
+  "Resolve temporary UIDs in data rows"
+  [rows headers {:keys [uid-cols uid-ranges]}]
+  (log/info "Resolving temporary UIDs")
+  
+  (let [{:keys [min-free-uid min-free-fact-uid max-temp-uid]} uid-ranges
+        
+        ;; Find indices for UID columns
+        header-indices (into {} (map-indexed (fn [idx val] [val idx]) headers))
+        lh-obj-idx (get header-indices "2")
+        rel-type-idx (get header-indices "60")
+        rh-obj-idx (get header-indices "15")
+        fact-idx (get header-indices "1")]
 
-    (doseq [row (excel/row-seq sheet)]
-      (when (> (.getRowNum row) 0) ; Skip header
-        ;; Process LH object UID
-        (when lh-obj-idx
-          (when-let [cell (.getCell row lh-obj-idx)]
-            (let [val (excel/read-cell cell)]
-              (when (and (number? val) (< val max-temp-uid))
-                (.setCellValue cell (+ val min-free-uid))))))
+    (println "HEADER INDICES" header-indices)
+    (println "UID CONFIG" uid-cols)
+    (println "UID RANGES" uid-ranges)
 
-        ;; Process relation type UID
-        (when rel-type-idx
-          (when-let [cell (.getCell row rel-type-idx)]
-            (let [val (excel/read-cell cell)]
-              (when (and (number? val) (< val max-temp-uid))
-                (.setCellValue cell (+ val min-free-uid))))))
+    ;; Process each row to resolve UIDs
+    (mapv (fn [row]
+            (let [process-uid (fn [r idx min-val]
+                               (if-let [cell-val (get r idx)]
+                                 (if (and (re-matches #"\d+" cell-val)
+                                          (< (Long/parseLong cell-val) max-temp-uid))
+                                   (assoc r idx (str (+ (Long/parseLong cell-val) min-val)))
+                                   r)
+                                 r))]
+              (-> row
+                   (process-uid lh-obj-idx min-free-uid)
+                   (process-uid rel-type-idx min-free-uid)
+                   (process-uid rh-obj-idx min-free-uid)
+                   (process-uid fact-idx min-free-fact-uid))
+              ))
+          rows)))
 
-        ;; Process RH object UID
-        (when rh-obj-idx
-          (when-let [cell (.getCell row rh-obj-idx)]
-            (let [val (excel/read-cell cell)]
-              (when (and (number? val) (< val max-temp-uid))
-                (.setCellValue cell (+ val min-free-uid))))))
-
-        ;; Process fact UID
-        (when fact-idx
-          (when-let [cell (.getCell row fact-idx)]
-            (let [val (excel/read-cell cell)]
-              (when (and (number? val) (< val max-temp-uid))
-                (.setCellValue cell (+ val min-free-fact-uid))))))))))
-
-;; --- File Processing ---
-
-(defn- process-sheet
-  "Process a worksheet, handling dates and UIDs.
-   Implements the combination of TypeScript readXLS and fixDatesInWorksheet."
-  [sheet config]
-  (let [{:keys [skip-rows remove-empty-rows? date-col-ids uid-cols uid-ranges]} config
-        {:keys [min-free-uid min-free-fact-uid max-temp-uid]} uid-ranges
-
-        ;; Find column indices similar to TypeScript
-        col-indices (find-column-indices sheet 0) ; Use first row for column IDs
-
-        ;; First, fix dates in the worksheet
-        _ (fix-dates-in-worksheet sheet col-indices)
-
-        ;; Then resolve temporary UIDs
-        _ (resolve-temp-uids sheet col-indices min-free-uid min-free-fact-uid max-temp-uid)
-
-        ;; Now extract the data for CSV export
-        all-rows (drop skip-rows (excel/row-seq sheet))
-        filtered-rows (if remove-empty-rows?
-                       (remove is-row-empty? all-rows)
-                       all-rows)
-
-        ;; Convert to string data for CSV
-        header-row (second (excel/row-seq sheet)) ; Get actual header row
-        header-values (mapv excel-value->str (excel/cell-seq header-row))
-
-        data-rows (mapv
-                   (fn [row]
-                     (mapv excel-value->str (excel/cell-seq row)))
-                   filtered-rows)]
-
-    {:header header-values :data data-rows}))
-
-;; --- Entry Point ---
+;; --- Entry Points ---
 
 (defn xls-to-csv
-  "Convert XLS to CSV, handling dates and UIDs.
-   Implements core functionality from TypeScript's readXLS, fixDatesInWorksheet,
-   and writeCSV."
+  "Convert XLS to CSV, handling special cell types and UIDs"
   [xls-file-path csv-output-path config]
   (try
     (log/infof "Processing XLS: %s -> %s" xls-file-path csv-output-path)
-
+    
     (with-open [in (FileInputStream. (io/file xls-file-path))]
       (let [workbook (WorkbookFactory/create in)
             sheet (.getSheetAt workbook 0) ; Process only the first sheet
-
-            ;; Process the sheet including date fixing and UID resolution
-            processed (process-sheet sheet config)
-
-            header (:header processed)
-            data (:data processed)]
-
-        (if (and header (seq data))
+            
+            ;; Extract worksheet data to Clojure vectors
+            {:keys [headers rows]} (extract-worksheet-data sheet config)
+            
+            ;; Process data in memory (resolve UIDs)
+            processed-rows (resolve-temp-uids rows headers config)]
+        
+        (if (and headers (seq processed-rows))
           (do
-            ;; Ensure directory has write permissions
-            (when (not (.exists (.getParentFile (io/file csv-output-path))))
+            ;; Ensure directory exists
+            (when-not (.exists (.getParentFile (io/file csv-output-path)))
               (.mkdirs (.getParentFile (io/file csv-output-path))))
-
-            ;; Reset permissions if needed
-            ;; (reset-directory-permissions! (.getParent (io/file csv-output-path)))
-
+            
             ;; Write CSV
             (with-open [writer (io/writer csv-output-path)]
-              (csv/write-csv writer (cons header data)))
-
-            ;; Reset permissions after writing
-            ;; (reset-directory-permissions! (.getParent (io/file csv-output-path)))
-
+              (csv/write-csv writer (cons headers processed-rows)))
+            
             (log/infof "Successfully generated CSV: %s (%d data rows)"
-                     csv-output-path (count data))
-            {:status :success :csv-path csv-output-path :rows (count data)})
-
+                      csv-output-path (count processed-rows))
+            {:status :success :csv-path csv-output-path :rows (count processed-rows)})
+          
           (do
             (log/warnf "No data rows processed or header not found for %s. CSV not generated."
                       xls-file-path)
             {:status :no-data :file xls-file-path}))))
-
+    
     (catch Exception e
       (log/errorf e "Failed to process XLS file: %s" xls-file-path)
       {:status :error :message (.getMessage e) :file xls-file-path})))
 
-;; Permission handling
-;; (defn- reset-directory-permissions!
-;;   "Reset permissions on a directory to ensure write access."
-;;   [dir-path]
-;;   (log/info "Resetting permissions for directory:" dir-path)
-;;   (let [result (shell/sh "chmod" "-R" "u+rw" dir-path)]
-;;     (if (zero? (:exit result))
-;;       (log/info "Successfully reset permissions for" dir-path)
-;;       (log/error "Failed to reset permissions:" (:err result)))))
-
-;; Main transform function
 (defn transform-seed-xls!
-  "Finds all .xls and .xlsx files in the seed directory, converts them to CSV.
-   Replicates the TypeScript readXLSFixDatesAndSaveCSV functionality."
+  "Process all XLS/XLSX files in seed directory and convert to CSV"
   []
   (let [seed-dir (config/seed-xls-dir)
         csv-dir (config/csv-output-dir)
         uid-config (config/uid-ranges)]
-
+    
     (log/infof "Searching for XLS(X) files in: %s" seed-dir)
     (log/infof "CSV output directory: %s" csv-dir)
-
-    ;; Ensure directories exist with proper permissions
+    
+    ;; Ensure directories exist
     (let [seed-dir-file (io/file seed-dir)
           csv-dir-file (io/file csv-dir)]
-
+      
       ;; Check/create CSV directory
       (when-not (.exists csv-dir-file)
         (log/infof "Creating CSV output directory: %s" csv-dir)
         (.mkdirs csv-dir-file))
-
-      ;; Reset permissions on CSV directory
-      ;; (reset-directory-permissions! csv-dir)
-
-      ;; Find XLS files (similar to TypeScript)
+      
+      ;; Find XLS files
       (if-not (.exists seed-dir-file)
         (do
           (log/errorf "Seed directory not found: %s" seed-dir)
           [])
-
+        
         ;; Directory exists, find XLS files
         (let [xls-files (filter #(and (.isFile %)
                                      (re-find #"(?i)\.xlsx?$" (.getName %)))
                                (file-seq seed-dir-file))]
-
+          
           (if (empty? xls-files)
             (do
               (log/warnf "No XLS(X) files found in seed directory: %s" seed-dir)
               [])
-
+            
             ;; Process the XLS files
             (do
               (log/infof "Found %d XLS(X) files. Processing..." (count xls-files))
-
+              
               (let [merged-config (merge default-config
                                         {:uid-ranges uid-config})
-
-                    ;; Map each file to a CSV (like TypeScript loop)
+                    
+                    ;; Process each file
                     results (doall
-                            (map-indexed
-                             (fn [idx xls-file]
-                               (let [csv-file-name (str idx ".csv")
-                                     csv-path (str csv-dir "/" csv-file-name)]
-                                 (xls-to-csv (.getAbsolutePath xls-file)
-                                           csv-path
-                                           merged-config)))
-                             xls-files))]
-
-
+                             (map-indexed
+                              (fn [idx xls-file]
+                                (let [csv-file-name (str idx ".csv")
+                                      csv-path (str csv-dir "/" csv-file-name)]
+                                  (xls-to-csv (.getAbsolutePath xls-file)
+                                             csv-path
+                                             merged-config)))
+                              xls-files))]
+                
                 ;; Return valid results
                 (let [successful-results (filter #(= (:status %) :success) results)]
                   (log/infof "Successfully processed %d of %d XLS files"
-                           (count successful-results) (count xls-files))
-
-                  ;; Reset permissions one final time
-                  ;; (reset-directory-permissions! csv-dir)
-
+                            (count successful-results) (count xls-files))
                   successful-results)))))))))
 
 (comment
-
+  
   (transform-seed-xls!)
-
-
+  
+  (xls-to-csv "../../seed_xls/099_systema relica - Individuals.xls" "../../seed_csv/xxx.csv" default-config)
+  
+  (xls-to-csv "../../seed_xls/000_TOPini.xls" "../../seed_csv/yyy.csv" default-config)
+  
   )

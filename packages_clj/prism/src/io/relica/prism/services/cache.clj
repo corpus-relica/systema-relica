@@ -38,7 +38,7 @@
               (log/info "Finished building entity facts cache.")
               true) ; Loop finished successfully
             (do
-              (log/trace (str "Processing facts batch (offset " offset ", size " (count facts-batch) ")"))
+              ;; (log/trace (str "Processing facts batch (offset " offset ", size " (count facts-batch) ")"))
               (process-facts-batch-for-facts-cache! facts-batch)
               (recur (+ offset BATCH_SIZE))))))
       (catch Exception e
@@ -57,7 +57,7 @@
         (let [lineage-res (<! (request-lineage lh_object_uid))
               success (:success lineage-res)
               lineage (:data lineage-res)]
-          (log/trace "Processing lineage fact:" fact_uid "lh_object_uid:" lh_object_uid)
+          ;; (log/trace "Processing lineage fact:" fact_uid "lh_object_uid:" lh_object_uid)
           (when (and lh_object_uid (not-empty lineage) success)
             (common-cache/add-to-entity-lineage-cache @cache-service-comp lh_object_uid lineage))))
       true ; doseq completed successfully
@@ -81,7 +81,7 @@
                 (log/info "Finished processing nodes for lineage cache.")
                 true) ; Loop finished successfully
               (do
-                (log/trace (str "Processing lineage facts batch (offset " skip ", size " (count facts-batch) ")"))
+                ;; (log/trace (str "Processing lineage facts batch (offset " skip ", size " (count facts-batch) ")"))
                 ;; Wait for the batch processing go block to complete
                 (let [batch-result (<! (process-facts-batch-for-lineage-cache! facts-batch))]
                   (when-not batch-result ; Check if the batch processing itself failed
@@ -119,7 +119,7 @@
         (let [lineage-res (<! (request-lineage lh_object_uid))
               success (:success lineage-res)
               lineage (:data lineage-res)]
-          (log/trace "Processing subtype fact:" fact_uid "lh_object_uid:" lh_object_uid "lineage:" lineage)
+          ;; (log/trace "Processing subtype fact:" fact_uid "lh_object_uid:" lh_object_uid "lineage:" lineage)
           (when (and lh_object_uid (not-empty lineage) success)
             (doseq [ancestor-uid lineage]
               (log/trace "Adding to subtypes cache:" lh_object_uid "->" ancestor-uid)
@@ -145,7 +145,7 @@
                 (log/info "Finished processing nodes for subtypes cache.")
                 true) ; Loop finished successfully
               (do
-                (log/trace (str "Processing subtypes facts batch (offset " skip ", size " (count facts-batch) ")"))
+                ;; (log/trace (str "Processing subtypes facts batch (offset " skip ", size " (count facts-batch) ")"))
                 ;; Wait for the batch processing go block to complete
                 (let [batch-result (<! (process-facts-batch-for-subtypes-cache! facts-batch))]
                    (when-not batch-result ; Check if the batch processing itself failed
