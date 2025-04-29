@@ -187,7 +187,8 @@ services:
       dockerfile: docker/Dockerfile.dev
     restart: always
     environment:
-      - PRISM_NEO4J_URI=neo4j+s://neo4j:7687 # Use container name
+      # - PRISM_NEO4J_URI=neo4j+s://neo4j:7687 # Use container name
+      - PRISM_NEO4J_URI=bolt://neo4j:7687 # Use container name
       - PRISM_NEO4J_USER=neo4j
       - PRISM_NEO4J_PASSWORD=password
       - PRISM_SEED_XLS_DIR=/seed_xls

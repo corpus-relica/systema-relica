@@ -18,9 +18,9 @@
     value))
 
 (def config
-  {:neo4j-uri        "bolt://localhost:7687" ;(get-required-env "PRISM_NEO4J_URI") ; e.g., "neo4j+s://xxxx.databases.neo4j.io"
-   :neo4j-user       "neo4j" ;(get-required-env "PRISM_NEO4J_USER") ; e.g., "neo4j"
-   :neo4j-password   "password" ;(get-required-env "PRISM_NEO4J_PASSWORD")
+  {:neo4j-uri        (get-env "PRISM_NEO4J_URI" "bolt://localhost:7687")
+   :neo4j-user       (get-env "PRISM_NEO4J_USER" "neo4j")
+   :neo4j-password   (get-env "PRISM_NEO4J_PASSWORD" "password")
 
    ;; PostgreSQL configuration for user management
    :db-spec          {:dbtype "postgresql"
