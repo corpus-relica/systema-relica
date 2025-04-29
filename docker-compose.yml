@@ -167,6 +167,11 @@ services:
       - REDIS_PORT=6379
       - REDIS_USER=default
       - REDIS_PASSWORD=redis
+      - POSTGRES_DB=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_PORT=5432
     ports:
       - "3333:3333"
       - "7891:7891"
