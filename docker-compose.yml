@@ -152,7 +152,7 @@ services:
       dockerfile: ./packages_clj/prism/docker/Dockerfile
     restart: always
     environment:
-      - PRISM_NEO4J_URI=neo4j+s://neo4j:7687
+      - PRISM_NEO4J_URI=bolt://neo4j:7687
       - PRISM_NEO4J_USER=neo4j
       - PRISM_NEO4J_PASSWORD=password
       - PRISM_SEED_XLS_DIR=/seed_xls
