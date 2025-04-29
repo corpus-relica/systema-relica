@@ -16,6 +16,7 @@ from src.relica_nous_langchain.agent.Common import (
 from src.relica_nous_langchain.agent.Templates import FULL_TEMPLATES
 from src.relica_nous_langchain.SemanticModel import semantic_model
 from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy # Not strictly needed here
+from src.relica_nous_langchain.agent.config import DEFAULT_CONFIG, get_model_instance
 
 ################################################################################## FINAL ANSWER
 
@@ -105,8 +106,9 @@ scratchpad:
 Based on the conversation history and the current question, provide a final, comprehensive answer.
 """
 
-        response = final_answer_llm.invoke([("system", prompt), ("human", input_text)])
-
+        # Get the model instance from configuration
+        final_answer_model = get_model_instance(DEFAULT_CONFIG.final_answer_model)
+        response = final_answer_model.invoke([("system", prompt), ("human", input_text)])
 
         print("/////////////////// GENERATED FINAL ANSWER /////////////////////")
         message = response.content

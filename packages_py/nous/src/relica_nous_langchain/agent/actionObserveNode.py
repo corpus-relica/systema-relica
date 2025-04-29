@@ -1,4 +1,4 @@
-#!/usr/bin/env python3o
+#!/usr/bin/env python3
 import os
 
 # from groq import Groq
@@ -23,6 +23,7 @@ from src.relica_nous_langchain.agent.Common import (
 )
 from src.relica_nous_langchain.agent.Templates import (background_info, FULL_TEMPLATES)
 from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
+from src.relica_nous_langchain.agent.config import DEFAULT_CONFIG, get_model_instance
 
 # client = Groq(
 #     api_key=os.environ.get("GROQ_API_KEY"),
@@ -58,20 +59,9 @@ async def action_observe(state, aperture_client: ApertureClientProxy, semantic_m
 
     print("/////////////////// ACTION BEGIN /////////////////////")
 
-    # Set up the action LLM with the *specific* tools for this instance
-    # Note: LLM instantiation might ideally happen once in NOUSAgent.__init__
-    # and passed here, but for now, we create it here with bound tools.
-    action_llm = ChatGroq(
-        model_name="qwen-qwq-32b",
-        temperature=0.7,
-        max_tokens=1000,
-        timeout=None,
-        max_retries=2,
-        stop=['\nObservation',
-              '\nFinal Answer',
-              '\nThought',
-              '\nAction']
-    ).bind_tools(tools) # Use the passed-in tools list
+    # Get the model instance from configuration
+    action_model = get_model_instance(DEFAULT_CONFIG.action_model)
+    action_model = action_model.bind_tools(tools)
 
     # Create a ToolNode instance with the passed-in tools
     # This ToolNode is used specifically for executing the chosen tool later
@@ -80,7 +70,7 @@ async def action_observe(state, aperture_client: ApertureClientProxy, semantic_m
     print("/////////////////// ACTION OBSERVE BEGIN /////////////////////")
 
     # Invoke the model with the prompt
-    response = action_llm.invoke([("system", prompt), ("human", input)])
+    response = action_model.invoke([("system", prompt), ("human", input)])
 
     # strip everything between and including '<think>' and '</think>'
     # foobar = response.content.split("</think>")[-1]
