@@ -9,30 +9,20 @@ import functools
 from typing import Optional, List, Dict, Any, TypedDict, Annotated, Sequence
 from langgraph.graph import StateGraph
 
-# Import bifurcated agent nodes
-# from src.relica_nous_langchain.agent.reactAgentNode import (
-    # route_after_thought,
-    # route_after_action,
-    # should_continue_or_finish
-# )
-
 def route_after_action(state):
     return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_THINK
 
 from src.relica_nous_langchain.agent.thoughtNode import thought as thought_node_func
 from src.relica_nous_langchain.agent.actionObserveNode import action_observe as action_observe_node_func
-from src.relica_nous_langchain.agent.shouldContinueNode import should_continue as should_continue_node_func
 from src.relica_nous_langchain.agent.finalAnswerNode import final_answer as final_answer_node_func
 
 from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
 from src.relica_nous_langchain.SemanticModel import SemanticModel
 from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
 
-from src.relica_nous_langchain.agent.Common import (
-    ACTION_CONTINUE,
+from src.relica_nous_langchain.agent.config import (
     ACTION_FINAL_ANSWER,
     ACTION_THINK,
-    ACTION_ACT,
 )
 
 # Simplified state definition
@@ -108,16 +98,6 @@ class NOUSAgent:
 
         # Set entry point
         workflow.set_entry_point("thought_agent")
-
-        # Add edges
-        # workflow.add_conditional_edges(
-        #     "thought_agent",
-        #     should_continue_node_func, # should_continue only needs state
-        #     {
-        #         ACTION_CONTINUE: "action_observe_agent",
-        #         ACTION_FINAL_ANSWER: "final_answer"
-        #     }
-        # )
 
         workflow.add_edge("thought_agent", "action_observe_agent")
 

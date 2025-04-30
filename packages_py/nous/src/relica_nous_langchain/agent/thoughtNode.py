@@ -34,7 +34,7 @@ user = client.chat.completions.create(
 
 console.print(user)
 
-from src.relica_nous_langchain.agent.Common import (
+from src.relica_nous_langchain.agent.config import (
     ACTION_FINAL_ANSWER,
     ACTION_ACT,
     format_chat_history,

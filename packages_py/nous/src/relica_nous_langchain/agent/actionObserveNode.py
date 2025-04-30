@@ -16,7 +16,7 @@ from langchain_anthropic import ChatAnthropic
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import AIMessage
 
-from src.relica_nous_langchain.agent.Common import (
+from src.relica_nous_langchain.agent.config import (
     localModel,
     openAIModel,
     anthropicModel,

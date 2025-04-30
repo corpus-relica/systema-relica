@@ -10,7 +10,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 
-from src.relica_nous_langchain.agent.Common import (
+from src.relica_nous_langchain.agent.config import (
     openAIModel,
     localModel,
     anthropicModel,
