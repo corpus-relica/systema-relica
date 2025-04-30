@@ -25,24 +25,31 @@ class AgentConfig:
     # Model configurations for different nodes
     thought_model: ModelConfig = field(default_factory=lambda: ModelConfig(
         provider=ModelProvider.GROQ,
-        model_name="qwen-qwq-32b",
+        # model_name="meta-llama/llama-4-maverick-17b-128e-instruct",
+        # model_name="qwen-qwq-32b",
+        model_name="mistral-saba-24b",
         stop=['</thought>']
     ))
-    
+
     action_model: ModelConfig = field(default_factory=lambda: ModelConfig(
         provider=ModelProvider.GROQ,
-        model_name="qwen-qwq-32b",
+        # model_name="meta-llama/llama-4-maverick-17b-128e-instruct",
+        # model_name="qwen-qwq-32b",
+        # model_name="mistral-saba-24b",
+        model_name="llama-3.1-8b-instant",
         stop=['\nObservation', '\nFinal Answer', '\nThought', '\nAction']
     ))
     
     final_answer_model: ModelConfig = field(default_factory=lambda: ModelConfig(
         provider=ModelProvider.GROQ,
-        model_name="qwen-qwq-32b",
+        # model_name="meta-llama/llama-4-maverick-17b-128e-instruct",
+        # model_name="qwen-qwq-32b",
+        model_name="mistral-saba-24b",
         stop=['\nObservation', '\nFinal Answer', '\nThought', '\nAction']
     ))
 
     # Agent behavior settings
-    max_iterations: int = 4
+    max_iterations: int = 3
     default_temperature: float = 0.7
 
     # Tool settings
@@ -75,7 +82,7 @@ def get_model_instance(config: ModelConfig):
             max_tokens=config.max_tokens,
             timeout=config.timeout,
             max_retries=config.max_retries,
-            stop=config.stop if config.stop else None
+            stop=config.stop if config.stop else None,
         )
     elif config.provider == ModelProvider.OPENAI:
         from langchain_openai import ChatOpenAI
@@ -113,4 +120,4 @@ def get_model_instance(config: ModelConfig):
         raise ValueError(f"Unsupported model provider: {config.provider}")
 
 # Default configuration instance
-DEFAULT_CONFIG = AgentConfig() 
+DEFAULT_CONFIG = AgentConfig()

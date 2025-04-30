@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from rich import print
+from rich.console import Console
+
 from datetime import datetime
 from langchain_openai import  ChatOpenAI
 from langchain_anthropic import ChatAnthropic
@@ -19,57 +22,8 @@ from src.relica_nous_langchain.services.aperture_client import ApertureClientPro
 from src.relica_nous_langchain.agent.config import DEFAULT_CONFIG, get_model_instance
 
 ################################################################################## FINAL ANSWER
+console = Console()
 
-
-final_answer_llm = ChatGroq(
-    model_name="qwen-qwq-32b",
-    temperature=0.7,
-    max_tokens=1000,
-    timeout=None,
-    max_retries=2,
-    stop=['\nObservation',
-          '\nFinal Answer',
-          '\nThought',
-          '\nAction'],
-    )
-# final_answer_llm = ChatOpenAI(
-#     model=openAIModel,
-#     # temperature=0,
-#     max_tokens=1000,
-#     timeout=None,
-#     max_retries=2,
-#     stop=['\nObservation',
-#           '\nFinal Answer',
-#           '\nThought',
-#           '\nAction'],
-#     )
-
-# final_answer_llm = ChatOpenAI(
-#     # model=openAIModel,
-#     temperature=0,
-#     base_url="http://127.0.0.1:1234/v1",
-#     openai_api_key="dummy_value",
-#     model_name=localModel,
-#     max_tokens=1000,
-#     timeout=None,
-#     max_retries=2,
-#     stop=['\nObservation',
-#           '\nFinal Answer',
-#           '\nThought',
-#           '\nAction'],
-#     )
-
-# final_answer_llm = ChatAnthropic(
-#     model=anthropicModel,
-#     temperature=0.7,
-#     max_tokens=1000,
-#     timeout=None,
-#     max_retries=2,
-#     stop=['\nObservation',
-#           '\nFinal Answer',
-#           '\nThought',
-#           '\nAction'],
-#     )
 
 def final_answer(state, semantic_model):
     """
@@ -78,7 +32,8 @@ def final_answer(state, semantic_model):
     If the state already has an answer (e.g., from loop limit or specific tool call), use it.
     Otherwise, generate a final answer based on all previous interactions using the LLM.
     """
-    print("/////////////////// FINAL ANSWER NODE BEGIN /////////////////////")
+
+    console.print("/////////////////// FINAL ANSWER NODE BEGIN /////////////////////", style="bold blue")
     
     input_text = state['input']
     scratchpad = state['scratchpad']
@@ -86,8 +41,8 @@ def final_answer(state, semantic_model):
     # If we already have an answer from the reactAgent, use it directly
     if state.get('answer'):
         message = state['answer']
-        print("/////////////////// USING EXISTING FINAL ANSWER /////////////////////")
-        print(message)
+        console.print("/////////////////// USING EXISTING FINAL ANSWER /////////////////////", style="bold blue")
+        console.print(message)
     else:
         # Generate a final answer using the LLM
         prompt = f"""You are NOUS (Network for Ontological Understanding and Synthesis), an AI assistant.
@@ -110,11 +65,12 @@ Based on the conversation history and the current question, provide a final, com
         final_answer_model = get_model_instance(DEFAULT_CONFIG.final_answer_model)
         response = final_answer_model.invoke([("system", prompt), ("human", input_text)])
 
-        print("/////////////////// GENERATED FINAL ANSWER /////////////////////")
+        console.print("/////////////////// GENERATED FINAL ANSWER /////////////////////", style="bold blue")
         message = response.content
         # strip everything before '</think>'
         message = message.split("</think>")[-1]
-        print(message)
+        console.print(message)
 
     # Return the final answer in the state dictionary
-    return {"answer": message}
+    return {"answer": message,
+            "messages": [{"role": "assistant", "content":message}]}

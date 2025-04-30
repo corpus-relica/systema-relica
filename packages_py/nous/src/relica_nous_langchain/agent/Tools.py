@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from rich import print
+
 import asyncio
 from langchain.tools import tool
 from langchain_core.utils.function_calling import convert_to_openai_tool
@@ -99,8 +101,11 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
             if result is None or "facts" not in result or len(result["facts"]) == 0:
                 return f"No entity found with the name \"{search_term}\""
 
+            environment = result.get('environment')
+            facts = environment.get('facts', [])
+
             # Process the result to return a concise summary or list of UIDs
-            uids = [fact['lh_object_uid'] for fact in result.get('facts', [])]
+            uids = [fact['lh_object_uid'] for fact in facts]
             if not uids:
                 return f"No entity found with the name \"{search_term}\""
             else:

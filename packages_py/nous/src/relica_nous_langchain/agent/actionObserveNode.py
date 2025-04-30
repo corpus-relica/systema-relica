@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 import os
 
+from rich import print
+from rich.console import Console
+
+console = Console()
+
 # from groq import Groq
 from langchain_groq import ChatGroq
 
@@ -57,7 +62,7 @@ async def action_observe(state, aperture_client: ApertureClientProxy, semantic_m
         chat_history=format_chat_history(messages)  # Use state instead of memory
     )
 
-    print("/////////////////// ACTION BEGIN /////////////////////")
+    console.print("/////////////////// ACTION BEGIN /////////////////////", style="bold green")
 
     # Get the model instance from configuration
     action_model = get_model_instance(DEFAULT_CONFIG.action_model)
@@ -146,14 +151,15 @@ async def action_observe(state, aperture_client: ApertureClientProxy, semantic_m
 
         # Pass the extracted list of tool calls directly to ToolNode
         tool_messages = await tool_node.ainvoke(extracted_tool_calls)
+        tool_message = tool_messages.get("messages")[-1]
 
         print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-        print(tool_messages)
+        print(tool_message)
         print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
 
         return {
-            "messages": messages, # + [response] + tool_messages['messages'],
-            "scratchpad": scratchpad + f"\n<Observation>\n{response.content}\n</Observation>", # Observation is added via messages
+            # "messages": messages, # + [response] + tool_messages['messages'],
+            "scratchpad": scratchpad + f"\n<Observation>\n{tool_message.content}\n</Observation>", # Observation is added via messages
             "next_step": ACTION_THINK, # Always return to thought after action/observation
             "user_id": user_id, # Propagate user_id
             "env_id": env_id    # Propagate env_id

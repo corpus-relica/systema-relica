@@ -419,7 +419,7 @@ class ApertureClient:
             return {"error": f"Failed to deselect entities: {str(e)}"}
 
     # Existing methods
-    async def loadEntity(self, uid):
+    async def loadEntity(self, user_id, env_id, uid):
         """Load entity data by UID"""
         if not self.connected:
             await self.connect()
@@ -427,7 +427,10 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-entity", {"uid": uid})
+            response = await self.client.send("environment/load-entity", {
+                "entity-uid": uid,
+                "user-id": user_id,
+                "environment-id": env_id})
             return response['payload']
         except Exception as e:
             logger.error(f"Error loading entity: {e}")

@@ -2,6 +2,38 @@
 import os
 from datetime import datetime
 
+from rich import print
+from rich.console import Console
+
+console = Console()
+
+from groq import Groq
+import instructor
+from pydantic import BaseModel
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = instructor.from_groq(client)
+
+class User(BaseModel):
+    name: str
+    age: int
+
+class ThoughtResponse(BaseModel):
+    thought: str
+    cutToFinalAnswer: bool
+    finalAnswer: str
+
+
+# Create structured output
+user = client.chat.completions.create(
+    model="mistral-saba-24b",
+    messages=[
+        {"role": "user", "content": "Extract: Jason is 25 years old"},
+    ],
+    response_model=User,
+)
+
+console.print(user)
+
 from src.relica_nous_langchain.agent.Common import (
     ACTION_FINAL_ANSWER,
     ACTION_ACT,
@@ -26,15 +58,15 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
     scratchpad = state['scratchpad']
 
     if loop_idx > DEFAULT_CONFIG.max_iterations:
-        message = "Loop limit exceeded. Terminating."
+        message = "Loop limit reached. I better summarize what I know for the final answer..."
         return { 
-            "messages": state["messages"] + [("assistant", message)],
-            "scratchpad": state["scratchpad"] + f"\nLoop limit reached. Forcing final answer.",
+            # "messages": [("assistant", message)],
+            "scratchpad": state["scratchpad"] + f"\n<thought>Loop limit reached. I better summarize what I know for the final answer...</thought>",
             "thought": message,
             "next_step": ACTION_FINAL_ANSWER,
             "cut_to_final": True,
             "loop_idx": loop_idx,
-            "answer": message,
+            # "answer": message,
             "user_id": user_id,
             "env_id": env_id
         }
@@ -53,7 +85,7 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
         chat_history=format_chat_history(messages)
     )
 
-    print("/////////////////// THOUGHT BEGIN /////////////////////")
+    console.print("/////////////////// THOUGHT BEGIN /////////////////////", style="bold red")
 
     # Get the model instance from configuration
     thought_model = get_model_instance(DEFAULT_CONFIG.thought_model)
@@ -69,16 +101,65 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
         }
     ])
 
+#     prompt_too = f'''
+# <agent_instructions>
+# You are working within a ReAct framework and must produce output that strictly conforms to the ThoughtResponse schema.
+
+# Your task is to analyze the current situation and decide whether to:
+# 1. Continue gathering information using tools
+# 2. Provide a final answer to the user's question
+
+# # Output Schema
+# Your response must conform to this schema:
+# - thought: A concise reasoning about what information you have and what's still needed
+# - cutToFinalAnswer: Boolean flag (true = ready to answer, false = need more information)
+# - finalAnswer: Complete answer if cutToFinalAnswer is true, "None" otherwise
+
+# # Decision Guidelines
+# - For purely conversational queries: Set cutToFinalAnswer=true and provide finalAnswer immediately
+# - For factual queries:
+#   - Review all previous observations from the scratchpad
+#   - Identify specific information gaps related to the question
+#   - Determine if you have sufficient information to answer
+#   - If information is incomplete, set cutToFinalAnswer=false and explain what's still needed
+
+# # Response Style
+# - Keep thoughts brief and focused on decision-making
+# - Avoid unnecessary explanations or verbose reasoning
+# - For the finalAnswer, provide complete and helpful responses to the user's query
+# - Do not include any content that doesn't conform to the required schema
+
+# Remember: Your output must be parseable as a ThoughtResponse object with the exact fields specified.
+# </agent_instructions>
+#     '''
+#     chat_completion_too = client.chat.completions.create(
+#         model="mistral-saba-24b",
+#         messages=[
+#             {
+#                 "role": "system",
+#                 "content": prompt_too,
+#             },
+#             {
+#                 "role": "user",
+#                 "content": input,
+#             }
+#         ],
+#         response_model=ThoughtResponse,
+#     )
+
+
     print("/////////////////// THOUGHT COMPLETE /////////////////////")
     print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
     print(chat_completion.content)
     print("%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    # console.print(chat_completion_too)
     if hasattr(chat_completion, 'reasoning'):
         print(chat_completion.reasoning)
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     message = chat_completion.content 
     message = message.split("</thought>")[0].split("<thought>")[-1]
+    message = message.strip()
 
     new_scratchpad = scratchpad + f"<thought>\n{message}\n</thought>"
 

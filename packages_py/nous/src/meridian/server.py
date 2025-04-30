@@ -136,13 +136,14 @@ class WebSocketServer:
             client_format = client.get("format", FORMAT_JSON)
             websocket = client["websocket"]
 
-            print(f"Sending to client: {client_id}")
-            print(f"Message: {message}")
+            # print(f"Sending to client: {client_id}")
+            # print(f"Message: {message}")
+
             # Serialize message to client's format
             message_str = serialize_message(message, client_format)
             #escape message_str
             # message_str = message_str.replace('"', '\\"')
-            print(f"Seralized message: {message_str}")
+            # print(f"Serialized message: {message_str}")
 
             try:
                 await websocket.send_text(message_str)

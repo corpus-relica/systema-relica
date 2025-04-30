@@ -1,3 +1,4 @@
+from rich import print
 import operator
 import json
 import os
@@ -109,14 +110,16 @@ class NOUSAgent:
         workflow.set_entry_point("thought_agent")
 
         # Add edges
-        workflow.add_conditional_edges(
-            "thought_agent",
-            should_continue_node_func, # should_continue only needs state
-            {
-                ACTION_CONTINUE: "action_observe_agent",
-                ACTION_FINAL_ANSWER: "final_answer"
-            }
-        )
+        # workflow.add_conditional_edges(
+        #     "thought_agent",
+        #     should_continue_node_func, # should_continue only needs state
+        #     {
+        #         ACTION_CONTINUE: "action_observe_agent",
+        #         ACTION_FINAL_ANSWER: "final_answer"
+        #     }
+        # )
+
+        workflow.add_edge("thought_agent", "action_observe_agent")
 
         workflow.add_conditional_edges(
             "action_observe_agent",
@@ -137,9 +140,12 @@ class NOUSAgent:
         self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this agent instance
         print(f"NOUS Agent Initialized (ID: {self.conversation_id})")
 
-    async def handleInput(self, user_input: str):
+    async def handleInput(self, messages):
         # Note: user_id and env_id are now part of self.aperture_client
         # They might still be needed for the initial state if nodes rely on them directly from state
+
+        user_input = messages[-1]['content']
+
         user_id = self.aperture_client.user_id
         env_id = self.aperture_client.env_id
 
@@ -147,10 +153,11 @@ class NOUSAgent:
         print(f"User ID: {user_id}")
         print(f"Env ID: {env_id}")
 
+
         # Initial state for the LangGraph workflow
         initial_state = AgentState(
             input=user_input,
-            messages=[{"role": "user", "content": user_input}], # Start with the user message
+            messages=messages, # Start with the user message
             scratchpad="",  # Initialize empty scratchpad
             thought=None,
             answer=None,   # Initialize answer as None
