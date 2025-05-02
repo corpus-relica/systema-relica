@@ -118,8 +118,6 @@ When interpreting entity relationships, always consider:
 - Any aspects possessed by the entities
 - The broader network of relationships connecting entities
 - Potential temporal dimensions or state changes
-
-ALWAYS RESPONDE WITH JSON
 '''
 
 # <agent_instructions>
@@ -190,25 +188,28 @@ BASE_CONTEXT = """<agent_identity>
 {env_id}
 </environment_id>
 </user_info>
+
+<user_query>
+{input}
+</user_query>
 """
 
 THOUGHT_TEMPLATE = """<agent_instructions>
-This is the Thought step in the ReAct process, your job here is to reason about the current situation.
+This is the Thought step in the ReAct process, your job here is to decide how best to respond to the user_query.
 
-Based on the previous observations and the current state, you must decide:
 
-1. Think about the input question and what information is needed to answer it.
-  - is it even something that needs a tool call? Is it merely conversational? If so you can skip to the final answer step.
-  - otherwise, continue with the next steps
-2. Review the previous thoughts and observations from the scratchpad, what information did we learn?
-  - do we have enough information to answer the question? If so, you can skip to the final answer step.
-  - otherwise, continue with the next steps
-3. What specific semantic relationships or classifications do we need to investigate?
-4. Which tool would help us extract this information?
-  - be sure to mention the specific tool and properties you intend to use
-  - DO NOT call the same tool with the same properties more than once!!!
-5. Do we have enough information for a final answer?
-  - if so you say "I can now supply the final answer"
+
+If it is converstational, you can skip to the final answer step.
+
+1. Consider the intent of the user_query, is it simply conversational or does it a request for information or work?
+  - If it is simply conversational, skip to the final answer step.
+2. Is the the intent of the user_query is for more information or work to be done?
+  - Consider the history in the scratchpad if any, what does it say about the tradjectory and status of the process of responding to the user_query?
+    - If you think you have enough information to answer the question, you can skip to the final answer step.
+  - If you need more information, consider the available tools and how they can help, but think through the process step by step before giving your final answer. The resonse should have 3 parts:
+    1.Thought: Respond directly to the state of scratchpad and the user_query, where are you in the process of responding to the user_query?
+    2.Reasoning: State what information you need to gather next to continue the process of responding to the user_query.
+    3.Action: Specify the action you'll take, must be one of <tool_names>{tool_names}</tool_names>
 
 Keep responses brief and action-oriented. Focus on concrete next steps using available tools.
 
