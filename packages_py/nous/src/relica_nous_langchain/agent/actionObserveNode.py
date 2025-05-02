@@ -46,6 +46,10 @@ async def action_observe(state, aperture_client: ApertureClientProxy, semantic_m
     scratchpad = state['scratchpad']
     messages = state['messages']
     loop_idx = state.get('loop_idx', 1)
+    cut_to_final = state.get('cut_to_final', False)
+
+    if(cut_to_final):
+        return
 
     prompt = FULL_TEMPLATES["action"].format(
         user_id=user_id,
@@ -59,7 +63,8 @@ async def action_observe(state, aperture_client: ApertureClientProxy, semantic_m
         tool_descriptions=tool_descriptions,
         tool_names=tool_names,
         agent_scratchpad=scratchpad,
-        chat_history=format_chat_history(messages)  # Use state instead of memory
+        chat_history=format_chat_history(messages), # Use state instead of memory
+        input=input
     )
 
     console.print("/////////////////// ACTION BEGIN /////////////////////", style="bold green")

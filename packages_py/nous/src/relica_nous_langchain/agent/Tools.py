@@ -74,9 +74,9 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
         content = semantic_model.getModelRepresentation(uid)
 
         if content is None:
-            content = "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
+            return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
 
-        await aperture_proxy.selectEntity(7, 1, uid)
+        await aperture_proxy.selectEntity(uid)
 
         return content
 

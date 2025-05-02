@@ -9,6 +9,9 @@ import functools
 from typing import Optional, List, Dict, Any, TypedDict, Annotated, Sequence
 from langgraph.graph import StateGraph
 
+def route_after_think(state):
+    return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_ACT
+
 def route_after_action(state):
     return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_THINK
 
@@ -21,6 +24,7 @@ from src.relica_nous_langchain.SemanticModel import SemanticModel
 from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
 
 from src.relica_nous_langchain.agent.config import (
+    ACTION_ACT,
     ACTION_FINAL_ANSWER,
     ACTION_THINK,
 )
@@ -99,7 +103,14 @@ class NOUSAgent:
         # Set entry point
         workflow.set_entry_point("thought_agent")
 
-        workflow.add_edge("thought_agent", "action_observe_agent")
+        workflow.add_conditional_edges(
+            "thought_agent",
+            route_after_think, # route_after_action only needs state (check implementation if unsure)
+            {
+                ACTION_ACT: "action_observe_agent",
+                ACTION_FINAL_ANSWER: "final_answer"
+            }
+        )
 
         workflow.add_conditional_edges(
             "action_observe_agent",

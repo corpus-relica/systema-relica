@@ -82,7 +82,8 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
         tool_descriptions=tool_descriptions,
         tool_names=tool_names,
         agent_scratchpad=scratchpad,
-        chat_history=format_chat_history(messages)
+        chat_history=format_chat_history(messages),
+        input=input
     )
 
     console.print("/////////////////// THOUGHT BEGIN /////////////////////", style="bold red")
@@ -100,53 +101,6 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
             "content": input,
         }
     ])
-
-#     prompt_too = f'''
-# <agent_instructions>
-# You are working within a ReAct framework and must produce output that strictly conforms to the ThoughtResponse schema.
-
-# Your task is to analyze the current situation and decide whether to:
-# 1. Continue gathering information using tools
-# 2. Provide a final answer to the user's question
-
-# # Output Schema
-# Your response must conform to this schema:
-# - thought: A concise reasoning about what information you have and what's still needed
-# - cutToFinalAnswer: Boolean flag (true = ready to answer, false = need more information)
-# - finalAnswer: Complete answer if cutToFinalAnswer is true, "None" otherwise
-
-# # Decision Guidelines
-# - For purely conversational queries: Set cutToFinalAnswer=true and provide finalAnswer immediately
-# - For factual queries:
-#   - Review all previous observations from the scratchpad
-#   - Identify specific information gaps related to the question
-#   - Determine if you have sufficient information to answer
-#   - If information is incomplete, set cutToFinalAnswer=false and explain what's still needed
-
-# # Response Style
-# - Keep thoughts brief and focused on decision-making
-# - Avoid unnecessary explanations or verbose reasoning
-# - For the finalAnswer, provide complete and helpful responses to the user's query
-# - Do not include any content that doesn't conform to the required schema
-
-# Remember: Your output must be parseable as a ThoughtResponse object with the exact fields specified.
-# </agent_instructions>
-#     '''
-#     chat_completion_too = client.chat.completions.create(
-#         model="mistral-saba-24b",
-#         messages=[
-#             {
-#                 "role": "system",
-#                 "content": prompt_too,
-#             },
-#             {
-#                 "role": "user",
-#                 "content": input,
-#             }
-#         ],
-#         response_model=ThoughtResponse,
-#     )
-
 
     print("/////////////////// THOUGHT COMPLETE /////////////////////")
     print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
