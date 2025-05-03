@@ -194,6 +194,7 @@
                     graph-service
                     queries/classification-fact
                     {:uid uid})]
+        (println "!!!!!!!!!!!!!!!!!!!!!!!! Classification fact result:" (graph/transform-results result))
         (if (empty? result)
           []
           (graph/transform-results result)))

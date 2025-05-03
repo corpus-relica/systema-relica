@@ -115,12 +115,14 @@
   (when ?reply-fn
     ;; (tap> {:event :websocket/getting-classification-fact
     ;;        :entity-service fact-s})
+    (println "!!!!!!!!!!!!!!!!!!!!!!!! --- Bon Jovi: " ?data)
     (if (nil? gellish-base-s)
       (?reply-fn {:success false
                   :error "gellish base service not initialized"})
       (go
         (try
-          (let [facts (<! (gellish-base-service/get-classification-fact gellish-base-s (:uid ?data)))]
+          (let [facts  (gellish-base-service/get-classification-fact gellish-base-s (:uid ?data))]
+            (println "!!!!!!!!!!!!!!!!!!!!!!!! --- Facts: " facts)
             (?reply-fn {:success true
                         :facts facts}))
           (catch Exception e
@@ -465,7 +467,26 @@
             (?reply-fn {:success false
                         :error "Failed to execute text search"})))))))
 
-;; SPECIALIZATION HIERARCHY
+;; SPECIALIZATION
+
+(defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
+  :specialization/fact
+  [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
+  (when ?reply-fn
+    (tap> {:event :websocket/getting-specialization-fact
+           :entity-service gellish-base-s})
+    (if (nil? gellish-base-s)
+      (?reply-fn {:success false
+                  :error "Entity service not initialized"})
+      (go
+        (try
+          (let [facts (gellish-base-service/get-specialization-fact gellish-base-s (:uid ?data))]
+            (?reply-fn {:success true
+                        :facts facts}))
+          (catch Exception e
+            (log/error e "Failed to get specialization fact")
+            (?reply-fn {:success false
+                        :error "Failed to get specialization fact"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
   :specialization/hierarchy

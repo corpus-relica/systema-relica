@@ -241,7 +241,25 @@ class ApertureClient:
             logger.error(f"Error creating environment: {e}")
             return {"error": f"Failed to create environment: {str(e)}"}
 
-    async def loadSpecializationHierarchy(self, user_id, uid):
+    async def loadSpecializationFact(self, user_id, env_id, uid):
+        """Load specialization fact"""
+        if not self.connected:
+            await self.connect()
+            if not self.connected:
+                return {"error": "Failed to connect to Aperture"}
+
+        try:
+            response = await self.client.send("environment/load-specialization-fact", {
+                "user-id": user_id,
+                "environment-id": env_id,
+                "uid": uid
+            })
+            return response['payload'] if 'payload' in response else response
+        except Exception as e:
+            logger.error(f"Error loading specialization hierarchy: {e}")
+            return {"error": f"Failed to load specialization hierarchy: {str(e)}"}
+
+    async def loadSpecializationHierarchy(self, user_id, env_id, uid):
         """Load specialization hierarchy (equivalent to load-specialization-hierarchy)"""
         if not self.connected:
             await self.connect()
@@ -250,8 +268,9 @@ class ApertureClient:
 
         try:
             response = await self.client.send("environment/load-specialization", {
-                "uid": uid,
-                "user-id": user_id
+                "user-id": user_id,
+                "environment-id": env_id,
+                "uid": uid
             })
             return response['payload'] if 'payload' in response else response
         except Exception as e:
@@ -328,6 +347,60 @@ class ApertureClient:
         except Exception as e:
             logger.error(f"Error loading entities: {e}")
             return {"error": f"Failed to load entities: {str(e)}"}
+
+    async def loadSubtypes(self, user_id, env_id, entity_uid):
+        """Load subtypes"""
+        if not self.connected:
+            await self.connect()
+            if not self.connected:
+                return {"error": "Failed to connect to Aperture"}
+
+        try:
+            response = await self.client.send("environment/load-subtypes", {
+                "user-id": user_id,
+                "environment-id": env_id,
+                "entity-uid": entity_uid
+            })
+            return response['payload'] if 'payload' in response else response
+        except Exception as e:
+            logger.error(f"Error loading subtypes: {e}")
+            return {"error": f"Failed to load subtypes: {str(e)}"}
+
+    async def loadClassified(self, user_id, env_id, entity_uid):
+        """Load classified"""
+        if not self.connected:
+            await self.connect()
+            if not self.connected:
+                return {"error": "Failed to connect to Aperture"}
+
+        try:
+            response = await self.client.send("environment/load-classified", {
+                "user-id": user_id,
+                "environment-id": env_id,
+                "entity-uid": entity_uid
+            })
+            return response['payload'] if 'payload' in response else response
+        except Exception as e:
+            logger.error(f"Error loading classified: {e}")
+            return {"error": f"Failed to load classified: {str(e)}"}
+
+    async def loadClassificationFact(self, user_id, env_id, entity_uid):
+        """Load classificationFact"""
+        if not self.connected:
+            await self.connect()
+            if not self.connected:
+                return {"error": "Failed to connect to Aperture"}
+
+        try:
+            response = await self.client.send("environment/load-classification-fact", {
+                "user-id": user_id,
+                "environment-id": env_id,
+                "entity-uid": entity_uid
+            })
+            return response['payload'] if 'payload' in response else response
+        except Exception as e:
+            logger.error(f"Error loading classification fact: {e}")
+            return {"error": f"Failed to load classification fact: {str(e)}"}
 
     async def loadSubtypesCone(self, user_id, env_id, entity_uid):
         """Load subtypes cone (equivalent to load-subtypes-cone)"""
@@ -419,7 +492,7 @@ class ApertureClient:
             return {"error": f"Failed to deselect entities: {str(e)}"}
 
     # Existing methods
-    async def loadEntity(self, uid):
+    async def loadEntity(self, user_id, env_id, uid):
         """Load entity data by UID"""
         if not self.connected:
             await self.connect()
@@ -427,7 +500,10 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-entity", {"uid": uid})
+            response = await self.client.send("environment/load-entity", {
+                "entity-uid": uid,
+                "user-id": user_id,
+                "environment-id": env_id})
             return response['payload']
         except Exception as e:
             logger.error(f"Error loading entity: {e}")
@@ -510,6 +586,9 @@ class ApertureClientProxy:
     async def createEnvironment(self, *args, **kwargs):
         return await self._proxy_call('createEnvironment', *args, **kwargs)
 
+    async def loadSpecializationFact(self, *args, **kwargs):
+        return await self._proxy_call('loadSpecializationFact', *args, **kwargs)
+
     async def loadSpecializationHierarchy(self, *args, **kwargs):
         return await self._proxy_call('loadSpecializationHierarchy', *args, **kwargs)
 
@@ -525,8 +604,17 @@ class ApertureClientProxy:
     async def loadEntities(self, *args, **kwargs):
         return await self._proxy_call('loadEntities', *args, **kwargs)
 
+    async def loadSubtypes(self, *args, **kwargs):
+        return await self._proxy_call('loadSubtypes', *args, **kwargs)
+
     async def loadSubtypesCone(self, *args, **kwargs):
         return await self._proxy_call('loadSubtypesCone', *args, **kwargs)
+
+    async def loadClassified(self, *args, **kwargs):
+        return await self._proxy_call('loadClassified', *args, **kwargs)
+
+    async def loadClassificationFact(self, *args, **kwargs):
+        return await self._proxy_call('loadClassificationFact', *args, **kwargs)
 
     async def unloadEntities(self, *args, **kwargs):
         return await self._proxy_call('unloadEntities', *args, **kwargs)

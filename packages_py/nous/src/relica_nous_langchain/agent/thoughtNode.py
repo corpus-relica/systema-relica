@@ -2,7 +2,39 @@
 import os
 from datetime import datetime
 
-from src.relica_nous_langchain.agent.Common import (
+from rich import print
+from rich.console import Console
+
+console = Console()
+
+from groq import Groq
+import instructor
+from pydantic import BaseModel
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = instructor.from_groq(client)
+
+class User(BaseModel):
+    name: str
+    age: int
+
+class ThoughtResponse(BaseModel):
+    thought: str
+    cutToFinalAnswer: bool
+    finalAnswer: str
+
+
+# Create structured output
+user = client.chat.completions.create(
+    model="mistral-saba-24b",
+    messages=[
+        {"role": "user", "content": "Extract: Jason is 25 years old"},
+    ],
+    response_model=User,
+)
+
+console.print(user)
+
+from src.relica_nous_langchain.agent.config import (
     ACTION_FINAL_ANSWER,
     ACTION_ACT,
     format_chat_history,
@@ -26,15 +58,15 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
     scratchpad = state['scratchpad']
 
     if loop_idx > DEFAULT_CONFIG.max_iterations:
-        message = "Loop limit exceeded. Terminating."
+        message = "Loop limit reached. I better summarize what I know for the final answer..."
         return { 
-            "messages": state["messages"] + [("assistant", message)],
-            "scratchpad": state["scratchpad"] + f"\nLoop limit reached. Forcing final answer.",
+            # "messages": [("assistant", message)],
+            "scratchpad": state["scratchpad"] + f"\n<thought>Loop limit reached. I better summarize what I know for the final answer...</thought>",
             "thought": message,
             "next_step": ACTION_FINAL_ANSWER,
             "cut_to_final": True,
             "loop_idx": loop_idx,
-            "answer": message,
+            # "answer": message,
             "user_id": user_id,
             "env_id": env_id
         }
@@ -50,10 +82,11 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
         tool_descriptions=tool_descriptions,
         tool_names=tool_names,
         agent_scratchpad=scratchpad,
-        chat_history=format_chat_history(messages)
+        chat_history=format_chat_history(messages),
+        input=input
     )
 
-    print("/////////////////// THOUGHT BEGIN /////////////////////")
+    console.print("/////////////////// THOUGHT BEGIN /////////////////////", style="bold red")
 
     # Get the model instance from configuration
     thought_model = get_model_instance(DEFAULT_CONFIG.thought_model)
@@ -73,12 +106,14 @@ def thought(state, aperture_client: ApertureClientProxy, semantic_model, tools, 
     print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
     print(chat_completion.content)
     print("%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    # console.print(chat_completion_too)
     if hasattr(chat_completion, 'reasoning'):
         print(chat_completion.reasoning)
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     message = chat_completion.content 
     message = message.split("</thought>")[0].split("<thought>")[-1]
+    message = message.strip()
 
     new_scratchpad = scratchpad + f"<thought>\n{message}\n</thought>"
 

@@ -25,24 +25,31 @@ class AgentConfig:
     # Model configurations for different nodes
     thought_model: ModelConfig = field(default_factory=lambda: ModelConfig(
         provider=ModelProvider.GROQ,
-        model_name="qwen-qwq-32b",
+        # model_name="meta-llama/llama-4-maverick-17b-128e-instruct",
+        # model_name="qwen-qwq-32b",
+        model_name="mistral-saba-24b",
         stop=['</thought>']
     ))
-    
+
     action_model: ModelConfig = field(default_factory=lambda: ModelConfig(
         provider=ModelProvider.GROQ,
-        model_name="qwen-qwq-32b",
+        # model_name="meta-llama/llama-4-maverick-17b-128e-instruct",
+        # model_name="qwen-qwq-32b",
+        model_name="mistral-saba-24b",
+        # model_name="llama-3.1-8b-instant",
         stop=['\nObservation', '\nFinal Answer', '\nThought', '\nAction']
     ))
     
     final_answer_model: ModelConfig = field(default_factory=lambda: ModelConfig(
         provider=ModelProvider.GROQ,
-        model_name="qwen-qwq-32b",
+        # model_name="meta-llama/llama-4-maverick-17b-128e-instruct",
+        # model_name="qwen-qwq-32b",
+        model_name="mistral-saba-24b",
         stop=['\nObservation', '\nFinal Answer', '\nThought', '\nAction']
     ))
 
     # Agent behavior settings
-    max_iterations: int = 4
+    max_iterations: int = 3
     default_temperature: float = 0.7
 
     # Tool settings
@@ -75,7 +82,7 @@ def get_model_instance(config: ModelConfig):
             max_tokens=config.max_tokens,
             timeout=config.timeout,
             max_retries=config.max_retries,
-            stop=config.stop if config.stop else None
+            stop=config.stop if config.stop else None,
         )
     elif config.provider == ModelProvider.OPENAI:
         from langchain_openai import ChatOpenAI
@@ -113,4 +120,50 @@ def get_model_instance(config: ModelConfig):
         raise ValueError(f"Unsupported model provider: {config.provider}")
 
 # Default configuration instance
-DEFAULT_CONFIG = AgentConfig() 
+DEFAULT_CONFIG = AgentConfig()
+
+#########################################################################
+
+#!/usr/bin/env python3
+
+# Model configuration
+
+# openAIModel="gpt-4o-mini"
+openAIModel="o3-mini"
+
+# anthropicModel = "claude-3-opus-20240229"
+anthropicModel = "claude-3-7-sonnet-latest"
+# anthropicModel = "claude-3-5-sonnet-latest"
+
+# localModel = "gemma-3-12b-it"
+localModel = "mistral-nemo-instruct-2407"
+
+def format_chat_history(messages):
+    """
+    Format message history into a readable string, safely handling different
+    message formats and types.
+    """
+    if not messages:
+        return ""
+
+    formatted = ""
+    for msg in messages:
+        # Handle different message formats safely
+        if isinstance(msg, dict):
+            role = msg.get('role', 'unknown')
+            content = msg.get('content', '')
+            formatted += f"""<{role}>\n{content}\n</{role}>\n"""
+        # elif isinstance(msg, str):
+        #     formatted += f"""message: {msg}\n"""
+        # else:
+        #     # For any other type, convert to string safely
+        #     formatted += f"""message: {str(msg)}\n"""
+
+    return formatted
+
+# Action types for graph flow control
+ACTION_CONTINUE = "continue"
+ACTION_FINAL_ANSWER = "final_answer"
+ACTION_MAX_LOOPS = "max_loops"
+ACTION_THINK = "think"
+ACTION_ACT = "act"

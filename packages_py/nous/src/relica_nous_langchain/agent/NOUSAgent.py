@@ -1,3 +1,4 @@
+from rich import print
 import operator
 import json
 import os
@@ -8,30 +9,24 @@ import functools
 from typing import Optional, List, Dict, Any, TypedDict, Annotated, Sequence
 from langgraph.graph import StateGraph
 
-# Import bifurcated agent nodes
-# from src.relica_nous_langchain.agent.reactAgentNode import (
-    # route_after_thought,
-    # route_after_action,
-    # should_continue_or_finish
-# )
+def route_after_think(state):
+    return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_ACT
 
 def route_after_action(state):
     return ACTION_FINAL_ANSWER if state["cut_to_final"] else ACTION_THINK
 
 from src.relica_nous_langchain.agent.thoughtNode import thought as thought_node_func
 from src.relica_nous_langchain.agent.actionObserveNode import action_observe as action_observe_node_func
-from src.relica_nous_langchain.agent.shouldContinueNode import should_continue as should_continue_node_func
 from src.relica_nous_langchain.agent.finalAnswerNode import final_answer as final_answer_node_func
 
 from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
 from src.relica_nous_langchain.SemanticModel import SemanticModel
 from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
 
-from src.relica_nous_langchain.agent.Common import (
-    ACTION_CONTINUE,
+from src.relica_nous_langchain.agent.config import (
+    ACTION_ACT,
     ACTION_FINAL_ANSWER,
     ACTION_THINK,
-    ACTION_ACT,
 )
 
 # Simplified state definition
@@ -108,12 +103,11 @@ class NOUSAgent:
         # Set entry point
         workflow.set_entry_point("thought_agent")
 
-        # Add edges
         workflow.add_conditional_edges(
             "thought_agent",
-            should_continue_node_func, # should_continue only needs state
+            route_after_think, # route_after_action only needs state (check implementation if unsure)
             {
-                ACTION_CONTINUE: "action_observe_agent",
+                ACTION_ACT: "action_observe_agent",
                 ACTION_FINAL_ANSWER: "final_answer"
             }
         )
@@ -137,9 +131,12 @@ class NOUSAgent:
         self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this agent instance
         print(f"NOUS Agent Initialized (ID: {self.conversation_id})")
 
-    async def handleInput(self, user_input: str):
+    async def handleInput(self, messages):
         # Note: user_id and env_id are now part of self.aperture_client
         # They might still be needed for the initial state if nodes rely on them directly from state
+
+        user_input = messages[-1]['content']
+
         user_id = self.aperture_client.user_id
         env_id = self.aperture_client.env_id
 
@@ -147,10 +144,11 @@ class NOUSAgent:
         print(f"User ID: {user_id}")
         print(f"Env ID: {env_id}")
 
+
         # Initial state for the LangGraph workflow
         initial_state = AgentState(
             input=user_input,
-            messages=[{"role": "user", "content": user_input}], # Start with the user message
+            messages=messages, # Start with the user message
             scratchpad="",  # Initialize empty scratchpad
             thought=None,
             answer=None,   # Initialize answer as None

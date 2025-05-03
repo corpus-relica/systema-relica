@@ -1,3 +1,4 @@
+from rich import print
 import asyncio
 import logging
 from src.relica_nous_langchain.services.NOUSServer import nous_server
@@ -8,7 +9,8 @@ from src.relica_nous_langchain.services.clarity_client import clarity_client
 from src.meridian.server import WebSocketServer, app
 
 # from src.relica_nous_langchain.test_agent import handleInput
-from src.relica_nous_langchain.agent.NOUSAgent import NOUSAgent
+# from src.relica_nous_langchain.agent.NOUSAgent import NOUSAgent
+from src.relica_nous_langchain.agent.NOUSAgentPrebuilt import NOUSAgent
 # from src.relica_nous_langchain.agent.NOUSAgent_prebuilt import handleInput
 from src.relica_nous_langchain.agent.Tools import create_agent_tools
 
@@ -23,6 +25,8 @@ logging.getLogger("edn_format").setLevel(logging.WARNING)  # Suppress EDN logs
 # load_dotenv()  # This loads the variables from .env
 
 # #####################################################################################
+
+messages = []
 
 async def main():
     print("RELICA :: NOUS :: STARTING UP....")
@@ -75,15 +79,19 @@ async def main():
             semantic_model=semantic_model, # Pass the imported semantic_model instance
             converted_tools=tool_data["converted_tools"], # Pass the converted_tools from tool_data
             # Pass other necessary dependencies for NOUSAgent here, if any
-            # e.g., nous_server=nous_server ? 
+            # e.g., nous_server=nous_server ?
         )
+
 
         # 3. Invoke the agent to process the input
         #    (Replace 'handleInput' with the actual method name if different)
         try:
             # Assuming the agent returns the final answer to send to the user
-            final_answer_raw = await agent.handleInput(message)
+            messages.append({"role":"user", "content": message})
+            final_answer_raw = await agent.handleInput(messages)
             final_answer = final_answer_raw.strip() if isinstance(final_answer_raw, str) else final_answer_raw
+            messages.append({"role":"assistant", "content": final_answer})
+
             logger.info(f"Final answer: {final_answer}")
             logger.info(f"Agent processed message from user '{user_id}', sending response to client '{client_id}'.")
             # 4. Send the final answer back to the user
