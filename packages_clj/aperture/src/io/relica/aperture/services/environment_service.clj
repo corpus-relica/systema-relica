@@ -27,14 +27,18 @@
   (text-search-load [this user-id search-term])
   
   ;; Fact/Entity management
+  (load-specialization-fact [this user-id uid env-id])
   (load-specialization-hierarchy [this user-id uid env-id])
   (load-all-related-facts [this user-id entity-uid env-id])
   (load-entity [this user-id entity-uid env-id])
   (unload-entity [this user-id entity-uid env-id])
   (load-entities [this user-id env-id entity-uids])
   (unload-entities [this user-id env-id entity-uids])
+  (load-subtypes [this user-id entity-uid env-id])
   (load-subtypes-cone [this user-id entity-uid env-id])
   (unload-subtypes-cone [this user-id entity-uid env-id])
+  (load-classified [this user-id entity-uid env-id])
+  (load-classification-fact [this user-id entity-uid env-id])
   (load-composition [this user-id entity-uid env-id])
   (load-composition-in [this user-id entity-uid env-id])
   (load-connections [this user-id entity-uid env-id])
@@ -165,6 +169,27 @@
           {:error "Failed to text search"}))))
 
   ;; Fact/Entity management
+  (load-specialization-fact [this user-id env-id uid]
+    (go
+      (try
+        (let [result (<! (archivist/get-specialization-fact archivist-client user-id uid))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts (:facts updated-env)}
+            {:error "Failed to update environment with specialization fact"}))
+       (catch Exception e
+          (log/error e "Failed to load specialization fact")
+          {:error "Failed to load specialization fact"}))))
+
   (load-specialization-hierarchy [this user-id uid env-id]
     (go
       (try
@@ -404,6 +429,30 @@
           (log/error e "Failed to unload entities")
           {:error "Failed to unload entities"}))))
 
+  (load-subtypes [this user-id env-id entity-uid]
+    (go
+      (try
+        (let [_ (log/info "Loading subtypes entity:" entity-uid)
+              result (<! (archivist/get-subtypes archivist-client entity-uid))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              _ (log/debug "Retrieved subtypes facts:" (count facts))
+              _ (tap> {:event :subtypes-facts :count (count facts)})
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with subtypes"}))
+        (catch Exception e
+          (log/error e "Failed to load subtypes")
+          {:error "Failed to load subtypes"}))))
+
   ;; async loadSubtypesCone(uid: number) {
   ;;   const result = await this.archivistService.getSubtypesCone(uid);
   ;;   const models = await this.modelsFromFacts(result);
@@ -435,6 +484,54 @@
         (catch Exception e
           (log/error e "Failed to load subtypes cone")
           {:error "Failed to load subtypes cone"}))))
+
+  (load-classified [this user-id env-id entity-uid]
+    (go
+      (try
+        (let [_ (log/info "Loading classified as entity:" entity-uid)
+              result (<! (archivist/get-classified archivist-client entity-uid))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              _ (log/debug "Retrieved classified facts:" (count facts))
+              _ (tap> {:event :classified-facts :count (count facts)})
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with classified"}))
+        (catch Exception e
+          (log/error e "Failed to load classified")
+          {:error "Failed to load classified"}))))
+
+  (load-classification-fact [this user-id env-id entity-uid]
+    (go
+      (try
+        (let [_ (log/info "Loading classification fact of entity:" entity-uid)
+              result (<! (archivist/get-classification-fact archivist-client entity-uid))
+              env-id (or env-id (:id (get-default-environment user-id)))
+              env (get-user-environment user-id env-id)
+              old-facts (:facts env)
+              facts (:facts result)
+              _ (log/debug "Retrieved classification facts:" (count facts))
+              _ (tap> {:event :classification-facts :count (count facts)})
+              combined-facts (concat old-facts facts)
+              new-facts (deduplicate-facts combined-facts)
+              updated-env (when facts
+                           (update-user-environment! user-id env-id {:facts new-facts}))]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts facts}
+            {:error "Failed to update environment with classification facts"}))
+        (catch Exception e
+          (log/error e "Failed to load classification facts")
+          {:error "Failed to load classified"}))))
 
   (load-composition [this user-id env-id entity-uid]
     (go

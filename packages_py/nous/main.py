@@ -9,7 +9,8 @@ from src.relica_nous_langchain.services.clarity_client import clarity_client
 from src.meridian.server import WebSocketServer, app
 
 # from src.relica_nous_langchain.test_agent import handleInput
-from src.relica_nous_langchain.agent.NOUSAgent import NOUSAgent
+# from src.relica_nous_langchain.agent.NOUSAgent import NOUSAgent
+from src.relica_nous_langchain.agent.NOUSAgentPrebuilt import NOUSAgent
 # from src.relica_nous_langchain.agent.NOUSAgent_prebuilt import handleInput
 from src.relica_nous_langchain.agent.Tools import create_agent_tools
 

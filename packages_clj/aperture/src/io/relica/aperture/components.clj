@@ -6,6 +6,7 @@
             [io.relica.aperture.config :refer [app-config]]
             [io.relica.common.io.archivist-client :as archivist]
             [io.relica.aperture.io.client-instances :refer [archivist-client]]
+            [clojure.core.async :as async :refer [go <! >! chan]]
             [clojure.tools.logging :as log]))
 
 ;; WebSocket Server Component
@@ -21,18 +22,23 @@
 
 ;; Environment Service Component
 (defstate environment-service
-  :start (do
+  :start (go(do
            (log/info "Starting Environment Service...")
            ;; Create the environment service with the archivist client
-           (let [service (env-service/create-environment-service archivist-client)]
+           (let [service (env-service/create-environment-service archivist-client)
+                 xxx (<! (env-service/load-classification-fact service 7 1 1000000070))]
+             (println "******************************************************************")
+             (println xxx)
+             (println "******************************************************************")
              ;; Register the service with the handlers
              (ws-handlers/set-environment-service! service)
              ;; Return the service instance
-             service))
+             service)))
   :stop (do
           (log/info "Stopping Environment Service...")
           ;; Reset the handlers' reference to the service
           (ws-handlers/set-environment-service! nil)))
+
 
 ;; --- System Lifecycle ---
 (defn start-system []
@@ -51,6 +57,9 @@
 (comment
   ;; REPL commands for managing the system
   (start-system)
+
   (stop-system)
+
   (restart-system)
+
   )

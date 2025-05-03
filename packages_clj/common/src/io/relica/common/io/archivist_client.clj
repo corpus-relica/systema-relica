@@ -74,6 +74,7 @@
   (kind-search [this query])
 
   ;; Specialization operations
+  (get-specialization-fact [this user-id uid])
   (get-specialization-hierarchy [this user-id uid])
 
   ;; Transaction operations
@@ -347,6 +348,10 @@
     (ws/send-message! client :kind-search/get query (:timeout options)))
 
   ;; Specialization operations
+
+  (get-specialization-fact [this user-id uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :specialization/fact {:user-id user-id :uid uid} (:timeout options)))
 
   (get-specialization-hierarchy [this user-id uid]
     (when-not (connected? this) (connect! this))

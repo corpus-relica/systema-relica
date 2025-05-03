@@ -68,6 +68,26 @@
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-specialization-fact
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (let [result (<! (env-service/load-specialization-fact
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:uid ?data)
+                      ))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/loaded
+          :facts (:facts result)
+          :user-id (:user-id ?data)
+          :environment-id (or (:environment-id ?data)
+                             (:id (get-default-environment (:user-id ?data))))}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/load-specialization
   [{:keys [?data ?reply-fn] :as msg}]
   (go
@@ -180,6 +200,24 @@
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-subtypes
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (let [result (<! (env-service/load-subtypes
+                     @environment-service
+                     (:user-id ?data)
+                     (:environment-id ?data)
+                     (:entity-uid ?data)))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/loaded
+          :facts (:facts result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/load-subtypes-cone
   [{:keys [?data ?reply-fn] :as msg}]
   (go
@@ -213,6 +251,42 @@
          {:type :facts/unloaded
           :fact-uids (:fact-uids-removed result)
           :model-uids (:model-uids-removed result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-classified
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (let [result (<! (env-service/load-classified
+                     @environment-service
+                     (:user-id ?data)
+                     (:environment-id ?data)
+                     (:entity-uid ?data)))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/loaded
+          :facts (:facts result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/load-classification-fact
+  [{:keys [?data ?reply-fn] :as msg}]
+  (go
+    (let [result (<! (env-service/load-classification-fact
+                     @environment-service
+                     (:user-id ?data)
+                     (:environment-id ?data)
+                     (:entity-uid ?data)))]
+      (?reply-fn (:environment result))
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/loaded
+          :facts (:facts result)
           :user-id (:user-id ?data)
           :environment-id (:environment-id ?data)}
          10)))))
