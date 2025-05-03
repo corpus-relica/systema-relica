@@ -111,51 +111,51 @@
 
   (get-batch-facts [this config]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-batch config (:timeout options)))
+    (ws/send-message! client :archivist.fact/batch-get config (:timeout options)))
 
   (get-facts-count [this]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/count {} (:timeout options)))
+    (ws/send-message! client :archivist.fact/count {} (:timeout options)))
 
   (execute-query [this query params]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :graph/execute-query
+    (ws/send-message! client :archivist.graph/query-execute
                       {:query query}
                       (:timeout options)))
 
   (resolve-uids [this uids]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :entities/resolve
+    (ws/send-message! client :archivist.entity/batch-resolve
                       {:uids uids}
                       (:timeout options)))
 
   (get-kinds [this opts]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :kinds/list
+    (ws/send-message! client :archivist.kind/list
                       opts
                       (:timeout options)))
 
   (get-collections [this]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :entity/collections
+    (ws/send-message! client :archivist.entity/collections-get
                       {}
                       (:timeout options)))
 
   (get-entity-type [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :entity/type
+    (ws/send-message! client :archivist.entity/type-get
                       {:uid uid}
                       (:timeout options)))
 
   (get-entity-category [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :entity/category
+    (ws/send-message! client :archivist.entity/category-get
                       {:uid uid}
                       (:timeout options)))
 
   (text-search [this query]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :general-search/text
+    (ws/send-message! client :archivist.search/text
                       query
                       (:timeout options)))
 
@@ -163,227 +163,227 @@
 
   (get-aspects [this opts]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :aspects/get opts (:timeout options)))
+    (ws/send-message! client :archivist.aspect/list opts (:timeout options)))
 
   (create-aspect [this aspect-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :aspects/create aspect-data (:timeout options)))
+    (ws/send-message! client :archivist.aspect/create aspect-data (:timeout options)))
 
   (update-aspect [this uid aspect-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :aspects/update (assoc aspect-data :uid uid) (:timeout options)))
+    (ws/send-message! client :archivist.aspect/update (assoc aspect-data :uid uid) (:timeout options)))
 
   (delete-aspect [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :aspects/delete {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.aspect/delete {:uid uid} (:timeout options)))
 
   ;; Completion operations
 
   (get-completions [this query]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :completions/get query (:timeout options)))
+    (ws/send-message! client :archivist.completion/list query (:timeout options)))
 
   ;; Concept operations
 
   (get-concept [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :concepts/get {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.concept/get {:uid uid} (:timeout options)))
 
   (create-concept [this concept-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :concepts/create concept-data (:timeout options)))
+    (ws/send-message! client :archivist.concept/create concept-data (:timeout options)))
 
   (update-concept [this uid concept-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :concepts/update (assoc concept-data :uid uid) (:timeout options)))
+    (ws/send-message! client :archivist.concept/update (assoc concept-data :uid uid) (:timeout options)))
 
   ;; Definition operations
 
   (get-definition [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :definitions/get {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.definition/get {:uid uid} (:timeout options)))
 
   (create-definition [this def-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :definitions/create def-data (:timeout options)))
+    (ws/send-message! client :archivist.definition/create def-data (:timeout options)))
 
   (update-definition [this uid def-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :definitions/update (assoc def-data :uid uid) (:timeout options)))
+    (ws/send-message! client :archivist.definition/update (assoc def-data :uid uid) (:timeout options)))
 
   ;; Fact operations
 
   (get-facts [this opts]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :facts/get opts (:timeout options)))
+    (ws/send-message! client :archivist.fact/list opts (:timeout options)))
 
   (get-all-related [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-all-related {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/all-related-get {:uid uid} (:timeout options)))
 
   (get-related-on-uid-subtype-cone [this lh-object-uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-related-on-uid-subtype-cone
+    (ws/send-message! client :archivist.fact/related-on-uid-subtype-cone-get
                       {:lh-object-uid lh-object-uid
                        :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-recurisve-relations [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-recursive-relations
+    (ws/send-message! client :archivist.fact/recursive-relations-get
                       {:uid uid
                        :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-recurisve-relations-to [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-recursive-relations-to
+    (ws/send-message! client :archivist.fact/recursive-relations-get-to
                       {:uid uid
                        :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-inherited-relation [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-inherited-relation
+    (ws/send-message! client :archivist.fact/inherited-relation-get
                       {:uid uid
                        :rel-type-uid rel-type-uid} (:timeout options)))
 
   (create-fact [this fact-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :facts/create fact-data (:timeout options)))
+    (ws/send-message! client :archivist.fact/create fact-data (:timeout options)))
 
   (update-fact [this uid fact-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :facts/update (assoc fact-data :uid uid) (:timeout options)))
+    (ws/send-message! client :archivist.fact/update (assoc fact-data :uid uid) (:timeout options)))
 
   (delete-fact [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :facts/delete {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/delete {:uid uid} (:timeout options)))
 
   (get-definitive-facts [this uid]
     (println "get-definitive-facts" uid)
     (println "connected?" (connected? this))
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-definitive-facts {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/definitive-get {:uid uid} (:timeout options)))
 
   (get-core-sample [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-core-sample {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/core-sample-get {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-core-sample-rh [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-core-sample-rh {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/core-sample-get-rh {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
 
   ;; *************************
   (get-classification-fact [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-classification-fact {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/classification-get {:uid uid} (:timeout options)))
   ;; *************************
 
   (get-facts-relating-entities [this uid1 uid2]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-relating-entities {:uid1 uid1 :uid2 uid2} (:timeout options)))
+    (ws/send-message! client :archivist.fact/relating-entities-get {:uid1 uid1 :uid2 uid2} (:timeout options)))
 
   (get-related-to [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-related-to {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/related-to-get {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-related-to-subtype-cone [this uid rel-type-uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-related-to-subtype-cone {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/related-to-get-subtype-cone {:uid uid :rel-type-uid rel-type-uid} (:timeout options)))
 
   (get-classified [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-classified {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/classified-get {:uid uid} (:timeout options)))
 
   (get-subtypes [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-subtypes {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/subtypes-get {:uid uid} (:timeout options)))
 
   (get-subtypes-cone [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :fact/get-subtypes-cone {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.fact/subtypes-get-cone {:uid uid} (:timeout options)))
 
   ;; Individual operations
 
   (get-individual [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :individuals/get {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.individual/get {:uid uid} (:timeout options)))
 
   (create-individual [this individual-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :individuals/create individual-data (:timeout options)))
+    (ws/send-message! client :archivist.individual/create individual-data (:timeout options)))
 
   (update-individual [this uid individual-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :individuals/update (assoc individual-data :uid uid) (:timeout options)))
+    (ws/send-message! client :archivist.individual/update (assoc individual-data :uid uid) (:timeout options)))
 
   ;; Kind operations
 
   (get-kind [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :kinds/get-one {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.kind/get {:uid uid} (:timeout options)))
 
   (create-kind [this kind-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :kinds/create kind-data (:timeout options)))
+    (ws/send-message! client :archivist.kind/create kind-data (:timeout options)))
 
   (update-kind [this uid kind-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :kinds/update (assoc kind-data :uid uid) (:timeout options)))
+    (ws/send-message! client :archivist.kind/update (assoc kind-data :uid uid) (:timeout options)))
 
   (delete-kind [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :kinds/delete {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.kind/delete {:uid uid} (:timeout options)))
 
   ;; Search operations
 
   (uid-search [this query]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :general-search/uid query (:timeout options)))
+    (ws/send-message! client :archivist.search/uid query (:timeout options)))
 
   (individual-search [this query]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :individual-search/get query (:timeout options)))
+    (ws/send-message! client :archivist.search/individual query (:timeout options)))
 
   (kind-search [this query]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :kind-search/get query (:timeout options)))
+    (ws/send-message! client :archivist.search/kind query (:timeout options)))
 
   ;; Specialization operations
 
   (get-specialization-fact [this user-id uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :specialization/fact {:user-id user-id :uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.specialization/fact-get {:user-id user-id :uid uid} (:timeout options)))
 
   (get-specialization-hierarchy [this user-id uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :specialization/hierarchy {:user-id user-id :uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.specialization/hierarchy-get {:user-id user-id :uid uid} (:timeout options)))
 
   ;; Transaction operations
 
   (get-transaction [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :transactions/get {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.transaction/get {:uid uid} (:timeout options)))
 
   (create-transaction [this tx-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :transactions/create tx-data (:timeout options)))
+    (ws/send-message! client :archivist.transaction/create tx-data (:timeout options)))
 
   (commit-transaction [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :transactions/commit {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.transaction/commit {:uid uid} (:timeout options)))
 
   (rollback-transaction [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :transactions/rollback {:uid uid} (:timeout options)))
+    (ws/send-message! client :archivist.transaction/rollback {:uid uid} (:timeout options)))
 
   ;; Validation operations
 
   (validate-entity [this entity-data]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :validation/validate entity-data (:timeout options)))
+    (ws/send-message! client :archivist.validation/validate entity-data (:timeout options)))
 
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
-    (ws/send-message! client :app/heartbeat
+    (ws/send-message! client :archivist.system/heartbeat
                             {:timestamp (System/currentTimeMillis)}
                             30000))
 
@@ -391,7 +391,7 @@
 
   (get-lineage [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :lineage/get {:uid uid} (:timeout options))))
+    (ws/send-message! client :archivist.lineage/get {:uid uid} (:timeout options))))
 
 
 ;; Heartbeat scheduler

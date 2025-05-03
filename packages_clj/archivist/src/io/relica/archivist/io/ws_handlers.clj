@@ -14,7 +14,7 @@
 ;; GRAPH SERVICE
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :graph/execute-query
+  :archivist.graph/execute-query
   [{:keys [?data ?reply-fn graph-s] :as msg}]
   (when ?reply-fn
     (if (nil? graph-s)
@@ -33,7 +33,7 @@
 ;; FACT SERVICE
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-batch
+  :archivist.fact/batch-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -51,7 +51,7 @@
                         :error "Failed to get batch facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/count
+  :archivist.fact/count
   [{:keys [?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -68,7 +68,7 @@
                         :error "Failed to count facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-all-related
+  :archivist.fact/all-related-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     ;; (tap> {:event :websocket/getting-all-related-facts
@@ -89,7 +89,7 @@
                         :error "Failed to get all related facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-definitive-facts
+  :archivist.fact/definitive-get
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
     (println "Getting definitive facts")
@@ -110,7 +110,7 @@
                         :error "Failed to get definitive facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-classification-fact
+  :archivist.fact/classification-get
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
     ;; (tap> {:event :websocket/getting-classification-fact
@@ -131,7 +131,7 @@
                         :error "Failed to get classification fact"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-relating-entities
+  :archivist.fact/relating-entities-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -148,7 +148,7 @@
                        :error "Failed to get facts relating entities"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-related-on-uid-subtype-cone
+  :archivist.fact/related-on-uid-subtype-cone-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     ;; (tap> {:event :websocket/getting-related-on-uid-subtype-cone-facts
@@ -170,7 +170,7 @@
                         :error "Failed to get related on uid subtype cone facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-inherited-relation
+  :archivist.fact/inherited-relation-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -187,7 +187,7 @@
                         :error "Failed to get inherited relation"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-related-to
+  :archivist.fact/related-to-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -204,7 +204,7 @@
                         :error "Failed to get related to facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-related-to-subtype-cone
+  :archivist.fact/related-to-get-subtype-cone
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -221,7 +221,7 @@
                         :error "Failed to get related to subtypes cone facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-recursive-relations
+  :archivist.fact/recursive-relations-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -238,7 +238,7 @@
                         :error "Failed to get recursive relations"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-recursive-relations-to
+  :archivist.fact/recursive-relations-get-to
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -255,7 +255,7 @@
                         :error "Failed to get recursive relations"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-classified
+  :archivist.fact/classified-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -272,7 +272,7 @@
                         :error "Failed to get classified facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-subtypes
+  :archivist.fact/subtypes-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -291,7 +291,7 @@
                         :error "Failed to get subtypes facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-subtypes-cone
+  :archivist.fact/subtypes-get-cone
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -310,7 +310,7 @@
                         :error "Failed to get subtypes cone facts"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-core-sample
+  :archivist.fact/core-sample-get
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -333,7 +333,7 @@
                         :error "Failed to get core sample"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :fact/get-core-sample-rh
+  :archivist.fact/core-sample-get-rh
   [{:keys [?data ?reply-fn fact-s] :as msg}]
   (when ?reply-fn
     (if (nil? fact-s)
@@ -356,14 +356,14 @@
                         :error "Failed to get core sample"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :entities/resolve
+  :archivist.entity/batch-resolve
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
     (let [result (gellish-base-service/get-entities gellish-base-s (:uids ?data))]
       (?reply-fn {:resolved true :data result}))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :entity/category
+  :archivist.entity/category-get
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
     (if (nil? gellish-base-s)
@@ -380,7 +380,7 @@
                         :error "Failed to get entity category"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :entity/collections
+  :archivist.entity/collections-get
   [{:keys [?data ?reply-fn entity-s] :as msg}]
   (when ?reply-fn
     (if (nil? entity-s)
@@ -397,7 +397,7 @@
                         :error "Failed to get collections"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :entity/type
+  :archivist.entity/type-get
   [{:keys [?data ?reply-fn entity-s] :as msg}]
   (when ?reply-fn
     (go
@@ -413,7 +413,7 @@
 ;; KIND SERVICE
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :kinds/list
+  :archivist.kind/list
   [{:keys [?data ?reply-fn kind-s] :as msg}]
   (println ?data)
   (when ?reply-fn
@@ -443,7 +443,7 @@
 ;; SEARCH SERVICE
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :general-search/text
+  :archivist.search/text
   [{:keys [?data ?reply-fn general-search-s] :as msg}]
   (when ?reply-fn
     (if (nil? general-search-s)
@@ -470,7 +470,7 @@
 ;; SPECIALIZATION
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :specialization/fact
+  :archivist.specialization/fact-get
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
     (tap> {:event :websocket/getting-specialization-fact
@@ -489,7 +489,7 @@
                         :error "Failed to get specialization fact"})))))))
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :specialization/hierarchy
+  :archivist.specialization/hierarchy-get
   [{:keys [?data ?reply-fn gellish-base-s] :as msg}]
   (when ?reply-fn
     (tap> {:event :websocket/getting-specialization-hierarchy
@@ -510,7 +510,7 @@
 ;; LINEAGE SERVICE
 
 (defmethod ^{:priority 10} io.relica.common.websocket.server/handle-ws-message
-  :lineage/get
+  :archivist.lineage/get
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
     (let [service @linearization-service/linearization-service-comp]
