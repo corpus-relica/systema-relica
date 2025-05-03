@@ -122,8 +122,12 @@ class WebSocketClient:
                     # Extract message details
                     msg_id = parsed_message.get("id", "")
                     msg_type = parsed_message.get("type", "")
-                    payload = parsed_message.get("payload", {})
-
+                    
+                    # Handle standardized response format
+                    # For response messages with success/error data structure,
+                    # we need to use the standardized format
+                    payload = parsed_message
+                    
                     # print(f"Received message: {parsed_message}")
 
                     # Check if we have a pending request future for this message ID

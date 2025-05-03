@@ -171,6 +171,29 @@ class ArchivistClient:
 
         try:
             response = await self.client.send(msg_type, payload, timeout)
+            
+            # Handle new standardized response format
+            # New format: {"success": true, "request_id": "...", "data": {...}}
+            # or {"success": false, "request_id": "...", "error": {"code": 123, "type": "...", "message": "...", "details": {...}}}
+            
+            if 'success' in response:
+                if response['success']:
+                    # Success response - return the data field
+                    return response.get('data', {})
+                else:
+                    # Error response - extract error details
+                    error = response.get('error', {})
+                    if isinstance(error, dict):
+                        error_message = error.get('message', 'Unknown error')
+                        error_code = error.get('code', 0)
+                        error_type = error.get('type', 'error')
+                        error_details = error.get('details', {})
+                        logger.error(f"Error in response: {error_type} ({error_code}): {error_message}")
+                        return {"error": error_message, "code": error_code, "type": error_type, "details": error_details}
+                    else:
+                        return {"error": str(error)}
+            
+            # Fall back to old response format handling if 'success' key not found
             return response.get('payload', response)
         except Exception as e:
             logger.error(f"Error sending {msg_type} message to Archivist: {e}", exc_info=True)
