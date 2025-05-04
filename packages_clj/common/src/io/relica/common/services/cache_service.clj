@@ -1,5 +1,5 @@
 (ns io.relica.common.services.cache-service
-  (:require [mount.core :as mount]
+  (:require [mount.core :as mount :refer [defstate]]
             [taoensso.carmine :as car :refer [wcar]]
             [clojure.tools.logging :as log]
             [io.relica.common.config :as common-config]))
@@ -271,3 +271,13 @@
     (reset! cache-service-comp nil))
   ;; Stop common config if needed
   (mount/stop #'common-config/config))
+
+;; CACHE SERVICE
+
+(defstate cache-service
+  :start (do
+           (println "Starting Cache service...")
+           (start nil))
+  :stop (do
+          (println "Stopping Cache service...")
+          (stop)))

@@ -1,6 +1,10 @@
 (ns io.relica.archivist.core
   (:require [mount.core :as mount]
-            [io.relica.archivist.components :refer [postgres-db]]))
+            [io.relica.archivist.services.ws-service]
+            [io.relica.archivist.services.postgres-service]
+            [io.relica.archivist.services.graph-service]
+            [io.relica.archivist.services.uid-service]
+             ))
 
 (defn start-app []
   (mount/start))
@@ -15,4 +19,6 @@
 
   (start-app)
 
-  (stop-app))
+  (stop-app)
+
+  )

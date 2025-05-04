@@ -20,10 +20,10 @@
 
 (defn expand-relation-subtypes
   "Get a relation type and all its subtypes"
-  [cache-service rel-type-uid]
+  [rel-type-uid]
   (go
     (try
-      (let [subtypes (cache/all-descendants-of cache-service rel-type-uid)]
+      (let [subtypes (cache/all-descendants-of cache/cache-service rel-type-uid)]
         (conj subtypes rel-type-uid))
       (catch Exception e
         (log/error "Error expanding relation subtypes:" (ex-message e))
@@ -40,10 +40,10 @@
    - direction: :outgoing, :incoming, or :both
    
    Returns: Collection of facts that match the traversal parameters"
-  [graph-service cache-service entity-uid rel-type-uid direction]
+  [entity-uid rel-type-uid direction]
   (go
     (try
-      (let [all-rel-types (<! (expand-relation-subtypes cache-service rel-type-uid))
+      (let [all-rel-types (<! (expand-relation-subtypes rel-type-uid))
             query (case direction
                     :outgoing queries/all-related-facts-c
                     :incoming queries/all-related-facts-d
@@ -52,17 +52,17 @@
             
             ;; Handle 'both' direction case specially
             results (if (= direction :both)
-                      (let [outgoing-results (graph/exec-query graph-service 
+                      (let [outgoing-results (graph/exec-query graph/graph-service
                                                              queries/all-related-facts-c 
                                                              {:start_uid entity-uid
                                                               :rel_type_uids all-rel-types})
-                            incoming-results (graph/exec-query graph-service 
+                            incoming-results (graph/exec-query graph/graph-service
                                                              queries/all-related-facts-d 
                                                              {:start_uid entity-uid
                                                               :rel_type_uids all-rel-types})]
                         (concat outgoing-results incoming-results))
                       ;; Normal case - single direction
-                      (graph/exec-query graph-service query 
+                      (graph/exec-query graph/graph-service query
                                       {:start_uid entity-uid
                                        :rel_type_uids all-rel-types}))
             
@@ -84,7 +84,7 @@
    - max-depth: Maximum traversal depth (default 10)
    
    Returns: Collection of all facts found during traversal"
-  [graph-service cache-service start-uid rel-type-uid direction max-depth]
+  [start-uid rel-type-uid direction max-depth]
   (go
     (try
       (let [actual-depth (or max-depth 10)
@@ -93,8 +93,7 @@
             
             ;; Helper function to get related entities
             get-related (fn [uid]
-                         (traverse-with-subtypes 
-                           graph-service cache-service uid rel-type-uid direction))
+                         (traverse-with-subtypes uid rel-type-uid direction))
             
             ;; Recursive traversal function
             traverse (fn traverse-fn [current-uid current-depth]
@@ -140,11 +139,11 @@
 (defn get-specialization-cone
   "Get all facts representing the specialization hierarchy (cone) 
    for a given type entity."
-  [graph-service cache-service subtypes-fn uid]
+  [subtypes-fn uid]
   (go
     (try
       (let [;; Get all descendants
-            subtypes (cache/all-descendants-of cache-service uid)
+            subtypes (cache/all-descendants-of cache/cache-service uid)
             
             ;; Get facts about the root entity itself
             root-facts (subtypes-fn uid)
@@ -172,13 +171,11 @@
    
    This creates cones like 'parts-of-parts', 'subtypes-of-subtypes', etc.
    depending on the relation type provided."
-  [graph-service cache-service root-uid rel-type-uid direction max-depth]
-  (traverse-recursive graph-service 
-                     cache-service 
-                     root-uid 
-                     rel-type-uid 
-                     direction 
-                     max-depth))
+  [root-uid rel-type-uid direction max-depth]
+  (traverse-recursive root-uid
+                      rel-type-uid
+                      direction
+                      max-depth))
 
 (defn combine-cones
   "Combine multiple semantic cones with set operations.
@@ -210,14 +207,12 @@
    - occurrence-rel-uid: The relation type UID for occurrences (e.g. 7105)
    
    Returns: Collection of occurrence facts related to the entity or its components"
-  [graph-service cache-service entity-uid parts-rel-uid occurrence-rel-uid]
+  [entity-uid parts-rel-uid occurrence-rel-uid]
   (go
     (try
       ;; 1. Get all parts recursively (parts-of-parts cone)
       (let [parts-cone (<! (create-relation-cone 
-                            graph-service 
-                            cache-service 
-                            entity-uid 
+                            entity-uid
                             parts-rel-uid 
                             :outgoing 
                             5))
@@ -231,9 +226,7 @@
             occurrence-results (atom [])
             _ (doseq [uid component-uids]
                 (let [occurrences (<! (traverse-with-subtypes 
-                                       graph-service 
-                                       cache-service 
-                                       uid 
+                                       uid
                                        occurrence-rel-uid 
                                        :both))]
                   (swap! occurrence-results concat occurrences)))]

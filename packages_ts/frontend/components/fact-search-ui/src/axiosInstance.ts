@@ -76,7 +76,7 @@ export const getCollections = async () => {
   try {
     const axiosInstance = getAxiosInstance(); // Get the initialized instance
     const response = await axiosInstance.get(COLLECTIONS_ENDPOINT);
-    const collections = response.data;
+    const collections = response.data.data;
     return collections;
   } catch (error) {
     console.error("Error in getCollections:", error);

@@ -201,3 +201,33 @@ A convenience wrapper is also available for handler functions:
                                     ([error-type message details request-id] 
                                      (?reply-fn (error-response error-type message details request-id))))))))
 ```
+
+## Testing
+
+The WebSocket response format has a comprehensive test suite to ensure consistency and reliability:
+
+### Test Suite Structure
+
+- **Unit Tests**: Test response utilities and handlers in isolation
+- **Integration Tests**: Test client-server communication patterns
+- **Interoperability Tests**: Verify format compatibility with different clients
+
+### Running Tests
+
+```bash
+cd packages_clj/archivist
+clj -M:test
+```
+
+For development with auto-reloading tests:
+
+```bash
+cd packages_clj/archivist
+clj -M:dev
+
+# In the REPL
+(require 'midje.repl)
+(midje.repl/autotest)
+```
+
+For more information on the test suite and how to add new tests, see the `test/README.md` file.
