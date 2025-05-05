@@ -123,19 +123,19 @@ class PortalWebSocketClient extends EventEmitter {
       }
       
       // Dispatch message as a DOM event for components to listen to
-      const eventName = message.type.replace(/:/g, '-');
-      const customEvent = new CustomEvent(`portal:${eventName}`, { 
-        detail: payload 
-      });
-      document.dispatchEvent(customEvent);
-      
+      // const eventName = message.type.replace(/:/g, '-');
+      // const customEvent = new CustomEvent(`portal:${eventName}`, {
+      //   detail: payload
+      // });
+      // document.dispatchEvent(customEvent);
+
       // For handling response messages from our request-response pattern
-      if (message.type === 'response') {
-        const responseEvent = new CustomEvent('ws:response', { 
-          detail: message 
-        });
-        document.dispatchEvent(responseEvent);
-      }
+      // if (message.type === 'response') {
+      //   const responseEvent = new CustomEvent('ws:response', {
+      //     detail: message
+      //   });
+      //   document.dispatchEvent(responseEvent);
+      // }
     } catch (error) {
       console.error("Error parsing WebSocket message:", error);
     }

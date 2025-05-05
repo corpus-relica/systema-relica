@@ -62,14 +62,14 @@ export const MyLayout = (props) => {
     if (categories.length > 0) return;
 
     console.log("vvvv - VULNERABLE II - vvvv");
-    const concepts = await portalClient.resolveUIDs(
+    const result = await portalClient.resolveUIDs(
       Object.keys(cats).map((x) => parseInt(x))
     );
     console.log("vvvv - CONCEPTS vvvv:");
-    console.log(concepts);
+    console.log(result.data);
     const newCats = [];
     for (const [key, name] of Object.entries(cats)) {
-      const concept = concepts.find((c: any) => c.uid === parseInt(key));
+      const concept = result.data.find((c: any) => c.uid === parseInt(key));
       const { uid, descendants } = concept;
       newCats.push({ uid, name, descendants });
     }
@@ -85,9 +85,7 @@ export const MyLayout = (props) => {
       };
 
       const onClientRegistered = (d) => {
-        console.log("CLIENT REGISTERED", d);
-        if (d.success && d.clientID) {
-          console.log("SETTING PORTALSWS CLIENT ID!!!!", d.clientID);
+        if (d.clientID) {
           portalWs.clientId = d.clientID;
           // Clean up the one-time listener
           portalWs.off("system:clientRegistered", onClientRegistered);

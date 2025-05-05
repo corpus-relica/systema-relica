@@ -78,17 +78,16 @@
          :message "Entity deselected"})
       (catch Exception e
         (log/error "Failed to deselect entity:" e)
-        {:error "Failed to deselect entity"})))
-  )
+        {:error "Failed to deselect entity"}))))
+  
 
 (defn load-specialization-hierarchy [{:keys [uid] :as message}]
   (go
     (try
-      (let [response (<! (aperture/load-specialization-hierarchy aperture-client (:user-id message) uid))
-            result (get-in response [:data])]
+      (let [response (<! (aperture/load-specialization-hierarchy aperture-client (:user-id message) uid))]
         {:success true
          :message "Specialization hierarchy loaded"
-         :hierarchy result})
+         :environment response})
       (catch Exception e
         (log/error "Failed to load specialization hierarchy:" e)
         {:error "Failed to load specialization hierarchy"}))))
@@ -217,8 +216,8 @@
          :composition (or (get-in response [:data]) {:foo "bar"})})
       (catch Exception e
         (println "Failed to load composition:" e)
-        {:error "Failed to load composition"})))
-  )
+        {:error "Failed to load composition"}))))
+  
 
 (defn handle-load-composition-in [{:keys [uid client-id] :as message}]
       (println "LOAD COMPOSITION IN" message)
@@ -233,8 +232,8 @@
          :composition (or (get-in response [:data]) {:foo "bar"})})
       (catch Exception e
         (println "Failed to load composition:" e)
-        {:error "Failed to load composition"})))
-  )
+        {:error "Failed to load composition"}))))
+  
 
 (defn handle-load-connections [{:keys [uid client-id] :as message}]
   (go
@@ -273,8 +272,8 @@
                                          :type (:type payload)
                                          :entity_uid (:entity-uid payload)
                                          :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
+                                         :environment_id (:environment-id payload)}})))
+                                         
 
 (defn handle-entity-selected-none-event [payload]
   (let [environment-id (:environment-id payload)]
@@ -284,8 +283,8 @@
                                :payload {
                                          :type (:type payload)
                                          :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
+                                         :environment_id (:environment-id payload)}})))
+                                         
 
 (defn handle-facts-loaded-event [payload]
   (let [environment-id (:environment-id payload)]
@@ -296,8 +295,8 @@
                                          :type (:type payload)
                                          :facts (:facts payload)
                                          :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
+                                         :environment_id (:environment-id payload)}})))
+                                         
 
 (defn handle-facts-unloaded-event [payload]
   (let [environment-id (:environment-id payload)]
@@ -308,8 +307,8 @@
                                          :type (:type payload)
                                          :fact_uids (:fact-uids payload)
                                          :user_id (:user-id payload)
-                                         :environment_id (:environment-id payload)
-                                         }})))
+                                         :environment_id (:environment-id payload)}})))
+                                         
 
 (defn handle-final-answer-event [payload]
   (let [environment-id (:environment-id payload)]
@@ -322,8 +321,8 @@
                                          :type (:type payload)
                                          :answer (:payload payload)
                                          :user_id 7
-                                         :environment_id 1
-                                         }})))
+                                         :environment_id 1}})))
+                                         
 
 ;; Prism setup handlers
 
@@ -421,8 +420,8 @@
    :not-found                      1401
    :bad-request                    1402
    :unknown-message-type           1403
-   :invalid-message-format         1404
-   })
+   :invalid-message-format         1404})
+   
 
 (defn create-response
   "Create a standardized WebSocket response"
@@ -476,25 +475,25 @@
             (catch Exception e
               (log/error "Error processing message:" e)
               (let [error-response (create-response id false 
-                                   {:type :internal-error
-                                    :message (.getMessage e)
-                                    :details {:exception (str e)}}
-                                   request-id)]
+                                    {:type :internal-error
+                                     :message (.getMessage e)
+                                     :details {:exception (str e)}}
+                                    request-id)]
                 (http/send! channel (json/generate-string error-response))))))
         (do
           (log/warn "No handler found for message type:" type)
           (let [error-response (create-response id false 
-                               {:type :unknown-message-type
-                                :message (str "Unknown message type: " type)}
-                               request-id)]
+                                {:type :unknown-message-type
+                                 :message (str "Unknown message type: " type)}
+                                request-id)]
             (http/send! channel (json/generate-string error-response))))))
     (catch Exception e
       (log/error "Error parsing message:" e)
       (let [error-response (create-response nil false 
-                           {:type :invalid-message-format
-                            :message "Invalid message format"
-                            :details {:exception (str e)}}
-                           nil)]
+                            {:type :invalid-message-format
+                             :message "Invalid message format"
+                             :details {:exception (str e)}}
+                            nil)]
         (http/send! channel (json/generate-string error-response))))))
 
 ;; Configuration
@@ -528,8 +527,8 @@
    "prism/startSetup" handle-prism-start-setup
    "prism/createUser" handle-prism-create-user
    "prism/processStage" handle-prism-process-stage
-   "setup/update" handle-prism-setup-update-event
-   })
+   "setup/update" handle-prism-setup-update-event})
+   
 
 ;; Set up event listener
 

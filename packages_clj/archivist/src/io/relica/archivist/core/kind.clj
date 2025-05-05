@@ -31,18 +31,18 @@
                  graph/graph-service
                  queries/count-kinds
                  {})]
-      {:data result
-       :total (:total (first total))}
-      )
+      {:facts result
+       :total (:total (first total))})
+      
     (catch Exception e
       (tap> {:event :get-kinds-list-error
              :error e})
       nil)))
 
 
-(comment
+(comment)
 
-  )
+  
 
   ;; constructor(private readonly graphService: GraphService) {}
 

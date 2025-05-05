@@ -7,8 +7,8 @@
             ;; [io.relica.common.websocket.client :as ws]
             [io.relica.common.events.core :as events]
             [clojure.tools.logging :as log]
-            [io.relica.portal.config :refer [app-config]]
-            ))
+            [io.relica.portal.config :refer [app-config]]))
+            
 
 ;; ARCHIVIST
 
@@ -26,8 +26,8 @@
 
 (def aperture-handlers
   {:handle-facts-loaded (fn [msg]
-                          (tap> "Facts loaded:")
-                          (tap> msg)
+                          (println "Facts loaded:")
+                          (println msg)
                           (events/publish-event {:type :facts-loaded
                                                  :payload msg}))
    :handle-facts-unloaded (fn [msg]
@@ -58,7 +58,7 @@
                           ;; (println "Final answer:")
                           ;; (println msg)
                           (events/publish-event {:type :final-answer
-                                                 :payload msg}))
+                                                 :payload msg}))})
    ;; "heartbeat" (fn [msg]
    ;;              (tap> "Heartbeat:")
    ;;              (tap> msg)
@@ -69,8 +69,8 @@
    ;;             (tap> msg)
    ;;             (events/publish-event {:type :question
    ;;                                    :payload msg}))
-   }
-  )
+   
+  
 
 (defonce nous-client (nous/create-client
                       {:host (get-in app-config [:nous :host])
@@ -92,10 +92,10 @@
 
 (def prism-handlers
   {:handle-setup-state-update (fn [msg]
-                    (tap> "Prism setup update:")
-                    (tap> msg)
-                    (events/publish-event {:type :prism-setup-update
-                                           :payload msg}))
+                               (tap> "Prism setup update:")
+                               (tap> msg)
+                               (events/publish-event {:type :prism-setup-update
+                                                      :payload msg}))
    ;; Add heartbeat handler
    "heartbeat" (fn [msg]
                  (log/debug "Received heartbeat from Prism"))

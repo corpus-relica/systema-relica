@@ -185,7 +185,8 @@ class PortalClient {
     const response = await this.axiosInstance.get(SUBTYPES_ENDPOINT, {
       params: { uid },
     });
-    return response.data;
+    console.log("MUTHERFUCKING GETTING BITCHAZZ SUBTYPES NIGGGGAAAAAAAHHHHHHHHHHHHHHHHHHHHH!!!  ", response)
+    return response.data.facts;
   }
 
   async getSubtypesCone(uid: number) {

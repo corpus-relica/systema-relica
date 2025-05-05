@@ -216,8 +216,8 @@
 (response/def-ws-handler :archivist.kind/list
   (println ?data)
   (let [result (kind/get-list ?data)]
-    (println "RESULT: " result)
-    (respond-success {:resolved true :data result}))
+    ;; result : {:facts :total}
+    (respond-success result))
   (catch Exception e
     (tap> {:event :websocket/sending-kinds-list-response
            :error e})
@@ -254,7 +254,8 @@
 
 (response/def-ws-handler :archivist.specialization/hierarchy-get
   (let [hierarchy (gellish-base/get-specialization-hierarchy (:uid ?data))]
-    (respond-success {:hierarchy hierarchy}))
+    (respond-success {:facts (:facts hierarchy)
+                      :concepts (:concepts hierarchy)}))
   (catch Exception e
     (log/error e "Failed to get specialization hierarchy")
     (respond-error :database-error "Failed to get specialization hierarchy"

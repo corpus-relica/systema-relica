@@ -33,9 +33,9 @@
    (success-response data nil))
   ([data request-id]
    (json-response 200
-                 {:success true
-                  :request_id request-id
-                  :data data})))
+                  (merge {:success true
+                          :request_id request-id}
+                         data))))
 
 (def error-codes
   {;; System errors (1001-1099)
@@ -57,8 +57,8 @@
    
    ;; Generic errors
    :not-found                      1401
-   :bad-request                    1402
-   })
+   :bad-request                    1402})
+   
 
 (defn error-response
   ([error-msg]
@@ -123,18 +123,12 @@
                            :pageSize (parse-int-param pageSize 10)
                            :filter filter
                            :exactMatch exactMatch}))
-            ;; Handle new standardized format with data field
             result (if (:success response)
-                     ;; Check if response has a data field (new format) or results field (old format)
-                     (if (:data response)
-                       (get-in response [:data :results])  ; New format
-                       (:results response))               ; Old format
+                     (:results response)
                      nil)]
         (if (:success response)
           (success-response result)
-          (let [error (if (map? (:error response))  ; New error format
-                        (get-in response [:error :message])
-                        (:error response))]         ; Old error format
+          (let [error (get-in response [:error :message])]
             (error-response 500 :database-error (or error "Unknown error")))))
       (catch Exception e
         (tap> (str "Error in text search handler: " e))
@@ -147,16 +141,9 @@
                   :filter (parse-json-param (:filter params) {})
                   :user-id (-> identity :user-id)}]
       (try
-        (let [result (<! (archivist/get-kinds archivist-client params))
-              ;; Handle response format based on its structure
-              kinds-data (if (:data result)
-                          ;; New format - might have nested data field
-                          (if (contains? (:data result) :data)
-                            (get-in result [:data :data])  ; Double-nested data
-                            (:data result))                ; Single-nested data
-                          ;; Old format - extract directly
-                          (:data result))]
-          (success-response kinds-data))
+        (let [result (<! (archivist/get-kinds archivist-client params))]
+          (success-response {:facts (:facts result)
+                             :total (:total result)}))
         (catch Exception e
           (error-response "Failed to fetch kinds"))))))
 
@@ -183,8 +170,8 @@
                                                             :message "Connection established"}}))
           (http/on-close channel
                          (fn [status]
-                           (swap! connected-clients dissoc client-id)
-                           ))
+                           (swap! connected-clients dissoc client-id)))
+                           
           (http/on-receive channel
                            (fn [data]
                              (handle-ws-message channel data)))))
@@ -197,11 +184,9 @@
     (try
       (let [result (<! (archivist/get-collections archivist-client))
             ;; Handle new standardized format with data field
-            collections (if (:data result)
-                          (get-in result [:data :collections])  ; New format
-                          (:collections result))]               ; Old format
+            collections (:collections result)]
         (println "RESULT" result)
-        (success-response collections))
+        (success-response {:collections collections}))
       (catch Exception e
         (error-response 500 :database-error "Failed to fetch collections" {:exception (str e)})))))
 
@@ -211,7 +196,7 @@
       (let [uid (some-> params :uid parse-long)
             response (<! (archivist/get-entity-type archivist-client uid))]
         (if (:success response)
-          (success-response {:type (get-in response [:data :type])})
+          (success-response {:type (:type response)})
           (error-response (get-in response [:error :message] "Unknown error"))))
       (catch Exception e
         (error-response "Failed to get entity type")))))
@@ -224,7 +209,7 @@
                           aperture-client
                           (:user-id identity)
                           nil))
-            env (get-in response [:data :environment])]
+            env (:environment response)]
         (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         (println "TIME" (- (System/currentTimeMillis) t) "ms")
         (println "ENVIRONMENT" response)
@@ -241,16 +226,13 @@
       (try
         (let [result (<! (archivist/resolve-uids
                           archivist-client
-                          uids))
+                          uids))]
               ;; Handle response format based on its structure
-              resolved-data (if (:data result)
-                             ;; New format - extract from data field
-                             (if (contains? (:data result) :data)
-                               (get-in result [:data :data])  ; Double-nested data
-                               (:data result))                ; Single-nested data
-                             ;; Old format - extract directly 
-                             (:data result))]
-          (success-response resolved-data))
+              ;resolved-data result]
+          (println "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+          (println result)
+
+          (success-response result))
         (catch Exception e
           (error-response "Failed to resolve entities"))))))
 
@@ -263,7 +245,7 @@
             uid (parse-long (first uids))
             response (<! (clarity/get-model clarity-client uid))]
         (if (:success response)
-          (success-response (get-in response [:data :model]))
+          (success-response (:model response))
           (error-response (get-in response [:error :message] "Unknown error"))))
       (catch Exception e
         (error-response "Failed to get model")))))
@@ -273,8 +255,10 @@
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (clarity/get-kind-model clarity-client uid))]
+        (println "********************************************************************************")
+        (println response)
         (if (:success response)
-          (success-response (get-in response [:data :model]))
+          (success-response (:model response))
           (error-response (get-in response [:error :message] "Unknown error"))))
       (catch Exception e
         (error-response "Failed to get kind model")))))
@@ -285,7 +269,7 @@
       (let [uid (some-> params :uid parse-long)
             response (<! (clarity/get-individual-model clarity-client uid))]
         (if (:success response)
-          (success-response (get-in response [:data :model]))
+          (success-response (:model response))
           (error-response (get-in response [:error :message] "Unknown error"))))
       (catch Exception e
         (error-response "Failed to get individual model")))))
@@ -295,19 +279,10 @@
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (archivist/get-classified archivist-client uid))
-            ;; Handle response format based on its structure
-            facts (if (:data response)
-                    ;; New format - extract from data field
-                    (get-in response [:data :facts])
-                    ;; Old format - extract directly 
-                    (:facts response))]
+            facts (:facts response)]
         (if (:success response)
           (success-response facts)
-          (let [error (if (map? (:error response))
-                        ;; New format - extract error message
-                        (get-in response [:error :message])
-                        ;; Old format - use error directly
-                        (:error response))]
+          (let [error (get-in response [:error :message])]
             (error-response (or error "Unknown error")))))
       (catch Exception e
         (error-response "Failed to get classified")))))
@@ -317,21 +292,14 @@
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (archivist/get-subtypes archivist-client uid))
-            ;; Handle response format based on its structure
-            facts (if (:data response)
-                    ;; New format - extract from data field
-                    (get-in response [:data :facts])
-                    ;; Old format - extract directly 
-                    (:facts response))]
-        (tap> "GET SUBTYPES RESPONSE")
-        (tap> response)
+            facts (:facts response)]
+        (println "GET SUBTYPES RESPONSE")
+        (println response)
+        (println facts)
+        (println (:success response))
         (if (:success response)
-          (success-response facts)
-          (let [error (if (map? (:error response))
-                        ;; New format - extract error message
-                        (get-in response [:error :message])
-                        ;; Old format - use error directly
-                        (:error response))]
+          (success-response {:facts facts})
+          (let [error (get-in response [:error :message])]
             (error-response (or error "Unknown error")))))
       (catch Exception e
         (error-response "Failed to get subtypes")))))
@@ -341,19 +309,10 @@
     (try
       (let [uid (some-> params :uid parse-long)
             response (<! (archivist/get-subtypes-cone archivist-client uid))
-            ;; Handle response format based on its structure
-            facts (if (:data response)
-                    ;; New format - extract from data field
-                    (get-in response [:data :facts])
-                    ;; Old format - extract directly 
-                    (:facts response))]
+            facts (:facts response)]
         (if (:success response)
           (success-response facts)
-          (let [error (if (map? (:error response))
-                        ;; New format - extract error message
-                        (get-in response [:error :message])
-                        ;; Old format - use error directly
-                        (:error response))]
+          (let [error (get-in response [:error :message])]
             (error-response (or error "Unknown error")))))
       (catch Exception e
         (error-response "Failed to get subtypes cone")))))

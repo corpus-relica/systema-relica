@@ -123,11 +123,11 @@
                             (:lh_object_uid r) (update :lh_object_uid graph/ensure-integer)
                             (:rh_object_uid r) (update :rh_object_uid graph/ensure-integer)
                             (:collection_uid r) (update :collection_uid graph/ensure-integer)
-                            (:language_uid r) (update :language_uid graph/ensure-integer)
-                            )))
+                            (:language_uid r) (update :language_uid graph/ensure-integer))))
+                            
                       result))]
-      res
-      )
+      res)
+      
     (catch Exception e
       (log/error "Error getting specialization fact:" e)
       [])))
@@ -362,8 +362,8 @@
                 (not-empty class-fact) class-fact
                 (not-empty qual-fact) qual-fact
                 :else [])]
-      res
-      )
+      res)
+      
     (catch Exception e
       (log/error "Error getting definitive facts:" e)
       [])))
@@ -460,6 +460,6 @@
   (get-fact @gb-comp 123)
 
   ;; Test get-facts
-  (get-facts @gb-comp [123 456])
+  (get-facts @gb-comp [123 456]))
 
-  )
+  

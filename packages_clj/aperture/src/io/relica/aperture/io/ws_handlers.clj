@@ -63,8 +63,8 @@
          {:type :facts/loaded
           :facts (:facts result)
           :user-id (:user-id ?data)
-          :environment-id (:environment-id ?data)
-          }
+          :environment-id (:environment-id ?data)}
+          
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -75,8 +75,8 @@
                       @environment-service
                       (:user-id ?data)
                       (:environment-id ?data)
-                      (:uid ?data)
-                      ))]
+                      (:uid ?data)))]
+                      
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -97,6 +97,8 @@
                       (:uid ?data)
                       (:environment-id ?data)))]
       (?reply-fn (:environment result))
+      (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      (println result)
       (when (:success result)
         (ws/broadcast!
          {:type :facts/loaded
@@ -129,10 +131,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-entity
-                     @environment-service
-                     (:user-id ?data)
-                     (:entity-uid ?data)
-                     (:environment-id ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:entity-uid ?data)
+                      (:environment-id ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -148,10 +150,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/unload-entity
-                     @environment-service
-                     (:user-id ?data)
-                     (:entity-uid ?data)
-                     (:environment-id ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:entity-uid ?data)
+                      (:environment-id ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -167,10 +169,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-entities
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uids ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uids ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -185,10 +187,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/unload-entities
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uids ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uids ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -204,10 +206,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-subtypes
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -222,10 +224,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-subtypes-cone
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -241,10 +243,10 @@
   (go
     (println "UNLOADING SUBTYPES CONE")
     (let [result (<! (env-service/unload-subtypes-cone
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -260,10 +262,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-classified
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -278,10 +280,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-classification-fact
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -297,10 +299,10 @@
   (go
     (println "LOADING COMPOSITION")
     (let [result (<! (env-service/load-composition
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -316,10 +318,10 @@
   (go
     (println "LOADING COMPOSITION IN")
     (let [result (<! (env-service/load-composition-in
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -334,10 +336,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-connections
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -352,10 +354,10 @@
   [{:keys [?data ?reply-fn] :as msg}]
   (go
     (let [result (<! (env-service/load-connections-in
-                     @environment-service
-                     (:user-id ?data)
-                     (:environment-id ?data)
-                     (:entity-uid ?data)))]
+                      @environment-service
+                      (:user-id ?data)
+                      (:environment-id ?data)
+                      (:entity-uid ?data)))]
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -374,9 +376,9 @@
     (tap> (str "Clearing entities for user:" (:user-id ?data)))
     (go
       (let [result (<! (env-service/clear-entities
-                       @environment-service
-                       (:user-id ?data)
-                       (:environment-id ?data)))]
+                        @environment-service
+                        (:user-id ?data)
+                        (:environment-id ?data)))]
         (?reply-fn (if (:success result) {:success true} {:error "Failed to clear entities"}))
         (when (:success result)
           (ws/broadcast!
@@ -393,13 +395,13 @@
   (tap> (str "Handling entity/select"))
   (tap> ?data)
   (when ?reply-fn
-    (tap> (str "selecting entity " (:entity-uid ?data) " for user:" (:user-id ?data)))
+    (println (str "selecting entity " (:entity-uid ?data) " for user:" (:user-id ?data)))
     (go
       (let [result (<! (env-service/select-entity
-                       @environment-service
-                       (:user-id ?data)
-                       (:environment-id ?data)
-                       (:entity-uid ?data)))]
+                        @environment-service
+                        (:user-id ?data)
+                        (:environment-id ?data)
+                        (:entity-uid ?data)))]
         (?reply-fn (if (:success result)
                     {:success true :selected-entity (:entity-uid ?data)}
                     {:error "Failed to select entity"}))
@@ -422,9 +424,9 @@
     (tap> (str "deselecting entity for user:" (:user-id ?data)))
     (go
       (let [result (<! (env-service/deselect-entity
-                       @environment-service
-                       (:user-id ?data)
-                       (:environment-id ?data)))]
+                        @environment-service
+                        (:user-id ?data)
+                        (:environment-id ?data)))]
         (?reply-fn (if (:success result) {:success true} {:error "Failed to deselect entity"}))
         (when (:success result)
           (tap> "%%%%%%%%%%%%%%%%%%%%% BROADCASTING ENTITY DESELECTION %%%%%%%%%%%%%%%%%%%%%%")

@@ -120,7 +120,7 @@ export const App = () => {
             await initializeWebSocket(token);
             console.log("WebSocket initialized for setup");
           } catch (wsErr) {
-            console.warn("WebSocket initialization failed:", wsErr);
+            console.warn("WebSocket initialization failed (no token):", wsErr);
           }
         }
         

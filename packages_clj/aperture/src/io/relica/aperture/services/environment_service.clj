@@ -1,9 +1,9 @@
 (ns io.relica.aperture.services.environment-service
   (:require [clojure.tools.logging :as log]
             [io.relica.aperture.config :refer [get-user-environment get-user-environments
-                                           update-user-environment! select-entity!
-                                           deselect-entity! get-default-environment
-                                           create-user-environment!]]
+                                               update-user-environment! select-entity!
+                                               deselect-entity! get-default-environment
+                                               create-user-environment!]]
             [clojure.core.async :as async :refer [go <! >! chan]]
             [cheshire.core :as json]
             [io.relica.common.io.archivist-client :as archivist]))
@@ -69,7 +69,7 @@
         
         ;; Remove entities from candidates if they're still referenced in remaining facts
         entities-to-remove (loop [entities candidate-entity-uids
-                                 remaining remaining-facts]
+                                  remaining remaining-facts]
                             (if (empty? remaining)
                               entities
                               (let [fact (first remaining)
@@ -197,7 +197,7 @@
               env-id (or env-id (:id (get-default-environment user-id)))
               env (get-user-environment user-id env-id)
               old-facts (:facts env)
-              facts (get-in result [:hierarchy :facts])
+              facts (:facts result)
               combined-facts (concat old-facts facts)
               new-facts (deduplicate-facts combined-facts)
               updated-env (when facts
@@ -300,20 +300,20 @@
               
               ;; Remove models from candidates if they're still referenced in remaining facts
               final-model-uids-to-remove (loop [models candidate-model-uids-to-remove
-                                              remaining remaining-facts]
-                                         (if (empty? remaining)
-                                           models
-                                           (let [fact (first remaining)
-                                                 lh-uid (:lh_object_uid fact)
-                                                 rh-uid (:rh_object_uid fact)
-                                                 models (cond-> models
-                                                          (contains? models lh-uid) (disj lh-uid)
-                                                          (contains? models rh-uid) (disj rh-uid))]
-                                             (recur models (rest remaining)))))
+                                                remaining remaining-facts]
+                                          (if (empty? remaining)
+                                            models
+                                            (let [fact (first remaining)
+                                                  lh-uid (:lh_object_uid fact)
+                                                  rh-uid (:rh_object_uid fact)
+                                                  models (cond-> models
+                                                           (contains? models lh-uid) (disj lh-uid)
+                                                           (contains? models rh-uid) (disj rh-uid))]
+                                              (recur models (rest remaining)))))
               
               ;; Update environment with remaining facts
               updated-env (when env
-                       (update-user-environment! user-id env-id {:facts remaining-facts}))]
+                           (update-user-environment! user-id env-id {:facts remaining-facts}))]
           
           (if updated-env
             {:success true
@@ -343,9 +343,9 @@
                                   (:facts result)
                                   [])]
               (when (seq entity-facts)
-                (swap! new-facts-only concat entity-facts)
+                (swap! new-facts-only concat entity-facts))))
                 ;; If we had models, we would add them here
-                )))
+                
 
           (tap> @new-facts-only)
           
@@ -395,7 +395,7 @@
           
           ;; Now remove all facts referencing any of these entities
           (let [remaining-facts (remove #(or (some (fn [entity-uid] 
-                                                   (= entity-uid (:lh_object_uid %)))
+                                                    (= entity-uid (:lh_object_uid %)))
                                                  entity-uids)
                                            (some (fn [entity-uid]
                                                    (= entity-uid (:rh_object_uid %)))
@@ -404,7 +404,7 @@
                 
                 ;; Determine which models can be removed (not referenced in remaining facts)
                 final-model-uids-to-remove (loop [models (set @all-model-uids-to-remove)
-                                                 remaining remaining-facts]
+                                                  remaining remaining-facts]
                                             (if (empty? remaining)
                                               models
                                               (let [fact (first remaining)
@@ -417,7 +417,7 @@
                 
                 ;; Update environment with remaining facts
                 updated-env (when env
-                          (update-user-environment! user-id env-id {:facts remaining-facts}))]
+                             (update-user-environment! user-id env-id {:facts remaining-facts}))]
             
             (if updated-env
               {:success true
@@ -550,8 +550,8 @@
              :environment updated-env
              :facts facts}
             {:error "Failed to update environment with composition"}))
-        (catch Exception e))
-        ))
+        (catch Exception e))))
+        
 
   (load-composition-in [this user-id env-id entity-uid]
     (go
@@ -570,8 +570,8 @@
              :environment updated-env
              :facts facts}
             {:error "Failed to update environment with composition"}))
-        (catch Exception e))
-        ))
+        (catch Exception e))))
+        
 
   (load-connections [this user-id env-id entity-uid]
     (go
@@ -590,8 +590,8 @@
              :environment updated-env
              :facts facts}
             {:error "Failed to update environment with composition"}))
-        (catch Exception e))
-        ))
+        (catch Exception e))))
+        
 
   (load-connections-in [this user-id env-id entity-uid]
     (go
@@ -610,8 +610,8 @@
              :environment updated-env
              :facts facts}
             {:error "Failed to update environment with composition"}))
-        (catch Exception e))
-        ))
+        (catch Exception e))))
+        
 
   (clear-entities [this user-id env-id]
     (go
@@ -647,9 +647,9 @@
               
               ;; Create a recursive function to process each child
               result (loop [children child-uids
-                           current-env updated-env
-                           all-fact-uids fact-uids-removed
-                           all-entity-uids entity-uids-removed]
+                            current-env updated-env
+                            all-fact-uids fact-uids-removed
+                            all-entity-uids entity-uids-removed]
                       (if (empty? children)
                         {:env current-env
                          :fact-uids-removed all-fact-uids
