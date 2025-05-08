@@ -56,7 +56,7 @@
   (let [lh-var (var-name (:left fact))
         rel-var (fact-var-name idx)
         rh-var (var-name (:right fact))
-        match-pattern (str "(" lh-var ":Entity)--(" rel-var ":Fact)--(" rh-var ":Entity)")
+        match-pattern (str "(" lh-var ":Entity)-->(" rel-var ":Fact)-->(" rh-var ":Entity)")
         where-clauses (filterv some?
                               [(when-let [uid (get-in fact [:relation :uid])]
                                  (str rel-var ".rel_type_uid = " uid))
@@ -74,23 +74,23 @@
    Returns a complete Cypher query string"
   [facts]
   (let [patterns (map-indexed (fn [idx fact] (fact-to-cypher-match fact idx)) facts)
-        _ (println "PATTERNS:" patterns)
+        ;; _ (println "PATTERNS:" patterns)
         match-clauses (map #(str "MATCH " (:match %)) patterns)
-        _ (println "MATCH CLAUSES:" match-clauses)
+        ;; _ (println "MATCH CLAUSES:" match-clauses)
         where-clauses (mapcat :where patterns)
-        _ (println "WHERE CLAUSES:" where-clauses)
+        ;; _ (println "WHERE CLAUSES:" where-clauses)
 
         where-string (when (seq where-clauses)
                        (str "WHERE " (str/join " AND " where-clauses)))
-        _ (println "WHERE STING:" where-string)
+        ;; _ (println "WHERE STING:" where-string)
         return-vars (distinct (mapcat (fn [fact]
                                        (filter #(str/starts-with? % "var_") 
                                                [(var-name (:left fact))
                                                 (var-name (:right fact))]))
                                      facts))
-        _ (println "RETURN VARS:" return-vars)
+        ;; _ (println "RETURN VARS:" return-vars)
         return-string (str "RETURN " (str/join ", " (or (seq return-vars) ["*"])))
-        _ (println "RETURN STRING:" return-string)
+        ;; _ (println "RETURN STRING:" return-string)
         query-parts (filterv some? [(str/join "\n" match-clauses)
                                     where-string
                                     return-string])]
@@ -119,22 +119,28 @@
 
 ;; Complete example of GEL -> Cypher conversion
 (comment
-  (parse-and-generate "?1 > 5935.is classified as > 40043.pump")
+  (println (parse-and-generate "?1 > 5935.is classified as > 40043.pump"))
   ;; =>
   ;; "MATCH (var_1:Entity)--(f0:Fact)--(e40043:Entity)
   ;;  WHERE f0.rel_type_uid = 5935 AND e40043.uid = 40043
   ;;  RETURN var_1"
   
-  (parse-and-generate "?1.? > 1190.has as part > 201.Impeller")
+  (println (parse-and-generate "?1.? > 1190.has as part > 201.Impeller"))
   ;; =>
   ;; "MATCH (var_1:Entity)--(f0:Fact)--(e201:Entity)
   ;;  WHERE f0.rel_type_uid = 1190 AND e201.uid = 201
   ;;  RETURN var_1"
   
-  (parse-and-generate "?1 > 1190.has as part > 2.?
+  (println (parse-and-generate "?1 > 1190.has as part > 2.?
                        ?2.? > 5935.is classified as > 40043.bearing"))
   ;; =>
   ;; "MATCH (var_1:Entity)--(f0:Fact)--(var_2:Entity)
   ;;  MATCH (var_2:Entity)--(f1:Fact)--(e40043:Entity)
   ;;  WHERE f0.rel_type_uid = 1190 AND f1.rel_type_uid = 5935 AND e40043.uid = 40043
   ;;  RETURN var_1, var_2"
+
+  (println (parse-and-generate "1.? > 1190.has as part > 2.?
+                       ?2.? > v5935.is classified as > 40043.bearing"))
+
+
+  (print))

@@ -6,12 +6,24 @@
            (org.neo4j.driver.internal.value NumberValueAdapter)))
 
 (defprotocol GraphOperations
+  (check-connection [this])
   (exec-query [this query params])
   (exec-write-query [this query params]))
 
 (defrecord GraphService [session-factory]
 
   GraphOperations
+
+  (check-connection [_]
+    (try
+      (with-open [session (session-factory)]
+        (let [result (neo4j/execute session "RETURN 1" nil)]
+          (if (seq result)
+            true
+            false)))
+      (catch Exception e
+        (log/error e "Error checking Neo4j connection")
+        false)))
 
   (exec-query [_ query params]
     (with-open [session (session-factory)]
@@ -77,6 +89,26 @@
     ;; For nil or any other type, just return it
     :else v))
 
+(defn transform-result [result]
+  (reduce-kv (fn [m k v]
+              (assoc m k
+                     (cond
+                       ;; Handle date fields
+                       (and (contains? #{:effective_from :latest_update} k)
+                            (or (instance? java.time.LocalDate v)
+                                (string? v)))
+                       (format-date v)
+
+                       ;; Ensure integer values when appropriate
+                       (contains? #{:rel_type_uid :lh_object_uid :rh_object_uid
+                                    :fact_uid :collection_uid :language_uid} k)
+                       (ensure-integer v)
+
+                       ;; Handle Neo4j numeric values
+                       :else (resolve-neo4j-int v))))
+            {}
+            result))
+
 (defn transform-results [results]
   (->> results
        (map #(get-in % [:r]))
@@ -93,7 +125,7 @@
 
                                     ;; Ensure integer values when appropriate
                                     (contains? #{:rel_type_uid :lh_object_uid :rh_object_uid
-                                                :fact_uid :collection_uid :language_uid} k)
+                                                 :fact_uid :collection_uid :language_uid} k)
                                     (ensure-integer v)
 
                                     ;; Handle Neo4j numeric values
@@ -133,6 +165,4 @@
                (get-in db-config [:neo4j :password]))
         session-factory (fn [] (neo4j/get-session conn))
         test-service (create-graph-service session-factory)]
-    (exec-query test-service "MATCH (n) RETURN n LIMIT 1" nil))
-
-)
+    (exec-query test-service "MATCH (n) RETURN n LIMIT 1" nil)))

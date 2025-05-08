@@ -57,9 +57,9 @@
     nil
     
     ;; What placeholder (*)
-    (= text "*")
-    {:type :what-placeholder}
-    
+    ;; (= text "*")
+    ;; {:type :what-placeholder}
+
     ;; Single placeholder (?)
     (= text "?")
     {:type :placeholder}
@@ -101,7 +101,8 @@
     ;; Taxonomic lineage query (^40043.pump)
     (str/starts-with? text "^")
     (let [entity-text (subs text 1)
-          level-match (re-find #"^(\d+)\." text)
+          level-match (re-find #"^(\d+)\." entity-text)
+          range-match (re-find #"^(\d+)-(\d+)\." entity-text)
           level (when level-match (parse-number (second level-match)))
           entity (parse-entity entity-text)]
       {:type :lineage
@@ -111,9 +112,9 @@
     ;; Taxonomic subtype query (v40043.pump)
     (str/starts-with? text "v")
     (let [entity-text (subs text 1)
-          level-match (re-find #"^(\d+)\." text)
+          level-match (re-find #"^(\d+)\." entity-text)
           level (when level-match (parse-number (second level-match)))
-          range-match (re-find #"^(\d+)-(\d+)\." text)
+          range-match (re-find #"^(\d+)-(\d+)\." entity-text)
           [min-level max-level] (when range-match 
                                  [(parse-number (second range-match))
                                   (parse-number (nth range-match 2))])
@@ -212,6 +213,7 @@
     
     :else nil))
 
+(declare parsed-to-facts)
 ;; Public API function to parse GEL queries
 (defn parse
   "Parse GEL query string and return structured data"
@@ -224,12 +226,12 @@
                              (cond
                                (str/blank? trimmed) nil
                                (str/starts-with? trimmed "@") (parse-metadata trimmed)
-                               (str/starts-with? trimmed "^") (parse-taxonomic-query trimmed)
-                               (str/starts-with? trimmed "v") (parse-taxonomic-query trimmed)
+                               ;; (str/starts-with? trimmed "^") (parse-taxonomic-query trimmed)
+                               ;; (str/starts-with? trimmed "v") (parse-taxonomic-query trimmed)
                                (str/includes? trimmed ">") (parse-statement trimmed)
                                :else nil)))
                          lines)]
-      (filterv some? parsed-lines))
+      (parsed-to-facts (filterv some? parsed-lines)))
     (catch Exception e
       (log/error "Error parsing GEL query:" (pr-str input) "Exception:" (ex-message e))
       (throw (ex-info "Error parsing GEL query" 
@@ -381,3 +383,29 @@
   (-> input
       parse
       fix-placeholder-query))
+
+(comment
+  (println (parsed-to-facts  (parse "?1 > 5935.is classified as > 40043.pump")))
+
+  (println (parse "?1.? > 1190.has as part > 201.Impeller"))
+  ;; =>
+  ;; "MATCH (var_1:Entity)--(f0:Fact)--(e201:Entity)
+  ;;  WHERE f0.rel_type_uid = 1190 AND e201.uid = 201
+  ;;  RETURN var_1"
+
+  (println (parse "?1 > 1190.has as part > 2.?
+                       ?2.? > 5935.is classified as > 40043.bearing"))
+  ;; =>
+  ;; "MATCH (var_1:Entity)--(f0:Fact)--(var_2:Entity)
+  ;;  MATCH (var_2:Entity)--(f1:Fact)--(e40043:Entity)
+  ;;  WHERE f0.rel_type_uid = 1190 AND f1.rel_type_uid = 5935 AND e40043.uid = 40043
+  ;;  RETURN var_1, var_2"
+
+  (println (parse "1.? > 1190.has as part > 2.?
+                       ?2.? > v5935.is classified as > 40043.bearing"))
+
+  (println (parse "?1 > 5935.is classified as > ?(1 2 3)"))
+
+  ;; (println (parse-and-expand "?1 > 5935.is classified as > ?(1 2 3)"))
+
+  (print))

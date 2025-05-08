@@ -78,9 +78,7 @@
 (deftest nested-structure-test
   (testing "Query with nested structure"
     (let [gel "?1 > 1190.has as part > (201.Impeller, 202.Shaft)"
-          _ (println "GEEEEEEEEEEEEL" gel)
           cypher (g2c/parse-and-generate gel)]
-      (println "CYPHER!!!: " cypher)
       ;; Should be expanded to multiple patterns
       (is (or (re-find #"(?s)MATCH.*MATCH" cypher)
               (re-find #"WHERE.*IN" cypher))))))
