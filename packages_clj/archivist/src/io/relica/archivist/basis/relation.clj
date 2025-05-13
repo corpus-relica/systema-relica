@@ -186,8 +186,8 @@
         false))))
 
 (defn most-specific
-  "Get the 'most specific' concept from a set of concepts.
-   Presumably the one with the longest lineage.
+  "Get the 'most specific' concept from a set of concepts;
+   presumably the one with the longest lineage.
    Returns the UID of the most specific concept."
   [concepts]
   (go
@@ -286,7 +286,7 @@
 ;;        :rh_role rh-matching-role
 ;;        :rh_object rh-object})))
 
-;; Get inherited relations
+;;Get inherited relations
 ;; (defn get-inherited-relations
 ;;   "Get relations that could apply through inheritance, preserving lineage order
 
@@ -309,9 +309,9 @@
 ;;       (let [lineage (get-lineage entity-uid)
 ;;             ;; Build ordered sequence of inheritance levels
 ;;             levels (for [[ancestor level] (map vector lineage (range))]
-;;                      (let [relations (<! (get-relations ancestor)
-;;                                          {:edge-type rel-types
-;;                                           :include-subtypes? include-subtypes?})
+;;                      (let [relations (<! (get-relations ancestor
+;;                                             {:edge-type rel-types
+;;                                              :include-subtypes? include-subtypes?}))
 ;;                            filtered (if filter-fn
 ;;                                      (filter filter-fn relations)
 ;;                                      relations)
@@ -356,27 +356,35 @@
                           result []]
                      (if (empty? ancestors)
                        result
-                       (let [ancestor (first ancestors)
+                       (let [
+                             ancestor (first ancestors)
                              relations (<! (get-relations ancestor
                                                          {:edge-type rel-types
                                                           :include-subtypes? include-subtypes?}))
+                             pre-filtered (filter #(not (contains? #{1146 ;; specialization
+                                                                     1981 ;; synonym
+                                                                     1986 ;; inverse
+                                                                     } (:rel_type_uid %))) relations)
                              filtered (if filter-fn
-                                       (filter filter-fn relations)
-                                       relations)
+                                       (filter filter-fn pre-filtered)
+                                       pre-filtered)
+
+                             ;; _ (pp/pprint filtered)
                              ;; Process each relation sequentially to check compatibility
-                             compatible (loop [rels filtered
-                                              compatible-rels []]
-                                          (if (empty? rels)
-                                            compatible-rels
-                                            (let [rel (first rels)
-                                                  is-compatible? (<! (roles-compatible? entity-uid (:rel_type_uid rel)))]
-                                              (recur (rest rels)
-                                                     (if is-compatible?
-                                                       (conj compatible-rels rel)
-                                                       compatible-rels)))))
+                             ;; compatible (loop [rels filtered
+                             ;;                  compatible-rels []]
+                             ;;              (if (empty? rels)
+                             ;;                compatible-rels
+                             ;;                (let [rel (first rels)
+                             ;;                      is-compatible? (<! (roles-compatible? entity-uid (:rel_type_uid rel)))]
+                             ;;                  (recur (rest rels)
+                             ;;                         (if is-compatible?
+                             ;;                           (conj compatible-rels rel)
+                             ;;                           compatible-rels)))))
                              level-map {:level level
                                         :ancestor ancestor
-                                        :relations (vec compatible)}]
+                                        :relations (vec filtered)}
+                             ]
                          (recur (rest ancestors)
                                 (inc level)
                                 (if (seq (:relations level-map))
@@ -388,6 +396,13 @@
         (log/error "Error in get-inherited-relations:" (ex-message e))
         [])))))
 
+(comment
+
+  (go
+    (let [val (<! (get-inherited-relations 1146))]
+      (pp/pprint val)))
+
+)
 ;; Role validation
 (defn validate-role-players
   "Validate that entities can play the required roles in a relation"
@@ -489,8 +504,5 @@
 
   ;; ----------------------------------------------
 
-  (go
-    (let [val (<! (get-inherited-relations 1146))]
-      (pp/pprint val)))
 
   (print))

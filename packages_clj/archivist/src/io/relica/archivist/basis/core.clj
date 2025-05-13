@@ -261,6 +261,10 @@
 
 (comment
 
+  (graph/start)
+
+  (cache/start "xxx")
+
   (go
     (let [foo (<! (expand-types 730044))]
       (pp/pprint foo)))
@@ -329,9 +333,7 @@
 ;;             _ (println "rewewrewrew" results)
 ;;             transformed (graph/transform-results results)]
 ;;         ;; Return paths as sequences of facts
-;;         (partition-by :path_id transformed))
-;;       (catch Exception e
-;;         (log/error "Error in get-relation-paths:" (ex-message e))
+;;         (partition-by :path_id transformed)) (catch Exception e (log/error "Error in get-relation-paths:" (ex-message e))
 ;;         []))))
 
 ;; (comment
