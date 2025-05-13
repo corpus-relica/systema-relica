@@ -211,34 +211,35 @@
    Returns map containing full role structure"
   [fact]
   (go
-    (let [;; get conceptual version of relation
+    (let [;; isolate relevant uids
           lh-object-uid (:lh_object_uid fact)
           rh-object-uid (:rh_object_uid fact)
           rel-type-uid (:rel_type_uid fact)
+          ;; get required roles of relation type
           [role1-uid role2-uid] (<! (get-required-role-uids rel-type-uid))
+          ;; get all subtypes of the required roles
           role1-cone (<! (get-cone role1-uid))
           role2-cone (<! (get-cone role2-uid))
+          ;; get the roles the objects can play
           lh-object-roles (<! (get-inheritable-roles lh-object-uid))
           rh-object-roles (<! (get-inheritable-roles rh-object-uid))
+          ;; filter the roles to only those that are in the cone of the required roles
           lh-roles (filter #(contains? role1-cone (:rh_object_uid %)) lh-object-roles)
           rh-roles (filter #(contains? role2-cone (:rh_object_uid %)) rh-object-roles)
+          ;; get the most specific role from the filtered roles
           lh-role-uids (set (map :rh_object_uid lh-roles))
           rh-role-uids (set (map :rh_object_uid rh-roles))
           lh-role-uid (<! (most-specific lh-role-uids))
           rh-role-uid (<! (most-specific rh-role-uids))
           lh-role (first (filter #(= (:rh_object_uid %) lh-role-uid) lh-object-roles))
-          rh-role (first (filter #(= (:rh_object_uid %) rh-role-uid) rh-object-roles))
-           ]
-      ;; [lh-object-roles rh-object-roles]
+          rh-role (first (filter #(= (:rh_object_uid %) rh-role-uid) rh-object-roles))]
       (merge
         fact
         {:lh_role_uid (:rh_object_uid lh-role)
          :lh_role_name (:rh_object_name lh-role)
          :rh_role_uid (:rh_object_uid rh-role)
          :rh_role_name (:rh_object_name rh-role)
-         }
-      )
-      )))
+         }))))
 
 (comment
   ;; Example usage
