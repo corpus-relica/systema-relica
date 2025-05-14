@@ -77,10 +77,8 @@ Timestamp: {timestamp}
 
 <available_capabilities>
 Your tools allow you to:
-- Search for entities by name (textSearchExact)
-- Navigate the taxonomic hierarchy (loadSpecializationHierarchy, loadSubtypes, loadSpecializationFact)
-- Explore classifications (loadClassified, loadClassificationFact)
-- Examine entity relationships (loadEntity, getEntityOverview, getEntityDetails)
+- Search for entities by name and load them into the environment (textSearchLoad)
+- Search for entities by uid and load them into the environment (textSearchUID)
 </available_capabilities>
 
 <interaction_approach>
@@ -94,6 +92,10 @@ Your tools allow you to:
 </interaction_approach>
 
 """
+# - Navigate the taxonomic hierarchy (loadSpecializationHierarchy, loadSubtypes, loadSpecializationFact)
+# - Explore classifications (loadClassified, loadClassificationFact)
+# - Examine entity relationships (loadEntity, getEntityOverview, getEntityDetails)
+
 # Chat History: {chat_history}
 # Current Query: {input}
 

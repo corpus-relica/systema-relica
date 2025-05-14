@@ -3,8 +3,7 @@
             [io.relica.archivist.services.ws-service]
             [io.relica.archivist.services.postgres-service]
             [io.relica.archivist.services.graph-service]
-            [io.relica.archivist.services.uid-service]
-             ))
+            [io.relica.archivist.services.uid-service]))
 
 (defn start-app []
   (mount/start))
@@ -21,4 +20,4 @@
 
   (stop-app)
 
-  )
+  (print))

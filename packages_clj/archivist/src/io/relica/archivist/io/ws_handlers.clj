@@ -242,6 +242,24 @@
     (respond-error :database-error "Failed to execute text search"
                    {:exception (str e)})))
 
+(response/def-ws-handler :archivist.search/uid
+  (let [{:keys [searchUID collectionUID page pageSize filter]
+         :or {page 1 pageSize 10}} ?data
+        _ (println "UID Search Data: " ?data)
+        results (<! (general-search/get-uid-search
+                     (if (string? searchUID)
+                       (Integer/parseInt searchUID)
+                       searchUID)
+                     collectionUID
+                     page
+                     pageSize
+                     filter))]
+    (respond-success {:results results}))
+  (catch Exception e
+    (log/error e "Failed to execute text search")
+    (respond-error :database-error "Failed to execute text search"
+                   {:exception (str e)})))
+
 ;; SPECIALIZATION
 
 (response/def-ws-handler :archivist.specialization/fact-get

@@ -38,7 +38,7 @@
         (log/error e "Error in text search")
         {:error "Failed to execute text search"}))))
 
-(defn get-uid-search [search-term collection-uid page page-size filter]
+(defn get-uid-search [search-uid collection-uid page page-size filter]
   (go
     (try
       (let [descendants (when filter
@@ -47,7 +47,7 @@
             skip (* (dec page) page-size)
             results (graph/exec-query graph/graph-service
                                     queries/uid-search
-                                    {:searchTerm search-term
+                                    {:searchTerm search-uid
                                      :relTypeUIDs rel-type-uids
                                      :filterUIDs (or descendants [])
                                      :collectionUID (or collection-uid "")
@@ -55,7 +55,7 @@
                                      :pageSize page-size})
             count-results (graph/exec-query graph/graph-service
                                           queries/count-uid-search
-                                          {:searchTerm search-term
+                                          {:searchTerm search-uid
                                            :relTypeUIDs rel-type-uids
                                            :filterUIDs (or descendants [])
                                            :collectionUID (or collection-uid "")})
@@ -69,6 +69,6 @@
         {:error "Failed to execute UID search"}))))
 
 
-(comment
+(comment)
 
-  )
+  

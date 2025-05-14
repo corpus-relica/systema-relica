@@ -134,6 +134,30 @@
         (tap> (str "Error in text search handler: " e))
         (error-response 500 :internal-error "Failed to execute text search" {:exception (str e)})))))
 
+(defn handle-uid-search [{:keys [params]}]
+  (go
+    (try
+      (let [{:keys [searchTerm collectionUID page pageSize filter exactMatch]
+             :or {page "1" pageSize "10" exactMatch false}} params
+            response (<! (archivist/uid-search
+                          archivist-client
+                          {:searchUID searchTerm
+                           :collectionUID collectionUID
+                           :page (parse-int-param page 1)
+                           :pageSize (parse-int-param pageSize 10)
+                           :filter filter
+                           :exactMatch exactMatch}))
+            result (if (:success response)
+                     (:results response)
+                     nil)]
+        (if (:success response)
+          (success-response result)
+          (let [error (get-in response [:error :message])]
+            (error-response 500 :database-error (or error "Unknown error")))))
+      (catch Exception e
+        (tap> (str "Error in text search handler: " e))
+        (error-response 500 :internal-error "Failed to execute text search" {:exception (str e)})))))
+
 (defn handle-get-kinds [{:keys [params identity]}]
   (go
     (let [params {:sort (parse-json-param (:sort params) ["name" "ASC"])

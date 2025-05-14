@@ -88,8 +88,8 @@
   (send-heartbeat! [this])
 
   ;; Lineage operations
-  (get-lineage [this uid])
-  )
+  (get-lineage [this uid]))
+
 
 (defprotocol ConnectionManagement
   (connect! [this])
@@ -384,8 +384,8 @@
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
     (ws/send-message! client :archivist.system/heartbeat
-                            {:timestamp (System/currentTimeMillis)}
-                            30000))
+                      {:timestamp (System/currentTimeMillis)}
+                      30000))
 
   ;; Lineage operations
 
@@ -408,23 +408,23 @@
 
 (defn create-client
   [{:keys [timeout handlers host port] :or {timeout default-timeout} :as opts}]
-   (let [uri (str "ws://" host ":" port "/ws")
-         default-handlers {:on-error (fn [e]
-                                       (log/error "Archivist WS Error:" e))
-                           :on-message (fn [msg]
-                                         (log/debug "Archivist message received:" msg))}
-         merged-handlers (merge default-handlers handlers)
-         ;; client (ws/create-client {:uri url :handlers merged-handlers})]
-         client (ws/create-client {:service-name "archivist"
-                                   :uri uri
-                                   :handlers merged-handlers})
-         archivist-client (->ArchivistClient client {:timeout timeout})]
+  (let [uri (str "ws://" host ":" port "/ws")
+        default-handlers {:on-error (fn [e]
+                                      (log/error "Archivist WS Error:" e))
+                          :on-message (fn [msg]
+                                        (log/debug "Archivist message received:" msg))}
+        merged-handlers (merge default-handlers handlers)
+        ;; client (ws/create-client {:uri url :handlers merged-handlers})]
+        client (ws/create-client {:service-name "archivist"
+                                  :uri uri
+                                  :handlers merged-handlers})
+        archivist-client (->ArchivistClient client {:timeout timeout})]
 
-     (ws/connect! client)
+    (ws/connect! client)
 
-     (start-heartbeat-scheduler! archivist-client 30000)
+    (start-heartbeat-scheduler! archivist-client 30000)
 
-     archivist-client))
+    archivist-client))
 
 ;; Singleton instance for backward compatibility
 ;; (defonce archivist-client (create-client))

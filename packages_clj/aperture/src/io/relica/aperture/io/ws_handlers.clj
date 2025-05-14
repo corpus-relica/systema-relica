@@ -23,10 +23,10 @@
       (println ?data)
       (println (type (:user-id ?data)))
       (let [result (<! (env-service/get-environment @environment-service
-                                                  (:user-id ?data)
-                                                  (:environment-id ?data)))]
+                                                    (:user-id ?data)
+                                                    (:environment-id ?data)))]
         (println "RESULT")
-        ;; (println result)
+        (println result)
         (?reply-fn result)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -43,8 +43,8 @@
   (when ?reply-fn
     (go
       (let [result (<! (env-service/create-environment @environment-service
-                                                     (:user-id ?data)
-                                                     (:name ?data)))]
+                                                       (:user-id ?data)
+                                                       (:name ?data)))]
         (?reply-fn result)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -54,8 +54,8 @@
   (println ?data)
   (go
     (let [result (<! (env-service/text-search-load @environment-service
-                                                 (:user-id ?data)
-                                                 (:term ?data)))]
+                                                   (:user-id ?data)
+                                                   (:term ?data)))]
       (?reply-fn {:environment (:environment result)
                   :facts (:facts result)})
       (when (:success result)
@@ -64,8 +64,28 @@
           :facts (:facts result)
           :user-id (:user-id ?data)
           :environment-id (:environment-id ?data)}
-          
          10)))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :environment/uid-search-load
+  [{:keys [?data ?reply-fn] :as msg}]
+  (println "UID SEARCH LOAD -- **************************************")
+  (println ?data)
+  (go
+    (let [result (<! (env-service/uid-search-load @environment-service
+                                                  (:user-id ?data)
+                                                  (:uid ?data)))]
+      (?reply-fn {:environment (:environment result)
+                  :facts (:facts result)})
+      (when (:success result)
+        (ws/broadcast!
+         {:type :facts/loaded
+          :facts (:facts result)
+          :user-id (:user-id ?data)
+          :environment-id (:environment-id ?data)}
+         10)))))
+
+;;
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :environment/load-specialization-fact
@@ -76,7 +96,7 @@
                       (:user-id ?data)
                       (:environment-id ?data)
                       (:uid ?data)))]
-                      
+
       (?reply-fn (:environment result))
       (when (:success result)
         (ws/broadcast!
@@ -84,7 +104,7 @@
           :facts (:facts result)
           :user-id (:user-id ?data)
           :environment-id (or (:environment-id ?data)
-                             (:id (get-default-environment (:user-id ?data))))}
+                              (:id (get-default-environment (:user-id ?data))))}
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -105,7 +125,7 @@
           :facts (:facts result)
           :user-id (:user-id ?data)
           :environment-id (or (:environment-id ?data)
-                             (:id (get-default-environment (:user-id ?data))))}
+                              (:id (get-default-environment (:user-id ?data))))}
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -142,7 +162,7 @@
           :facts (:facts result)
           :user-id (:user-id ?data)
           :environment-id (or (:environment-id ?data)
-                             (:id (get-default-environment (:user-id ?data))))}
+                              (:id (get-default-environment (:user-id ?data))))}
          10)))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -386,7 +406,7 @@
             :fact-uids (:fact-uids-removed result)
             :user-id (:user-id ?data)
             :environment-id (or (:environment-id ?data)
-                               (:id (get-default-environment (:user-id ?data))))}
+                                (:id (get-default-environment (:user-id ?data))))}
            10))))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -403,8 +423,8 @@
                         (:environment-id ?data)
                         (:entity-uid ?data)))]
         (?reply-fn (if (:success result)
-                    {:success true :selected-entity (:entity-uid ?data)}
-                    {:error "Failed to select entity"}))
+                     {:success true :selected-entity (:entity-uid ?data)}
+                     {:error "Failed to select entity"}))
         (when (:success result)
           (println "%%%%%%%%%%%%%%%%%%%%% BROADCASTING ENTITY SELECTION %%%%%%%%%%%%%%%%%%%%%%")
           (ws/broadcast!
@@ -412,7 +432,7 @@
             :entity-uid (:entity-uid ?data)
             :user-id (:user-id ?data)
             :environment-id (or (:environment-id ?data)
-                               (:id (get-default-environment (:user-id ?data))))}
+                                (:id (get-default-environment (:user-id ?data))))}
            10))))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
@@ -434,5 +454,5 @@
            {:type :entity/selected-none
             :user-id (:user-id ?data)
             :environment-id (or (:environment-id ?data)
-                               (:id (get-default-environment (:user-id ?data))))}
+                                (:id (get-default-environment (:user-id ?data))))}
            10))))))

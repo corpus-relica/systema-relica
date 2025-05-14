@@ -528,6 +528,24 @@ class ApertureClient:
             logger.error(f"Error loading entity by text search: {e}")
             return {"error": f"Failed to load entity by text search: {str(e)}"}
 
+    async def uidSearchLoad(self, user_id, env_id, uid):
+        """Load entity data by numerical search uid"""
+        if not self.connected:
+            await self.connect()
+            if not self.connected:
+                return {"error": "Failed to connect to Aperture"}
+
+        try:
+            response = await self.client.send("environment/uid-search-load", {
+                "user-id": user_id,
+                "environment-id": env_id,
+                "uid": uid})
+            print("//////////////////////////////// UID SEARCH LOAD RESPONSE ////////////////////////////////")
+            print(response['payload'])
+            return response['payload']
+        except Exception as e:
+            logger.error(f"Error loading entity by text search: {e}")
+            return {"error": f"Failed to load entity by text search: {str(e)}"}
     # Helper method for emit
     async def emit(self, target, event_type, payload):
         """Emit an event (used in the textSearchLoad method)"""
@@ -577,6 +595,8 @@ class ApertureClientProxy:
     async def disconnect(self, *args, **kwargs):
         return await self._target_client.disconnect(*args, **kwargs)
 
+    # --
+
     async def retrieveEnvironment(self, *args, **kwargs):
         return await self._proxy_call('retrieveEnvironment', *args, **kwargs)
 
@@ -585,6 +605,16 @@ class ApertureClientProxy:
 
     async def createEnvironment(self, *args, **kwargs):
         return await self._proxy_call('createEnvironment', *args, **kwargs)
+
+    # --
+
+    async def textSearchLoad(self, *args, **kwargs):
+        return await self._proxy_call('textSearchLoad', *args, **kwargs)
+
+    async def uidSearchLoad(self, *args, **kwargs):
+        return await self._proxy_call('uidSearchLoad', *args, **kwargs)
+
+    # --
 
     async def loadSpecializationFact(self, *args, **kwargs):
         return await self._proxy_call('loadSpecializationFact', *args, **kwargs)
@@ -634,9 +664,6 @@ class ApertureClientProxy:
     async def loadEntity(self, *args, **kwargs):
         # This method didn't seem to take user/env id, check signature in ApertureClient
         return await self._proxy_call('loadEntity', *args, **kwargs)
-
-    async def textSearchLoad(self, *args, **kwargs):
-        return await self._proxy_call('textSearchLoad', *args, **kwargs)
 
     async def emit_event(self, *args, **kwargs):
         return await self._proxy_call('emit_event', *args, **kwargs)
