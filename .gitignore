@@ -35,3 +35,4 @@ seed_xls_bak
 seed_xls/.~*
 
 seed_csv/
+**/.claude/settings.local.json
