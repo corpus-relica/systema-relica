@@ -233,7 +233,7 @@
                           aperture-client
                           (:user-id identity)
                           nil))
-            env (:environment response)]
+            env response]
         (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         (println "TIME" (- (System/currentTimeMillis) t) "ms")
         (println "ENVIRONMENT" response)

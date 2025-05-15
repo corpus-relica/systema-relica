@@ -8,7 +8,7 @@
             [io.relica.archivist.core.entity-retrieval :as entity]
             [io.relica.archivist.core.general-search :as general-search]
             [io.relica.archivist.services.graph-service :as graph]
-            [io.relica.archivist.utils.response :as response]))
+            [io.relica.common.utils.response :as response]))
 
 
 ;; GRAPH SERVICE

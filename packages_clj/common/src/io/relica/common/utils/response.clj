@@ -1,4 +1,4 @@
-(ns io.relica.archivist.utils.response
+(ns io.relica.common.utils.response
    (:require [clojure.tools.logging :as log]
              [clojure.core.async :as async :refer [<! go chan]]))
 
