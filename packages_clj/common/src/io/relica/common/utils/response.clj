@@ -1,16 +1,46 @@
 (ns io.relica.common.utils.response
-   (:require [clojure.tools.logging :as log]
-             [clojure.core.async :as async :refer [<! go chan]]))
+  (:require [clojure.tools.logging :as log]
+            [clojure.core.async :as async :refer [<! go chan]]))
 
- ;; ==========================================================================
- ;; Error code definitions
- ;; ==========================================================================
+;; ==========================================================================
+;; Error code definitions
+;; ==========================================================================
 
- ;; Error code ranges by module (as specified in the migration plan)
- ;; 1xxx: Archivist errors
- ;;   1001-1099: Archivist system errors
- ;;   1101-1199: Archivist validation errors
- ;;   1201-1299: Archivist data access errors
+;; Error code ranges by module (as specified in the migration plan)
+;; 1xxx: Archivist errors
+;;   1001-1099: Archivist system errors
+;;   1101-1199: Archivist validation errors
+;;   1201-1299: Archivist data access errors
+;;
+;; 2xxx: Clarity errors
+;;   2001-2099: Clarity system errors
+;;   2101-2199: Clarity validation errors
+;;   2201-2299: Clarity data access errors
+;;
+;; 3xxx: Aperture errors
+;;   3001-3099: Aperture system errors
+;;   3101-3199: Aperture validation errors
+;;   3201-3299: Aperture data access errors
+;;
+;; 4xxx: Prism errors
+;;   4001-4099: Prism system errors
+;;   4101-4199: Prism validation errors
+;;   4201-4299: Prism data access errors
+;;
+;; 5xxx: Portal errors
+;;   5001-5099: Portal system errors
+;;   5101-5199: Portal validation errors
+;;   5201-5299: Portal data access errors
+;;
+;; 6xxx: Shutter errors
+;;   6001-6099: Shutter system errors
+;;   6101-6199: Shutter validation errors
+;;   6201-6299: Shutter data access errors
+;;
+;; 7xxx: Nous errors
+;;   7001-7099: Nous system errors
+;;   7101-7199: Nous validation errors
+;;   7201-7299: Nous data access errors
 
 (def error-codes
   {;; System errors (1001-1099)
@@ -33,11 +63,11 @@
    :transaction-failed             1204 ;; Transaction operation failed
    :unauthorized-access            1205 ;; Not authorized to access resource
    :database-error                 1206}) ;; General database error
-    
 
- ;; ==========================================================================
- ;; Response utility functions
- ;; ==========================================================================
+
+;; ==========================================================================
+;; Response utility functions
+;; ==========================================================================
 
 (defn success-response
   "Generate a standardized success response"
@@ -47,7 +77,7 @@
    (merge {:success true
            :request_id request-id}
           data)))
-    
+
 
 (defn error-response
   "Generate a standardized error response"
@@ -65,9 +95,9 @@
               :message message
               :details details}})))
 
- ;; ==========================================================================
- ;; WebSocket Handler Macro
- ;; ==========================================================================
+;; ==========================================================================
+;; WebSocket Handler Macro
+;; ==========================================================================
 
 (defmacro def-ws-handler
   "Defines a WebSocket message handler using defmethod, wrapping the body
