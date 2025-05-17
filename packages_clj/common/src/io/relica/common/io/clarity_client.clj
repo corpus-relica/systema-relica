@@ -8,8 +8,8 @@
 
 (defprotocol ClarityOperations
   (get-model [this uid])
-  (get-kind-model[this kind-id])
-  (get-individual-model[this individual-id])
+  (get-kind-model [this kind-id])
+  (get-individual-model [this individual-id])
   (send-heartbeat! [this]))
 
 (defrecord ClarityClient [ws-client options]
@@ -17,41 +17,41 @@
 
   (get-model
     [this uid]
-    (tap> {:event :app/getting-model})
+    (tap> {:event :clarity.model/getting})
     (tap> (ws/connected? ws-client))
     (when-not (ws/connected? ws-client)
       (ws/connect! ws-client))
-    (tap> {:event :app/sending-get-model})
-    (ws/send-message! ws-client :get/model
+    (tap> {:event :clarity.model/sending-get})
+    (ws/send-message! ws-client :clarity.model/get
                       {:uid uid}
                       (:timeout options)))
   (get-kind-model
     [this kind-id]
-    (tap> {:event :app/getting-kind-model})
+    (tap> {:event :clarity.kind/getting})
     (tap> (ws/connected? ws-client))
     (when-not (ws/connected? ws-client)
       (ws/connect! ws-client))
-    (tap> {:event :app/sending-get-kind-model})
-    (ws/send-message! ws-client :get/kind-model
+    (tap> {:event :clarity.kind/sending-get})
+    (ws/send-message! ws-client :clarity.kind/get
                       {:kind-id kind-id}
                       (:timeout options)))
 
   (get-individual-model
     [this individual-id]
-    (tap> {:event :app/getting-individual-model})
+    (tap> {:event :clarity.individual/getting})
     (tap> (ws/connected? ws-client))
     (when-not (ws/connected? ws-client)
       (ws/connect! ws-client))
-    (tap> {:event :app/sending-get-individual-model})
-    (ws/send-message! ws-client :get/individual-model
+    (tap> {:event :clarity.individual/sending-get})
+    (ws/send-message! ws-client :clarity.individual/get
                       {:individual-id individual-id}
                       (:timeout options)))
 
   (send-heartbeat! [this]
-    (tap> {:event :app/sending-heartbeat})
-    (ws/send-message! ws-client :app/heartbeat
-                            {:timestamp (System/currentTimeMillis)}
-                            3000)))
+    (tap> {:event :relica.app/sending-heartbeat})
+    (ws/send-message! ws-client :relica.app/heartbeat
+                      {:timestamp (System/currentTimeMillis)}
+                      3000)))
 
 ;; Heartbeat scheduler
 (defn start-heartbeat-scheduler! [clarity-client interval-ms]
@@ -69,10 +69,10 @@
 (defn create-client
   [{:keys [timeout handlers host port] :or {timeout default-timeout}}]
   (let [uri (str "ws://" host ":" port "/ws")
-        default-handlers {:on-connect #(tap> {:event :app/connected})
-                          :on-disconnect #(tap> {:event :app/disconnected})
+        default-handlers {:on-connect #(tap> {:event :relica.connection/connected})
+                          :on-disconnect #(tap> {:event :relica.connection/disconnected})
                           :on-message (fn [event-type payload]
-                                        (tap> {:event :app/received-message
+                                        (tap> {:event :clarity.message/received
                                                :type event-type
                                                :payload payload}))}
         merged-handlers (merge default-handlers handlers)
@@ -81,9 +81,9 @@
                                        :handlers merged-handlers})
         clarity-client (->ClarityClient base-client {:timeout timeout})]
 
-    ;; (ws/register-handler base-client :kind/model
+    ;; (ws/register-handler base-client :clarity.kind/model
     ;;                      (fn [payload]
-    ;;                        (tap> {:event :app/handling-kind-model
+    ;;                        (tap> {:event :clarity.kind/handling
     ;;                               :payload payload})))
 
     (ws/connect! base-client)
