@@ -8,7 +8,7 @@
             [io.relica.common.events.core :as events]
             [clojure.tools.logging :as log]
             [io.relica.portal.config :refer [app-config]]))
-            
+
 
 ;; ARCHIVIST
 
@@ -28,14 +28,14 @@
   {:handle-facts-loaded (fn [msg]
                           (println "Facts loaded:")
                           (println msg)
-                          (events/publish-event {:type :facts-loaded
+                          (events/publish-event {:type :aperture.facts/loaded
                                                  :payload msg}))
    :handle-facts-unloaded (fn [msg]
                             (tap> "Facts unloaded:")
                             (tap> msg)
-                            (events/publish-event {:type :facts-unloaded :payload msg})) :handle-entity-selected (fn [msg] (events/publish-event {:type :entity-selected :payload msg}))
-   :handle-entity-selected-none(fn [msg]
-                                  (events/publish-event {:type :entity-selected-none
+                            (events/publish-event {:type :aperture.facts/unloaded :payload msg})) :handle-entity-selected (fn [msg] (events/publish-event {:type :aperture.entity/selected :payload msg}))
+   :handle-entity-selected-none (fn [msg]
+                                  (events/publish-event {:type :aperture.entity/deselected
                                                          :payload msg}))})
 
 ;; Create Aperture client with handlers
@@ -57,20 +57,20 @@
   {:handle-final-answer (fn [msg]
                           ;; (println "Final answer:")
                           ;; (println msg)
-                          (events/publish-event {:type :final-answer
+                          (events/publish-event {:type :nous.chat/final-answer
                                                  :payload msg}))})
-   ;; "heartbeat" (fn [msg]
-   ;;              (tap> "Heartbeat:")
-   ;;              (tap> msg)
-   ;;              (events/publish-event {:type :heartbeat
-   ;;                                     :payload msg}))
-   ;; "question" (fn [msg]
-   ;;             (tap> "Question:")
-   ;;             (tap> msg)
-   ;;             (events/publish-event {:type :question
-   ;;                                    :payload msg}))
-   
-  
+;; "heartbeat" (fn [msg]
+;;              (tap> "Heartbeat:")
+;;              (tap> msg)
+;;              (events/publish-event {:type :heartbeat
+;;                                     :payload msg}))
+;; "question" (fn [msg]
+;;             (tap> "Question:")
+;;             (tap> msg)
+;;             (events/publish-event {:type :question
+;;                                    :payload msg}))
+
+
 
 (defonce nous-client (nous/create-client
                       {:host (get-in app-config [:nous :host])
@@ -79,23 +79,23 @@
                                   nous-handlers
                                   {:on-connect (fn []
                                                  (tap> "Connected to NOUS")
-                                                 (events/publish-event {:type :nous-connected}))
+                                                 (events/publish-event {:type :nous/connected}))
                                    :on-disconnect (fn []
                                                     (tap> "Disconnected from NOUS")
-                                                    (events/publish-event {:type :nous-disconnected}))
+                                                    (events/publish-event {:type :nous/disconnected}))
                                    :on-message (fn [event-type payload]
                                                  (tap> "Received message from NOUS")
-                                                 (events/publish-event {:type :nous-message-received
+                                                 (events/publish-event {:type :nous/message-received
                                                                         :payload payload}))})}))
 
 ;; PRISM
 
 (def prism-handlers
   {:handle-setup-state-update (fn [msg]
-                               (tap> "Prism setup update:")
-                               (tap> msg)
-                               (events/publish-event {:type :prism-setup-update
-                                                      :payload msg}))
+                                (tap> "Prism setup update:")
+                                (tap> msg)
+                                (events/publish-event {:type :prism.setup/updated
+                                                       :payload msg}))
    ;; Add heartbeat handler
    "heartbeat" (fn [msg]
                  (log/debug "Received heartbeat from Prism"))
@@ -103,13 +103,13 @@
             (log/debug "Received ping from Prism"))})
 
 (defonce prism-client (prism/create-client
-                        {:host (get-in app-config [:prism :host])
-                         :port (get-in app-config [:prism :port])
-                         :handlers (merge
-                                    prism-handlers
-                                    {:on-connect (fn []
-                                                   (tap> "Connected to PRISM")
-                                                   (events/publish-event {:type :prism-connected}))
-                                     :on-disconnect (fn []
-                                                      (tap> "Disconnected from PRISM")
-                                                      (events/publish-event {:type :prism-disconnected}))})}))
+                       {:host (get-in app-config [:prism :host])
+                        :port (get-in app-config [:prism :port])
+                        :handlers (merge
+                                   prism-handlers
+                                   {:on-connect (fn []
+                                                  (tap> "Connected to PRISM")
+                                                  (events/publish-event {:type :prism/connected}))
+                                    :on-disconnect (fn []
+                                                     (tap> "Disconnected from PRISM")
+                                                     (events/publish-event {:type :prism/disconnected}))})}))

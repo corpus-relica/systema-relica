@@ -66,3 +66,52 @@
   [user & body]
   `(binding [*current-user* ~user]
      ~@body))
+
+;; WebSocket testing helpers
+
+(def ^:dynamic *event-handlers-called* (atom {}))
+(def ^:dynamic *channel-messages* (atom {}))
+
+(defn mock-events-channel
+  "Creates a mock events channel for testing."
+  []
+  (reset! *event-handlers-called* {})
+  (chan 100))
+
+(defn publish-test-event
+  "Publishes a test event to the event system."
+  [event-type payload]
+  (io.relica.common.events.core/publish-event {:type event-type
+                                               :payload payload}))
+
+(defn event-handler-called?
+  "Checks if an event handler was called."
+  [handler-fn]
+  (get @*event-handlers-called* handler-fn false))
+
+(defn record-handler-call
+  "Records that a handler was called."
+  [handler-fn]
+  (swap! *event-handlers-called* assoc handler-fn true))
+
+(defn mock-ws-channel
+  "Creates a mock WebSocket channel for testing."
+  []
+  (let [channel-id (str (gensym "channel-"))]
+    (swap! *channel-messages* assoc channel-id [])
+    channel-id))
+
+(defn channel-received-message?
+  "Checks if a channel received a message."
+  [channel-id]
+  (not (empty? (get @*channel-messages* channel-id []))))
+
+(defn last-channel-message
+  "Gets the last message sent to a channel."
+  [channel-id]
+  (last (get @*channel-messages* channel-id [])))
+
+(defn record-channel-message
+  "Records a message sent to a channel."
+  [channel-id message]
+  (swap! *channel-messages* update channel-id (fnil conj []) message))

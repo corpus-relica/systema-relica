@@ -79,7 +79,7 @@
       (catch Exception e
         (log/error "Failed to deselect entity:" e)
         {:error "Failed to deselect entity"}))))
-  
+
 
 (defn load-specialization-hierarchy [{:keys [uid] :as message}]
   (go
@@ -204,7 +204,7 @@
         {:error "Failed to process chat user input"}))))
 
 (defn handle-load-composition [{:keys [uid client-id] :as message}]
-      (println "LOAD COMPOSITION" message)
+  (println "LOAD COMPOSITION" message)
   (go
     (try
       (println "LOAD COMPOSITION" message)
@@ -217,10 +217,10 @@
       (catch Exception e
         (println "Failed to load composition:" e)
         {:error "Failed to load composition"}))))
-  
+
 
 (defn handle-load-composition-in [{:keys [uid client-id] :as message}]
-      (println "LOAD COMPOSITION IN" message)
+  (println "LOAD COMPOSITION IN" message)
   (go
     (try
       (println "LOAD COMPOSITION IN" message)
@@ -233,7 +233,7 @@
       (catch Exception e
         (println "Failed to load composition:" e)
         {:error "Failed to load composition"}))))
-  
+
 
 (defn handle-load-connections [{:keys [uid client-id] :as message}]
   (go
@@ -268,47 +268,43 @@
     (broadcast-to-environment environment-id
                               {:id "system"
                                :type "portal:entitySelected"
-                               :payload {
-                                         :type (:type payload)
+                               :payload {:type (:type payload)
                                          :entity_uid (:entity-uid payload)
                                          :user_id (:user-id payload)
                                          :environment_id (:environment-id payload)}})))
-                                         
+
 
 (defn handle-entity-selected-none-event [payload]
   (let [environment-id (:environment-id payload)]
     (broadcast-to-environment environment-id
                               {:id "system"
                                :type "portal:entitySelectedNone"
-                               :payload {
-                                         :type (:type payload)
+                               :payload {:type (:type payload)
                                          :user_id (:user-id payload)
                                          :environment_id (:environment-id payload)}})))
-                                         
+
 
 (defn handle-facts-loaded-event [payload]
   (let [environment-id (:environment-id payload)]
     (broadcast-to-environment environment-id
                               {:id "system"
                                :type "portal:factsLoaded"
-                               :payload {
-                                         :type (:type payload)
+                               :payload {:type (:type payload)
                                          :facts (:facts payload)
                                          :user_id (:user-id payload)
                                          :environment_id (:environment-id payload)}})))
-                                         
+
 
 (defn handle-facts-unloaded-event [payload]
   (let [environment-id (:environment-id payload)]
     (broadcast-to-environment environment-id
                               {:id "system"
                                :type "portal:factsUnloaded"
-                               :payload {
-                                         :type (:type payload)
+                               :payload {:type (:type payload)
                                          :fact_uids (:fact-uids payload)
                                          :user_id (:user-id payload)
                                          :environment_id (:environment-id payload)}})))
-                                         
+
 
 (defn handle-final-answer-event [payload]
   (let [environment-id (:environment-id payload)]
@@ -317,20 +313,19 @@
     (broadcast-to-environment 1 ;;environment-id
                               {:id "system"
                                :type "portal:finalAnswer"
-                               :payload {
-                                         :type (:type payload)
+                               :payload {:type (:type payload)
                                          :answer (:payload payload)
                                          :user_id 7
                                          :environment_id 1}})))
-                                         
+
 
 ;; Prism setup handlers
 
 (defn handle-prism-setup-update-event [payload]
   (broadcast-to-environment nil
-                           {:id "system"
-                            :type "portal:prismSetupUpdate"
-                            :payload payload}))
+                            {:id "system"
+                             :type "portal:prismSetupUpdate"
+                             :payload payload}))
 
 ;; (defn handle-prism-setup-status [_]
 ;;   (go
@@ -404,24 +399,24 @@
    :internal-error                 1002
    :timeout                        1003
    :service-overloaded             1004
-   
+
    ;; Validation errors (1101-1199)
    :validation-error               1101
    :missing-required-field         1102
    :invalid-field-format           1103
    :invalid-reference              1104
    :constraint-violation           1105
-   
+
    ;; Authorization errors
    :unauthorized                   1301
    :forbidden                      1302
-   
+
    ;; Generic errors
    :not-found                      1401
    :bad-request                    1402
    :unknown-message-type           1403
    :invalid-message-format         1404})
-   
+
 
 (defn create-response
   "Create a standardized WebSocket response"
@@ -462,38 +457,38 @@
             (let [result (<! (handler payload))
                   ;; Check for error in new standardized format or old format
                   success (if (map? result)
-                           (if (contains? result :error)
-                             false
-                             (if (map? (:error result))
-                               false
-                               true))
-                           true)
+                            (if (contains? result :error)
+                              false
+                              (if (map? (:error result))
+                                false
+                                true))
+                            true)
                   response (create-response id success result request-id)]
               ;; (tap> "SENDING RESPONSE !!!!!!!!!!!!!!!!!!!!!!!!!!11")
               ;; (tap> response)
               (http/send! channel (json/generate-string response)))
             (catch Exception e
               (log/error "Error processing message:" e)
-              (let [error-response (create-response id false 
-                                    {:type :internal-error
-                                     :message (.getMessage e)
-                                     :details {:exception (str e)}}
-                                    request-id)]
+              (let [error-response (create-response id false
+                                                    {:type :internal-error
+                                                     :message (.getMessage e)
+                                                     :details {:exception (str e)}}
+                                                    request-id)]
                 (http/send! channel (json/generate-string error-response))))))
         (do
           (log/warn "No handler found for message type:" type)
-          (let [error-response (create-response id false 
-                                {:type :unknown-message-type
-                                 :message (str "Unknown message type: " type)}
-                                request-id)]
+          (let [error-response (create-response id false
+                                                {:type :unknown-message-type
+                                                 :message (str "Unknown message type: " type)}
+                                                request-id)]
             (http/send! channel (json/generate-string error-response))))))
     (catch Exception e
       (log/error "Error parsing message:" e)
-      (let [error-response (create-response nil false 
-                            {:type :invalid-message-format
-                             :message "Invalid message format"
-                             :details {:exception (str e)}}
-                            nil)]
+      (let [error-response (create-response nil false
+                                            {:type :invalid-message-format
+                                             :message "Invalid message format"
+                                             :details {:exception (str e)}}
+                                            nil)]
         (http/send! channel (json/generate-string error-response))))))
 
 ;; Configuration
@@ -507,7 +502,7 @@
    "selectEntity" handle-select-entity
    "selectNone" handle-select-entity-none
    "loadSpecializationHierarchy" load-specialization-hierarchy
-   "clearEnvironmentEntities"handle-clear-environment-entities
+   "clearEnvironmentEntities" handle-clear-environment-entities
    "loadAllRelatedFacts" handle-load-all-related-facts
    "unloadEntity" handle-unload-entity
    "loadEntities" handle-load-entities
@@ -528,7 +523,7 @@
    "prism/createUser" handle-prism-create-user
    "prism/processStage" handle-prism-process-stage
    "setup/update" handle-prism-setup-update-event})
-   
+
 
 ;; Set up event listener
 
@@ -536,15 +531,21 @@
   (let [events-ch (events/subscribe)]
     (go-loop []
       (when-let [event (<! events-ch)]
-        (tap> "Received event in websocket handler:")
+        (tap> {:message "Received event in websocket handler:"})
         (tap> event)
         (case (:type event)
-          :facts-loaded (handle-facts-loaded-event (:payload event))
-          :facts-unloaded (handle-facts-unloaded-event (:payload event))
-          :entity-selected (handle-entity-selected-event (:payload event))
-          :entity-selected-none (handle-entity-selected-none-event (:payload event))
-          :final-answer (handle-final-answer-event (:payload event))
-          :prism-setup-update (handle-prism-setup-update-event (:payload event))
+          :aperture.facts/loaded (handle-facts-loaded-event (:payload event))
+          :aperture.facts/unloaded (handle-facts-unloaded-event (:payload event))
+          :aperture.entity/selected (handle-entity-selected-event (:payload event))
+          :aperture.entity/deselected (handle-entity-selected-none-event (:payload event))
+          :nous.chat/final-answer (handle-final-answer-event (:payload event))
+          :prism.setup/updated (handle-prism-setup-update-event (:payload event))
+          ;; Connection events
+          :nous/connected (tap> {:message "Nous connected event received"})
+          :nous/disconnected (tap> {:message "Nous disconnected event received"})
+          :nous/message-received (tap> {:message "Nous message received event"})
+          :prism/connected (tap> {:message "Prism connected event received"})
+          :prism/disconnected (tap> {:message "Prism disconnected event received"})
           ;; finally
-          (tap> "Unknown event type:" (:type event)))
+          (tap> {:message "Unknown event type" :type (:type event)}))
         (recur)))))
