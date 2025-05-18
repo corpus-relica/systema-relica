@@ -44,7 +44,7 @@ async def main():
     async def retrieveEnv():
         # print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
         try:
-            result = await aperture_client.retrieveEnvironment(7, None)
+            result = await aperture_client.retrieveEnvironment(1, None)
             print("*******************************************")
 
             env = result['environment']

@@ -11,9 +11,9 @@
   (when-not @server-instance
     (log/info "Starting WebSocket server on port" (config/ws-server-port))
     (let [server (ws-server/create-server
-                   {:port (config/ws-server-port)
-                    :path "/ws"
-                    :event-msg-handler ws-server/handle-ws-message})]
+                  {:port (config/ws-server-port)
+                   :path "/ws"
+                   :event-msg-handler ws-server/handle-ws-message})]
       (ws-server/start! server)
       (reset! server-instance server)
       (log/info "WebSocket server started")
@@ -32,5 +32,5 @@
   [message]
   (ws-server/broadcast! @server-instance
                         {:id "server"
-                         :type :setup/update
+                         :type :prism.setup/event
                          :payload message}))

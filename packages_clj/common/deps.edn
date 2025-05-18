@@ -13,11 +13,14 @@
         ring/ring-core {:mvn/version "1.10.0"}
         ring-cors/ring-cors {:mvn/version "0.1.13"}
         mount/mount {:mvn/version "0.1.17"}
-        com.taoensso/carmine                              {:mvn/version "3.4.1"}
-
-        }
+        com.taoensso/carmine                              {:mvn/version "3.4.1"}}
 
  :aliases
  {:test {:extra-paths ["test"]
-         :extra-deps {io.github.cognitect-labs/test-runner
-                     {:git/tag "v0.5.1" :git/sha "dfb30dd"}}}}}
+         :extra-deps {midje/midje {:mvn/version "1.10.9"}
+                      org.clojure/tools.namespace {:mvn/version "1.4.4"}}
+         :main-opts ["-m" "io.relica.common.test.runner"]}
+  :midje {:extra-paths ["test"]
+          :extra-deps {midje/midje {:mvn/version "1.10.9"}
+                       org.clojure/tools.namespace {:mvn/version "1.4.4"}}
+          :main-opts ["-m" "midje.repl"]}}}

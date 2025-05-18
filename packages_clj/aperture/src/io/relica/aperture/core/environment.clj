@@ -1,0 +1,741 @@
+(ns io.relica.aperture.core.environment
+  (:require [clojure.tools.logging :as log]
+            [io.relica.aperture.config :refer [get-user-environment get-user-environments
+                                               update-user-environment! select-entity!
+                                               deselect-entity! get-default-environment
+                                               create-user-environment!]]
+            [clojure.core.async :as async :refer [go <! >! chan]]
+            [cheshire.core :as json]
+            [io.relica.common.io.archivist-client :as archivist]
+            [io.relica.aperture.io.client-instances :refer [archivist-client]]
+            [mount.core :refer [defstate]]))
+
+;; Helper function to deduplicate facts by fact_uid
+(defn- deduplicate-facts
+  "Remove duplicate facts based on fact_uid"
+  [facts]
+  (->> facts
+       (group-by :fact_uid)
+       vals
+       (map first)))
+
+;; Helper function to remove subtypes cone recursively
+(defn- remove-subtypes-cone-recursive
+  "Recursively remove subtypes of a given entity from the environment"
+  [user-id env-id entity-uid env]
+  (let [facts (:facts env)
+        ;; Find facts where this entity is the RH (parent type in subtyping relation)
+        facts-to-remove (filter #(= entity-uid (:rh_object_uid %)) facts)
+        ;; Find remaining facts
+        remaining-facts (remove #(= entity-uid (:rh_object_uid %)) facts)
+
+        ;; Get UIDs of facts to remove
+        fact-uids-to-remove (mapv :fact_uid facts-to-remove)
+
+        ;; Collect entity UIDs to check for removal
+        lh-uids (into #{} (map :lh_object_uid facts-to-remove))
+        rh-uids (into #{} (map :rh_object_uid facts-to-remove))
+        candidate-entity-uids (into lh-uids rh-uids)
+
+        ;; Remove entities from candidates if they're still referenced in remaining facts
+        entities-to-remove (loop [entities candidate-entity-uids
+                                  remaining remaining-facts]
+                             (if (empty? remaining)
+                               entities
+                               (let [fact (first remaining)
+                                     lh-uid (:lh_object_uid fact)
+                                     rh-uid (:rh_object_uid fact)
+                                     entities (cond-> entities
+                                                (contains? entities lh-uid) (disj lh-uid)
+                                                (contains? entities rh-uid) (disj rh-uid))]
+                                 (recur entities (rest remaining)))))
+
+        ;; Find subtyping facts (rel_type_uid 1146 is the subtyping relation)
+        subtyping-facts (filter #(and (= 1146 (:rel_type_uid %))
+                                      (= entity-uid (:rh_object_uid %)))
+                                facts-to-remove)
+
+        ;; Get the child entity UIDs for recursive processing
+        child-entity-uids (mapv :lh_object_uid subtyping-facts)]
+
+    ;; Return the result map
+    {:fact-uids-removed fact-uids-to-remove
+     :entity-uids-removed (vec entities-to-remove)
+     :child-entity-uids child-entity-uids
+     :remaining-facts remaining-facts}))
+
+;; Implementation of environment service
+;; (defrecord EnvironmentService [archivist-client]
+;;   EnvironmentOperations
+
+;; Environment management
+(defn get-environment [user-id env-id]
+  (go
+    (try
+      (let [env (if env-id
+                  (get-user-environment user-id env-id)
+                  (get-default-environment user-id))]
+        (if env
+          {:success true :environment env}
+          {:error "Environment not found"}))
+      (catch Exception e
+        (log/error e "Failed to get environment")
+        {:error "Failed to get environment"}))))
+
+(defn list-environments [user-id]
+  (go
+    (try
+      (let [environments (get-user-environments user-id)]
+        {:success true :environments environments})
+      (catch Exception e
+        (log/error e "Failed to list environments")
+        {:error "Failed to list environments"}))))
+
+(defn create-environment [user-id name]
+  (go
+    (try
+      (let [env (create-user-environment! user-id name)]
+        (if env
+          {:success true :environment env}
+          {:error "Failed to create environment"}))
+      (catch Exception e
+        (log/error e "Failed to create environment")
+        {:error "Failed to create environment"}))))
+
+(defn text-search-load [user-id search-term]
+  (go
+    (try
+      (let [result (<! (archivist/text-search archivist-client {:searchTerm search-term
+                                                                :exactMatch true}))
+            result (:results result)
+            - (println "TEXT SEARCH RESULT:")
+            _ (println result)
+            env-id (:id (get-default-environment user-id))
+            _ (println "USER ID:")
+            _ (println user-id)
+            _ (println "ENV ID:")
+            _ (println env-id)
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            facts-to-load (filter #(= (:lh_object_name %) search-term) facts)
+            _ (println "FACTS TO LOAD:")
+            _ (println facts-to-load)
+            combined-facts (concat old-facts facts-to-load)
+            new-facts (deduplicate-facts combined-facts)
+            _ (println "COMBINED AND NEW FACTS:")
+            _ (println combined-facts)
+            _ (println new-facts)
+            updated-env (when new-facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (println "UPDATED ENV:")
+        (println updated-env)
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts-to-load}
+          {:error "Failed to update environment with text search"}))
+      (catch Exception e
+        (log/error e "Failed to text search")
+        {:error "Failed to text search"}))))
+
+(defn uid-search-load [user-id search-uid]
+  (go
+    (try
+      (let [result (<! (archivist/uid-search archivist-client {:searchUID search-uid}))
+            result (:results result)
+            _ (println "UID SEARCH RESULT:")
+            _ (println result)
+            env-id (:id (get-default-environment user-id))
+            _ (println "USER ID:")
+            _ (println user-id)
+            _ (println "ENV ID:")
+            _ (println env-id)
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            facts-to-load (filter #(= (:lh_object_uid %) search-uid) facts)
+            _ (println "FACTS TO LOAD:")
+            _ (println facts-to-load)
+            combined-facts (concat old-facts facts-to-load)
+            new-facts (deduplicate-facts combined-facts)
+            _ (println "COMBINED AND NEW FACTS:")
+            _ (println combined-facts)
+            _ (println new-facts)
+            updated-env (when new-facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (println "UPDATED ENV:")
+        (println updated-env)
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts-to-load}
+          {:error "Failed to update environment with text search"}))
+      (catch Exception e
+        (log/error e "Failed to text search")
+        {:error "Failed to text search"}))))
+
+;; Fact/Entity management
+(defn load-specialization-fact [user-id env-id uid]
+  (go
+    (try
+      (let [result (<! (archivist/get-specialization-fact archivist-client user-id uid))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts (:facts updated-env)}
+          {:error "Failed to update environment with specialization fact"}))
+      (catch Exception e
+        (log/error e "Failed to load specialization fact")
+        {:error "Failed to load specialization fact"}))))
+
+(defn load-specialization-hierarchy [user-id uid env-id]
+  (go
+    (try
+      (let [result (<! (archivist/get-specialization-hierarchy archivist-client user-id uid))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts (:facts updated-env)}
+          {:error "Failed to update environment with specialization hierarchy"}))
+      (catch Exception e
+        (log/error e "Failed to load specialization hierarchy")
+        {:error "Failed to load specialization hierarchy"}))))
+
+(defn load-all-related-facts [user-id entity-uid env-id]
+  (go
+    (try
+      (let [result (<! (archivist/get-all-related archivist-client entity-uid))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with related facts"}))
+      (catch Exception e
+        (log/error e "Failed to load all related facts")
+        {:error "Failed to load all related facts"}))))
+
+(defn load-entity [user-id entity-uid env-id]
+  (go
+    (try
+      (let [env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            selected-entity (:selected_entity_id env)
+
+            ;; Get definitive facts for the entity
+            def-result (<! (archivist/get-definitive-facts archivist-client entity-uid))
+            definitive-facts (:facts def-result)
+
+            ;; If there's a selected entity, get facts relating it to our entity
+            rel-result (if selected-entity
+                         (<! (archivist/get-facts-relating-entities archivist-client
+                                                                    entity-uid
+                                                                    selected-entity))
+                         {:facts []})
+            relating-facts (:facts rel-result)
+
+            ;; Combine both sets of facts from this operation
+            all-new-facts (concat definitive-facts relating-facts)
+            ;; Deduplicate only the new facts
+            unique-new-facts (deduplicate-facts all-new-facts)
+
+            ;; Check if there are already existing facts in the environment
+            old-facts (:facts env)
+
+            ;; Combine with existing facts and deduplicate for storing in environment
+            combined-facts (concat old-facts unique-new-facts)
+            deduplicated-env-facts (deduplicate-facts combined-facts)
+
+            ;; Models could be implemented here if needed
+
+            ;; Update the environment - only when we have new facts to add
+            updated-env (when (seq unique-new-facts)
+                          (update-user-environment! user-id env-id {:facts deduplicated-env-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts unique-new-facts}
+          {:error "Failed to update environment with entity"}))
+      (catch Exception e
+        (log/error e "Failed to load entity")
+        {:error "Failed to load entity"}))))
+
+(defn unload-entity [user-id entity-uid env-id]
+  (go
+    (try
+      (let [env (get-user-environment user-id env-id)
+            facts (:facts env)
+            ;; Find facts to remove (those where the entity is on either side)
+            facts-to-remove (filter #(or (= entity-uid (:lh_object_uid %))
+                                         (= entity-uid (:rh_object_uid %)))
+                                    facts)
+            ;; Find facts to keep
+            remaining-facts (remove #(or (= entity-uid (:lh_object_uid %))
+                                         (= entity-uid (:rh_object_uid %)))
+                                    facts)
+            ;; Get UIDs of facts to remove
+            fact-uids-to-remove (mapv :fact_uid facts-to-remove)
+
+            ;; Find candidate model UIDs to remove
+            ;; These are models that might need to be removed if they're not referenced by remaining facts
+            candidate-model-uids-to-remove (-> #{}
+                                               (into (map :lh_object_uid facts-to-remove))
+                                               (into (map :rh_object_uid facts-to-remove)))
+
+            ;; Remove models from candidates if they're still referenced in remaining facts
+            final-model-uids-to-remove (loop [models candidate-model-uids-to-remove
+                                              remaining remaining-facts]
+                                         (if (empty? remaining)
+                                           models
+                                           (let [fact (first remaining)
+                                                 lh-uid (:lh_object_uid fact)
+                                                 rh-uid (:rh_object_uid fact)
+                                                 models (cond-> models
+                                                          (contains? models lh-uid) (disj lh-uid)
+                                                          (contains? models rh-uid) (disj rh-uid))]
+                                             (recur models (rest remaining)))))
+
+            ;; Update environment with remaining facts
+            updated-env (when env
+                          (update-user-environment! user-id env-id {:facts remaining-facts}))]
+
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :fact-uids-removed fact-uids-to-remove
+           :model-uids-removed (vec final-model-uids-to-remove)}
+          {:error "Failed to unload entity"}))
+      (catch Exception e
+        (log/error e "Failed to unload entity")
+        {:error "Failed to unload entity"}))))
+
+(defn load-entities [user-id env-id entity-uids]
+  (go
+    (try
+      (let [;; Track only the newly loaded facts from this operation
+            new-facts-only (atom [])
+            ;; Models could be added here if needed
+            new-models-only (atom [])
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)]
+
+        ;; Process each entity and collect ONLY the new facts
+        (doseq [entity-uid entity-uids]
+          (let [result (<! (load-entity user-id entity-uid env-id))
+                ;; Only take facts that were newly loaded for this entity
+                entity-facts (if (:success result)
+                               (:facts result)
+                               [])]
+            (when (seq entity-facts)
+              (swap! new-facts-only concat entity-facts))))
+        ;; If we had models, we would add them here
+
+
+        (tap> @new-facts-only)
+
+        ;; Get only unique facts to add to the environment
+        (let [unique-new-facts (deduplicate-facts @new-facts-only)
+              ;; Deduplicate when combining with existing facts
+              combined-facts (concat old-facts unique-new-facts)
+              deduplicated-facts (deduplicate-facts combined-facts)
+              ;; Update environment with the combined deduplicated facts
+              updated-env (update-user-environment! user-id env-id {:facts deduplicated-facts})]
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :facts unique-new-facts
+             :models @new-models-only}
+            {:error "Failed to load entities"})))
+      (catch Exception e
+        (log/error e "Failed to load entities")
+        {:error "Failed to load entities"}))))
+
+(defn unload-entities [user-id env-id entity-uids]
+  (go
+    (try
+      (let [env (get-user-environment user-id env-id)
+            facts (:facts env)
+            ;; Track all facts and models to remove
+            all-fact-uids-to-remove (atom [])
+            all-model-uids-to-remove (atom [])]
+
+        ;; Process each entity
+        (doseq [entity-uid entity-uids]
+          (let [;; Find facts to remove for this entity
+                facts-to-remove (filter #(or (= entity-uid (:lh_object_uid %))
+                                             (= entity-uid (:rh_object_uid %)))
+                                        facts)
+                ;; Get UIDs of facts to remove
+                fact-uids-to-remove (mapv :fact_uid facts-to-remove)
+
+                ;; Find candidate model UIDs to remove
+                candidate-model-uids-to-remove (-> #{}
+                                                   (into (map :lh_object_uid facts-to-remove))
+                                                   (into (map :rh_object_uid facts-to-remove)))]
+
+            ;; Add to our collection
+            (swap! all-fact-uids-to-remove concat fact-uids-to-remove)
+            (swap! all-model-uids-to-remove concat (vec candidate-model-uids-to-remove))))
+
+        ;; Now remove all facts referencing any of these entities
+        (let [remaining-facts (remove #(or (some (fn [entity-uid]
+                                                   (= entity-uid (:lh_object_uid %)))
+                                                 entity-uids)
+                                           (some (fn [entity-uid]
+                                                   (= entity-uid (:rh_object_uid %)))
+                                                 entity-uids))
+                                      facts)
+
+              ;; Determine which models can be removed (not referenced in remaining facts)
+              final-model-uids-to-remove (loop [models (set @all-model-uids-to-remove)
+                                                remaining remaining-facts]
+                                           (if (empty? remaining)
+                                             models
+                                             (let [fact (first remaining)
+                                                   lh-uid (:lh_object_uid fact)
+                                                   rh-uid (:rh_object_uid fact)
+                                                   models (cond-> models
+                                                            (contains? models lh-uid) (disj lh-uid)
+                                                            (contains? models rh-uid) (disj rh-uid))]
+                                               (recur models (rest remaining)))))
+
+              ;; Update environment with remaining facts
+              updated-env (when env
+                            (update-user-environment! user-id env-id {:facts remaining-facts}))]
+
+          (if updated-env
+            {:success true
+             :environment updated-env
+             :fact-uids-removed @all-fact-uids-to-remove
+             :model-uids-removed (vec final-model-uids-to-remove)}
+            {:error "Failed to unload entities"})))
+      (catch Exception e
+        (log/error e "Failed to unload entities")
+        {:error "Failed to unload entities"}))))
+
+(defn load-subtypes [user-id env-id entity-uid]
+  (go
+    (try
+      (let [_ (log/info "Loading subtypes entity:" entity-uid)
+            result (<! (archivist/get-subtypes archivist-client entity-uid))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            _ (log/debug "Retrieved subtypes facts:" (count facts))
+            _ (tap> {:event :subtypes-facts :count (count facts)})
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with subtypes"}))
+      (catch Exception e
+        (log/error e "Failed to load subtypes")
+        {:error "Failed to load subtypes"}))))
+
+;; async loadSubtypesCone(uid: number) {
+;;   const result = await this.archivistService.getSubtypesCone(uid);
+;;   const models = await this.modelsFromFacts(result);
+;;   this.insertFacts(result);
+;;   this.insertModels(models);
+;;   const payload = { facts: result, models };
+;;   return payload;
+;; }
+(defn load-subtypes-cone [user-id env-id entity-uid]
+  (go
+    (try
+      (let [_ (log/info "Loading subtypes cone for entity:" entity-uid)
+            result (<! (archivist/get-subtypes-cone archivist-client entity-uid))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            _ (log/debug "Retrieved subtypes cone facts:" (count facts))
+            _ (tap> {:event :subtypes-cone-facts :count (count facts)})
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with subtypes cone"}))
+      (catch Exception e
+        (log/error e "Failed to load subtypes cone")
+        {:error "Failed to load subtypes cone"}))))
+
+(defn load-classified [user-id env-id entity-uid]
+  (go
+    (try
+      (let [_ (log/info "Loading classified as entity:" entity-uid)
+            result (<! (archivist/get-classified archivist-client entity-uid))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            _ (log/debug "Retrieved classified facts:" (count facts))
+            _ (tap> {:event :classified-facts :count (count facts)})
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with classified"}))
+      (catch Exception e
+        (log/error e "Failed to load classified")
+        {:error "Failed to load classified"}))))
+
+(defn load-classification-fact [user-id env-id entity-uid]
+  (go
+    (try
+      (let [_ (log/info "Loading classification fact of entity:" entity-uid)
+            result (<! (archivist/get-classification-fact archivist-client entity-uid))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            _ (log/debug "Retrieved classification facts:" (count facts))
+            _ (tap> {:event :classification-facts :count (count facts)})
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with classification facts"}))
+      (catch Exception e
+        (log/error e "Failed to load classification facts")
+        {:error "Failed to load classified"}))))
+
+(defn load-composition [user-id env-id entity-uid]
+  (go
+    (try
+      (let [result (<! (archivist/get-recurisve-relations archivist-client entity-uid 1190))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with composition"}))
+      (catch Exception e))))
+
+
+(defn load-composition-in [user-id env-id entity-uid]
+  (go
+    (try
+      (let [result (<! (archivist/get-recurisve-relations-to archivist-client entity-uid 1190))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with composition"}))
+      (catch Exception e))))
+
+
+(defn load-connections [user-id env-id entity-uid]
+  (go
+    (try
+      (let [result (<! (archivist/get-recurisve-relations archivist-client entity-uid 1487))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with composition"}))
+      (catch Exception e))))
+
+
+(defn load-connections-in [user-id env-id entity-uid]
+  (go
+    (try
+      (let [result (<! (archivist/get-recurisve-relations-to archivist-client entity-uid 1487))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            facts (:facts result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with composition"}))
+      (catch Exception e))))
+
+
+(defn clear-entities [user-id env-id]
+  (go
+    (try
+      (let [env-id (or env-id (:id (get-default-environment user-id)))
+            environment (get-user-environment user-id env-id)
+            updated (when env-id
+                      (update-user-environment! user-id env-id {:facts []}))]
+        (if updated
+          {:success true
+           :fact-uids-removed (map (fn [f] (:fact_uid f)) (:facts environment))}
+          {:error "Failed to clear entities"}))
+      (catch Exception e
+        (log/error e "Failed to clear entities")
+        {:error "Failed to clear entities"}))))
+
+(defn unload-subtypes-cone [user-id env-id entity-uid]
+  (go
+    (try
+      (log/info "Unloading subtypes cone for entity:" entity-uid)
+      (let [env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+
+            ;; Get initial set of subtypes to remove
+            initial-result (remove-subtypes-cone-recursive user-id env-id entity-uid env)
+            fact-uids-removed (:fact-uids-removed initial-result)
+            entity-uids-removed (:entity-uids-removed initial-result)
+            remaining-facts (:remaining-facts initial-result)
+
+            ;; Process child entities recursively
+            child-uids (:child-entity-uids initial-result)
+            updated-env (assoc env :facts remaining-facts)
+
+            ;; Create a recursive function to process each child
+            result (loop [children child-uids
+                          current-env updated-env
+                          all-fact-uids fact-uids-removed
+                          all-entity-uids entity-uids-removed]
+                     (if (empty? children)
+                       {:env current-env
+                        :fact-uids-removed all-fact-uids
+                        :entity-uids-removed all-entity-uids}
+                       (let [child (first children)
+                             child-result (remove-subtypes-cone-recursive
+                                           user-id
+                                           env-id
+                                           child
+                                           current-env)
+                             next-env (assoc current-env :facts (:remaining-facts child-result))
+                             next-fact-uids (concat all-fact-uids (:fact-uids-removed child-result))
+                             next-entity-uids (concat all-entity-uids (:entity-uids-removed child-result))
+                             next-children (concat (rest children) (:child-entity-uids child-result))]
+                         (recur next-children
+                                next-env
+                                next-fact-uids
+                                next-entity-uids))))
+
+            ;; Update the environment with the new facts
+            final-facts (:facts (:env result))
+            updated-env (update-user-environment! user-id env-id {:facts final-facts})]
+
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :fact-uids-removed (vec (distinct (:fact-uids-removed result)))
+           :model-uids-removed (vec (distinct (:entity-uids-removed result)))}
+          {:error "Failed to unload subtypes cone"}))
+      (catch Exception e
+        (log/error e "Failed to unload subtypes cone")
+        {:error "Failed to unload subtypes cone"}))))
+
+;; Entity selection
+(defn select-entity [user-id env-id entity-uid]
+  (go
+    (try
+      (let [env-id (or env-id (:id (get-default-environment user-id)))
+            updated (when env-id
+                      (select-entity! user-id env-id entity-uid))]
+        (if updated
+          {:success true :selected-entity entity-uid}
+          {:error "Failed to select entity"}))
+      (catch Exception e
+        (log/error e "Failed to select entity")
+        {:error "Failed to select entity"}))))
+
+(defn deselect-entity [user-id env-id]
+  (go
+    (try
+      (let [env-id (or env-id (:id (get-default-environment user-id)))
+            updated (when env-id
+                      (deselect-entity! user-id env-id))]
+        (if updated
+          {:success true}
+          {:error "Failed to deselect entity"}))
+      (catch Exception e
+        (log/error e "Failed to deselect entity")
+        {:error "Failed to deselect entity"}))))
+
+;; ;; Factory function to create environment service
+;; (defn create-environment-service [archivist-client]
+;;   (->EnvironmentService archivist-client))
+
+
+;; (defstate environment-service
+;;   :start (go(do
+;;              (log/info "Starting Environment Service...")
+;;            ;; Create the environment service with the archivist client
+;;              (let [service (env-service/create-environment-service archivist-client)
+;;                    xxx (<! (env-service/load-classification-fact service 7 1 1000000070))]
+;;                (println "******************************************************************")
+;;                (println xxx)
+;;                (println "******************************************************************")
+;;                ;; Register the service with the handlers
+;;                (ws-handlers/set-environment-service! service)
+;;                ;; Return the service instance
+;;                service)))
+;;   :stop (do
+;;           (log/info "Stopping Environment Service...")
+;;           ;; Reset the handlers' reference to the service
+;;           (ws-handlers/set-environment-service! nil)))

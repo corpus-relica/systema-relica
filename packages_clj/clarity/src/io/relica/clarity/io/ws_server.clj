@@ -6,14 +6,14 @@
 ;; Application state (would typically be in a database or other persistence)
 (def app-state (atom {:clients {}
                       :last-status {:status "OK"
-                                   :timestamp (System/currentTimeMillis)
-                                   :active-users 0}
+                                    :timestamp (System/currentTimeMillis)
+                                    :active-users 0}
                       :files {}}))
 
 (defmethod ws-server/handle-ws-message
-  :app/request-status
+  :relica.app/status-request
   [{:keys [uid ?reply-fn] :as msg}]
-  (tap> {:event :app/status-requested
+  (tap> {:event :relica.app/status-requested
          :client-id uid})
 
   ;; Update client last active time
@@ -24,9 +24,9 @@
     (?reply-fn (get @app-state :last-status))))
 
 (defmethod ws-server/handle-ws-message
-  :app/heartbeat
+  :relica.app/heartbeat
   [{:keys [uid ?data] :as msg}]
-  (tap> {:event :app/heartbeat-received
+  (tap> {:event :relica.app/heartbeat-received
          :client-id uid
          :timestamp (:timestamp ?data)})
 
@@ -35,7 +35,7 @@
 
 ;; Connection lifecycle handlers
 (defmethod ws-server/handle-ws-message
-  :chsk/uidport-open
+  :relica.connection/open
   [{:keys [uid] :as msg}]
   ;; Add client to connected clients
   (swap! app-state assoc-in [:clients uid]
@@ -46,12 +46,12 @@
   (swap! app-state assoc-in [:last-status :active-users]
          (count (:clients @app-state)))
 
-  (tap> {:event :app/client-connected
+  (tap> {:event :relica.app/client-connected
          :client-id uid
          :active-users (get-in @app-state [:last-status :active-users])}))
 
 (defmethod ws-server/handle-ws-message
-  :chsk/uidport-close
+  :relica.connection/close
   [{:keys [uid] :as msg}]
   ;; Remove client from connected clients
   (swap! app-state update :clients dissoc uid)
@@ -60,7 +60,7 @@
   (swap! app-state assoc-in [:last-status :active-users]
          (count (:clients @app-state)))
 
-  (tap> {:event :app/client-disconnected
+  (tap> {:event :relica.app/client-disconnected
          :client-id uid
          :active-users (get-in @app-state [:last-status :active-users])}))
 
@@ -91,8 +91,8 @@
     ;; (tap> "Broadcasting message")
     ;; (tap> server)
     (let [notification {:message message
-                       :level level
-                       :timestamp (System/currentTimeMillis)}]
+                        :level level
+                        :timestamp (System/currentTimeMillis)}]
       ;; (tap> {:event :app/sending-notification
       ;;        :message message
       ;;        :level level})
@@ -119,13 +119,11 @@
   ;; Send a direct message to a specific client
   (let [client-id (first (keys (:clients @app-state)))]
     (ws-server/send! (:server @app-state) client-id
-                    {:type :direct-message
-                     :message "This is a personal message"
-                     :timestamp (System/currentTimeMillis)}))
+                     {:type :clarity.message/direct
+                      :message "This is a personal message"
+                      :timestamp (System/currentTimeMillis)}))
 
   (broadcast! "Hello, everyone!" "info")
 
   ;; Stop the server
-  (stop! app-server)
-
-  )
+  (stop! app-server))

@@ -34,41 +34,41 @@
     (when-not (ws/connected? ws-client)
       (ws/connect! ws-client))
     (tap> {:event :app/sending-get-environment})
-    (ws/send-message! ws-client :environment/get
+    (ws/send-message! ws-client :aperture.environment/get
                       {:user-id user-id
                        :environment-id env-id}
                       (:timeout options)))
 
   (list-environments [this user-id]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/list
+    (ws/send-message! ws-client :aperture.environment/list
                       {:user-id user-id}
                       (:timeout options)))
 
   (create-environment [this user-id env-name]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/create
+    (ws/send-message! ws-client :aperture.environment/create
                       {:user-id user-id
                        :name env-name}
                       (:timeout options)))
 
   (load-specialization-hierarchy [this user-id uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-specialization
+    (ws/send-message! ws-client :aperture.specialization/load
                       {:uid uid
                        :user-id user-id}
                       (:timeout options)))
 
   (clear-environment-entities [this user-id env-id]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/clear-entities
+    (ws/send-message! ws-client :aperture.environment/clear
                       {:user-id user-id
                        :environment-id env-id}
                       (:timeout options)))
 
   (load-all-related-facts [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-all-related-facts
+    (ws/send-message! ws-client :aperture.fact/load-related
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -76,7 +76,7 @@
 
   (unload-entity [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/unload-entity
+    (ws/send-message! ws-client :aperture.entity/unload
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -84,7 +84,7 @@
 
   (load-entities [this user-id env-id entity-uids]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-entities
+    (ws/send-message! ws-client :aperture.entity/load-multiple
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uids entity-uids}
@@ -92,15 +92,15 @@
 
   (load-subtypes-cone [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-subtypes-cone
+    (ws/send-message! ws-client :aperture.subtype/load-cone
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
                       (:timeout options)))
-                      
+
   (unload-subtypes-cone [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/unload-subtypes-cone
+    (ws/send-message! ws-client :aperture.subtype/unload-cone
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -108,7 +108,7 @@
 
   (load-composition [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-composition
+    (ws/send-message! ws-client :aperture.composition/load
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -116,7 +116,7 @@
 
   (load-composition-in [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-composition-in
+    (ws/send-message! ws-client :aperture.composition/load-in
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -124,7 +124,7 @@
 
   (load-connections [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-connections
+    (ws/send-message! ws-client :aperture.connection/load
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -132,7 +132,7 @@
 
   (load-connections-in [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/load-connections-in
+    (ws/send-message! ws-client :aperture.connection/load-in
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -140,7 +140,7 @@
 
   (unload-entities [this user-id env-id entity-uids]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/unload-entities
+    (ws/send-message! ws-client :aperture.entity/unload-multiple
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uids entity-uids}
@@ -148,7 +148,7 @@
 
   (update-environment! [this user-id env-id updates]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :environment/update
+    (ws/send-message! ws-client :aperture.environment/update
                       {:user-id user-id
                        :environment-id env-id
                        :updates updates}
@@ -156,7 +156,7 @@
 
   (select-entity [this user-id env-id entity-uid]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :entity/select
+    (ws/send-message! ws-client :aperture.entity/select
                       {:user-id user-id
                        :environment-id env-id
                        :entity-uid entity-uid}
@@ -164,16 +164,16 @@
 
   (select-entity-none [this user-id env-id]
     (when-not (ws/connected? ws-client) (ws/connect! this))
-    (ws/send-message! ws-client :entity/select-none
+    (ws/send-message! ws-client :aperture.entity/deselect-all
                       {:user-id user-id
                        :environment-id env-id}
                       (:timeout options)))
 
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
-    (ws/send-message! ws-client :app/heartbeat
-                            {:timestamp (System/currentTimeMillis)}
-                            30000)))
+    (ws/send-message! ws-client :relica.app/heartbeat
+                      {:timestamp (System/currentTimeMillis)}
+                      30000)))
 
 ;; Heartbeat scheduler
 (defn start-heartbeat-scheduler! [aperture-client interval-ms]
@@ -198,16 +198,16 @@
                                                :type event-type}))}
         merged-handlers (merge default-handlers handlers)
         base-client (ws/create-client
-                                      {:service-name "aperture"
-                                       :uri uri
-                                       :handlers merged-handlers})
+                     {:service-name "aperture"
+                      :uri uri
+                      :handlers merged-handlers})
         aperture-client (->ApertureClient base-client {:timeout timeout})]
 
     ;; Register application-specific event handlers
-    (ws/register-handler! base-client :facts/loaded (:handle-facts-loaded handlers))
-    (ws/register-handler! base-client :facts/unloaded (:handle-facts-unloaded handlers))
-    (ws/register-handler! base-client :entity/selected (:handle-entity-selected handlers))
-    (ws/register-handler! base-client :entity/selected-none (:handle-entity-selected-none handlers))
+    (ws/register-handler! base-client :aperture.facts/loaded (:handle-facts-loaded handlers))
+    (ws/register-handler! base-client :aperture.facts/unloaded (:handle-facts-unloaded handlers))
+    (ws/register-handler! base-client :aperture.entity/selected (:handle-entity-selected handlers))
+    (ws/register-handler! base-client :aperture.entity/deselected (:handle-entity-selected-none handlers))
 
     ;; Connect to the server
     (ws/connect! base-client)
@@ -241,5 +241,4 @@
 
   ;; Stop heartbeat and disconnect
   (stop-heartbeat)
-  (ws-client/disconnect! (.-ws-client app-client))
-  )
+  (ws-client/disconnect! (.-ws-client app-client)))

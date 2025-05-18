@@ -6,7 +6,7 @@
             [clojure.tools.logging :as log]))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
-  :app/heartbeat
+  :relica.app/heartbeat
   [{:keys [?data ?reply-fn] :as msg}]
   (when ?reply-fn
     (log/info (str "*************************** Heartbeat received:" ?data))
@@ -25,20 +25,20 @@
           (?reply-fn {:success false :error "Failed to get model"}))))))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
-  :setup-status/get
+  :prism.setup/get-status
   [{:keys [?data ?reply-fn] :as msg}]
   (log/debug "Handling setup status request")
   (?reply-fn (statechart-controller/get-setup-state)))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
-  :setup/start
+  :prism.setup/start
   [{:keys [?data ?reply-fn] :as msg}]
   (log/info "Starting setup sequence via WebSocket")
   (statechart-controller/send-event :START_SETUP)
   (?reply-fn {:success true :message "Setup sequence started"}))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
-  :setup/create-user
+  :prism.setup/create-user
   [{:keys [?data ?reply-fn] :as msg}]
   (let [{:keys [username password confirmPassword]} ?data]
     (log/info "Creating admin user via WebSocket:" username)
@@ -57,5 +57,4 @@
                 (?reply-fn {:success false :message "Failed to create admin user"})
                 (statechart-controller/send-event :ERROR))))
           (?reply-fn {:success false :message (:message validation)})))
-      (?reply-fn {:success false :message "Missing required fields"})))
-  )
+      (?reply-fn {:success false :message "Missing required fields"}))))

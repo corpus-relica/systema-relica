@@ -270,4 +270,6 @@
 
   (clear-db!)
 
+  (load-nodes-from-csv! "0.csv")
+
   )

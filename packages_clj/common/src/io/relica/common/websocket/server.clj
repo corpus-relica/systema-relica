@@ -93,7 +93,7 @@
                                      msg-type (:type message)
                                      msg-id (:id message)]
 
-                                 (log/debug "Received message:" message)
+                                 ;; (log/debug "Received message:" message)
 
                                  (cond
                                    ;; Handle ping messages immediately
@@ -128,12 +128,9 @@
                                                                        (let [resp {:id msg-id
                                                                                    :type "response"
                                                                                    :payload response}
-                                                                             _ (println "@@@@@@ Response, nukkah:" resp)
                                                                              resp-str (format/serialize-message
                                                                                        (get @connected-clients client-id)
                                                                                        resp)]
-                                                                         (println "@@@@@@ client-id, nukkah:" client-id)
-                                                                         (println "@@@@@@ Response string, nukkah:" resp-str)
                                                                          (http-kit/send! channel resp-str)))}]
                                      ;; Check if there's a multimethod handler for this message type
                                      (if (get (methods handle-ws-message) (keyword msg-type))

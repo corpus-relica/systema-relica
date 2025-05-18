@@ -95,29 +95,47 @@ class PortalWebSocketClient extends EventEmitter {
       const message = JSON.parse(event.data);
       console.log("Parsed message:", message);
       
-      // Emit to our internal event system
-      this.emit(message.type, message.payload);
+      let payload = message.payload;
+      
+      // Handle standardized response format
+      // New format: {"success": true, "request_id": "...", "data": {...}}
+      // or {"success": false, "request_id": "...", "error": {...}}
+      if ('success' in message) {
+        if (message.success) {
+          // Success response
+          payload = message.data;
+        } else {
+          // Error response
+          payload = { 
+            error: typeof message.error === 'object' ? message.error : { message: message.error }
+          };
+          console.error("WebSocket error response:", message.error);
+        }
+      }
+      
+      // Emit to our internal event system using the standardized payload
+      this.emit(message.type, payload);
       
       // Handle client registration
       if (message.type === "system:clientRegistered") {
-        console.log("Client registered with ID:", message.payload.clientID);
-        this.clientId = message.payload.clientID;
+        console.log("Client registered with ID:", payload.clientID);
+        this.clientId = payload.clientID;
       }
       
       // Dispatch message as a DOM event for components to listen to
-      const eventName = message.type.replace(/:/g, '-');
-      const customEvent = new CustomEvent(`portal:${eventName}`, { 
-        detail: message.payload 
-      });
-      document.dispatchEvent(customEvent);
-      
+      // const eventName = message.type.replace(/:/g, '-');
+      // const customEvent = new CustomEvent(`portal:${eventName}`, {
+      //   detail: payload
+      // });
+      // document.dispatchEvent(customEvent);
+
       // For handling response messages from our request-response pattern
-      if (message.type === 'response') {
-        const responseEvent = new CustomEvent('ws:response', { 
-          detail: message 
-        });
-        document.dispatchEvent(responseEvent);
-      }
+      // if (message.type === 'response') {
+      //   const responseEvent = new CustomEvent('ws:response', {
+      //     detail: message
+      //   });
+      //   document.dispatchEvent(responseEvent);
+      // }
     } catch (error) {
       console.error("Error parsing WebSocket message:", error);
     }

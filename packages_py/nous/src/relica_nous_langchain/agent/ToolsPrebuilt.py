@@ -43,6 +43,73 @@ def facts_to_metadata_str(facts) -> str:
 def create_agent_tools(aperture_proxy: ApertureClientProxy):
     """Creates and returns LangChain tools and related metadata configured with a specific ApertureClientProxy."""
 
+
+    # --- Search Tools --- #
+
+
+    async def textSearchLoad(search_term: str)->str:
+        """Searches the Semantic Model for entities matching the exact search term string and loads grounding facts into the environment.
+        Args:
+            search_term: The exact string to search for in entity names.
+        """
+        # The ApertureClientProxy will automatically prepend user_id and env_id
+        # when calling the actual textSearchLoad method.
+        print(f"Tool 'textSearchExact' called with search_term: {search_term}")
+        try:
+            result = await aperture_proxy.textSearchLoad(search_term)
+            print(f"Result from aperture_proxy.textSearchLoad: {result}")
+
+            if result is None or "facts" not in result or len(result["facts"]) == 0:
+                return f"No entity found with the name \"{search_term}\""
+
+            environment = result.get('environment')
+            facts = environment.get('facts', [])
+
+            # Process the result to return a concise summary or list of UIDs
+            uids = [fact['lh_object_uid'] for fact in facts]
+            if not uids:
+                return f"No entity found with the name \"{search_term}\""
+            else:
+                return f"Found entities matching \"{search_term}\": UIDs {uids}"
+
+        except Exception as e:
+            # Log the exception for debugging
+            print(f"Error in textSearchExact tool: {e}")
+            # Return a user-friendly error message
+            return f"An error occurred while searching for '{search_term}': {e}"
+
+
+    async def uidSearchLoad(search_uid: int)->str:
+        """Searches the Semantic Model for entities matching the exact uid and loads grounding facts into the environment.
+        Args:
+            search_uid: The exact uid to search for in entity uids.
+        """
+        # The ApertureClientProxy will automatically prepend user_id and env_id
+        # when calling the actual textSearchLoad method.
+        print(f"Tool 'uidSearchLoad' called with search_uid: {search_uid}")
+        try:
+            result = await aperture_proxy.uidSearchLoad(search_uid)
+            print(f"Result from aperture_proxy.uidSearchLoad: {result}")
+
+            if result is None or "facts" not in result or len(result["facts"]) == 0:
+                return f"No entity found with the name \"{search_uid}\""
+
+            environment = result.get('environment')
+            facts = environment.get('facts', [])
+
+            # Process the result to return a concise summary or list of UIDs
+            uids = [fact['lh_object_uid'] for fact in facts]
+            if not uids:
+                return f"No entity found with the name \"{search_uid}\""
+            else:
+                return f"Found entities matching \"{search_uid}\": UIDs {uids}"
+
+        except Exception as e:
+            # Log the exception for debugging
+            print(f"Error in textSearchLoad tool: {e}")
+            # Return a user-friendly error message
+            return f"An error occurred while searching for '{search_uid}': {e}"
+
     # --- Active Tools --- #
     async def loadEntity(uid: int) -> str:
         """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
@@ -80,37 +147,6 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
     # async def cutToFinalAnswer(message: str)->str:
     #     """Use this ONLY when you have enough information to provide the final answer. Input the complete final answer string."""
     #     return "cut to the chase"
-
-    async def textSearchExact(search_term: str)->str:
-        """Searches the local knowledge base for entities matching the exact search term string.
-        Args:
-            search_term: The exact string to search for in entity names.
-        """
-        # The ApertureClientProxy will automatically prepend user_id and env_id
-        # when calling the actual textSearchLoad method.
-        print(f"Tool 'textSearchExact' called with search_term: {search_term}")
-        try:
-            result = await aperture_proxy.textSearchLoad(search_term)
-            print(f"Result from aperture_proxy.textSearchLoad: {result}")
-
-            if result is None or "facts" not in result or len(result["facts"]) == 0:
-                return f"No entity found with the name \"{search_term}\""
-
-            environment = result.get('environment')
-            facts = environment.get('facts', [])
-
-            # Process the result to return a concise summary or list of UIDs
-            uids = [fact['lh_object_uid'] for fact in facts]
-            if not uids:
-                return f"No entity found with the name \"{search_term}\""
-            else:
-                return f"Found entities matching \"{search_term}\": UIDs {uids}"
-
-        except Exception as e:
-            # Log the exception for debugging
-            print(f"Error in textSearchExact tool: {e}")
-            # Return a user-friendly error message
-            return f"An error occurred while searching for '{search_term}': {e}"
 
 
     async def getEntityDetails(uid: int)->str:
@@ -304,17 +340,17 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
     # Define the list of *active* tool objects created within this scope
     active_tools = [
         # --------------------------------------
-        loadEntity,
-        getEntityOverview,
-        # cutToFinalAnswer,
-        getEntityDetails,
-        textSearchExact,
-        loadClassificationFact,
-        loadClassified,
-        loadSubtypes,
-        loadSpecializationFact,
-        loadSpecializationHierarchy
-
+        textSearchLoad,
+        uidSearchLoad,
+        # loadEntity,
+        # getEntityOverview,
+        # # cutToFinalAnswer,
+        # getEntityDetails,
+        # loadClassificationFact,
+        # loadClassified,
+        # loadSubtypes,
+        # loadSpecializationFact,
+        # loadSpecializationHierarchy
         ]
 
     # --- Generate required tool metadata --- #

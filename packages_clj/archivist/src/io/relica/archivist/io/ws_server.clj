@@ -9,8 +9,9 @@
   (broadcast! [this message])
   (send-to-session! [this session-id message])
   (get-active-sessions [this])
-  (disconnect-all! [this])
-  (get-xxx [this]))
+  (start! [this])
+  (stop! [this])
+  )
 
 
 (defrecord WebSocketComponent [args]
@@ -25,40 +26,33 @@
     (when-let [connected-uids (:connected-uids @(:state (:server args)))]
       (count (:any @connected-uids))))
 
-  (disconnect-all! [_]
+  (start! [_]
+    (ws/start! (:server args)))
+
+  (stop! [_]
     (ws/stop! (:server args)))
 
-  (get-xxx [_]
-    (:gellish-base args)))
-
-(defn create-event-handler [{:keys [gellish-base
-                                    kind
-                                    entity-retrieval
-                                    general-search
-                                    fact-service
-                                    graph-service]}]
-  (fn [msg]
-    (io.relica.common.websocket.server/handle-ws-message (assoc msg
-                                                                :gellish-base-s gellish-base
-                                                                :kind-s kind
-                                                                :entity-s entity-retrieval
-                                                                :general-search-s general-search
-                                                                :fact-s fact-service
-                                                                :graph-s  graph-service))))
+    )
 
 (defn start [{:keys [port] :as args}]
   (tap> (str "!!! Starting WebSocket server on port " port))
   (let [server (ws/create-server {:port port
-                                  :event-msg-handler (create-event-handler args)})
+                                  })
         component (->WebSocketComponent (assoc args :server server))]
-    (ws/start! server)
+    (start! component)
     component))
 
 (defn stop [component]
   (log/info "Stopping WebSocket server...")
-  (when-let [server (:server component)]
-    (ws/stop! server)))
+  (when component
+    (stop! component)))
 
-;; (defstate ws-server
-;;   :start (start (:xxx (mount.core/args)) (:port (mount.core/args)))
-;;   :stop (stop ws-server))
+(comment
+
+  (def foo (start {:port 3000}))
+
+  (:server foo)
+  (stop! foo)
+
+
+  )

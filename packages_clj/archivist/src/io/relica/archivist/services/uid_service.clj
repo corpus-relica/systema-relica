@@ -1,5 +1,6 @@
 (ns io.relica.archivist.services.uid-service
-  (:require [clojure.tools.logging :as log]
+  (:require [mount.core :refer [defstate]]
+            [clojure.tools.logging :as log]
             [io.relica.archivist.services.graph-service :as graph]
             [io.relica.archivist.db.queries :as queries]
             [clojure.core.async :refer [<! go]]
@@ -10,21 +11,20 @@
   (init [this])
   (reserve-uid [this n]))
 
-(defrecord UIDService [graph-service state]
+(defrecord UIDService [state]
   UIDOperations
   (init [_]
     (go
       (try
         (let [min-threshold 1000000000
               max-threshold 2000000000
-              result (graph/exec-query graph-service
+              result (graph/exec-query graph/graph-service
                                        queries/highest-uid
                                         {:minThreshold min-threshold
                                          :maxThreshold max-threshold})
               highest-value (if (and (seq result)
                                      (get-in (first result) [:highestValue]))
-                              (inc (graph/resolve-neo4j-int graph-service
-                                                            (get-in (first result) [:highestValue])))
+                              (inc (graph/resolve-neo4j-int (get-in (first result) [:highestValue])))
                               min-threshold)]
           (println "//// init UID Service; current highest value:" highest-value)
           (reset! (:highest-value (.-state _)) highest-value)
@@ -46,11 +46,32 @@
          (log/error "An error occurred while reserving UIDs:" e)
          (throw e)))))
 
-(defn create-uid-service [graph-service]
-  (->UIDService graph-service {:highest-value (atom 0)}))
+(defn create-uid-service []
+  (->UIDService {:highest-value (atom 0)}))
 
 ;; Singleton instance for backward compatibility
-(defonce uid-service (create-uid-service nil))
+;; (defonce uid-service (create-uid-service nil))
+
+(defn start []
+  (let [service (create-uid-service)]
+    (go
+      (<! (init service))
+      service)))
+
+(defn stop []
+  ;; Currently, there's no specific cleanup needed for the UIDService,
+  ;; but this function can be extended if necessary in the future.
+  (log/info "Stopping UID Service..."))
+
+;; UID SERVICE
+
+(defstate uid-service
+  :start (do
+           (println "Starting UID service...")
+           (start))
+  :stop (do
+          (println "Stopping Graph service...")
+          (stop)))
 
 (comment
 
@@ -73,3 +94,4 @@
 
 
   )
+

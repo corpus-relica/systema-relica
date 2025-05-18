@@ -1,5 +1,6 @@
 (ns io.relica.archivist.services.graph-service
-  (:require [clojure.tools.logging :as log]
+  (:require [mount.core :refer [defstate]]
+            [clojure.tools.logging :as log]
             [neo4j-clj.core :as neo4j]
             [io.relica.archivist.config :refer [db-config]])
   (:import (org.neo4j.driver Values)
@@ -136,7 +137,7 @@
 (defn create-graph-service [session-factory]
   (->GraphService session-factory))
 
-(def graph-service (atom nil))
+(def service (atom nil))
 
 (defn start []
   (let [uri-str (str "bolt://" (get-in db-config [:neo4j :host]) ":" (get-in db-config [:neo4j :port]))
@@ -146,14 +147,25 @@
                (get-in db-config [:neo4j :user])
                (get-in db-config [:neo4j :password]))
         session-factory (fn [] (neo4j/get-session conn))
-        service (create-graph-service session-factory)]
-    (reset! graph-service service)
-    service))
+        svc (create-graph-service session-factory)]
+    (reset! service svc)
+    ;; service
+    svc))
 
 (defn stop []
   ;; disconnect
   ;; (neo4j/close (neo4j/get-conn @graph-service))
-  (reset! graph-service nil))
+  (reset! service nil))
+
+;; GRAPH SERVICE
+
+(defstate graph-service
+  :start (do
+           (println "Starting Graph service...")
+           (start))
+  :stop (do
+          (println "Stopping Graph service...")
+          (stop)))
 
 (comment
   ;; Test operations
