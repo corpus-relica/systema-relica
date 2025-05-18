@@ -383,7 +383,7 @@
 
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
-    (ws/send-message! client :archivist.system/heartbeat
+    (ws/send-message! client :relica.app/heartbeat
                       {:timestamp (System/currentTimeMillis)}
                       30000))
 

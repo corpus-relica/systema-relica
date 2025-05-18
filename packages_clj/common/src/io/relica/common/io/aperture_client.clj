@@ -171,7 +171,7 @@
 
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
-    (ws/send-message! ws-client :aperture.app/heartbeat
+    (ws/send-message! ws-client :relica.app/heartbeat
                       {:timestamp (System/currentTimeMillis)}
                       30000)))
 

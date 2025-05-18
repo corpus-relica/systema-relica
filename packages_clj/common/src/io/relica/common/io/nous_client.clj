@@ -13,18 +13,17 @@
 
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
-    (ws/send-message! ws-client :app/heartbeat
-                            {:timestamp (System/currentTimeMillis)}
-                            3000))
+    (ws/send-message! ws-client :relica.app/heartbeat
+                      {:timestamp (System/currentTimeMillis)}
+                      3000))
 
   (user-input [this user-id env-id user-message]
     (print {:event :app/sending-user-input})
-    (ws/send-message! ws-client :app/user-input
-                            {:user-id user-id
-                             :env-id env-id
-                             :message user-message}
-                            3000))
-  )
+    (ws/send-message! ws-client :nous.user/input
+                      {:user-id user-id
+                       :env-id env-id
+                       :message user-message}
+                      3000)))
 
 ;; Heartbeat scheduler
 (defn start-heartbeat-scheduler! [nous-client interval-ms]
@@ -51,14 +50,14 @@
                                                :payload payload}))}
         merged-handlers (merge default-handlers handlers)
         base-client (ws/create-client
-                {:service-name "nous"
-                 :uri uri
-                 :format "json"
-                 :handlers merged-handlers})
+                     {:service-name "nous"
+                      :uri uri
+                      :format "json"
+                      :handlers merged-handlers})
         nous-client (->NOUSClient base-client {:timeout timeout})]
 
     ;; Register application-specific event handlers
-    (ws/register-handler! base-client ":final_answer" (:handle-final-answer handlers))
+    (ws/register-handler! base-client :nous.chat/final-answer (:handle-final-answer handlers))
     ;; (ws/register-handler base-client :kind/model
     ;;                      (fn [payload]
     ;;                        (tap> {:event :app/handling-kind-model

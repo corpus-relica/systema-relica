@@ -117,7 +117,7 @@
          (fact "send-heartbeat! uses standardized message identifier"
                (reset! captured-messages [])
                (aperture/send-heartbeat! aperture-client)
-               (first @captured-messages) => (contains {:type :aperture.app/heartbeat}))))
+               (first @captured-messages) => (contains {:type :relica.app/heartbeat}))))
 
 (facts "About Aperture client factory function"
        (with-redefs [ws/connect! (fn [_] true)]

@@ -14,35 +14,35 @@
 
 (defrecord PrismClient [ws-client state]
   PrismClientProtocol
-  
+
   (get-setup-status [this]
     (log/debug "Getting Prism setup status")
-    (ws/send-message! ws-client :setup-status/get {} 5000))
-  
+    (ws/send-message! ws-client :prism.setup/get-status {} 5000))
+
   (start-setup [this]
     (log/info "Starting Prism setup")
-    (ws/send-message! ws-client "setup/start" {} 5000))
-  
+    (ws/send-message! ws-client :prism.setup/start {} 5000))
+
   (create-admin-user [this username password confirm-password]
     (log/info "Creating admin user:" username)
-    (ws/send-message! ws-client "setup/create-user" 
+    (ws/send-message! ws-client :prism.setup/create-user
                       {:username username
                        :password password
-                       :confirmPassword confirm-password} 
+                       :confirmPassword confirm-password}
                       5000))
-  
+
   (process-setup-stage [this]
     (log/info "Processing current setup stage")
-    (ws/send-message! ws-client "setup/process-stage" {} 900000)) ;; 15 minutes
+    (ws/send-message! ws-client :prism.setup/process-stage {} 900000)) ;; 15 minutes
 
   (connected? [this]
     (ws/connected? ws-client))
 
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
-    (ws/send-message! ws-client :app/heartbeat
-                            {:timestamp (System/currentTimeMillis)}
-                            30000)))
+    (ws/send-message! ws-client :relica.app/heartbeat
+                      {:timestamp (System/currentTimeMillis)}
+                      30000)))
 
 ;; Heartbeat scheduler
 (defn start-heartbeat-scheduler! [prism-client interval-ms]
@@ -68,32 +68,32 @@
    - :reconnect-delay - Delay before reconnecting in ms (default: 5000)
    - :handlers - Map of message type to handler functions"
   [{:keys [handlers host port] :as options}]
-   (when (or (nil? host) (nil? port))
-     (throw (IllegalArgumentException. "Host and port are required for Prism client")))
-   
-   (let [uri (str "ws://" host ":" port "/ws")
-         default-handlers {:on-connect #(tap> {:event :app/connected})
-                           :on-disconnect #(tap> {:event :app/disconnected})
-                           :on-message (fn [event-type payload]
+  (when (or (nil? host) (nil? port))
+    (throw (IllegalArgumentException. "Host and port are required for Prism client")))
+
+  (let [uri (str "ws://" host ":" port "/ws")
+        default-handlers {:on-connect #(tap> {:event :app/connected})
+                          :on-disconnect #(tap> {:event :app/disconnected})
+                          :on-message (fn [event-type payload]
                                         (tap> {:event :app/message-received
                                                :type event-type}))}
-         merged-handlers (merge default-handlers handlers)
-         base-client (ws/create-client {:service-name "prism"
-                                        :uri uri
-                                        :handlers merged-handlers})
-         prism-client (->PrismClient base-client {:timeout 5000
-                                                  :auto-reconnect true
-                                                  :reconnect-delay 5000})]
+        merged-handlers (merge default-handlers handlers)
+        base-client (ws/create-client {:service-name "prism"
+                                       :uri uri
+                                       :handlers merged-handlers})
+        prism-client (->PrismClient base-client {:timeout 5000
+                                                 :auto-reconnect true
+                                                 :reconnect-delay 5000})]
 
-     (ws/register-handler! base-client :setup/update (:handle-setup-state-update handlers))
+    (ws/register-handler! base-client :prism.setup/update (:handle-setup-state-update handlers))
 
-     ;; Connect the WebSocket client
-     (ws/connect! base-client)
-     
-     ;; Return the Prism client
-     (start-heartbeat-scheduler! prism-client 30000)
+    ;; Connect the WebSocket client
+    (ws/connect! base-client)
 
-     prism-client))
+    ;; Return the Prism client
+    (start-heartbeat-scheduler! prism-client 30000)
+
+    prism-client))
 
 (defn disconnect-client [client]
   "Disconnects the Prism client"
