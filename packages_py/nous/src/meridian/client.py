@@ -39,13 +39,26 @@ class WebSocketClient:
         self.auto_reconnect = auto_reconnect
         self.reconnect_delay = reconnect_delay
         self.reconnect_task = None
+        
+        # Add logging for initialization
+        logger.info(f"Initializing WebSocket client with URL: {url}, Format: {format}")
 
     async def connect(self):
         """Connect to WebSocket server"""
         try:
-            self.websocket = await websockets.connect(self.url)
+            logger.info(f"Connecting to WebSocket server at {self.url}")
+            
+            # Add query parameters for format and language if not already in URL
+            url = self.url
+            if "?" not in url:
+                url = f"{url}?format={self.format}&language=python"
+            elif "format=" not in url:
+                url = f"{url}&format={self.format}&language=python"
+                
+            logger.info(f"Using connection URL: {url}")
+            self.websocket = await websockets.connect(url)
             self.connected = True
-            logger.info(f"Connected to WebSocket server at {self.url}")
+            logger.info(f"Successfully connected to WebSocket server")
 
             # Start listening for messages
             asyncio.create_task(self.listen())
@@ -54,6 +67,13 @@ class WebSocketClient:
             if self.reconnect_task:
                 self.reconnect_task.cancel()
                 self.reconnect_task = None
+                
+            # Send a ping to verify the connection
+            try:
+                ping_result = await self.send("ping", {"timestamp": int(datetime.now().timestamp() * 1000)}, timeout=5.0)
+                logger.info(f"Initial ping successful: {ping_result}")
+            except Exception as e:
+                logger.warning(f"Initial ping failed but connection established: {e}")
 
             return True
         except Exception as e:
@@ -107,43 +127,57 @@ class WebSocketClient:
         try:
             async for message in self.websocket:
                 try:
-                    # Parse message
+                    # Log the raw message for debugging
+                    logger.debug(f"Raw received message: {message}")
+                    
+                    # Parse message based on format
                     parsed_message = deserialize_message(message, self.format)
-
-# {'type': 'entity/selected',
-#  'entity-uid': 1000000526,
-#  'user-id': 7,
-#  'environment-id': 1}
-
+                    
                     if not parsed_message:
                         logger.error(f"Failed to parse message: {message}")
                         continue
-
+                    
                     # Extract message details
                     msg_id = parsed_message.get("id", "")
+                    
+                    # Handle different message type formats (with or without ":" prefix)
                     msg_type = parsed_message.get("type", "")
+                    if not msg_type:
+                        # Try to find a key that might be the type
+                        for key in parsed_message.keys():
+                            if key.startswith(":type"):
+                                msg_type = parsed_message[key]
+                                break
+                            elif key == "type" and not msg_type:
+                                msg_type = parsed_message[key]
                     
-                    # Handle standardized response format
-                    # For response messages with success/error data structure,
-                    # we need to use the standardized format
-                    payload = parsed_message
+                    # Remove colon prefix from type if present
+                    if isinstance(msg_type, str) and msg_type.startswith(":"):
+                        msg_type = msg_type[1:]
                     
-                    # print(f"Received message: {parsed_message}")
-
+                    # Handle payload extraction with flexibility
+                    payload = parsed_message.get("payload", {})
+                    if not payload and isinstance(parsed_message, dict):
+                        # If no payload found, treat the entire message as payload except id and type
+                        payload = {k: v for k, v in parsed_message.items() if k not in ["id", "type"]}
+                    
+                    logger.debug(f"Processed message - ID: {msg_id}, Type: {msg_type}, Payload: {payload}")
+                    
                     # Check if we have a pending request future for this message ID
                     if msg_id in self.response_futures:
                         future = self.response_futures[msg_id]
                         future.set_result(parsed_message)
                         del self.response_futures[msg_id]
-
+                    
                     # Handle message by type
                     if msg_type in self.message_handlers:
                         handler = self.message_handlers[msg_type]
-                        # await handler(msg_id, payload)
                         await handler(msg_id, parsed_message)
-
+                    else:
+                        logger.debug(f"No handler registered for message type: {msg_type}")
+                    
                 except Exception as e:
-                    logger.error(f"Error processing message: {str(e)}")
+                    logger.error(f"Error processing message: {str(e)}", exc_info=True)
 
         except websockets.exceptions.ConnectionClosed:
             logger.info("WebSocket connection closed")
@@ -163,6 +197,20 @@ class WebSocketClient:
         msg_id = f"client-{self.client_id}-{self.message_counter}"
         self.message_counter += 1
 
+        # Format message based on self.format
+        # if self.format == FORMAT_EDN:
+        #     print("MESSAGE TYPE", msg_type)
+        #     # For EDN format, ensure type is properly formatted
+        #     if not msg_type.startswith(":"):
+        #         msg_type = f":{msg_type}"
+
+        #     message = {
+        #         ":id": msg_id,
+        #         ":type": msg_type,
+        #         ":payload": payload or {}
+        #     }
+        # else:
+        #     # JSON format
         message = {
             "id": msg_id,
             "type": msg_type,
@@ -173,6 +221,7 @@ class WebSocketClient:
 
         # Serialize message
         message_str = serialize_message(message, self.format)
+        logger.debug(f"Serialized message: {message_str}")
 
         # Create future for response
         future = asyncio.Future()
@@ -180,7 +229,7 @@ class WebSocketClient:
 
         try:
             await self.websocket.send(message_str)
-            logger.debug(f"Sent message: {message}")
+            logger.debug(f"Message sent successfully")
 
             # Wait for response with timeout (if specified)
             if timeout is not None:
@@ -188,15 +237,26 @@ class WebSocketClient:
             else:
                 response = await future
 
-            return response
+            logger.debug(f"Received response: {response}")
+
+            # Extract payload with fallback options
+            if "payload" in response:
+                return response["payload"]
+            elif ":payload" in response:
+                return response[":payload"]
+            else:
+                # If no payload field found, return everything except id and type
+                return {k: v for k, v in response.items()
+                        if k not in ["id", "type", ":id", ":type"]}
 
         except asyncio.TimeoutError:
             logger.error(f"Request timeout: {msg_type}")
-            del self.response_futures[msg_id]
+            if msg_id in self.response_futures:
+                del self.response_futures[msg_id]
             raise TimeoutError(f"Request timeout: {msg_type}")
 
         except Exception as e:
-            logger.error(f"Error in request: {str(e)}")
+            logger.error(f"Error in request: {str(e)}", exc_info=True)
             if msg_id in self.response_futures:
                 del self.response_futures[msg_id]
             raise

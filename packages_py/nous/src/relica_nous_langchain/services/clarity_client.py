@@ -37,9 +37,9 @@ class ClarityClient:
         self.callbacks = {}
 
         # Register message handlers
-        self.client.on_message("processing-result", self.on_processing_result)
-        self.client.on_message("chat-history", self.on_chat_history)
-        self.client.on_message("final-answer", self.on_final_answer)
+        self.client.on_message("clarity.processing/result", self.on_processing_result)
+        self.client.on_message("clarity.chat/history", self.on_chat_history)
+        self.client.on_message("clarity.answer/final", self.on_final_answer)
 
         # Setup connection/disconnection handlers
         self.setup_connection_handlers()
@@ -75,8 +75,15 @@ class ClarityClient:
     async def on_processing_result(self, msg_id, payload):
         """Handler for processing results"""
         logger.info("Received processing result")
-        if "request_id" in payload and payload["request_id"] in self.callbacks:
-            callback = self.callbacks.pop(payload["request_id"])
+        # Support both standard and keyword-style keys
+        request_id = payload.get("request_id", payload.get(":request_id", None))
+        
+        if request_id and request_id in self.callbacks:
+            callback = self.callbacks.pop(request_id)
+            callback(payload)
+        elif "request-id" in payload and payload["request-id"] in self.callbacks:
+            # Support hyphenated key format
+            callback = self.callbacks.pop(payload["request-id"])
             callback(payload)
         return payload
 
@@ -111,8 +118,9 @@ class ClarityClient:
             self.callbacks[request_id] = callback
 
         try:
-            response = await self.client.send("process-input", {
-                "request_id": request_id,
+            # Use properly formatted message for Clojure compatibility
+            response = await self.client.send("clarity.input/process", {
+                "request-id": request_id,  # Use hyphenated version for Clojure
                 "input": input_text
             })
             return response
@@ -128,7 +136,7 @@ class ClarityClient:
                 return {"error": "Failed to connect to Clarity"}
 
         try:
-            response = await self.client.send("specialize-kind", {
+            response = await self.client.send("clarity.kind/specialize", {
                 "uid": uid,
                 "supertype_name": supertype_name,
                 "name": name
@@ -146,7 +154,7 @@ class ClarityClient:
                 return {"error": "Failed to connect to Clarity"}
 
         try:
-            response = await self.client.send("classify-individual", {
+            response = await self.client.send("clarity.individual/classify", {
                 "uid": uid,
                 "kind_name": kind_name,
                 "name": name
@@ -164,7 +172,7 @@ class ClarityClient:
                 return {"error": "Failed to connect to Clarity"}
 
         try:
-            response = await self.client.send("get/models", {"uids": uids})
+            response = await self.client.send("clarity.model/get-batch", {"uids": uids})
             return response
         except Exception as e:
             logger.error(f"Error retrieving models: {str(e)}")

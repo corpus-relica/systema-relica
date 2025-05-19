@@ -129,7 +129,7 @@ class WebSocketServer:
         msg_type = message.get("type", "unknown")
         payload = message.get("payload", {})
 
-        logger.info(f"Broadcasting message to {client_count} clients: type={msg_type}, payload={payload}")
+        # logger.info(f"Broadcasting message to {client_count} clients: type={msg_type}, payload={payload}")
 
         # Send to each client
         for client_id, client in self.clients.items():
@@ -155,7 +155,7 @@ class WebSocketServer:
 # Message handlers
 async def handle_ping(message: Dict, client_id: str) -> Dict:
     """Handle ping messages"""
-    logger.debug(f"Ping received from client: {client_id}")
+    logger.info(f"Ping received from client: {client_id}")
     return {
         "pong": True,
         "server_time": int(datetime.now().timestamp() * 1000)
@@ -281,16 +281,31 @@ async def websocket_endpoint(websocket: WebSocket, format: str = Query("json"), 
         format: The message format (json or edn)
         language: The client language
     """
+    # Log connection attempt with details
+    logger.info(f"WebSocket connection attempt - Format: {format}, Language: {language}")
+    
     # Accept WebSocket connection
     await websocket.accept()
-
+    
     # Generate client ID
     client_id = str(uuid.uuid4())
-
-    # Store client
+    
+    # Store client with format and language info
     await ws_server.add_client(client_id, websocket, format, language)
-
-    logger.info(f"Client connected: {client_id} format: {format} language: {language}")
+    
+    logger.info(f"Client connected successfully: {client_id} format: {format} language: {language}")
+    
+    # Send a connection confirmation message to the client
+    await ws_server.send(client_id, {
+        "id": "server",
+        "type": "connect",
+        "payload": {
+            "client_id": client_id,
+            "server_time": int(datetime.now().timestamp() * 1000),
+            "format": format,
+            "language": language
+        }
+    })
 
     try:
         # Handle incoming messages
@@ -314,14 +329,22 @@ async def websocket_endpoint(websocket: WebSocket, format: str = Query("json"), 
                     })
                     continue
 
-                # Extract message details
-                msg_id = message.get("id", "unknown")
-                msg_type = message.get("type", "unknown")
-                payload = message.get("payload", {})
-
-                logger.debug(f"Received message: {message}")
-
-                # For EDN format, ensure message type is properly extracted
+                # Extract message details with improved handling for different formats
+                msg_id = message.get("id", message.get(":id", "unknown"))
+                
+                # Handle different message type formats
+                msg_type = message.get("type", message.get(":type", "unknown"))
+                
+                # If type is a keyword (starts with :), remove the colon for handler lookup
+                if isinstance(msg_type, str) and msg_type.startswith(":"):
+                    msg_type = msg_type[1:]
+                
+                # Extract payload with fallbacks for different formats
+                payload = message.get("payload", message.get(":payload", {}))
+                
+                logger.debug(f"Received message - ID: {msg_id}, Type: {msg_type}, Payload: {payload}")
+                
+                # For EDN format, ensure message type is properly extracted if still unknown
                 if client_format == FORMAT_EDN and msg_type == "unknown":
                     # Try to extract type from raw data as a fallback
                     type_match = re.search(r':type\s+"([^"]+)"', data)
@@ -340,12 +363,13 @@ async def websocket_endpoint(websocket: WebSocket, format: str = Query("json"), 
                     continue
 
                 # Handle other message types
+                # First check if the type is in handlers directly
                 if msg_type in ws_server.handlers:
                     handler = ws_server.handlers[msg_type]
-
+                    
                     # Process message
                     result = await handler(payload, client_id)
-
+                    
                     # Send response if there's a result
                     if result:
                         await ws_server.send(client_id, {

@@ -189,12 +189,14 @@
   (go
     (try
       (let [environment-id (get-environment-id client-id)
-            _ (print "CHAT USER INPUT")
-            _ (print message)
-            _ (print user-id)
-            _ (print client-id)
-            _ (print environment-id)
+            _ (println "CHAT USER INPUT")
+            _ (println message)
+            _ (println user-id)
+            _ (println client-id)
+            _ (println environment-id)
             response (<! (nous/user-input nous-client user-id environment-id message))
+            _ (println "CHAT USER INPUT RESPONSE")
+            _ (println response)
             result (get-in response [:data])]
         {:success true
          :message "Chat user input processed"

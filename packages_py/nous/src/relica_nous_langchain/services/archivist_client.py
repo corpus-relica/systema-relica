@@ -156,7 +156,7 @@ class ArchivistClient:
         logger.info("Sending heartbeat")
         if self.connected:
             try:
-                await self.client.send("app/heartbeat", {"timestamp": int(asyncio.get_event_loop().time() * 1000)})
+                await self.client.send("archivist.system/heartbeat", {"timestamp": int(asyncio.get_event_loop().time() * 1000)})
             except Exception as e:
                 logger.error(f"Failed to send heartbeat: {e}")
 
@@ -171,30 +171,39 @@ class ArchivistClient:
 
         try:
             response = await self.client.send(msg_type, payload, timeout)
+            logger.debug(f"Raw response from Archivist: {response}")
             
-            # Handle new standardized response format
-            # New format: {"success": true, "request_id": "...", "data": {...}}
-            # or {"success": false, "request_id": "...", "error": {"code": 123, "type": "...", "message": "...", "details": {...}}}
+            # More flexible response handling to accommodate changes in Clojure implementation
             
-            if 'success' in response:
-                if response['success']:
-                    # Success response - return the data field
-                    return response.get('data', {})
+            # Case 1: New standardized response format with success field
+            if 'success' in response or ':success' in response:
+                success = response.get('success', response.get(':success', False))
+                if success:
+                    # Success response - return the data field with fallbacks
+                    return response.get('data',
+                           response.get(':data',
+                           response.get('payload',
+                           response.get(':payload', {}))))
                 else:
-                    # Error response - extract error details
-                    error = response.get('error', {})
+                    # Error response - extract error details with flexible key access
+                    error = response.get('error', response.get(':error', {}))
                     if isinstance(error, dict):
-                        error_message = error.get('message', 'Unknown error')
-                        error_code = error.get('code', 0)
-                        error_type = error.get('type', 'error')
-                        error_details = error.get('details', {})
+                        error_message = error.get('message', error.get(':message', 'Unknown error'))
+                        error_code = error.get('code', error.get(':code', 0))
+                        error_type = error.get('type', error.get(':type', 'error'))
+                        error_details = error.get('details', error.get(':details', {}))
                         logger.error(f"Error in response: {error_type} ({error_code}): {error_message}")
                         return {"error": error_message, "code": error_code, "type": error_type, "details": error_details}
                     else:
                         return {"error": str(error)}
             
-            # Fall back to old response format handling if 'success' key not found
-            return response.get('payload', response)
+            # Case 2: Response has direct payload
+            for key in ['payload', ':payload', 'data', ':data']:
+                if key in response:
+                    return response[key]
+            
+            # Case 3: No structured format found, return the whole response
+            return response
         except Exception as e:
             logger.error(f"Error sending {msg_type} message to Archivist: {e}", exc_info=True)
             return {"error": f"Failed to send {msg_type} message to Archivist: {str(e)}"}
@@ -207,227 +216,227 @@ class ArchivistClient:
         payload = {"query": query}
         if params:
             payload["params"] = params
-        return await self._send_message("graph/execute-query", payload)
+        return await self._send_message("archivist.graph/query-execute", payload)
 
     async def resolve_uids(self, uids):
         """Resolve entity UIDs to full entities"""
-        return await self._send_message("entities/resolve", {"uids": uids})
+        return await self._send_message("archivist.entity/batch-resolve", {"uids": uids})
 
     async def get_kinds(self, opts=None):
         """Get kinds with optional filtering, sorting and pagination"""
         if opts is None:
             opts = {}
-        return await self._send_message("kinds/get", opts)
+        return await self._send_message("archivist.kind/list", opts)
 
     async def get_collections(self):
         """Get all available entity collections"""
-        return await self._send_message("entity/collections", {})
+        return await self._send_message("archivist.entity/collections-get", {})
 
     async def get_entity_type(self, uid):
         """Get the type of an entity"""
-        return await self._send_message("entity/type", {"uid": uid})
+        return await self._send_message("archivist.entity/type-get", {"uid": uid})
 
     async def get_entity_category(self, uid):
         """Get the category of an entity"""
-        return await self._send_message("entity/category", {"uid": uid})
+        return await self._send_message("archivist.entity/category-get", {"uid": uid})
 
     async def text_search(self, query):
         """Perform a text search"""
-        return await self._send_message("general-search/text", query)
+        return await self._send_message("archivist.search/text", query)
 
     # Aspect operations
     async def get_aspects(self, opts=None):
         """Get aspects with optional filtering"""
         if opts is None:
             opts = {}
-        return await self._send_message("aspects/get", opts)
+        return await self._send_message("archivist.aspect/list", opts)
 
     async def create_aspect(self, aspect_data):
         """Create a new aspect"""
-        return await self._send_message("aspects/create", aspect_data)
+        return await self._send_message("archivist.aspect/create", aspect_data)
 
     async def update_aspect(self, uid, aspect_data):
         """Update an existing aspect"""
         payload = {**aspect_data, "uid": uid}
-        return await self._send_message("aspects/update", payload)
+        return await self._send_message("archivist.aspect/update", payload)
 
     async def delete_aspect(self, uid):
         """Delete an aspect"""
-        return await self._send_message("aspects/delete", {"uid": uid})
+        return await self._send_message("archivist.aspect/delete", {"uid": uid})
 
     # Completion operations
     async def get_completions(self, query):
         """Get completions for a query"""
-        return await self._send_message("completions/get", query)
+        return await self._send_message("archivist.completion/list", query)
 
     # Concept operations
     async def get_concept(self, uid):
         """Get a concept by UID"""
-        return await self._send_message("concepts/get", {"uid": uid})
+        return await self._send_message("archivist.concept/get", {"uid": uid})
 
     async def create_concept(self, concept_data):
         """Create a new concept"""
-        return await self._send_message("concepts/create", concept_data)
+        return await self._send_message("archivist.concept/create", concept_data)
 
     async def update_concept(self, uid, concept_data):
         """Update an existing concept"""
         payload = {**concept_data, "uid": uid}
-        return await self._send_message("concepts/update", payload)
+        return await self._send_message("archivist.concept/update", payload)
 
     # Definition operations
     async def get_definition(self, uid):
         """Get a definition by UID"""
-        return await self._send_message("definitions/get", {"uid": uid})
+        return await self._send_message("archivist.definition/get", {"uid": uid})
 
     async def create_definition(self, def_data):
         """Create a new definition"""
-        return await self._send_message("definitions/create", def_data)
+        return await self._send_message("archivist.definition/create", def_data)
 
     async def update_definition(self, uid, def_data):
         """Update an existing definition"""
         payload = {**def_data, "uid": uid}
-        return await self._send_message("definitions/update", payload)
+        return await self._send_message("archivist.definition/update", payload)
 
     # Fact operations
     async def get_facts(self, opts=None):
         """Get facts with optional filtering"""
         if opts is None:
             opts = {}
-        return await self._send_message("facts/get", opts)
+        return await self._send_message("archivist.fact/list", opts)
 
     async def get_all_related(self, uid):
         """Get all facts related to an entity"""
-        return await self._send_message("fact/get-all-related", {"uid": uid})
+        return await self._send_message("archivist.fact/all-related-get", {"uid": uid})
 
     async def create_fact(self, fact_data):
         """Create a new fact"""
-        return await self._send_message("facts/create", fact_data)
+        return await self._send_message("archivist.fact/create", fact_data)
 
     async def update_fact(self, uid, fact_data):
         """Update an existing fact"""
         payload = {**fact_data, "uid": uid}
-        return await self._send_message("facts/update", payload)
+        return await self._send_message("archivist.fact/update", payload)
 
     async def delete_fact(self, uid):
         """Delete a fact"""
-        return await self._send_message("facts/delete", {"uid": uid})
+        return await self._send_message("archivist.fact/delete", {"uid": uid})
 
     async def get_definitive_facts(self, uid):
         """Get definitive facts about an entity"""
         logger.info(f"Getting definitive facts for uid: {uid}")
-        return await self._send_message("fact/get-definitive-facts", {"uid": uid})
+        return await self._send_message("archivist.fact/definitive-get", {"uid": uid})
 
     async def get_facts_relating_entities(self, uid1, uid2):
         """Get facts relating two entities"""
-        return await self._send_message("fact/get-relating-entities", {"uid1": uid1, "uid2": uid2})
+        return await self._send_message("archivist.fact/relating-entities-get", {"uid1": uid1, "uid2": uid2})
 
     async def get_related_on_uid_subtype_cone(self, lh_object_uid, rel_type_uid):
         """Get related entities based on subtype cone"""
-        return await self._send_message("fact/get-related-on-uid-subtype-cone", {
+        return await self._send_message("archivist.fact/related-on-uid-subtype-cone-get", {
             "lh-object-uid": lh_object_uid,
             "rel-type-uid": rel_type_uid
         })
 
     async def get_inherited_relation(self, uid, rel_type_uid):
         """Get inherited relations"""
-        return await self._send_message("fact/get-inherited-relation", {
+        return await self._send_message("archivist.fact/inherited-relation-get", {
             "uid": uid,
             "rel-type-uid": rel_type_uid
         })
 
     async def get_core_sample(self, uid, rel_type_uid):
         """Get core samples for an entity"""
-        return await self._send_message("fact/get-core-sample", {
+        return await self._send_message("archivist.fact/core-sample-get", {
             "uid": uid,
             "rel-type-uid": rel_type_uid
         })
 
     async def get_core_sample_rh(self, uid, rel_type_uid):
         """Get right-hand core samples for an entity"""
-        return await self._send_message("fact/get-core-sample-rh", {
+        return await self._send_message("archivist.fact/core-sample-rh-get", {
             "uid": uid,
             "rel-type-uid": rel_type_uid
         })
 
     async def get_classification_fact(self, uid):
         """Get classification fact for an entity"""
-        return await self._send_message("fact/get-classification-fact", {"uid": uid})
+        return await self._send_message("archivist.fact/classification-get", {"uid": uid})
 
     async def get_related_to(self, uid, rel_type_uid):
         """Get entities related to an entity"""
-        return await self._send_message("fact/get-related-to", {
+        return await self._send_message("archivist.fact/related-to-get", {
             "uid": uid,
             "rel-type-uid": rel_type_uid
         })
 
     async def get_related_to_subtype_cone(self, uid, rel_type_uid):
         """Get entities related to an entity using subtype cone"""
-        return await self._send_message("fact/get-related-to-subtype-cone", {
+        return await self._send_message("archivist.fact/related-to-subtype-cone-get", {
             "uid": uid,
             "rel-type-uid": rel_type_uid
         })
 
     async def get_classified(self, uid):
         """Get entities classified by a kind"""
-        return await self._send_message("fact/get-classified", {"uid": uid})
+        return await self._send_message("archivist.fact/classified-get", {"uid": uid})
 
     async def get_subtypes(self, uid):
         """Get direct subtypes of a kind"""
-        return await self._send_message("fact/get-subtypes", {"uid": uid})
+        return await self._send_message("archivist.fact/subtypes-get", {"uid": uid})
 
     async def get_subtypes_cone(self, uid):
         """Get all subtypes (cone) of a kind"""
-        return await self._send_message("fact/get-subtypes-cone", {"uid": uid})
+        return await self._send_message("archivist.fact/subtypes-cone-get", {"uid": uid})
 
     # Individual operations
     async def get_individual(self, uid):
         """Get an individual by UID"""
-        return await self._send_message("individuals/get", {"uid": uid})
+        return await self._send_message("archivist.individual/get", {"uid": uid})
 
     async def create_individual(self, individual_data):
         """Create a new individual"""
-        return await self._send_message("individuals/create", individual_data)
+        return await self._send_message("archivist.individual/create", individual_data)
 
     async def update_individual(self, uid, individual_data):
         """Update an existing individual"""
         payload = {**individual_data, "uid": uid}
-        return await self._send_message("individuals/update", payload)
+        return await self._send_message("archivist.individual/update", payload)
 
     # Kind operations
     async def get_kind(self, uid):
         """Get a kind by UID"""
-        return await self._send_message("kinds/get-one", {"uid": uid})
+        return await self._send_message("archivist.kind/get", {"uid": uid})
 
     async def create_kind(self, kind_data):
         """Create a new kind"""
-        return await self._send_message("kinds/create", kind_data)
+        return await self._send_message("archivist.kind/create", kind_data)
 
     async def update_kind(self, uid, kind_data):
         """Update an existing kind"""
         payload = {**kind_data, "uid": uid}
-        return await self._send_message("kinds/update", payload)
+        return await self._send_message("archivist.kind/update", payload)
 
     async def delete_kind(self, uid):
         """Delete a kind"""
-        return await self._send_message("kinds/delete", {"uid": uid})
+        return await self._send_message("archivist.kind/delete", {"uid": uid})
 
     # Search operations
     async def uid_search(self, query):
         """Search for entities by UID"""
-        return await self._send_message("general-search/uid", query)
+        return await self._send_message("archivist.search/uid", query)
 
     async def individual_search(self, query):
         """Search for individuals"""
-        return await self._send_message("individual-search/get", query)
+        return await self._send_message("archivist.search/individual", query)
 
     async def kind_search(self, query):
         """Search for kinds"""
-        return await self._send_message("kind-search/get", query)
+        return await self._send_message("archivist.search/kind", query)
 
     # Specialization operations
     async def get_specialization_hierarchy(self, user_id, uid):
         """Get specialization hierarchy"""
-        return await self._send_message("specialization/hierarchy", {
+        return await self._send_message("archivist.specialization/hierarchy-get", {
             "user-id": user_id,
             "uid": uid
         })
@@ -435,24 +444,24 @@ class ArchivistClient:
     # Transaction operations
     async def get_transaction(self, uid):
         """Get a transaction by UID"""
-        return await self._send_message("transactions/get", {"uid": uid})
+        return await self._send_message("archivist.transaction/get", {"uid": uid})
 
     async def create_transaction(self, tx_data):
         """Create a new transaction"""
-        return await self._send_message("transactions/create", tx_data)
+        return await self._send_message("archivist.transaction/create", tx_data)
 
     async def commit_transaction(self, uid):
         """Commit a transaction"""
-        return await self._send_message("transactions/commit", {"uid": uid})
+        return await self._send_message("archivist.transaction/commit", {"uid": uid})
 
     async def rollback_transaction(self, uid):
         """Rollback a transaction"""
-        return await self._send_message("transactions/rollback", {"uid": uid})
+        return await self._send_message("archivist.transaction/rollback", {"uid": uid})
 
     # Validation operations
     async def validate_entity(self, entity_data):
         """Validate an entity"""
-        return await self._send_message("validation/validate", entity_data)
+        return await self._send_message("archivist.validation/validate", entity_data)
 
 # Create a singleton instance
 archivist_client = ArchivistClient()

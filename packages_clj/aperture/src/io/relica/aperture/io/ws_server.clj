@@ -6,8 +6,8 @@
 ;; Application state (would typically be in a database or other persistence)
 (def app-state (atom {:clients {}
                       :last-status {:status "OK"
-                                   :timestamp (System/currentTimeMillis)
-                                   :active-users 0}
+                                    :timestamp (System/currentTimeMillis)
+                                    :active-users 0}
                       :files {}}))
 
 ;; Application-specific message handlers
@@ -57,7 +57,7 @@
     (?reply-fn (get @app-state :last-status))))
 
 (defmethod ws-server/handle-ws-message
-  :app/heartbeat
+  :relica.app/heartbeat
   [{:keys [uid ?data] :as msg}]
   (tap> {:event :app/heartbeat-received
          :client-id uid
@@ -120,8 +120,8 @@
 (defn broadcast! [message level]
   (when-let [server (:server @app-state)]
     (let [notification {:message message
-                       :level level
-                       :timestamp (System/currentTimeMillis)}]
+                        :level level
+                        :timestamp (System/currentTimeMillis)}]
       ;; (tap> {:event :app/sending-notification
       ;;        :message message
       ;;        :level level})
@@ -178,6 +178,6 @@
   (broadcast! "Hello, everyone!" "info")
 
   ;; Stop the server
-  (stop-server! app-server)
+  (stop-server! app-server))
 
-  )
+  

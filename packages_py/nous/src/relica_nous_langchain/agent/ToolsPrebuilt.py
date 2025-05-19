@@ -59,10 +59,10 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
             result = await aperture_proxy.textSearchLoad(search_term)
             print(f"Result from aperture_proxy.textSearchLoad: {result}")
 
-            if result is None or "facts" not in result or len(result["facts"]) == 0:
-                return f"No entity found with the name \"{search_term}\""
+            # if result is None or "facts" not in result or len(result["facts"]) == 0:
+            #     return f"No entity found with the name \"{search_term}\""
 
-            environment = result.get('environment')
+            environment = result #.get('environment')
             facts = environment.get('facts', [])
 
             # Process the result to return a concise summary or list of UIDs
@@ -91,10 +91,10 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
             result = await aperture_proxy.uidSearchLoad(search_uid)
             print(f"Result from aperture_proxy.uidSearchLoad: {result}")
 
-            if result is None or "facts" not in result or len(result["facts"]) == 0:
-                return f"No entity found with the name \"{search_uid}\""
+            # if result is None or "facts" not in result or len(result["facts"]) == 0:
+            #     return f"No entity found with the name \"{search_uid}\""
 
-            environment = result.get('environment')
+            environment = result#.get('environment')
             facts = environment.get('facts', [])
 
             # Process the result to return a concise summary or list of UIDs

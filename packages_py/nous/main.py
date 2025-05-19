@@ -46,8 +46,9 @@ async def main():
         try:
             result = await aperture_client.retrieveEnvironment(1, None)
             print("*******************************************")
+            print(result)
 
-            env = result['environment']
+            env = result
             facts = env['facts']
 
             await semantic_model.addFacts(facts)

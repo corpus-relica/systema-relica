@@ -18,7 +18,7 @@
                       3000))
 
   (user-input [this user-id env-id user-message]
-    (print {:event :app/sending-user-input})
+    (println {:event :app/sending-user-input})
     (ws/send-message! ws-client :nous.user/input
                       {:user-id user-id
                        :env-id env-id
@@ -52,12 +52,12 @@
         base-client (ws/create-client
                      {:service-name "nous"
                       :uri uri
-                      :format "json"
+                      :format "edn"
                       :handlers merged-handlers})
         nous-client (->NOUSClient base-client {:timeout timeout})]
 
     ;; Register application-specific event handlers
-    (ws/register-handler! base-client :nous.chat/final-answer (:handle-final-answer handlers))
+    (ws/register-handler! base-client "nous.chat/final-answer" (:handle-final-answer handlers))
     ;; (ws/register-handler base-client :kind/model
     ;;                      (fn [payload]
     ;;                        (tap> {:event :app/handling-kind-model

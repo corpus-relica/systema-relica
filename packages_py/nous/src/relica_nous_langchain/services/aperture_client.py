@@ -65,19 +65,19 @@ class ApertureClient:
             await asyncio.sleep(5)
             await self.connect()
 
-        @self.client.on_message("facts/loaded")
+        @self.client.on_message("aperture.facts/loaded")
         async def on_facts_loaded(msg_id, payload):
             logger.info("Facts loaded")
             await semantic_model.addFacts(payload['facts'])
             return payload
 
-        @self.client.on_message("facts/unloaded")
+        @self.client.on_message("aperture.facts/unloaded")
         async def on_facts_unloaded(msg_id, payload):
             logger.info("Facts unloaded")
             await semantic_model.removeFacts(payload['fact-uids'])
             return payload
 
-        @self.client.on_message("entity/selected")
+        @self.client.on_message("aperture.entity/selected")
         async def on_entity_selected(msg_id, payload):
             logger.info("Entity selected")
             logger.info(f"Selected entity: {payload['entity-uid']}")
@@ -85,7 +85,7 @@ class ApertureClient:
             # emit event
             return payload
 
-        @self.client.on_message("entity/selected-none")
+        @self.client.on_message("aperture.entity/deselected")
         async def on_entity_deselected(msg_id, payload):
             logger.info("Entity deselected")
             semantic_model.selected_entity = None
@@ -183,7 +183,7 @@ class ApertureClient:
         logger.info("Sending heartbeat")
         if self.connected:
             try:
-                await self.client.send("app/heartbeat", {"timestamp": int(asyncio.get_event_loop().time() * 1000)})
+                await self.client.send("relica.app/heartbeat", {"timestamp": int(asyncio.get_event_loop().time() * 1000)})
             except Exception as e:
                 logger.error(f"Failed to send heartbeat: {e}")
 
@@ -204,8 +204,18 @@ class ApertureClient:
                 payload["environment-id"] = environment_id
 
             logger.info(f"Sending environment/get request with payload: {payload}")
-            response = await self.client.send("environment/get", payload)
-            return response['payload'] if 'payload' in response else response
+            response = await self.client.send("aperture.environment/get", payload)
+            logger.info(f"Received environment response: {response}")
+            
+            # Handle different response formats that might come from Clojure
+            if isinstance(response, dict):
+                # Try different ways the payload might be structured
+                for key in ['payload', ':payload', 'data', ':data', 'environment', ':environment']:
+                    if key in response:
+                        return response[key]
+            
+            # If no recognized structure, return the whole response
+            return response
         except Exception as e:
             logger.error(f"Error retrieving environment: {e}", exc_info=True)
             return {"error": f"Failed to retrieve environment: {str(e)}"}
@@ -218,7 +228,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/list", {"user-id": user_id})
+            response = await self.client.send("aperture.environment/list", {"user-id": user_id})
             return response['payload'] if 'payload' in response else response
         except Exception as e:
             logger.error(f"Error listing environments: {e}")
@@ -232,7 +242,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/create", {
+            response = await self.client.send("aperture.environment/create", {
                 "user-id": user_id,
                 "name": env_name
             })
@@ -249,7 +259,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-specialization-fact", {
+            response = await self.client.send("aperture.specialization/load-fact", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "uid": uid
@@ -267,7 +277,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-specialization", {
+            response = await self.client.send("aperture.specialization/load", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "uid": uid
@@ -285,7 +295,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/clear-entities", {
+            response = await self.client.send("aperture.environment/clear", {
                 "user-id": user_id,
                 "environment-id": env_id
             })
@@ -302,7 +312,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-all-related-facts", {
+            response = await self.client.send("aperture.fact/load-related", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uid": entity_uid
@@ -320,7 +330,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/unload-entity", {
+            response = await self.client.send("aperture.entity/unload", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uid": entity_uid
@@ -338,7 +348,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-entities", {
+            response = await self.client.send("aperture.entity/load-multiple", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uids": entity_uids
@@ -356,7 +366,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-subtypes", {
+            response = await self.client.send("aperture.subtype/load", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uid": entity_uid
@@ -374,7 +384,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-classified", {
+            response = await self.client.send("aperture.classification/load", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uid": entity_uid
@@ -392,7 +402,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-classification-fact", {
+            response = await self.client.send("aperture.classification/load-fact", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uid": entity_uid
@@ -410,7 +420,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/load-subtypes-cone", {
+            response = await self.client.send("aperture.subtype/load-cone", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uid": entity_uid
@@ -428,7 +438,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/unload-entities", {
+            response = await self.client.send("aperture.entity/unload-multiple", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uids": entity_uids
@@ -464,7 +474,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("entity/select", {
+            response = await self.client.send("aperture.entity/select", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "entity-uid": entity_uid
@@ -482,7 +492,7 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("entity/select-none", {
+            response = await self.client.send("aperture.entity/deselect", {
                 "user-id": user_id,
                 "environment-id": env_id
             })
@@ -517,13 +527,13 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/text-search-load", {
+            response = await self.client.send("aperture.search/load-text", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "term": term})
             print("//////////////////////////////// TEXT SEARCH LOAD RESPONSE ////////////////////////////////")
-            print(response['payload'])
-            return response['payload']
+            print(response)
+            return response
         except Exception as e:
             logger.error(f"Error loading entity by text search: {e}")
             return {"error": f"Failed to load entity by text search: {str(e)}"}
@@ -536,13 +546,13 @@ class ApertureClient:
                 return {"error": "Failed to connect to Aperture"}
 
         try:
-            response = await self.client.send("environment/uid-search-load", {
+            response = await self.client.send("aperture.search/load-uid", {
                 "user-id": user_id,
                 "environment-id": env_id,
                 "uid": uid})
             print("//////////////////////////////// UID SEARCH LOAD RESPONSE ////////////////////////////////")
-            print(response['payload'])
-            return response['payload']
+            print(response)
+            return response
         except Exception as e:
             logger.error(f"Error loading entity by text search: {e}")
             return {"error": f"Failed to load entity by text search: {str(e)}"}

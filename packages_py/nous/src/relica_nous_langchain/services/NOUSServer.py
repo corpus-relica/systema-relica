@@ -71,12 +71,13 @@ class NOUSServer:
         # TODO: Implement sending to specific client_id if ws_server supports it.
         # For now, broadcasting to all connected clients.
         logger.info(f"Broadcasting final answer (intended for client '{client_id}')")
-        logger.info(f"Final answer: {final_answer} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111")
+        logger.info(f"Final answer: {final_answer}")
 
         # Create the message in the format expected by broadcast
+        # Note: Remove colon prefix from type as this is handled properly by serialization
         message = {
             "id": "nous-server",
-            "type": ":final_answer",
+            "type": "nous.chat/final-answer",
             "payload": final_answer
         }
 
@@ -94,11 +95,11 @@ class NOUSServer:
         logger.info(f"Error message broadcasted to {client_count} clients.")
 
 nous_server = NOUSServer()
-ws_server.register_handler("app/user-input", nous_server.handle_user_input)
+ws_server.register_handler("nous.user/input", nous_server.handle_user_input)
 print("Registered user input handler")
 print(nous_server.handle_user_input)
 
-ws_server.register_handler("app/heartbeat", nous_server.heartbeat)
+ws_server.register_handler("relica.app/heartbeat", nous_server.heartbeat)
 
 # import os
 # import json
