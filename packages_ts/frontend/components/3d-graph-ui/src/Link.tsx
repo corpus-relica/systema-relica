@@ -1,16 +1,10 @@
-import React, { useState } from "react";
-// @ts-ignore
+import React from "react";
 import * as THREE from "three";
 import { Billboard, Text, Line } from "@react-three/drei";
 import { observer } from "mobx-react";
-import { toJS } from "mobx";
 import { Position } from "./types.js";
 
-import {
-  TEXT_HIGHLIGHT_COLOR,
-  TEXT_DEFAULT_COLOR,
-  TEXT_ULTIMATE_HIGHLIGHT_COLOR,
-} from "./colors.js";
+import { TEXT_HIGHLIGHT_COLOR } from "./colors.js";
 
 export interface LinkProps {
   id: number;
@@ -27,9 +21,7 @@ const lineOffsetLength = 1.618; // Length by which to shorten the line on each e
 const cylinderOffsetLength = 1.618; // Length by which to shorten the cylinder on each end
 
 const radius = 2; // You can control the radius here
-const tubeRadius = 0.1; // Radius of the tube
-const radialSegments = 8; // Number of segments in the tube
-const tubularSegments = 8; // Number of segments along the curve
+// Remove unused constants
 
 interface LoopLinkProps {
   origin: Position;
@@ -61,6 +53,7 @@ const LoopLink: React.FC<LoopLinkProps> = observer(
 const Link: React.FC<LinkProps> = observer(
   ({
     id,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     type,
     label,
     source,
@@ -131,39 +124,41 @@ const Link: React.FC<LinkProps> = observer(
     points.push(lineStartVector);
     points.push(lineEndVector);
 
+    // Create geometry for visualization purposes only
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
 
     const userData = { uid: id, type: "link" };
 
     return (
       <>
-        {/* @ts-ignore */}
+        {/* @ts-expect-error - mesh props are not fully typed */}
         <mesh
           userData={userData}
           position={midPoint}
           quaternion={orientation}
           visible={true}
         >
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - cylinderGeometry props are not fully typed */}
           <cylinderGeometry
             args={[cylinderWidth, cylinderWidth, lineLength, 3]}
           />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
-        {/* @ts-ignore */}
+        {/* @ts-expect-error - mesh props are not fully typed */}
         <mesh
           userData={userData}
           position={midPoint}
           quaternion={orientation}
           visible={false}
         >
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - cylinderGeometry props are not fully typed */}
           <cylinderGeometry args={[0.5, 0.5, cylinderLength, 5]} />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
         {(hovered || selected) && (
           <Billboard position={midPoint} follow>
@@ -179,19 +174,18 @@ const Link: React.FC<LinkProps> = observer(
             </Text>
           </Billboard>
         )}
-        {/* @ts-ignore */}
+        {/* @ts-expect-error - mesh props are not fully typed */}
         <mesh
           userData={userData}
           position={conePosition}
           quaternion={orientation}
         >
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - coneGeometry props are not fully typed */}
           <coneGeometry args={[0.2, 1, 4]} />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
-        {/* @ts-ignore */}
       </>
     );
   }

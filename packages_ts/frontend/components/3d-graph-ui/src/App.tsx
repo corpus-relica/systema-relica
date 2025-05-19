@@ -1,17 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-// @ts-ignore
-import * as THREE from "three";
-
-import { Canvas, extend } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { Stats, Stars } from "@react-three/drei";
 
-import { NodeData, EdgeData, Fact } from "./types.js";
+import { Fact } from "./types.js";
 import GraphRenderer from "./GraphRenderer.js";
 
-import RootStoreContext, { useStores } from "./context/RootStoreContext.js";
+import RootStoreContext from "./context/RootStoreContext.js";
 import RootStore from "./stores/RootStore.js";
 import { observer } from "mobx-react";
-import { toJS } from "mobx";
 
 // import './index.css'
 const rootStore = new RootStore();
@@ -31,24 +27,8 @@ export interface AppProps {
   paletteMap: Map<number, string> | null;
 }
 
-interface MouseEvent {
-  altKey: boolean;
-  button: number;
-  buttons: number;
-  clientX: number;
-  clientY: number;
-  ctrlKey: boolean;
-  metaKey: boolean;
-  movementX: number;
-  movementY: number;
-  pageX: number;
-  pageY: number;
-  relatedTarget: EventTarget | null;
-  screenX: number;
-  screenY: number;
-  shiftKey: boolean;
-  type: string;
-}
+// Use the DOMMouseEvent type from our types file
+import { DOMMouseEvent as MouseEvent } from "./types/three-types.js";
 
 const App: React.FC<AppProps> = observer(
   ({
@@ -57,7 +37,9 @@ const App: React.FC<AppProps> = observer(
     onNodeClick,
     onNodeRightClick,
     onStageClick,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onEdgeRollOver,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onEdgeRollOut,
     onEdgeClick,
     onEdgeRightClick,
@@ -85,7 +67,7 @@ const App: React.FC<AppProps> = observer(
         }
       });
       // find orphan nodes
-      for (let k of rootStore.nodeData.keys()) {
+      for (const k of rootStore.nodeData.keys()) {
         if (
           !facts.find(
             (fact) => fact.lh_object_uid === k || fact.rh_object_uid === k
@@ -104,7 +86,9 @@ const App: React.FC<AppProps> = observer(
           lh_object_name,
           rh_object_uid,
           rh_object_name,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           rel_type_uid,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           rel_type_name,
         } = fact;
 
@@ -132,7 +116,7 @@ const App: React.FC<AppProps> = observer(
       const handleResize = () => {
         if (containerRef.current) {
           const { width, height } =
-            //@ts-ignore
+            // @ts-expect-error - containerRef.current type is not properly defined
             containerRef.current.getBoundingClientRect();
           setDimensions({ width, height });
         }
@@ -218,7 +202,7 @@ const App: React.FC<AppProps> = observer(
           }}
         >
           <div style={{ width: dimensions.width, height: dimensions.height }}>
-            {/* @ts-ignore */}
+            {/* @ts-expect-error - Canvas props are not fully typed */}
             <Canvas
               camera={{
                 fov: 75,
@@ -245,7 +229,7 @@ const App: React.FC<AppProps> = observer(
               />
               <directionalLight color="blue" intensity={0.35} />
               <ambientLight color="white" intensity={0.8} />*/}
-              {/* @ts-ignore */}
+              {/* @ts-expect-error - ambientLight props are not fully typed */}
               <ambientLight color="#404040" />
               {/*<directionalLight
                 color="white"
@@ -266,7 +250,7 @@ const App: React.FC<AppProps> = observer(
                 fade
                 speed={2}
               />
-              {/* @ts-ignore */}
+              {/* @ts-expect-error - fog props are not fully typed */}
               <fog attach="fog" args={["#000000", 25, 100]} />
             </Canvas>
           </div>

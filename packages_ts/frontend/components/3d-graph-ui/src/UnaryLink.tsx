@@ -1,13 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React from "react";
 import * as THREE from "three";
-import { Fact, Position } from "./types.js";
 import { Torus, Billboard, Text } from "@react-three/drei";
 
-import {
-  TEXT_HIGHLIGHT_COLOR,
-  TEXT_DEFAULT_COLOR,
-  TEXT_ULTIMATE_HIGHLIGHT_COLOR,
-} from "./colors.js";
+import { TEXT_HIGHLIGHT_COLOR } from "./colors.js";
 
 export interface UnaryLinkProps {
   hovered: boolean;
@@ -46,21 +41,22 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
   const points = curve.getPoints(16);
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
   const material = new THREE.LineBasicMaterial({ color: color });
+  // Create geometry and material for visualization purposes
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const ellipse = new THREE.Line(geometry, material);
-  // ellipse.rotateY(
-  //   source + 2 * Math.PI * ((idx + 1) / links.length + offset),
-  // );
+
+  // Create geometries and materials for the torus
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const geom = new THREE.TorusGeometry(2, 0.5, 12, 48, Math.PI * 2 * 0.84);
   const mat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-  const torus = new THREE.Mesh(geom, mat);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const geom2 = new THREE.TorusGeometry(2, 0.05, 12, 48, Math.PI * 2 * 0.8);
   const mat2 = new THREE.MeshBasicMaterial({ color: color });
-  const torus2 = new THREE.Mesh(geom2, mat2);
 
   const userData = { uid: id, type: "link" };
 
-  const rotation = [0, 2 * Math.PI * ((idx + 1) / linksLength + offset), 0];
+  // Calculate position for the billboard
   // Calculate rotation and translation
   const axis = new THREE.Vector3(0, 1, 0); // Assuming rotation around Y axis
   const angle = 2 * Math.PI * ((idx + 1) / linksLength + offset);
@@ -79,9 +75,9 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
   ];
 
   return (
-    //@ts-ignore
+    // @ts-expect-error - Fragment props are not fully typed
     <>
-      {/* @ts-ignore */}
+      {/* @ts-expect-error - group props are not fully typed */}
       <group
         userData={userData}
         rotation={[0, 2 * Math.PI * ((idx + 1) / linksLength + offset), 0]}
@@ -121,20 +117,20 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
           args={[2, 0.05, 12, 48, Math.PI * 2 * 0.8]}
         />
 
-        {/* @ts-ignore */}
+        {/* @ts-expect-error - mesh props are not fully typed */}
         <mesh
           userData={userData}
           position={[-0.7, 1.65, 0]}
           rotation={[0, 0, 0.61 * (Math.PI * 2)]}
         >
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - coneGeometry props are not fully typed */}
           <coneGeometry args={[0.2, 1, 4]} />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
 
-        {/* @ts-ignore */}
+        {/* @ts-expect-error - closing tag is not properly typed */}
       </group>
 
       {hovered && (

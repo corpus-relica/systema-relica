@@ -76,6 +76,7 @@ export const getCollections = async () => {
   try {
     const axiosInstance = getAxiosInstance(); // Get the initialized instance
     const response = await axiosInstance.get(COLLECTIONS_ENDPOINT);
+    console.log("AYAYAYAYAYAYAYAYAYAYAYAY", response); // Debugging line
     const collections = response.data.collections;
     return collections;
   } catch (error) {

@@ -1,18 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-// @ts-ignore
 import * as THREE from "three";
-import { useThree, useFrame } from "@react-three/fiber";
-import { NodeData, Position } from "./types.js";
-import { Billboard, Plane, Text, RoundedBox } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { Position } from "./types.js";
+import { Billboard, Plane, Text } from "@react-three/drei";
 import { useStores } from "./context/RootStoreContext.js";
 import { observer } from "mobx-react";
-import { autorun } from "mobx";
 
-import {
-  TEXT_HIGHLIGHT_COLOR,
-  TEXT_DEFAULT_COLOR,
-  TEXT_ULTIMATE_HIGHLIGHT_COLOR,
-} from "./colors.js";
+// Import only the colors we need
+// No need for additional imports
 
 export interface NodeProps {
   key: number;
@@ -23,8 +18,7 @@ export interface NodeProps {
   hovered: boolean;
 }
 
-const circleTexture = new THREE.TextureLoader().load("../assets/circle.png");
-const squareTexture = new THREE.TextureLoader().load("../assets/square.png");
+// Remove unused texture loaders
 
 // Custom hook to wait for geometry to be ready
 function useGeometryBounds(meshRef: React.RefObject<THREE.Mesh>) {
@@ -59,6 +53,8 @@ const Node: React.FC<NodeProps> = observer(
     /*RefObject<
     THREE.Mesh<THREE.BufferGeometry<THREE.NormalBufferAttributes>>
   >*/
+    // Use any for now, but with a more specific type comment
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const textRef: any = useRef(null);
     const bounds: Bounds = useGeometryBounds(textRef);
     const [planeDimensions, setPlaneDimensions] = useState<[number, number]>([
@@ -90,7 +86,7 @@ const Node: React.FC<NodeProps> = observer(
       if (textRef.current) {
         // Assuming the geometry will be updated once the text is fully loaded and rendered
         const textMesh = textRef.current;
-        //@ts-ignore
+        // @ts-expect-error - textMesh.geometry type is not properly defined
         textMesh.geometry.computeBoundingBox();
         const box = new THREE.Box3().setFromObject(textMesh);
         const size = new THREE.Vector3();
@@ -102,7 +98,7 @@ const Node: React.FC<NodeProps> = observer(
     const userData = { uid: id, type: "node" };
     return (
       <>
-        {/* @ts-ignore */}
+        {/* @ts-expect-error - group props are not fully typed */}
         <group>
           <Billboard
             position={nodePosition}
@@ -147,7 +143,7 @@ const Node: React.FC<NodeProps> = observer(
             </Text>
           </Billboard>
 
-          {/* @ts-ignore*/}
+          {/* @ts-expect-error - group props are not fully typed */}
         </group>
       </>
     );

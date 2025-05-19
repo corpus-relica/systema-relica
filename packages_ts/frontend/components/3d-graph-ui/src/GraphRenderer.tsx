@@ -1,18 +1,16 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-// @ts-ignore
+import React, { useState, useRef, useEffect } from "react";
 import * as THREE from "three";
 import { observer } from "mobx-react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 
 import { useStores } from "./context/RootStoreContext.js";
-
 import { NodeData, EdgeData, Position } from "./types.js";
+import { ThreeIntersection } from "./types/three-types.js";
 
 import Node from "./Node.js";
 import Link from "./Link.js";
 import UnaryLink from "./UnaryLink.js";
-
 import useMouseRaycast from "./useMouseRaycast.js";
 
 export interface GraphRendererProps {}
@@ -59,12 +57,13 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
     unsetHoveredNode,
   } = useStores();
   const { camera } = useThree();
-  const [cameraPosition, setCameraPosition] = useState(
-    new THREE.Vector3(45, 0, 0)
-  );
+  // We need setCameraPosition but not cameraPosition
+  const [, setCameraPosition] = useState(new THREE.Vector3(45, 0, 0));
+  // Camera vector constant for reference
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const cameraVec = new THREE.Vector3(CAMERA_TARGET_DISTANCE, 0, 0);
 
-  useMouseRaycast((intersected: any) => {
+  useMouseRaycast((intersected: ThreeIntersection | null) => {
     if (intersected) {
       switch (intersected.object.userData.type) {
         case "node":
@@ -96,7 +95,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
     }
   });
 
-  //@ts-ignore
+  // @ts-expect-error - OrbitControls type from drei needs proper typing
   const controlsRef = useRef<OrbitControls>(null);
 
   useEffect(() => {
@@ -104,7 +103,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
       const node: NodeData | undefined = nodeData.get(selectedNode);
       if (!node) return;
 
-      // @ts-ignore
+      // @ts-expect-error - node.pos is optional but we know it exists here
       const { x, y, z }: Position | undefined = node.pos;
 
       // Set camera position offset from the target
@@ -120,7 +119,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
     const node: NodeData | undefined = nodeData.get(selectedNode);
     if (!node) return;
 
-    // @ts-ignore
+    // @ts-expect-error - node.pos is optional but we provide a default
     const { x, y, z }: Position | null = node.pos || { x: 0, y: 0, z: 0 };
 
     // Calculate the direction vector from the origin to the target node
@@ -161,9 +160,9 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
   // i.e. there may be multiople unary relations on a single node.
   const groupedUni: GroupedEdges = groupEdgesBySourceAndTarget(uni);
   const selfLinks = Object.keys(groupedUni).reduce(
-    (memo: any[], key: string) => {
+    (memo: React.ReactNode[], key: string) => {
       const links: EdgeData[] = groupedUni[key] as EdgeData[];
-      const ret: any[] = [];
+      const ret: React.ReactNode[] = [];
       const node: NodeData | undefined = nodeData.get(links[0].source);
       const position: Position = node?.pos || { x: 0, y: 0, z: 0 };
       const pos: [number, number, number] = [
@@ -207,7 +206,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = observer(() => {
     <>
       <OrbitControls
         ref={controlsRef}
-        // @ts-ignore
+        // @ts-expect-error - OrbitControls props are not fully typed
         maxDistance={CAMERA_MAX_DISTANCE}
         minDistance={CAMERA_MIN_DISTANCE}
       />
