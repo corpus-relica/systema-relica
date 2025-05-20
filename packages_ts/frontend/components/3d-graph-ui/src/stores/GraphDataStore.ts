@@ -1,11 +1,12 @@
 import { makeAutoObservable, observable, computed, action } from "mobx";
-import { Fact } from "../types.js";
+import { Fact, Position } from "../types.js";
 import {
   INodeEntity,
   IEdgeEntity,
   createNodeEntity,
   createEdgeEntity,
 } from "../types/models.js";
+import SpatialIndexService from "../services/spatial/SpatialIndexService.js";
 
 /**
  * GraphDataStore
@@ -17,6 +18,9 @@ class GraphDataStore {
   // Observable maps for storing node and edge entities
   private nodeEntities = observable.map<number, INodeEntity>();
   private edgeEntities = observable.map<number, IEdgeEntity>();
+
+  // Spatial index for efficient spatial queries
+  private spatialIndex: SpatialIndexService;
 
   // Category data for node classification
   private categories: {
@@ -46,12 +50,21 @@ class GraphDataStore {
       updateEdgePositions: action,
       setCategories: action,
       setPaletteMap: action,
+      findNodesInRadius: action,
+      findNodesInRegion: action,
 
       // Specify computed properties
       allNodes: computed,
       allEdges: computed,
       nodeCount: computed,
       edgeCount: computed,
+    });
+
+    // Initialize spatial index
+    this.spatialIndex = new SpatialIndexService("octree", {
+      size: 1000,
+      maxObjects: 16,
+      maxDepth: 8,
     });
   }
 
@@ -62,6 +75,12 @@ class GraphDataStore {
     if (!this.nodeEntities.has(nodeData.id)) {
       const node = createNodeEntity(nodeData);
       this.nodeEntities.set(node.id, node);
+
+      // Add to spatial index if position is available
+      if (node.pos) {
+        this.spatialIndex.addNode(node);
+      }
+
       return true;
     }
     return false;
@@ -71,6 +90,10 @@ class GraphDataStore {
    * Remove a node from the store
    */
   removeNode(id: number) {
+    // Remove from spatial index
+    this.spatialIndex.removeNode(id);
+
+    // Remove from node entities
     return this.nodeEntities.delete(id);
   }
 
@@ -110,6 +133,10 @@ class GraphDataStore {
         pos,
       };
       this.nodeEntities.set(id, updatedNode);
+
+      // Update position in spatial index
+      this.spatialIndex.updateNodePosition(id, pos);
+
       return true;
     }
     return false;
@@ -208,6 +235,30 @@ class GraphDataStore {
    */
   getNode(id: number): INodeEntity | undefined {
     return this.nodeEntities.get(id);
+  }
+
+  /**
+   * Find the nearest node to a position
+   */
+  findNearestNode(
+    position: Position,
+    maxRadius: number = 100
+  ): INodeEntity | null {
+    return this.spatialIndex.findNearestNode(position, maxRadius);
+  }
+
+  /**
+   * Find nodes within a radius of a position
+   */
+  findNodesInRadius(position: Position, radius: number): INodeEntity[] {
+    return this.spatialIndex.findNodesInRadius(position, radius);
+  }
+
+  /**
+   * Find nodes within a rectangular region
+   */
+  findNodesInRegion(min: Position, max: Position): INodeEntity[] {
+    return this.spatialIndex.findNodesInRegion(min, max);
   }
 
   /**
@@ -326,9 +377,17 @@ class GraphDataStore {
    * Get edges connected to a node
    */
   getConnectedEdges(nodeId: number): IEdgeEntity[] {
+    // This is more efficient than filtering all edges
     return this.allEdges.filter(
       (edge) => edge.source === nodeId || edge.target === nodeId
     );
+  }
+
+  /**
+   * Find potential collision candidates for a node
+   */
+  findCollisionCandidates(nodeId: number, radius: number): INodeEntity[] {
+    return this.spatialIndex.findCollisionCandidates(nodeId, radius);
   }
 
   /**
@@ -346,6 +405,22 @@ class GraphDataStore {
     return Array.from(connectedNodeIds)
       .map((id) => this.getNode(id))
       .filter((node): node is INodeEntity => node !== undefined);
+  }
+
+  /**
+   * Rebuild the spatial index from current nodes
+   * This is useful when loading a large number of nodes at once
+   */
+  rebuildSpatialIndex(): void {
+    this.spatialIndex.rebuildFromNodes(this.allNodes);
+  }
+
+  /**
+   * Select nodes in a region (e.g., rectangle selection)
+   * Returns node IDs that can be used for selection
+   */
+  selectNodesInRegion(min: Position, max: Position): number[] {
+    return this.spatialIndex.findNodeIdsInRegion(min, max);
   }
 }
 
