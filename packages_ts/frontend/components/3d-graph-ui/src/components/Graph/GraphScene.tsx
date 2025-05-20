@@ -5,11 +5,11 @@ import { OrbitControls } from "@react-three/drei";
 import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 
-import { useStores } from "../context/RootStoreContext.js";
-import NodesLayer from "./NodesLayer.js";
-import EdgesLayer from "./EdgesLayer.js";
-import useMouseRaycast from "../useMouseRaycast.js";
-import { ThreeIntersection } from "../types/three-types.js";
+import { useStores } from "../../context/RootStoreContext.js";
+import NodesLayer from "../Node/NodesLayer.js";
+import EdgesLayer from "../Edge/EdgesLayer.js";
+import useMouseRaycast from "../../hooks/useMouseRaycast.js";
+import { ThreeIntersection } from "../../types/three-types.js";
 
 const CAMERA_TARGET_DISTANCE = 20;
 const CAMERA_MAX_DISTANCE = 85;
@@ -88,7 +88,6 @@ const GraphScene: React.FC<GraphSceneProps> = observer(() => {
     const node = nodeData.get(selectedNode);
     if (!node) return;
 
-    // @ts-expect-error - node.pos is optional but we provide a default
     const { x, y, z } = node.pos || { x: 0, y: 0, z: 0 };
 
     // Calculate the direction vector from the origin to the target node

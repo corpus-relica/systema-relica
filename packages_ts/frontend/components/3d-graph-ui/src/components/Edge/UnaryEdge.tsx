@@ -2,7 +2,7 @@ import React from "react";
 import * as THREE from "three";
 import { Torus, Billboard, Text } from "@react-three/drei";
 
-import { TEXT_HIGHLIGHT_COLOR } from "../colors.js";
+import { TEXT_HIGHLIGHT_COLOR } from "../../config/colors.js";
 
 export interface UnaryEdgeProps {
   hovered: boolean;

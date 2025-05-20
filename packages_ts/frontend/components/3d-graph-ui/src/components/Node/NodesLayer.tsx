@@ -1,9 +1,9 @@
 import React from "react";
 import { observer } from "mobx-react";
-import { useStores } from "../hooks/useStores.js";
+import { useStores } from "../../hooks/useStores.js";
 import Node from "./Node.js";
-import useFrustumCulling from "../hooks/useFrustumCulling.js";
-import { INodeEntity } from "../types/models.js";
+import useFrustumCulling from "../../hooks/useFrustumCulling.js";
+import { INodeEntity } from "../../types/models.js";
 
 export interface NodesLayerProps {
   useInstancing?: boolean;

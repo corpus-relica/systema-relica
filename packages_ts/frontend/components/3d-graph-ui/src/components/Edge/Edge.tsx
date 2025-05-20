@@ -2,9 +2,9 @@ import React from "react";
 import * as THREE from "three";
 import { Billboard, Text, Line } from "@react-three/drei";
 import { observer } from "mobx-react";
-import { Position } from "../types.js";
+import { Position } from "../../types.js";
 
-import { TEXT_HIGHLIGHT_COLOR } from "../colors.js";
+import { TEXT_HIGHLIGHT_COLOR } from "../../config/colors.js";
 
 export interface EdgeProps {
   id: number;

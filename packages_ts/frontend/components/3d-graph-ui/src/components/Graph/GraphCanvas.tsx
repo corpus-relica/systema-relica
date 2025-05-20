@@ -2,11 +2,11 @@ import React, { useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Stats, Stars } from "@react-three/drei";
 import GraphScene from "./GraphScene.js";
-import { Fact } from "../types.js";
-import RootStoreContext from "../context/RootStoreContext.js";
-import RootStore from "../stores/RootStore.js";
+import { Fact } from "../../types.js";
 import { observer } from "mobx-react";
-import { DOMMouseEvent as MouseEvent } from "../types/three-types.js";
+import { DOMMouseEvent as MouseEvent } from "../../types/three-types.js";
+import { useStores } from "../../hooks/useStores.js";
+import { INodeEntity, IEdgeEntity } from "../../types/models.js";
 
 export interface GraphCanvasProps {
   dimensions: { width: number; height: number };
@@ -23,8 +23,6 @@ export interface GraphCanvasProps {
   selectedEdge: number | null;
   paletteMap: Map<number, string> | null;
 }
-
-const rootStore = new RootStore();
 
 const GraphCanvas: React.FC<GraphCanvasProps> = observer(
   ({
@@ -44,6 +42,10 @@ const GraphCanvas: React.FC<GraphCanvasProps> = observer(
     selectedEdge,
     paletteMap,
   }) => {
+    // Get the rootStore from context
+    const rootStore = useStores();
+
+    // Update store with props
     rootStore.setSelectedNode(selectedNode);
     rootStore.setSelectedEdge(selectedEdge);
     rootStore.setPaletteMap(paletteMap);
@@ -53,7 +55,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = observer(
     const mouse = useRef({ x: 0, y: 0 });
 
     const handleMouseDown = (e: MouseEvent) => {
-      const { button } = e; // eslint-disable-line @typescript-eslint/no-unused-vars
       mouse.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -96,25 +97,42 @@ const GraphCanvas: React.FC<GraphCanvasProps> = observer(
 
     // Process facts data
     useEffect(() => {
-      // remove old facts
-      rootStore.edgeData.forEach((edge) => {
-        if (!facts.find((fact) => fact.fact_uid === edge.id)) {
-          rootStore.removeEdge(edge.id);
+      // Get all current edge IDs
+      const currentEdgeIds = new Set<number>();
+      rootStore.edgeData.forEach((edge: IEdgeEntity | undefined) => {
+        if (edge && edge.id !== undefined) {
+          currentEdgeIds.add(edge.id);
         }
       });
 
-      // find orphan nodes
-      for (const k of rootStore.nodeData.keys()) {
+      // Find edges to remove (edges in the store but not in the facts)
+      currentEdgeIds.forEach((edgeId) => {
+        if (!facts.find((fact) => fact.fact_uid === edgeId)) {
+          rootStore.removeEdge(edgeId);
+        }
+      });
+
+      // Get all current node IDs
+      const currentNodeIds = new Set<number>();
+      rootStore.nodeData.forEach((node: INodeEntity | undefined) => {
+        if (node && node.id !== undefined) {
+          currentNodeIds.add(node.id);
+        }
+      });
+
+      // Find nodes to remove (nodes that aren't referenced in any fact)
+      currentNodeIds.forEach((nodeId) => {
         if (
           !facts.find(
-            (fact) => fact.lh_object_uid === k || fact.rh_object_uid === k
+            (fact) =>
+              fact.lh_object_uid === nodeId || fact.rh_object_uid === nodeId
           )
         ) {
-          rootStore.removeNode(k);
+          rootStore.removeNode(nodeId);
         }
-      }
+      });
 
-      // update existing facts and add new facts and nodes
+      // Add new nodes and edges
       facts.forEach((fact: Fact) => {
         const {
           fact_uid,
@@ -124,7 +142,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = observer(
           rh_object_name,
         } = fact;
 
-        if (!rootStore.nodeData.has(lh_object_uid)) {
+        // Add left-hand node if it doesn't exist
+        if (!rootStore.graphDataStore.hasNode(lh_object_uid)) {
           rootStore.addNode({
             id: lh_object_uid,
             name: lh_object_name,
@@ -132,7 +151,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = observer(
           });
         }
 
-        if (!rootStore.nodeData.has(rh_object_uid)) {
+        // Add right-hand node if it doesn't exist
+        if (!rootStore.graphDataStore.hasNode(rh_object_uid)) {
           rootStore.addNode({
             id: rh_object_uid,
             name: rh_object_name,
@@ -140,14 +160,18 @@ const GraphCanvas: React.FC<GraphCanvasProps> = observer(
           });
         }
 
-        if (!rootStore.edgeData.has(fact_uid)) {
+        // Add edge if it doesn't exist
+        if (!rootStore.graphDataStore.hasEdge(fact_uid)) {
           rootStore.addEdge(fact);
         }
       });
+
+      // Start the simulation after all facts are processed
+      rootStore.wake();
     }, [facts]);
 
     return (
-      <RootStoreContext.Provider value={rootStore}>
+      <>
         {/* @ts-expect-error - Canvas props are not fully typed */}
         <Canvas
           camera={{
@@ -178,7 +202,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = observer(
           {/* @ts-expect-error - fog props are not fully typed */}
           <fog attach="fog" args={["#000000", 25, 100]} />
         </Canvas>
-      </RootStoreContext.Provider>
+      </>
     );
   }
 );

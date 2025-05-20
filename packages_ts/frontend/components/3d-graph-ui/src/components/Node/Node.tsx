@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { Position } from "../types.js";
+import { Position } from "../../types.js";
 import { Billboard, Plane, Text } from "@react-three/drei";
-import { useStores } from "../context/RootStoreContext.js";
+import { useStores } from "../../context/RootStoreContext.js";
 import { observer } from "mobx-react";
 
 export interface NodeProps {
@@ -77,7 +77,6 @@ const Node: React.FC<NodeProps> = observer(
       if (textRef.current) {
         // Assuming the geometry will be updated once the text is fully loaded and rendered
         const textMesh = textRef.current;
-        // @ts-expect-error - textMesh.geometry type is not properly defined
         textMesh.geometry.computeBoundingBox();
         const box = new THREE.Box3().setFromObject(textMesh);
         const size = new THREE.Vector3();
@@ -88,7 +87,7 @@ const Node: React.FC<NodeProps> = observer(
     const userData = { uid: id, type: "node" };
     return (
       <>
-        {/* @ts-expect-error - group props are not fully typed */}
+        {/* @ts-expect-error - group is a valid Three.js element */}
         <group>
           <Billboard position={nodePosition} follow>
             <Plane

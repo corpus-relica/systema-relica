@@ -1,6 +1,6 @@
 import React from "react";
 import { Fact } from "./types.js";
-import GraphContainer from "./components/GraphContainer.js";
+import GraphContainer from "./components/Graph/GraphContainer.js";
 import { observer } from "mobx-react";
 
 // Use the DOMMouseEvent type from our types file

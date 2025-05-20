@@ -3,8 +3,8 @@ import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 // Import the ThreeIntersection type from the types file
-import { ThreeIntersection } from "./types/three-types.js";
-import { useGraphDataStore } from "./hooks/useStores.js";
+import { ThreeIntersection } from "../types/three-types.js";
+import { useGraphDataStore } from "./useStores.js";
 
 // Define a type for THREE.js intersection with instanceId
 type ThreeJsIntersection = THREE.Intersection & {

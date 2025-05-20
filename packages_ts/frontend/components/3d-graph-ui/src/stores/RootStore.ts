@@ -154,14 +154,58 @@ class RootStore {
   };
 
   /**
-   * Running state
+   * Spatial selection methods
+   */
+
+  selectNodesInRegion = (min: Position, max: Position, append = false) => {
+    // Get node IDs in the region using spatial indexing
+    const nodeIds = this.graphDataStore.selectNodesInRegion(min, max);
+
+    // Update selection state in UIStateStore
+    if (append) {
+      // Add to existing selection
+      nodeIds.forEach((id) => this.uiStateStore.addNodeToSelection(id));
+    } else {
+      // Replace existing selection
+      this.uiStateStore.setMultipleSelectedNodes(nodeIds);
+    }
+
+    return nodeIds;
+  };
+
+  findNodesInRadius = (position: Position, radius: number) => {
+    return this.graphDataStore.findNodesInRadius(position, radius);
+  };
+
+  findNearestNode = (position: Position, maxRadius = 100) => {
+    return this.graphDataStore.findNearestNode(position, maxRadius);
+  };
+
+  findCollisionCandidates = (nodeId: number, radius: number) => {
+    return this.graphDataStore.findCollisionCandidates(nodeId, radius);
+  };
+
+  /**
+   * Running state and physics control
    */
 
   setIsRunning = (isRunning: boolean) => {
     this.uiStateStore.setIsRunning(isRunning);
+
+    // Update physics simulation state
     if (isRunning) {
+      this.physicsStore.resumeSimulation();
       this.tickAnimation();
+    } else {
+      this.physicsStore.pauseSimulation();
     }
+  };
+
+  /**
+   * Get physics performance metrics
+   */
+  getPhysicsPerformanceMetrics = () => {
+    return this.physicsStore.getPerformanceMetrics();
   };
 
   /**
@@ -260,6 +304,18 @@ class RootStore {
     return this.uiStateStore.selectedEdge;
   }
 
+  get selectedNodeIds() {
+    return this.uiStateStore.getSelectedNodeIds;
+  }
+
+  isNodeSelected = (id: number) => {
+    return this.uiStateStore.isNodeSelected(id);
+  };
+
+  toggleNodeSelection = (id: number) => {
+    this.uiStateStore.toggleNodeSelection(id);
+  };
+
   get isRunning() {
     return this.uiStateStore.running;
   }
@@ -289,6 +345,14 @@ class RootStore {
       },
     };
   }
+
+  /**
+   * Rebuild spatial index
+   * This is useful after loading a large number of nodes
+   */
+  rebuildSpatialIndex = () => {
+    this.graphDataStore.rebuildSpatialIndex();
+  };
 }
 
 export default RootStore;

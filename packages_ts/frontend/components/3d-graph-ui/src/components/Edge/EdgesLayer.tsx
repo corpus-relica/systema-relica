@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { observer } from "mobx-react";
-import { useStores } from "../context/RootStoreContext.js";
-import { EdgeData, Position, NodeData } from "../types.js";
+import { useStores } from "../../hooks/useStores.js";
+import { EdgeData, Position } from "../../types.js";
 import Edge from "./Edge.js";
 import UnaryEdge from "./UnaryEdge.js";
+import useFrustumCulling, {
+  useVisibleEdges,
+} from "../../hooks/useFrustumCulling.js";
+import { IEdgeEntity, INodeEntity } from "../../types/models.js";
 
 export interface EdgesLayerProps {}
 
@@ -31,11 +35,46 @@ const EdgesLayer: React.FC<EdgesLayerProps> = observer(() => {
   const { edgeData, nodeData, hoveredLink, selectedEdge, paletteMap } =
     useStores();
 
+  // Convert nodeData to a proper Map for frustum culling
+  const nodeMap = useMemo(() => {
+    const map = new Map<number, INodeEntity>();
+    Array.from(nodeData.values()).forEach((node) => {
+      if (node) {
+        map.set(node.id, node);
+      }
+    });
+    return map;
+  }, [nodeData]);
+
+  // Convert edgeData to a proper Map for visible edges
+  const edgeMap = useMemo(() => {
+    const map = new Map<number, IEdgeEntity>();
+    Array.from(edgeData.values()).forEach((edge) => {
+      if (edge) {
+        map.set(edge.id, edge as IEdgeEntity);
+      }
+    });
+    return map;
+  }, [edgeData]);
+
+  // Use frustum culling to determine which nodes are visible
+  const visibleNodeIds = useFrustumCulling(nodeMap);
+
+  // Use visible nodes to determine which edges are visible
+  const visibleEdgeIds = useVisibleEdges(edgeMap, visibleNodeIds);
+
+  // Filter edgeData to only include visible edges
+  const visibleEdges = useMemo(() => {
+    return Array.from(edgeData.values()).filter(
+      (edge) => edge && visibleEdgeIds.includes(edge.id)
+    );
+  }, [edgeData, visibleEdgeIds]);
+
   const uni: EdgeData[] = [];
   const bin: EdgeData[] = [];
 
   // Separate binary from unary links
-  Array.from(edgeData.values()).forEach((link: EdgeData) => {
+  visibleEdges.forEach((link: EdgeData) => {
     const { sourcePos = origin, targetPos = origin }: EdgeData = link;
     if (
       sourcePos.x === targetPos.x &&
@@ -54,7 +93,7 @@ const EdgesLayer: React.FC<EdgesLayerProps> = observer(() => {
     (memo: React.ReactNode[], key: string) => {
       const links: EdgeData[] = groupedUni[key] as EdgeData[];
       const ret: React.ReactNode[] = [];
-      const node: NodeData | undefined = nodeData.get(links[0].source);
+      const node: INodeEntity | undefined = nodeData.get(links[0].source);
       const position: Position = node?.pos || { x: 0, y: 0, z: 0 };
       const pos: [number, number, number] = [
         position.x,

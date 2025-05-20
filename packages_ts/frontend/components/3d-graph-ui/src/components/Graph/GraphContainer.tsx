@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import GraphCanvas from "./GraphCanvas.js";
-import GraphControls from "./GraphControls.js";
-import { Fact } from "../types.js";
+import GraphControls from "../Controls/GraphControls.js";
+import { Fact } from "../../types.js";
+import { RootStoreProvider } from "../../context/RootStoreProvider.js";
+import RootStore from "../../stores/RootStore.js";
 
 export interface GraphContainerProps {
   categories: Array<{ uid: number; name: string; descendants: Array<number> }>;
@@ -19,7 +21,7 @@ export interface GraphContainerProps {
 }
 
 // Use the DOMMouseEvent type from our types file
-import { DOMMouseEvent as MouseEvent } from "../types/three-types.js";
+import { DOMMouseEvent as MouseEvent } from "../../types/three-types.js";
 
 const GraphContainer: React.FC<GraphContainerProps> = ({
   categories,
@@ -54,6 +56,9 @@ const GraphContainer: React.FC<GraphContainerProps> = ({
     };
   }, []);
 
+  // Create a singleton instance of the RootStore
+  const rootStore = new RootStore();
+
   return (
     <div
       ref={containerRef}
@@ -62,24 +67,26 @@ const GraphContainer: React.FC<GraphContainerProps> = ({
         height: "100%",
       }}
     >
-      <div style={{ width: dimensions.width, height: dimensions.height }}>
-        <GraphCanvas
-          dimensions={dimensions}
-          categories={categories}
-          facts={facts}
-          onNodeClick={onNodeClick}
-          onNodeRightClick={onNodeRightClick}
-          onStageClick={onStageClick}
-          onEdgeRollOver={onEdgeRollOver}
-          onEdgeRollOut={onEdgeRollOut}
-          onEdgeClick={onEdgeClick}
-          onEdgeRightClick={onEdgeRightClick}
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          paletteMap={paletteMap}
-        />
-      </div>
-      <GraphControls />
+      <RootStoreProvider store={rootStore}>
+        <div style={{ width: dimensions.width, height: dimensions.height }}>
+          <GraphCanvas
+            dimensions={dimensions}
+            categories={categories}
+            facts={facts}
+            onNodeClick={onNodeClick}
+            onNodeRightClick={onNodeRightClick}
+            onStageClick={onStageClick}
+            onEdgeRollOver={onEdgeRollOver}
+            onEdgeRollOut={onEdgeRollOut}
+            onEdgeClick={onEdgeClick}
+            onEdgeRightClick={onEdgeRightClick}
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            paletteMap={paletteMap}
+          />
+        </div>
+        <GraphControls />
+      </RootStoreProvider>
     </div>
   );
 };
