@@ -46,7 +46,7 @@ const GraphAndSelectionLayout = ({
           display: "flex",
           flexDirection: "column",
           flex: 1,
-          backgroundColor: theme.palette.background.default,
+          backgroundColor: theme.palette.mode === 'dark' ? '#121212' : theme.palette.background.default,
           overflow: "hidden", // Prevent scrolling in the graph view
         }}
       >
@@ -95,7 +95,7 @@ const GraphAndSelectionLayout = ({
           display: "flex",
           flexDirection: "column",
           width: "384px",
-          backgroundColor: "#515151",
+          backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#515151',
           overflow: "hidden", // Hide overflow on the container
         }}
       >
