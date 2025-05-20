@@ -2,9 +2,9 @@ import React from "react";
 import * as THREE from "three";
 import { Torus, Billboard, Text } from "@react-three/drei";
 
-import { TEXT_HIGHLIGHT_COLOR } from "./colors.js";
+import { TEXT_HIGHLIGHT_COLOR } from "../colors.js";
 
-export interface UnaryLinkProps {
+export interface UnaryEdgeProps {
   hovered: boolean;
   pos: [number, number, number];
   linksLength: number;
@@ -17,7 +17,7 @@ export interface UnaryLinkProps {
 
 const radius = 2;
 
-const UnaryLink: React.FC<UnaryLinkProps> = ({
+const UnaryEdge: React.FC<UnaryEdgeProps> = ({
   offset,
   id,
   idx,
@@ -27,7 +27,6 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
   label,
   color,
 }) => {
-  // const color = hovered ? 0xff0000 : 0x00ff00;
   const curve = new THREE.EllipseCurve(
     -2.35,
     0, // ax, aY
@@ -75,7 +74,6 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
   ];
 
   return (
-    // @ts-expect-error - Fragment props are not fully typed
     <>
       {/* @ts-expect-error - group props are not fully typed */}
       <group
@@ -87,33 +85,15 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
           userData={userData}
           material={mat}
           rotation={[0, 0, Math.PI * 2 * 0.08]}
-          // rotation={rotation as any}
           position={[-2.35, 0.55, 0]}
-          // position={pos}
           args={[2, 0.5, 12, 48, Math.PI * 2 * 0.84]}
           visible={false}
         />
-        {/*<primitive
-          userData={userData}
-          object={torus}
-          position={[-2.35, 0, 0]}
-          rotation={[0, 0, Math.PI * 2 * 0.08]}
-          visible={true}
-        />
-        // <primitive
-        //   userData={userData}
-        //   object={torus2}
-        //   position={[-2.35, 0.55, 0]}
-        //   rotation={[0, 0, Math.PI * 2 * 0.08]}
-        //   visible={true}
-        // />*/}
         <Torus
           userData={userData}
           material={mat2}
           rotation={[0, 0, Math.PI * 2 * 0.08]}
-          // rotation={rotation as any}
           position={[-2.35, 0.55, 0]}
-          // position={pos}
           args={[2, 0.05, 12, 48, Math.PI * 2 * 0.8]}
         />
 
@@ -127,10 +107,7 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
           <coneGeometry args={[0.2, 1, 4]} />
           {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
-
-        {/* @ts-expect-error - closing tag is not properly typed */}
       </group>
 
       {hovered && (
@@ -155,4 +132,4 @@ const UnaryLink: React.FC<UnaryLinkProps> = ({
   );
 };
 
-export default UnaryLink;
+export default UnaryEdge;

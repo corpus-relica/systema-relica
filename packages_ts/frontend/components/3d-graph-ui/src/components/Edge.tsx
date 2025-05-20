@@ -2,11 +2,11 @@ import React from "react";
 import * as THREE from "three";
 import { Billboard, Text, Line } from "@react-three/drei";
 import { observer } from "mobx-react";
-import { Position } from "./types.js";
+import { Position } from "../types.js";
 
-import { TEXT_HIGHLIGHT_COLOR } from "./colors.js";
+import { TEXT_HIGHLIGHT_COLOR } from "../colors.js";
 
-export interface LinkProps {
+export interface EdgeProps {
   id: number;
   label: string;
   type: number;
@@ -19,20 +19,15 @@ export interface LinkProps {
 
 const lineOffsetLength = 1.618; // Length by which to shorten the line on each end
 const cylinderOffsetLength = 1.618; // Length by which to shorten the cylinder on each end
-
 const radius = 2; // You can control the radius here
-// Remove unused constants
 
-interface LoopLinkProps {
+interface LoopEdgeProps {
   origin: Position;
 }
 
-const LoopLink: React.FC<LoopLinkProps> = observer(
-  ({ origin }: LoopLinkProps) => {
-    console.log("EVEN HYEPPENING????");
+const LoopEdge: React.FC<LoopEdgeProps> = observer(
+  ({ origin }: LoopEdgeProps) => {
     // Create an ellipse curve
-    // Create an ellipse curve
-
     const curve = new THREE.EllipseCurve(
       origin.x,
       origin.y, // ax, aY
@@ -50,7 +45,7 @@ const LoopLink: React.FC<LoopLinkProps> = observer(
   }
 );
 
-const Link: React.FC<LinkProps> = observer(
+const Edge: React.FC<EdgeProps> = observer(
   ({
     id,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -61,14 +56,14 @@ const Link: React.FC<LinkProps> = observer(
     baseColor,
     hovered,
     selected,
-  }: LinkProps) => {
+  }: EdgeProps) => {
     if (
       source.x === target.x &&
       source.y === target.y &&
       source.z === target.z
     ) {
       return (
-        <LoopLink
+        <LoopEdge
           {...{
             origin: source,
           }}
@@ -118,7 +113,6 @@ const Link: React.FC<LinkProps> = observer(
 
     const color: string = hovered || selected ? "hotpink" : baseColor;
     const cylinderWidth = selected ? 0.125 : 0.05;
-    //Handle self reference
 
     const points = [];
     points.push(lineStartVector);
@@ -145,7 +139,6 @@ const Link: React.FC<LinkProps> = observer(
           />
           {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
         {/* @ts-expect-error - mesh props are not fully typed */}
         <mesh
@@ -158,7 +151,6 @@ const Link: React.FC<LinkProps> = observer(
           <cylinderGeometry args={[0.5, 0.5, cylinderLength, 5]} />
           {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
         {(hovered || selected) && (
           <Billboard position={midPoint} follow>
@@ -184,11 +176,10 @@ const Link: React.FC<LinkProps> = observer(
           <coneGeometry args={[0.2, 1, 4]} />
           {/* @ts-expect-error - meshBasicMaterial props are not fully typed */}
           <meshBasicMaterial color={color} />
-          {/* @ts-expect-error - closing tag is not properly typed */}
         </mesh>
       </>
     );
   }
 );
 
-export default Link;
+export default Edge;

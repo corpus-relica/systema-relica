@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.js";
+import ThreeDGraphUI from "./3DGraphUI.js";
 import "./index.css";
-import { NodeData, EdgeData, Fact } from "./types.js";
+import { Fact } from "./types.js";
 
 const categories = [
   {
@@ -410,31 +410,7 @@ const graphFacts: Array<Fact> = [
   },
 ];
 
-// const nodeNames = new Set<number>();
-// const relNames = new Set<number>();
-
-// graphFacts.forEach(([from, rel, to]) => {
-//   nodeNames.add(from);
-//   nodeNames.add(to);
-//   relNames.add(rel);
-// });
-
-// const nd: NodeData[] = Array.from(nodeNames).map((name) => ({
-//   id: name,
-//   name: "" + name,
-//   val: 0.25,
-// }));
-// const ed: EdgeData[] = graphFacts.map(([from, rel, to]) => ({
-//   source: from,
-//   target: to,
-//   label: rel,
-//   id: Math.random(),
-// }));
-
-const rootElement = document.getElementById("root");
-let root: ReactDOM.Root | null = null;
-
-let paletteMap = new Map<number, string>();
+const paletteMap = new Map<number, string>();
 paletteMap.set(1146, "#ff0000");
 
 const Harness = ({ facts }: { facts: Array<Fact> }) => {
@@ -442,7 +418,7 @@ const Harness = ({ facts }: { facts: Array<Fact> }) => {
   const [selectedEdge, setSelectedEdge] = useState<number>(1);
   return (
     <React.StrictMode>
-      <App
+      <ThreeDGraphUI
         categories={categories}
         facts={facts}
         paletteMap={paletteMap}
@@ -476,6 +452,9 @@ const Harness = ({ facts }: { facts: Array<Fact> }) => {
   );
 };
 
+const rootElement = document.getElementById("root");
+let root: ReactDOM.Root | null = null;
+
 const init = (facts: Array<Fact>) => {
   if (rootElement) {
     if (!root) {
@@ -488,7 +467,7 @@ const init = (facts: Array<Fact>) => {
 // Initialize with empty array
 init([]);
 
-// Update with new facts after 3 seconds
+// Update with new facts after 500ms
 setTimeout(() => {
-  init(graphFacts); // Assuming graphFacts is available in this scope
+  init(graphFacts);
 }, 500);
