@@ -1,296 +1,357 @@
-import { makeAutoObservable, toJS, observable } from "mobx";
-import { NodeData, EdgeData, Fact } from "../types.js";
-import SimulationStore from "./SimulationStore.js";
+import { makeAutoObservable } from "mobx";
+import { Fact } from "../types.js";
+import GraphDataStore from "./GraphDataStore.js";
+import UIStateStore from "./UIStateStore.js";
+import PhysicsStore from "./PhysicsStore.js";
 import { Position } from "../types.js";
-// import { ThreeEvent } from "@react-three/fiber";
+import { ISimulationConfig } from "../types/models.js";
 
-// Type definition
-type Category = {
-  [name: string]: {
-    uid: number;
-    descendants: Array<number>;
-  };
-};
-
+/**
+ * RootStore
+ *
+ * Composes all store modules and provides a unified interface
+ * for the application to interact with the state.
+ */
 class RootStore {
-  simulationStore: SimulationStore;
-
-  nodeData: Map<number, NodeData>;
-  edgeData: Map<number, EdgeData> = new Map();
-
-  hoveredLink: number | null = null;
-  hoveredNode: number | null = null;
-  selectedNode: number | null = null;
-  selectedEdge: number | null = null;
-
-  private sleepTimer: number = 0;
-  private sleepDelay: number = 30000;
-  isRunning: boolean = false;
-
-  paletteMap: Map<number, string> = new Map();
-
-  // Variable initialization with default value
-  categories: Category = {};
+  // Store modules
+  graphDataStore: GraphDataStore;
+  uiStateStore: UIStateStore;
+  physicsStore: PhysicsStore;
 
   constructor() {
+    // Initialize store modules
+    this.graphDataStore = new GraphDataStore();
+    this.uiStateStore = new UIStateStore();
+
+    // Initialize physics store with callbacks for position updates
+    this.physicsStore = new PhysicsStore(
+      {}, // Default config
+      this.handleNodePositionUpdate,
+      this.handleEdgePositionsUpdate
+    );
+
     makeAutoObservable(this);
-    this.nodeData = observable.map<number, NodeData>();
-    this.simulationStore = new SimulationStore(this);
   }
 
-  addNode = (node: NodeData) => {
-    if (!this.nodeData.has(node.id)) {
-      this.nodeData.set(node.id, node);
-      this.simulationStore.addEntity(node);
+  /**
+   * Node operations
+   */
+
+  addNode = (node: {
+    id: number;
+    name: string;
+    val?: number;
+    pos?: Position;
+  }) => {
+    const added = this.graphDataStore.addNode(node);
+    if (added) {
+      this.physicsStore.addNode({
+        id: node.id,
+        name: node.name,
+        val: node.val || 0.25,
+        pos: node.pos,
+      });
       this.wake();
     }
+    return added;
   };
 
   removeNode = (id: number) => {
-    this.nodeData.delete(id);
-    this.simulationStore.removeEntity(id);
-    this.wake();
-  };
-
-  addEdge = (fact: Fact) => {
-    if (!this.edgeData.has(fact.fact_uid)) {
-      const source = fact.lh_object_uid;
-      const target = fact.rh_object_uid;
-      const edge: EdgeData = {
-        id: fact.fact_uid,
-        type: fact.rel_type_uid,
-        label: fact.rel_type_name,
-        source,
-        target,
-        // data: fact,
-      };
-      this.edgeData.set(fact.fact_uid, edge);
-      // no need to simulate unary relation (self-loop)
-      if (source !== target) this.simulationStore.addLink(edge, fact);
+    const removed = this.graphDataStore.removeNode(id);
+    if (removed) {
+      this.physicsStore.removeNode(id);
       this.wake();
     }
+    return removed;
+  };
+
+  /**
+   * Edge operations
+   */
+
+  addEdge = (fact: Fact) => {
+    const added = this.graphDataStore.addEdge(fact);
+    if (added) {
+      // Get the edge entity from the graph data store
+      const edge = this.graphDataStore.getEdge(fact.fact_uid);
+      if (edge) {
+        this.physicsStore.addLink(edge, fact);
+        this.wake();
+      }
+    }
+    return added;
   };
 
   removeEdge = (id: number) => {
-    this.edgeData.delete(id);
-    this.simulationStore.removeLink(id);
-    this.wake();
-  };
-
-  setNodePosition = (id: number, pos: Position) => {
-    const node = this.nodeData.get(id);
-    if (node) {
-      this.nodeData.set(id, Object.assign({}, node, { pos }));
+    const removed = this.graphDataStore.removeEdge(id);
+    if (removed) {
+      this.physicsStore.removeLink(id);
+      this.uiStateStore.wake();
     }
+    return removed;
   };
 
-  setEdgePositions = (
+  /**
+   * Position update handlers
+   */
+
+  private handleNodePositionUpdate = (id: number, pos: Position) => {
+    this.graphDataStore.updateNodePosition(id, pos);
+  };
+
+  private handleEdgePositionsUpdate = (
     id: number,
-    pos: { source: Position; target: Position }
+    positions: { source: Position; target: Position }
   ) => {
-    const edge = this.edgeData.get(id);
-    if (edge) {
-      this.edgeData.set(
-        id,
-        Object.assign({}, edge, {
-          sourcePos: pos.source,
-          targetPos: pos.target,
-        })
-      );
-    }
+    this.graphDataStore.updateEdgePositions(id, positions);
   };
+
+  /**
+   * Animation control
+   */
 
   wake = () => {
-    this.isRunning = true;
-    if (this.sleepTimer) {
-      clearInterval(this.sleepTimer);
-      this.sleepTimer = 0;
-    } else {
-      this.tickAnim();
-    }
-    //@ts-ignore
-    this.sleepTimer = setTimeout(() => {
-      this.isRunning = false;
-    }, this.sleepDelay);
+    this.uiStateStore.wake();
+    this.setIsRunning(true);
+    this.tickAnimation();
   };
 
-  tickAnim = () => {
+  private tickAnimation = () => {
     requestAnimationFrame(() => {
-      if (this.isRunning) {
-        this.simulationStore.stepLayout();
-        this.tickAnim();
-      } else {
-        clearInterval(this.sleepTimer);
-        this.sleepTimer = 0;
+      if (this.uiStateStore.running) {
+        this.physicsStore.stepSimulation();
+        this.tickAnimation();
       }
     });
   };
 
+  /**
+   * Selection state
+   */
+
   setSelectedNode = (id: number | null) => {
-    this.selectedNode = id;
+    this.uiStateStore.setSelectedNode(id);
   };
 
   setHoveredNode = (id: number | null) => {
-    this.hoveredNode = id;
+    this.uiStateStore.setHoveredNode(id);
   };
 
   unsetHoveredNode = () => {
-    this.hoveredNode = null;
+    this.uiStateStore.setHoveredNode(null);
   };
 
   setSelectedEdge = (id: number | null) => {
-    this.selectedEdge = id;
+    this.uiStateStore.setSelectedEdge(id);
   };
 
   setHoveredLink = (id: number | null) => {
-    this.hoveredLink = id;
+    this.uiStateStore.setHoveredEdge(id);
   };
 
   unsetHoveredLink = () => {
-    this.hoveredLink = null;
+    this.uiStateStore.setHoveredEdge(null);
   };
+
+  /**
+   * Spatial selection methods
+   */
+
+  selectNodesInRegion = (min: Position, max: Position, append = false) => {
+    // Get node IDs in the region using spatial indexing
+    const nodeIds = this.graphDataStore.selectNodesInRegion(min, max);
+
+    // Update selection state in UIStateStore
+    if (append) {
+      // Add to existing selection
+      nodeIds.forEach((id) => this.uiStateStore.addNodeToSelection(id));
+    } else {
+      // Replace existing selection
+      this.uiStateStore.setMultipleSelectedNodes(nodeIds);
+    }
+
+    return nodeIds;
+  };
+
+  findNodesInRadius = (position: Position, radius: number) => {
+    return this.graphDataStore.findNodesInRadius(position, radius);
+  };
+
+  findNearestNode = (position: Position, maxRadius = 100) => {
+    return this.graphDataStore.findNearestNode(position, maxRadius);
+  };
+
+  findCollisionCandidates = (nodeId: number, radius: number) => {
+    return this.graphDataStore.findCollisionCandidates(nodeId, radius);
+  };
+
+  /**
+   * Running state and physics control
+   */
 
   setIsRunning = (isRunning: boolean) => {
-    this.isRunning = isRunning;
-  };
+    this.uiStateStore.setIsRunning(isRunning);
 
-  setPaletteMap = (paletteMap: Map<number, string> | null) => {
-    if (!paletteMap) {
-      paletteMap = new Map();
+    // Update physics simulation state
+    if (isRunning) {
+      this.physicsStore.resumeSimulation();
+      this.tickAnimation();
     } else {
-      this.paletteMap = paletteMap;
+      this.physicsStore.pauseSimulation();
     }
   };
 
+  /**
+   * Get physics performance metrics
+   */
+  getPhysicsPerformanceMetrics = () => {
+    return this.physicsStore.getPerformanceMetrics();
+  };
+
+  /**
+   * Category and palette operations
+   */
+
+  setPaletteMap = (paletteMap: Map<number, string> | null) => {
+    this.graphDataStore.setPaletteMap(paletteMap);
+  };
+
   setCategories = (
-    newCats: Array<{
+    categories: Array<{
       uid: number;
       name: string;
       descendants: Array<number>;
     }> | null
   ) => {
-    if (!newCats) {
-      this.categories = {};
-    } else {
-      if (Object.keys(this.categories).length > 0) {
-        console.log("WARN: categories already set");
-        // we have to be very deliberate about updates here
-        // for each category we have to check if the conents of cat.descendants
-        // is different from the contents of this.categories[cat.name].descendants
-        // if it is, we have to update the descendants
-        // if it isn't, we can ignore it
-
-        newCats.forEach((cat) => {
-          if (this.categories[cat.name]) {
-            const currDesc = this.categories[cat.name].descendants;
-            const newDesc = cat.descendants;
-            //set equality check
-            // TODO: for now we are just going to check lengths, this should be sufficient for the additive case...if there is a deletion/insertion than we will need to be more meticulous
-            if (currDesc.length !== newDesc.length) {
-              console.log("did find a difference in descendants:", cat.name);
-              this.categories[cat.name].descendants = cat.descendants;
-            }
-          } else {
-            this.categories[cat.name] = {
-              uid: cat.uid,
-              descendants: cat.descendants,
-            };
-          }
-        });
-      } else {
-        // TODO: somewher in the stack of this application must reduce unnecessary calls to this function
-        newCats.forEach((cat) => {
-          this.categories[cat.name] = {
-            uid: cat.uid,
-            descendants: cat.descendants,
-          };
-        });
-      }
-    }
+    this.graphDataStore.setCategories(categories);
   };
 
-  // ["#8d70c9",
-  // "#7fa44a",
-  // "#ca5686",
-  // "#49adad",
-  // "#c7703f"]
-  catColors: {
-    [key: number]: string;
-  } = {
-    730044: "#8d70c9",
-    193671: "#7fa44a",
-    160170: "#ca5686",
-    790229: "#49adad",
-    //970002: "Information",
-    2850: "#c7703f",
+  /**
+   * Physics configuration
+   */
+
+  updatePhysicsConfig = (config: Partial<ISimulationConfig>) => {
+    this.physicsStore.updateConfig(config);
   };
+
+  /**
+   * Getters for accessing store properties
+   */
+
+  get nodeData() {
+    // Create a Map-like object for backward compatibility
+    const nodes = this.graphDataStore.allNodes;
+    const nodeMap = {
+      get: (id: number) => this.graphDataStore.getNode(id),
+      values: () => nodes,
+      size: nodes.length,
+      map: <T>(
+        callback: (
+          node: ReturnType<GraphDataStore["getNode"]>,
+          index: number,
+          array: ReturnType<GraphDataStore["getNode"]>[]
+        ) => T
+      ) => nodes.map(callback),
+      forEach: (
+        callback: (
+          node: ReturnType<GraphDataStore["getNode"]>,
+          index: number,
+          array: ReturnType<GraphDataStore["getNode"]>[]
+        ) => void
+      ) => nodes.forEach(callback),
+    };
+    return nodeMap;
+  }
+
+  get edgeData() {
+    // Create a Map-like object for backward compatibility
+    const edges = this.graphDataStore.allEdges;
+    const edgeMap = {
+      get: (id: number) => this.graphDataStore.getEdge(id),
+      values: () => edges,
+      size: edges.length,
+      map: <T>(
+        callback: (
+          edge: ReturnType<GraphDataStore["getEdge"]>,
+          index: number,
+          array: ReturnType<GraphDataStore["getEdge"]>[]
+        ) => T
+      ) => edges.map(callback),
+      forEach: (
+        callback: (
+          edge: ReturnType<GraphDataStore["getEdge"]>,
+          index: number,
+          array: ReturnType<GraphDataStore["getEdge"]>[]
+        ) => void
+      ) => edges.forEach(callback),
+    };
+    return edgeMap;
+  }
+
+  get hoveredNode() {
+    return this.uiStateStore.hoveredNode;
+  }
+
+  get hoveredLink() {
+    return this.uiStateStore.hoveredEdge;
+  }
+
+  get selectedNode() {
+    return this.uiStateStore.selectedNode;
+  }
+
+  get selectedEdge() {
+    return this.uiStateStore.selectedEdge;
+  }
+
+  get selectedNodeIds() {
+    return this.uiStateStore.getSelectedNodeIds;
+  }
+
+  isNodeSelected = (id: number) => {
+    return this.uiStateStore.isNodeSelected(id);
+  };
+
+  toggleNodeSelection = (id: number) => {
+    this.uiStateStore.toggleNodeSelection(id);
+  };
+
+  get isRunning() {
+    return this.uiStateStore.running;
+  }
+
+  /**
+   * Node category and color methods
+   */
 
   getNodeCategory = (id: number) => {
-    let category = "Unknown";
-    let idx = 0;
-
-    if (id === 730000) return "Root";
-
-    if (
-      this.categories["Physical Object"].uid === id ||
-      this.categories["Physical Object"].descendants.includes(id)
-    ) {
-      category = "Physical Object";
-    } else if (
-      this.categories["Occurrence"].uid === id ||
-      this.categories["Occurrence"].descendants.includes(id)
-    ) {
-      category = "Occurrence";
-    } else if (
-      this.categories["Role"].uid === id ||
-      this.categories["Role"].descendants.includes(id)
-    ) {
-      category = "Role";
-    } else if (
-      this.categories["Aspect"].uid === id ||
-      this.categories["Aspect"].descendants.includes(id)
-    ) {
-      category = "Aspect";
-    } else if (
-      this.categories["Relation"].uid === id ||
-      this.categories["Relation"].descendants.includes(id)
-    ) {
-      category = "Relation";
-    }
-
-    return category;
+    return this.graphDataStore.getNodeCategory(id);
   };
 
   getNodeColor = (id: number) => {
-    let color;
-    let idx = 0;
+    return this.graphDataStore.getNodeColor(id);
+  };
 
-    const cat = this.getNodeCategory(id);
+  /**
+   * Palette map for backward compatibility
+   */
+  get paletteMap() {
+    // Access the internal paletteMap from GraphDataStore
+    // This is needed for backward compatibility with existing components
+    return {
+      get: (type: number) => {
+        // Forward to the GraphDataStore's paletteMap
+        return this.graphDataStore.paletteMap.get(type);
+      },
+    };
+  }
 
-    if (cat === "Root") return "#fff";
-
-    if (cat === "Physical Object") {
-      color = this.catColors[730044];
-    } else if (cat === "Occurrence") {
-      color = this.catColors[193671];
-    } else if (cat === "Role") {
-      color = this.catColors[160170];
-    } else if (cat === "Aspect") {
-      color = this.catColors[790229];
-    } else if (cat === "Relation") {
-      color = this.catColors[2850];
-    }
-
-    // console.log("getNodeColor", id, toJS(this.categories));
-    // do {
-    //   const cat = this.categories[idx];
-    //   if (cat.descendants.includes(id) || cat.uid === id) {
-    //     color = this.catColors[cat.uid];
-    //   }
-    //   idx++;
-    // } while (color === undefined && idx < this.categories.length);
-
-    return color || "#999";
+  /**
+   * Rebuild spatial index
+   * This is useful after loading a large number of nodes
+   */
+  rebuildSpatialIndex = () => {
+    this.graphDataStore.rebuildSpatialIndex();
   };
 }
 

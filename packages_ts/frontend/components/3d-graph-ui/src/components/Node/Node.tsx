@@ -1,13 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { Position } from "./types.js";
+import { Position } from "../../types.js";
 import { Billboard, Plane, Text } from "@react-three/drei";
-import { useStores } from "./context/RootStoreContext.js";
+import { useStores } from "../../context/RootStoreContext.js";
 import { observer } from "mobx-react";
-
-// Import only the colors we need
-// No need for additional imports
 
 export interface NodeProps {
   key: number;
@@ -17,8 +14,6 @@ export interface NodeProps {
   color: string;
   hovered: boolean;
 }
-
-// Remove unused texture loaders
 
 // Custom hook to wait for geometry to be ready
 function useGeometryBounds(meshRef: React.RefObject<THREE.Mesh>) {
@@ -50,10 +45,6 @@ type Bounds = {
 const Node: React.FC<NodeProps> = observer(
   ({ id, name, pos, color, hovered }) => {
     const { selectedNode } = useStores();
-    /*RefObject<
-    THREE.Mesh<THREE.BufferGeometry<THREE.NormalBufferAttributes>>
-  >*/
-    // Use any for now, but with a more specific type comment
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const textRef: any = useRef(null);
     const bounds: Bounds = useGeometryBounds(textRef);
@@ -86,46 +77,25 @@ const Node: React.FC<NodeProps> = observer(
       if (textRef.current) {
         // Assuming the geometry will be updated once the text is fully loaded and rendered
         const textMesh = textRef.current;
-        // @ts-expect-error - textMesh.geometry type is not properly defined
         textMesh.geometry.computeBoundingBox();
         const box = new THREE.Box3().setFromObject(textMesh);
         const size = new THREE.Vector3();
         box.getSize(size);
-        //setBounds({ width: size.x, height: size.y, depth: size.z });
       }
     }, [selectedNode, textRef.current]);
 
     const userData = { uid: id, type: "node" };
     return (
       <>
-        {/* @ts-expect-error - group props are not fully typed */}
+        {/* @ts-expect-error - group is a valid Three.js element */}
         <group>
-          <Billboard
-            position={nodePosition}
-            follow
-            // onClick={(e) => (onNodeClick ? onNodeClick(id, e) : null)}
-            // onContextMenu={(e) =>
-            //   onNodeRightClick ? onNodeRightClick(id, e) : null
-            // }
-          >
+          <Billboard position={nodePosition} follow>
             <Plane
               userData={userData}
               args={planeDimensions}
               material-color={color}
               position={[0, 0.07, -0.01]}
               visible={selectedNode !== id}
-              // onPointerOver={(e) => {
-              //   e.stopPropagation();
-              //   onNodeRollOver ? onNodeRollOver(id) : null;
-              //   // console.log("HOVER");
-              //   // setHover(true);
-              // }}
-              // onPointerOut={(e) => {
-              //   e.stopPropagation();
-              //   onNodeRollOut ? onNodeRollOut() : null;
-              //   // console.log("HOVER OUT");
-              //   // setHover(false);
-              // }}
             />
             <Text
               userData={userData}
@@ -142,8 +112,6 @@ const Node: React.FC<NodeProps> = observer(
               {hovered || selectedNode === id ? id + " : " + name : name}
             </Text>
           </Billboard>
-
-          {/* @ts-expect-error - group props are not fully typed */}
         </group>
       </>
     );
