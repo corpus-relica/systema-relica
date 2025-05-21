@@ -4,6 +4,7 @@ import os
 import logging
 import asyncio
 import edn_format
+import functools
 from dotenv import load_dotenv
 from src.meridian.client import WebSocketClient
 from src.relica_nous_langchain.SemanticModel import semantic_model
@@ -187,389 +188,260 @@ class ApertureClient:
             except Exception as e:
                 logger.error(f"Failed to send heartbeat: {e}")
 
-    # API methods - Equivalent to the Clojure implementation
-    async def retrieveEnvironment(self, user_id, environment_id=None):
-        """Retrieve the current environment state (equivalent to get-environment)"""
-        logger.info(f"Retrieving environment for user {user_id}")
+    # Helper method to ensure connection and handle errors
+    async def _ensure_connection(self):
+        """Ensure connection to Aperture service"""
         if not self.connected:
             logger.warning("Not connected to Aperture, trying to connect...")
             await self.connect()
             if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+                return False
+        return True
+    
+    # Helper method to process response
+    def _process_response(self, response):
+        """Process response from Aperture service to extract payload"""
+        if isinstance(response, dict):
+            # Try different ways the payload might be structured
+            for key in ['payload', ':payload', 'data', ':data', 'environment', ':environment']:
+                if key in response:
+                    return response[key]
+        # If no recognized structure, return the whole response
+        return response
+    
+    # Decorator for API methods
+    def aperture_api_call(operation_name):
+        """Decorator for Aperture API calls to handle connection and errors"""
+        def decorator(func):
+            @functools.wraps(func)
+            async def wrapper(self, *args, **kwargs):
+                # Ensure connection
+                if not await self._ensure_connection():
+                    return {"error": "Failed to connect to Aperture"}
+                
+                try:
+                    # Call the original function
+                    response = await func(self, *args, **kwargs)
+                    # Process the response
+                    return self._process_response(response)
+                except Exception as e:
+                    logger.error(f"Error {operation_name}: {e}", exc_info=True)
+                    return {"error": f"Failed to {operation_name}: {str(e)}"}
+            return wrapper
+        return decorator
+    
+    # API methods - Equivalent to the Clojure implementation
+    @aperture_api_call("retrieve environment")
+    async def retrieveEnvironment(self, user_id, environment_id=None):
+        """Retrieve the current environment state (equivalent to get-environment)"""
+        logger.info(f"Retrieving environment for user {user_id}")
+        
+        # Create the payload
+        payload = {"user-id": user_id}
+        if environment_id is not None:
+            payload["environment-id"] = environment_id
 
-        try:
-            # Create the payload
-            payload = {"user-id": user_id}
-            if environment_id is not None:
-                payload["environment-id"] = environment_id
+        logger.info(f"Sending environment/get request with payload: {payload}")
+        response = await self.client.send("aperture.environment/get", payload)
+        logger.info(f"Received environment response: {response}")
+        
+        return response
 
-            logger.info(f"Sending environment/get request with payload: {payload}")
-            response = await self.client.send("aperture.environment/get", payload)
-            logger.info(f"Received environment response: {response}")
-            
-            # Handle different response formats that might come from Clojure
-            if isinstance(response, dict):
-                # Try different ways the payload might be structured
-                for key in ['payload', ':payload', 'data', ':data', 'environment', ':environment']:
-                    if key in response:
-                        return response[key]
-            
-            # If no recognized structure, return the whole response
-            return response
-        except Exception as e:
-            logger.error(f"Error retrieving environment: {e}", exc_info=True)
-            return {"error": f"Failed to retrieve environment: {str(e)}"}
-
+    @aperture_api_call("list environments")
     async def listEnvironments(self, user_id):
         """List all environments for a user (equivalent to list-environments)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.environment/list", {"user-id": user_id})
 
-        try:
-            response = await self.client.send("aperture.environment/list", {"user-id": user_id})
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error listing environments: {e}")
-            return {"error": f"Failed to list environments: {str(e)}"}
-
+    @aperture_api_call("create environment")
     async def createEnvironment(self, user_id, env_name):
         """Create a new environment (equivalent to create-environment)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.environment/create", {
+            "user-id": user_id,
+            "name": env_name
+        })
 
-        try:
-            response = await self.client.send("aperture.environment/create", {
-                "user-id": user_id,
-                "name": env_name
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error creating environment: {e}")
-            return {"error": f"Failed to create environment: {str(e)}"}
-
+    @aperture_api_call("load specialization fact")
     async def loadSpecializationFact(self, user_id, env_id, uid):
         """Load specialization fact"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.specialization/load-fact", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "uid": uid
+        })
 
-        try:
-            response = await self.client.send("aperture.specialization/load-fact", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "uid": uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading specialization hierarchy: {e}")
-            return {"error": f"Failed to load specialization hierarchy: {str(e)}"}
-
+    @aperture_api_call("load specialization hierarchy")
     async def loadSpecializationHierarchy(self, user_id, env_id, uid):
         """Load specialization hierarchy (equivalent to load-specialization-hierarchy)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.specialization/load", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "uid": uid
+        })
 
-        try:
-            response = await self.client.send("aperture.specialization/load", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "uid": uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading specialization hierarchy: {e}")
-            return {"error": f"Failed to load specialization hierarchy: {str(e)}"}
-
+    @aperture_api_call("clear environment entities")
     async def clearEnvironmentEntities(self, user_id, env_id):
         """Clear all entities from an environment (equivalent to clear-environment-entities)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.environment/clear", {
+            "user-id": user_id,
+            "environment-id": env_id
+        })
 
-        try:
-            response = await self.client.send("aperture.environment/clear", {
-                "user-id": user_id,
-                "environment-id": env_id
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error clearing environment entities: {e}")
-            return {"error": f"Failed to clear environment entities: {str(e)}"}
-
+    @aperture_api_call("load all related facts")
     async def loadAllRelatedFacts(self, user_id, env_id, entity_uid):
         """Load all facts related to an entity (equivalent to load-all-related-facts)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.fact/load-related", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uid": entity_uid
+        })
 
-        try:
-            response = await self.client.send("aperture.fact/load-related", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uid": entity_uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading related facts: {e}")
-            return {"error": f"Failed to load related facts: {str(e)}"}
-
+    @aperture_api_call("unload entity")
     async def unloadEntity(self, user_id, env_id, entity_uid):
         """Unload an entity from the environment (equivalent to unload-entity)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.entity/unload", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uid": entity_uid
+        })
 
-        try:
-            response = await self.client.send("aperture.entity/unload", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uid": entity_uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error unloading entity: {e}")
-            return {"error": f"Failed to unload entity: {str(e)}"}
-
+    @aperture_api_call("load entities")
     async def loadEntities(self, user_id, env_id, entity_uids):
         """Load multiple entities (equivalent to load-entities)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.entity/load-multiple", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uids": entity_uids
+        })
 
-        try:
-            response = await self.client.send("aperture.entity/load-multiple", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uids": entity_uids
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading entities: {e}")
-            return {"error": f"Failed to load entities: {str(e)}"}
-
+    @aperture_api_call("load subtypes")
     async def loadSubtypes(self, user_id, env_id, entity_uid):
         """Load subtypes"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.subtype/load", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uid": entity_uid
+        })
 
-        try:
-            response = await self.client.send("aperture.subtype/load", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uid": entity_uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading subtypes: {e}")
-            return {"error": f"Failed to load subtypes: {str(e)}"}
-
+    @aperture_api_call("load classified")
     async def loadClassified(self, user_id, env_id, entity_uid):
         """Load classified"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.classification/load", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uid": entity_uid
+        })
 
-        try:
-            response = await self.client.send("aperture.classification/load", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uid": entity_uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading classified: {e}")
-            return {"error": f"Failed to load classified: {str(e)}"}
-
+    @aperture_api_call("load classification fact")
     async def loadClassificationFact(self, user_id, env_id, entity_uid):
         """Load classificationFact"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.classification/load-fact", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uid": entity_uid
+        })
 
-        try:
-            response = await self.client.send("aperture.classification/load-fact", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uid": entity_uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading classification fact: {e}")
-            return {"error": f"Failed to load classification fact: {str(e)}"}
-
+    @aperture_api_call("load subtypes cone")
     async def loadSubtypesCone(self, user_id, env_id, entity_uid):
         """Load subtypes cone (equivalent to load-subtypes-cone)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.subtype/load-cone", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uid": entity_uid
+        })
 
-        try:
-            response = await self.client.send("aperture.subtype/load-cone", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uid": entity_uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error loading subtypes cone: {e}")
-            return {"error": f"Failed to load subtypes cone: {str(e)}"}
-
+    @aperture_api_call("unload entities")
     async def unloadEntities(self, user_id, env_id, entity_uids):
         """Unload multiple entities (equivalent to unload-entities)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.entity/unload-multiple", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uids": entity_uids
+        })
 
-        try:
-            response = await self.client.send("aperture.entity/unload-multiple", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uids": entity_uids
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error unloading entities: {e}")
-            return {"error": f"Failed to unload entities: {str(e)}"}
-
+    @aperture_api_call("update environment")
     async def updateEnvironment(self, user_id, env_id, updates):
         """Update environment (equivalent to update-environment!)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("environment/update", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "updates": updates
+        })
 
-        try:
-            response = await self.client.send("environment/update", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "updates": updates
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error updating environment: {e}")
-            return {"error": f"Failed to update environment: {str(e)}"}
-
+    @aperture_api_call("select entity")
     async def selectEntity(self, user_id, env_id, entity_uid):
         """Select an entity (equivalent to select-entity)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("aperture.entity/select", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "entity-uid": entity_uid
+        })
 
-        try:
-            response = await self.client.send("aperture.entity/select", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "entity-uid": entity_uid
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error selecting entity: {e}")
-            return {"error": f"Failed to select entity: {str(e)}"}
-
+    @aperture_api_call("deselect entities")
     async def selectEntityNone(self, user_id, env_id):
         """Deselect all entities (equivalent to select-entity-none)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
-
-        try:
-            response = await self.client.send("aperture.entity/deselect", {
-                "user-id": user_id,
-                "environment-id": env_id
-            })
-            return response['payload'] if 'payload' in response else response
-        except Exception as e:
-            logger.error(f"Error deselecting entities: {e}")
-            return {"error": f"Failed to deselect entities: {str(e)}"}
+        return await self.client.send("aperture.entity/deselect", {
+            "user-id": user_id,
+            "environment-id": env_id
+        })
 
     # Existing methods
+    @aperture_api_call("load entity")
     async def loadEntity(self, user_id, env_id, uid):
         """Load entity data by UID"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        return await self.client.send("environment/load-entity", {
+            "entity-uid": uid,
+            "user-id": user_id,
+            "environment-id": env_id
+        })
 
-        try:
-            response = await self.client.send("environment/load-entity", {
-                "entity-uid": uid,
-                "user-id": user_id,
-                "environment-id": env_id})
-            return response['payload']
-        except Exception as e:
-            logger.error(f"Error loading entity: {e}")
-            return {"error": f"Failed to load entity: {str(e)}"}
-
+    @aperture_api_call("text search load")
     async def textSearchLoad(self, user_id, env_id, term):
         """Load entity data by text search term"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        response = await self.client.send("aperture.search/load-text", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "term": term
+        })
+        print("//////////////////////////////// TEXT SEARCH LOAD RESPONSE ////////////////////////////////")
+        print(response)
+        return response
 
-        try:
-            response = await self.client.send("aperture.search/load-text", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "term": term})
-            print("//////////////////////////////// TEXT SEARCH LOAD RESPONSE ////////////////////////////////")
-            print(response)
-            return response
-        except Exception as e:
-            logger.error(f"Error loading entity by text search: {e}")
-            return {"error": f"Failed to load entity by text search: {str(e)}"}
-
+    @aperture_api_call("uid search load")
     async def uidSearchLoad(self, user_id, env_id, uid):
         """Load entity data by numerical search uid"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
+        response = await self.client.send("aperture.search/load-uid", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "uid": uid
+        })
+        print("//////////////////////////////// UID SEARCH LOAD RESPONSE ////////////////////////////////")
+        print(response)
+        return response
 
-        try:
-            response = await self.client.send("aperture.search/load-uid", {
-                "user-id": user_id,
-                "environment-id": env_id,
-                "uid": uid})
-            print("//////////////////////////////// UID SEARCH LOAD RESPONSE ////////////////////////////////")
-            print(response)
-            return response
-        except Exception as e:
-            logger.error(f"Error loading entity by text search: {e}")
-            return {"error": f"Failed to load entity by text search: {str(e)}"}
-    # Helper method for emit
+    @aperture_api_call("load_required_roles")
+    async def loadRequiredRoles(self, user_id, env_id, uid):
+        """Load required roles of relation"""
+        response = await self.client.send("aperture.relation/required-roles-load", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "uid": uid
+        })
+        return response
+
+    @aperture_api_call("load_role_players")
+    async def loadRolePlayers(self, user_id, env_id, uid):
+        """Load role players of relation"""
+        response = await self.client.send("aperture.relation/role-players-load", {
+            "user-id": user_id,
+            "environment-id": env_id,
+            "uid": uid
+        })
+        return response
+
+    @aperture_api_call("emit event")
     async def emit(self, target, event_type, payload):
         """Emit an event (used in the textSearchLoad method)"""
-        if not self.connected:
-            await self.connect()
-            if not self.connected:
-                return {"error": "Failed to connect to Aperture"}
-
-        try:
-            response = await self.client.send(f"{target}/{event_type}", payload)
-            return response
-        except Exception as e:
-            logger.error(f"Error emitting event: {e}")
-            return {"error": f"Failed to emit event: {str(e)}"}
+        return await self.client.send(f"{target}/{event_type}", payload)
 
 # Create a singleton instance
 aperture_client = ApertureClient()
