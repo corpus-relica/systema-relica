@@ -451,3 +451,62 @@
     (respond-error :database-error
                    "Failed to deselect entity"
                    {:exception (str e)})))
+
+(response/def-ws-handler :aperture.relation/required-roles-load
+  (let [result (<! (env/load-required-roles
+                    (:user-id ?data)
+                    (:environment-id ?data)
+                    (:uid ?data)))]
+    (respond-success (:environment result))
+    (when (:success result)
+      (ws/broadcast!
+       {:type :aperture.facts/loaded
+        :facts (:facts result)
+        :user-id (:user-id ?data)
+        :environment-id (:environment-id ?data)}
+       10)))
+  (catch Exception e
+    (log/error e "Failed to load connections-in")
+    (respond-error :database-error
+                   "Failed to load connections-in"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :aperture.relation/role-players-load
+  (let [result (<! (env/load-role-players
+                    (:user-id ?data)
+                    (:environment-id ?data)
+                    (:uid ?data)))]
+    (respond-success (:environment result))
+    (when (:success result)
+      (ws/broadcast!
+       {:type :aperture.facts/loaded
+        :facts (:facts result)
+        :user-id (:user-id ?data)
+        :environment-id (:environment-id ?data)}
+       10)))
+  (catch Exception e
+    (log/error e "Failed to load connections-in")
+    (respond-error :database-error
+                   "Failed to load connections-in"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :aperture.relation/role-players-load
+  (let [result (<! (env/deselect-entity
+                    (:user-id ?data)
+                    (:environment-id ?data)
+                    (:uid ?data)))]
+    (if (:success result)
+      (respond-success {:success true})
+      (respond-error :database-error "Failed to deselect entity"))
+    (when (:success result)
+      (ws/broadcast!
+       {:type :aperture.entity/deselected
+        :user-id (:user-id ?data)
+        :environment-id (or (:environment-id ?data)
+                            (:id (get-default-environment (:user-id ?data))))}
+       10)))
+  (catch Exception e
+    (log/error e "Failed to deselect entity")
+    (respond-error :database-error
+                   "Failed to deselect entity"
+                   {:exception (str e)})))

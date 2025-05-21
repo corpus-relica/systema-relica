@@ -27,8 +27,8 @@
                          :relationTypeUIDs rel-type-uids}
           _ (println "RESOLVED CONF " resolved-conf)
           func (if (nil? rel-type-uids)
-                           queries/get-facts-batch
-                           queries/get-facts-batch-on-relation-type)
+                   queries/get-facts-batch
+                   queries/get-facts-batch-on-relation-type)
           _ (println "FUNC " func)
           raw-result (graph/exec-query
                          graph/graph-service
@@ -130,9 +130,8 @@
         (concat res-2850 res-2850b))
       (catch Exception e
         (log/error "Error in get-all-related-facts:" (ex-message e))
-        []))))
+        [])))
 
-(defn get-all-related-facts-recursive [uid depth]
   (go
     (try
       (let [max-depth 3
@@ -473,6 +472,6 @@
 
 
 
-(comment
+(comment)
 
-  )
+  

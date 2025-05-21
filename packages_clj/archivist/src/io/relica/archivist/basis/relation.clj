@@ -173,9 +173,9 @@
             found (loop [[ancestor & rest] lineage]
                    (if ancestor
                      (let [role-relations (<! (get-relations-filtered ancestor
-                                              {:direction :outgoing
-                                               :edge-type 4714
-                                               :filter-fn #(= (:rh_object_uid %) role-uid)}))]
+                                               {:direction :outgoing
+                                                :edge-type 4714
+                                                :filter-fn #(= (:rh_object_uid %) role-uid)}))]
                        (if (seq role-relations)
                          true
                          (recur rest)))
@@ -238,8 +238,8 @@
         {:lh_role_uid (:rh_object_uid lh-role)
          :lh_role_name (:rh_object_name lh-role)
          :rh_role_uid (:rh_object_uid rh-role)
-         :rh_role_name (:rh_object_name rh-role)
-         }))))
+         :rh_role_name (:rh_object_name rh-role)}))))
+         
 
 (comment
   ;; Example usage
@@ -363,8 +363,8 @@
                                                           :include-subtypes? include-subtypes?}))
                              pre-filtered (filter #(not (contains? #{1146 ;; specialization
                                                                      1981 ;; synonym
-                                                                     1986 ;; inverse
-                                                                     } (:rel_type_uid %))) relations)
+                                                                     1986} ;; inverse
+                                                                    (:rel_type_uid %))) relations)
                              filtered (if filter-fn
                                        (filter filter-fn pre-filtered)
                                        pre-filtered)
@@ -383,8 +383,8 @@
                              ;;                           compatible-rels)))))
                              level-map {:level level
                                         :ancestor ancestor
-                                        :relations (vec filtered)}
-                             ]
+                                        :relations (vec filtered)}]
+                             
                          (recur (rest ancestors)
                                 (inc level)
                                 (if (seq (:relations level-map))
@@ -400,9 +400,9 @@
 
   (go
     (let [val (<! (get-inherited-relations 1146))]
-      (pp/pprint val)))
+      (pp/pprint val))))
 
-)
+
 ;; Role validation
 (defn validate-role-players
   "Validate that entities can play the required roles in a relation"

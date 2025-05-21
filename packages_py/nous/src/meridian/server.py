@@ -155,7 +155,7 @@ class WebSocketServer:
 # Message handlers
 async def handle_ping(message: Dict, client_id: str) -> Dict:
     """Handle ping messages"""
-    logger.info(f"Ping received from client: {client_id}")
+    # logger.info(f"Ping received from client: {client_id}")
     return {
         "pong": True,
         "server_time": int(datetime.now().timestamp() * 1000)

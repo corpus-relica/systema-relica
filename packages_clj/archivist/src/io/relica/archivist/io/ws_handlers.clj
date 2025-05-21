@@ -44,7 +44,9 @@
                    {:exception (str e)})))
 
 (response/def-ws-handler :archivist.fact/all-related-get
-  (let [facts (<! (fact/get-all-related-facts (:uid ?data)))]
+  (let [_ (println ?data)
+        facts (<! (fact/get-all-related-facts (:uid ?data)))]
+    (println "Facts: " facts)
     (respond-success {:facts facts}))
   (catch Exception e
     (log/error e "Failed to get all related facts")
