@@ -7,7 +7,7 @@ from langchain_core.utils.function_calling import convert_to_openai_tool
 
 from src.relica_nous_langchain.SemanticModel import semantic_model
 from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
-from src.relica_nous_langchain.services.archivist_client import archivist_client
+from src.relica_nous_langchain.services.archivist_client import ArchivistClientProxy
 
 def facts_to_related_entities_str(facts) -> str:
     entities = {}
@@ -40,12 +40,12 @@ def facts_to_metadata_str(facts) -> str:
 
     return "\n".join(metadata)
 
-def create_agent_tools(aperture_proxy: ApertureClientProxy):
+def create_agent_tools(aperture_proxy: ApertureClientProxy,
+                       archivist_proxy: ArchivistClientProxy):
     """Creates and returns LangChain tools and related metadata configured with a specific ApertureClientProxy."""
 
 
     # --- Search Tools --- #
-
 
     async def textSearchLoad(search_term: str)->str:
         """Searches the Semantic Model for entities matching the exact search term string and loads grounding facts into the environment.
@@ -110,14 +110,20 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
             # Return a user-friendly error message
             return f"An error occurred while searching for '{search_uid}': {e}"
 
-    # --- Active Tools --- #
-    async def loadEntity(uid: int) -> str:
-        """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
-        uid = int(uid)
-        result = await aperture_proxy.loadEntity(uid)
 
-        if result is None:
-            return "No entity with that uid exists"
+    # --- Specialization Operations --- #
+
+    async def loadDirectSupertypes(uid: int)->str:
+        """Use this to retrieve the specialization fact(s) of a kind, it's supertypes. Provide the uid of the kind, and the system will return a string representation of the specialization fact.
+            Args:
+                uid: The unique identifier of the kind to retrieve the specialization fact for
+        """
+        uid = int(uid)
+        # Assumes retrieveSpecializationFact exists on the proxy/client
+        result = await aperture_proxy.loadSpecializationFact(uid)
+
+        if result is None or ('facts' not in result):
+             return "No kind with that uid exists or no facts returned"
 
         related_str = facts_to_related_entities_str(result["facts"])
         relationships_str = facts_to_relations_str(result["facts"])
@@ -128,48 +134,242 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
             f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
             f"{relationships_str}"
         )
-
         return ret
 
-    async def getEntityOverview(uid: int)->str | None:
-        """Gets a high-level overview or representation of an entity identified by its UID. Also selects this entity as the current focus."""
+
+    async def loadDirectSubtypes(uid: int)->str:
+        """Use this to retrieve the direct subtypes of a kind. Provide the uid of the kind, and the system will return a string representation of the subtypes.
+            Args:
+                uid: The unique identifier of the kind to retrieve the subtypes for
+        """
         uid = int(uid)
+        # Assumes retrieveSubtypes exists on the proxy/client
+        result = await aperture_proxy.loadSubtypes(uid)
 
-        content = semantic_model.getModelRepresentation(uid)
+        if result is None or ('facts' not in result):
+            return "No kind with that uid exists or no facts returned"
 
-        if content is None:
-            return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
+        related_str = facts_to_related_entities_str(result["facts"])
 
+        ret =  (
+            f"\tRelated Entities (uid:name):\n"
+            f"{related_str}\n"
+        )
+        return ret
+
+
+    async def loadLineage(uid: int)->str:
+        """Use this to retrieve the specialization hierarchy of a kind, it's lineage. Provide the uid of the kind, and the system will return a string representation of the hierarchy.
+            Args:
+                uid: The unique identifier of the kind to retrieve the hierarchy for
+        """
+        uid = int(uid)
+        # Assumes retrieveSpecializationHierarchy exists on the proxy/client
+        result = await aperture_proxy.loadSpecializationHierarchy(uid)
+
+        if result is None or ('facts' not in result):
+            return "No kind with that uid exists or no facts returned"
+
+        related_str = facts_to_related_entities_str(result["facts"])
+        relationships_str = facts_to_relations_str(result["facts"])
+
+        ret =  (
+            f"\tRelated Entities (uid:name):\n"
+            f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
+        )
+        return ret
+
+
+    # --- Classification Operations --- #
+
+    async def loadClassifier(uid: int)->str:
+        """Use this to retrieve the classification fact(s) of an individual, the relation relating it to it's type and further knowledge about what it fundamentally is. Provide the uid of the individual, and the system will return a string representation of the classification fact(s).
+            Args:
+                uid: The unique identifier of the individual to retrieve the classification fact(s) for
+        """
+        uid = int(uid)
+        # Assumes retrieveClassificationFact exists on the proxy/client
+        result = await aperture_proxy.loadClassificationFact(uid)
+
+        if result is None or ('facts' not in result):
+            return "No individual with that uid exists or no facts returned"
+
+        related_str = facts_to_related_entities_str(result["facts"])
+        relationships_str = facts_to_relations_str(result["facts"])
+
+        ret =  (
+            f"\tRelated Entities (uid:name):\n"
+            f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
+        )
+        return ret
+
+
+    async def loadClassified(uid: int)->str:
+        """Use this to retrieve the classified entities of a kind, the instances. Provide the uid of the kind, and the system will return a string representation of the classified entities.
+            Args:
+                uid: The unique identifier of the kind to retrieve the classified entities for
+        """
+        uid = int(uid)
+        # Assumes retrieveClassified exists on the proxy/client
+        result = await aperture_proxy.loadClassified(uid)
+
+        if result is None or ('facts' not in result):
+            return "No kind with that uid exists or no facts returned"
+
+        related_str = facts_to_related_entities_str(result["facts"])
+        relationships_str = facts_to_relations_str(result["facts"])
+
+        ret =  (
+            f"\tRelated Entities (uid:name):\n"
+            f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
+        )
+        return ret
+
+
+    # -- Relation Operations  --- #
+
+    async def loadRelations(uid: int)->str:
+        """Use this to retrieve the direct relations an entity is involved in (specialization and classification non inclusive).
+        Provide the uid of the kind, and the system will return a string representation of the direct relations.
+            Args:
+                uid: The unique identifier of the entity to retrieve the relations for
+        """
+        uid = int(uid)
+        result = await aperture_proxy.loadAllRelatedFacts(uid)
+
+        if result is None or ('facts' not in result):
+            return "No kind with that uid exists or no facts returned"
+
+        related_str = facts_to_related_entities_str(result["facts"])
+
+        ret =  (
+            f"\tRelated Entities (uid:name):\n"
+            f"{related_str}\n"
+        )
+        return ret
+
+
+    async def loadRoleRequirements(uid: int)->str:
+        """Use this to retrieve the role requirements of a relation entity.
+        Provide the uid of the relation, and the system will return a string representation of the relations 2 required roles.
+            Args:
+                uid: The unique identifier of the relation entity to retrieve the role requirements for
+        """
+        uid = int(uid)
+        result = await aperture_proxy.loadRequiredRoles(uid)
+
+        if result is None or ('facts' not in result):
+            return "No relation with that uid exists or no facts returned"
+
+        related_str = facts_to_relations_str(result["facts"])
+
+        ret =  (
+            f"\tRequired Roles of Relation:\n"
+            f"{related_str}\n"
+        )
+        return ret
+
+
+    async def loadRolePlayers(uid: int)->str:
+        """Use this to retrieve the role players of a relation entity.
+        Provide the uid of the relation, and the system will return a string representation of the entities that can play the roles required by the relation.
+            Args:
+                uid: The unique identifier of the relation entity to retrieve the role players for
+        """
+        uid = int(uid)
+        result = await aperture_proxy.loadRolePlayers(uid)
+
+        if result is None or ('facts' not in result):
+            return "No relation with that uid exists or no facts returned"
+
+        related_str = facts_to_relations_str(result["facts"])
+
+        ret =  (
+            f"\tRole Players of Relation:\n"
+            f"{related_str}\n"
+        )
+        return ret
+
+     
+    # Active Tools --- #
+
+    async def getEntityDefinition(uid: int) -> str | None:
+        """Gets textual definition of an entity identified by its UID. Also selects this entity as the current focus."""
+        uid = int(uid)
+        content = await archivist_proxy.get_definition(uid)
+        # if content is None:
+        #     return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
         await aperture_proxy.selectEntity(uid)
+        return '\n'.join(content)  # Correct way to join strings with newlines
 
-        return content
+    # async def loadEntity(uid: int) -> str:
+    #     """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
+    #     uid = int(uid)
+    #     result = await aperture_proxy.loadEntity(uid)
+
+    #     if result is None:
+    #         return "No entity with that uid exists"
+
+    #     related_str = facts_to_related_entities_str(result["facts"])
+    #     relationships_str = facts_to_relations_str(result["facts"])
+
+    #     ret =  (
+    #         f"\tRelated Entities (uid:name):\n"
+    #         f"{related_str}\n"
+    #         f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+    #         f"{relationships_str}"
+    #     )
+
+    #     return ret
+
+
+    # async def getEntityOverview(uid: int)->str | None:
+    #     """Gets a high-level overview or representation of an entity identified by its UID. Also selects this entity as the current focus."""
+    #     uid = int(uid)
+
+    #     content = semantic_model.getModelRepresentation(uid)
+
+    #     if content is None:
+    #         return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
+
+    #     await aperture_proxy.selectEntity(uid)
+
+    #     return content
+
 
     # async def cutToFinalAnswer(message: str)->str:
     #     """Use this ONLY when you have enough information to provide the final answer. Input the complete final answer string."""
     #     return "cut to the chase"
 
 
-    async def getEntityDetails(uid: int)->str:
-        """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
-        uid = int(uid)
-        result = await aperture_proxy.loadAllRelatedFacts(uid)
+    # async def getEntityDetails(uid: int)->str:
+    #     """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
+    #     uid = int(uid)
+    #     result = await aperture_proxy.loadAllRelatedFacts(uid)
 
-        if result is None:
-            return "No entity with that uid exists"
+    #     if result is None:
+    #         return "No entity with that uid exists"
 
-        related_str = facts_to_related_entities_str(result["facts"])
-        relationships_str = facts_to_relations_str(result["facts"])
+    #     related_str = facts_to_related_entities_str(result["facts"])
+    #     relationships_str = facts_to_relations_str(result["facts"])
 
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-            f"{relationships_str}"
-        )
+    #     ret =  (
+    #         f"\tRelated Entities (uid:name):\n"
+    #         f"{related_str}\n"
+    #         f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+    #         f"{relationships_str}"
+    #     )
 
-        return ret
+    #     return ret
 
-    # --- Commented Out / Inactive Tools (Preserved) --- #
+
+    # Commented Out / Inactive Tools (Preserved) --- #
 
     #
     # async def specializeKind(name: str)->str:
@@ -212,118 +412,7 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
     #
     #     return f"New individual created with uid {result['uid']}"
 
-    async def loadSpecializationHierarchy(uid: int)->str:
-        """Use this to retrieve the specialization hierarchy of a kind. Provide the uid of the kind, and the system will return a string representation of the hierarchy.
-            Args:
-                uid: The unique identifier of the kind to retrieve the hierarchy for
-        """
-        uid = int(uid)
-        # Assumes retrieveSpecializationHierarchy exists on the proxy/client
-        result = await aperture_proxy.loadSpecializationHierarchy(uid)
 
-        if result is None or ('facts' not in result):
-            return "No kind with that uid exists or no facts returned"
-
-        related_str = facts_to_related_entities_str(result["facts"])
-        relationships_str = facts_to_relations_str(result["facts"])
-
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-            f"{relationships_str}"
-        )
-        return ret
-
-    async def loadSpecializationFact(uid: int)->str:
-        """Use this to retrieve the specialization fact of a kind. Provide the uid of the kind, and the system will return a string representation of the specialization fact.
-            Args:
-                uid: The unique identifier of the kind to retrieve the specialization fact for
-        """
-        uid = int(uid)
-        # Assumes retrieveSpecializationFact exists on the proxy/client
-        result = await aperture_proxy.loadSpecializationFact(uid)
-
-        if result is None or ('facts' not in result):
-             return "No kind with that uid exists or no facts returned"
-
-        related_str = facts_to_related_entities_str(result["facts"])
-        relationships_str = facts_to_relations_str(result["facts"])
-
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-            f"{relationships_str}"
-        )
-        return ret
-
-    async def loadSubtypes(uid: int)->str:
-        """Use this to retrieve the subtypes of a kind. Provide the uid of the kind, and the system will return a string representation of the subtypes.
-            Args:
-                uid: The unique identifier of the kind to retrieve the subtypes for
-        """
-        uid = int(uid)
-        # Assumes retrieveSubtypes exists on the proxy/client
-        result = await aperture_proxy.loadSubtypes(uid)
-
-        if result is None or ('facts' not in result):
-            return "No kind with that uid exists or no facts returned"
-
-        related_str = facts_to_related_entities_str(result["facts"])
-
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-        )
-        return ret
-
-    async def loadClassified(uid: int)->str:
-        """Use this to retrieve the classified entities of a kind. Provide the uid of the kind, and the system will return a string representation of the classified entities.
-            Args:
-                uid: The unique identifier of the kind to retrieve the classified entities for
-        """
-        uid = int(uid)
-        # Assumes retrieveClassified exists on the proxy/client
-        result = await aperture_proxy.loadClassified(uid)
-
-        if result is None or ('facts' not in result):
-            return "No kind with that uid exists or no facts returned"
-
-        related_str = facts_to_related_entities_str(result["facts"])
-        relationships_str = facts_to_relations_str(result["facts"])
-
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-            f"{relationships_str}"
-        )
-        return ret
-
-
-    async def loadClassificationFact(uid: int)->str:
-        """Use this to retrieve the classification fact of an individual. Provide the uid of the individual, and the system will return a string representation of the classification fact.
-            Args:
-                uid: The unique identifier of the individual to retrieve the classification fact for
-        """
-        uid = int(uid)
-        # Assumes retrieveClassificationFact exists on the proxy/client
-        result = await aperture_proxy.loadClassificationFact(uid)
-
-        if result is None or ('facts' not in result):
-            return "No individual with that uid exists or no facts returned"
-
-        related_str = facts_to_related_entities_str(result["facts"])
-        relationships_str = facts_to_relations_str(result["facts"])
-
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-            f"{relationships_str}"
-        )
-        return ret
 
     # async def findSuitableSupertype(description: str)->str:
     #      """Use this to find a suitable supertype for a new, proposed,  kind...
@@ -338,39 +427,27 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy):
     #      return "Finding suitable supertype (placeholder logic)"
 
     # Define the list of *active* tool objects created within this scope
+
     active_tools = [
         # --------------------------------------
         textSearchLoad,
         uidSearchLoad,
-        # loadEntity,
-        # getEntityOverview,
-        # # cutToFinalAnswer,
-        # getEntityDetails,
-        # loadClassificationFact,
-        # loadClassified,
-        # loadSubtypes,
-        # loadSpecializationFact,
-        # loadSpecializationHierarchy
+        #
+        loadDirectSupertypes,
+        loadDirectSubtypes,
+        loadLineage,
+        #
+        loadClassifier,
+        loadClassified,
+        #
+        loadRelations,
+        loadRoleRequirements,
+        loadRolePlayers,
+        # loadRolePlayers (of role)
+        #
+        getEntityDefinition
         ]
 
-    # --- Generate required tool metadata --- #
-    # tool_names = [tool.name for tool in active_tools]
-    # converted_tools = [convert_to_openai_tool(tool) for tool in active_tools]
-    # The structure needed by thoughtNode seems to be the 'function' part of the converted tool
-    # tool_descriptions = [tool["function"] for tool in converted_tools]
-
-    # Return all necessary components
     return {
         "tools": active_tools,
-        # "converted_tools": converted_tools,
-        # "tool_descriptions": tool_descriptions,
-        # "tool_names": tool_names
     }
-
-# tools = create_agent_tools(ApertureClientProxy())
-# foobarbazqux = ""
-# for tool in tools["tool_descriptions"]:
-#     foobarbazqux += '\t' + tool["name"] + ": "
-#     foobarbazqux += tool["description"] + "\n\n"
-# foobarbazqux = foobarbazqux[:-1]
-# tools["tool_descriptions"] = foobarbazqux

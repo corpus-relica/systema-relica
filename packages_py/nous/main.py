@@ -3,18 +3,14 @@ import asyncio
 import logging
 from src.relica_nous_langchain.services.NOUSServer import nous_server
 from src.relica_nous_langchain.services.aperture_client import aperture_client, ApertureClientProxy
-from src.relica_nous_langchain.services.archivist_client import archivist_client
+from src.relica_nous_langchain.services.archivist_client import archivist_client, ArchivistClientProxy
 from src.relica_nous_langchain.services.clarity_client import clarity_client
 
 from src.meridian.server import WebSocketServer, app
 
-# from src.relica_nous_langchain.test_agent import handleInput
-# from src.relica_nous_langchain.agent.NOUSAgent import NOUSAgent
 from src.relica_nous_langchain.agent.NOUSAgentPrebuilt import NOUSAgent
-# from src.relica_nous_langchain.agent.NOUSAgent_prebuilt import handleInput
-from src.relica_nous_langchain.agent.Tools import create_agent_tools
+# from src.relica_nous_langchain.agent.ToolsPrebuilt import create_agent_tools
 
-# from src.relica_nous_langchain.compere.NOUSCompere import nousCompere
 from src.relica_nous_langchain.SemanticModel import semantic_model
 
 # Set up logging - suppress EDN format logs
@@ -37,9 +33,6 @@ async def main():
     def handleFinalAnswer(finalAnswer):
         print("HANDLE FINAL ANSWER")
         nous_server.sendFinalAnswer(finalAnswer)
-
-#     nousCompere.emitter.on('chatHistory', handleChatHistory)
-#    nous_server.emitter.on('final_answer', handleFinalAnswer)
 
     async def retrieveEnv():
         # print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
@@ -66,21 +59,17 @@ async def main():
 
         # Create an ApertureClientProxy instance for this specific user/environment context
         aperture_proxy = ApertureClientProxy(user_id=user_id, env_id=env_id)
+        archivist_proxy = ArchivistClientProxy(user_id=user_id, env_id=env_id)
 
         # 1. Generate the tools and metadata using the factory and the user-specific proxy
-        tool_data = create_agent_tools(aperture_proxy=aperture_proxy)
+        # tool_data = create_agent_tools(aperture_proxy=aperture_proxy)
 
         # 2. Instantiate the NOUSAgent
         #    (Adjust constructor arguments if NOUSAgent expects different names/structure)
         agent = NOUSAgent(
             aperture_client=aperture_proxy, # Pass the proxy
-            tools=tool_data["tools"], # Based on thoughtNode.py usage
-            tool_descriptions=tool_data["tool_descriptions"], # Based on thoughtNode.py usage
-            tool_names=tool_data["tool_names"], # Based on thoughtNode.py usage
+            archivist_client=archivist_proxy,
             semantic_model=semantic_model, # Pass the imported semantic_model instance
-            converted_tools=tool_data["converted_tools"], # Pass the converted_tools from tool_data
-            # Pass other necessary dependencies for NOUSAgent here, if any
-            # e.g., nous_server=nous_server ?
         )
 
 

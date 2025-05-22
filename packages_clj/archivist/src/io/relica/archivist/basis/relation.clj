@@ -34,45 +34,77 @@
 
 ;; ----------------------------------------------------
 
+(defn find-up-lineage
+  "Searches up a lineage chain for a specific relation pattern.
+   Starting at the given UID, looks for relations matching the specified pattern.
+   If not found, continues searching up the lineage chain.
+
+   Parameters:
+   - uid: The starting UID to begin the search
+   - relation-pattern: A map containing search criteria:
+     - :direction - :incoming or :outgoing (required)
+     - :edge-type - The edge type to search for (required)
+     - :filter-fn - Optional function to further filter relations (optional)
+   - include-metadata?: Whether to include distance metadata (default: false)
+
+   Returns:
+   - If include-metadata? is false: The first matching relation fact, or nil if none found
+   - If include-metadata? is true: A map {:fact fact :distance distance}, or nil if none found"
+  ([uid relation-pattern]
+   (find-up-lineage uid relation-pattern false))
+
+  ([uid relation-pattern include-metadata?]
+   (println "FIND UP LINEAGE" uid relation-pattern include-metadata?)
+   (go
+     (let [lineage (get-lineage uid)
+           _ (println "GOT LINEAGE!!")
+           {:keys [direction edge-type filter-fn]
+            :or {filter-fn (constantly true)}} relation-pattern]
+       (loop [[current & rest] lineage
+              distance 0]
+         (when current
+           (let [relations (<! (get-relations-filtered current
+                                                       {:direction direction
+                                                        :edge-type edge-type
+                                                        :filter-fn #(and (= (:rel_type_uid %) edge-type)
+                                                                         (filter-fn %))}))
+                 relation-fact (first relations)]
+             (if relation-fact
+               (if include-metadata?
+                 {:fact relation-fact :distance distance}
+                 relation-fact)
+               (recur rest (inc distance))))))))))
+
 ;; Role requirements for relations
 (defn get-required-roles
   "Get the required roles for a relation type, checking up lineage if needed.
    Returns pair of [role1 role2] facts, or with metadata version returns
    {:role1 {:fact fact :distance n} :role2 {:fact fact :distance m}}"
+
   ([relation-type-uid]
    (get-required-roles relation-type-uid false))
-  
+
   ([relation-type-uid include-metadata?]
+   (println "GET REQUIRED ROLES" relation-type-uid include-metadata?)
    (go
-    (try
-      (let [lineage (get-lineage relation-type-uid)
-            ;; Function to find first role up lineage
-            find-role (fn [edge-type]
-                       (go
-                         (loop [[current & rest] lineage
-                                distance 0]
-                           (when current
-                             (let [role (<! (get-relations-filtered current
-                                              {:direction :outgoing
-                                               :edge-type edge-type
-                                               :filter-fn #(= (:rel_type_uid %) edge-type)}))
-                                   role-fact (first role)]
-                               (if role-fact
-                                 (if include-metadata?
-                                   {:fact role-fact :distance distance}
-                                   role-fact)
-                                 (recur rest (inc distance))))))))]
-        ;; Find both roles
-        (let [role1 (<! (find-role 4731))  ; requires-role-1
-              role2 (<! (find-role 4733))]  ; requires-role-2
-          (if include-metadata?
-            {:role1 role1 :role2 role2}
-            [role1 role2])))
-      (catch Exception e
-        (log/error "Error in get-required-roles:" (ex-message e))
-        (if include-metadata?
-          {:role1 nil :role2 nil}
-          [nil nil]))))))
+     (try
+       (let [;; Find both roles using the generic find-up-lineage function
+             role1 (<! (find-up-lineage relation-type-uid
+                                        {:direction :outgoing
+                                         :edge-type 4731}
+                                        include-metadata?))  ; requires-role-1
+             role2 (<! (find-up-lineage relation-type-uid
+                                        {:direction :outgoing
+                                         :edge-type 4733}
+                                        include-metadata?))]  ; requires-role-2
+         (if include-metadata?
+           {:role1 role1 :role2 role2}
+           [role1 role2]))
+       (catch Exception e
+         (log/error "Error in get-required-roles:" (ex-message e))
+         (if include-metadata?
+           {:role1 nil :role2 nil}
+           [nil nil]))))))
 
 (defn get-required-role-uids
   "Get the required role UIDs for a relation type.
@@ -98,14 +130,14 @@
             ;; Collect roles sequentially using loop/recur
             roles (loop [ancestors lineage
                          accumulated []]
-                   (if (seq ancestors)
-                     (let [ancestor (first ancestors)
-                           new-roles (<! (get-relations ancestor
-                                                      {:direction :outgoing
-                                                       :edge-type 4714}))]
-                       (recur (rest ancestors)
-                              (concat accumulated new-roles)))
-                     accumulated))]
+                    (if (seq ancestors)
+                      (let [ancestor (first ancestors)
+                            new-roles (<! (get-relations ancestor
+                                                         {:direction :outgoing
+                                                          :edge-type 4714}))]
+                        (recur (rest ancestors)
+                               (concat accumulated new-roles)))
+                      accumulated))]
         roles)
       (catch Exception e
         (log/error "Error in get-inheritable-roles:" (ex-message e))
@@ -171,18 +203,53 @@
       (let [lineage (get-lineage entity-uid)
             ;; Check each ancestor for the role relation
             found (loop [[ancestor & rest] lineage]
-                   (if ancestor
-                     (let [role-relations (<! (get-relations-filtered ancestor
-                                              {:direction :outgoing
-                                               :edge-type 4714
-                                               :filter-fn #(= (:rh_object_uid %) role-uid)}))]
-                       (if (seq role-relations)
-                         true
-                         (recur rest)))
-                     false))]
+                    (if ancestor
+                      (let [role-relations (<! (get-relations-filtered ancestor
+                                                                       {:direction :outgoing
+                                                                        :edge-type 4714
+                                                                        :filter-fn #(= (:rh_object_uid %) role-uid)}))]
+                        (if (seq role-relations)
+                          true
+                          (recur rest)))
+                      false))]
         found)
       (catch Exception e
         (log/error "Error in can-play-role?:" (ex-message e))
+        false))))
+
+(defn get-role-players
+  "Get the possible role players for a role
+   Returns list of facts"
+  [role-type-uid]
+  (go
+    (try
+      (let [role-players (<! (find-up-lineage
+                              role-type-uid
+                              {:direction :incoming
+                               :edge-type 4714}))]
+
+        role-players)
+      (catch Exception e
+        (log/error "Error in get-role-players:" (ex-message e))
+        false))))
+
+(defn get-relation-role-players
+  "Get the possible role players for a relation type
+   Returns [{:role-requirement role1-requirement-fact :role-players [role1-player-facts]}
+            {:role-requirement role2-requirement-fact :role-players [role2-player-facts]}"
+  [rel-type-uid]
+  (println "REL_TYPE_UID IS NOT AN INT!!!! --->>" rel-type-uid)
+  (go
+    (try
+      (let [[r1 r2] (<! (get-required-roles rel-type-uid))
+            players1 (<! (get-role-players (:rh_object_uid r1)))
+            players2 (<! (get-role-players (:rh_object_uid r2)))]
+        [{:requirement r1
+          :player players1}
+         {:requirement r2
+          :player players2}])
+      (catch Exception e
+        (log/error "Error in get-role-players:" (ex-message e))
         false))))
 
 (defn most-specific
@@ -234,12 +301,12 @@
           lh-role (first (filter #(= (:rh_object_uid %) lh-role-uid) lh-object-roles))
           rh-role (first (filter #(= (:rh_object_uid %) rh-role-uid) rh-object-roles))]
       (merge
-        fact
-        {:lh_role_uid (:rh_object_uid lh-role)
-         :lh_role_name (:rh_object_name lh-role)
-         :rh_role_uid (:rh_object_uid rh-role)
-         :rh_role_name (:rh_object_name rh-role)
-         }))))
+       fact
+       {:lh_role_uid (:rh_object_uid lh-role)
+        :lh_role_name (:rh_object_name lh-role)
+        :rh_role_uid (:rh_object_uid rh-role)
+        :rh_role_name (:rh_object_name rh-role)}))))
+
 
 (comment
   ;; Example usage
@@ -257,82 +324,7 @@
 
   (pp/pprint))
 
-  ;; ---------------------------------------------------
-
-  ;; Example usage of the functions
-
-  ;; (go
-  ;;   (let [val (<! (expand-binary-fact {:lh_object_uid 1146
-  ;;                                      :rh_object_uid 3941
-  ;;                                      :rel_type_uid 790123}))]
-  ;;     (pp/pprint val))))
-
-;; Expand binary to explicit
-;; (defn expand-binary-relation
-;;   "Expand binary relation into explicit role-based form
-;;    Returns map containing full role structure"
-;;   [lh-object rel-type rh-object]
-;;   (go
-;;     (let [[role1 role2] (<! (get-required-roles rel-type))
-;;           _ (pp/pprint (compatible-role? lh-object role1))
-;;           lh-roles (<! (get-inheritable-roles lh-object))
-;;           rh-roles (<! (get-inheritable-roles rh-object))
-;;           ;; Match inherited roles against requirements
-;;           lh-matching-role (first (filter #(compatible-role? (:rh_object_uid %) (:rh_object_uid role1)) lh-roles))
-;;           rh-matching-role (first (filter #(compatible-role? (:rh_object_uid %) (:rh_object_uid role2)) rh-roles))]
-;;       {:lh_object lh-object
-;;        :lh_role lh-matching-role
-;;        :relation rel-type
-;;        :rh_role rh-matching-role
-;;        :rh_object rh-object})))
-
-;;Get inherited relations
-;; (defn get-inherited-relations
-;;   "Get relations that could apply through inheritance, preserving lineage order
-
-;;    Returns: Vector of maps, each containing:
-;;    - :level - Distance from original entity in lineage
-;;    - :ancestor - The ancestor entity where relation was found
-;;    - :relations - Vector of relations found at this level
-
-;;    Order is maintained from most specific (level 0) to most general"
-;;   ([entity-uid]
-;;    (get-inherited-relations entity-uid nil nil))
-
-;;   ([entity-uid rel-types]
-;;    (get-inherited-relations entity-uid rel-types nil))
-
-;;   ([entity-uid rel-types {:keys [filter-fn include-subtypes?]
-;;                           :or {include-subtypes? true}}]
-;;    (go
-;;     (try
-;;       (let [lineage (get-lineage entity-uid)
-;;             ;; Build ordered sequence of inheritance levels
-;;             levels (for [[ancestor level] (map vector lineage (range))]
-;;                      (let [relations (<! (get-relations ancestor
-;;                                             {:edge-type rel-types
-;;                                              :include-subtypes? include-subtypes?}))
-;;                            filtered (if filter-fn
-;;                                      (filter filter-fn relations)
-;;                                      relations)
-;;                            ;; this is a bit redundant re: the rules of gellish
-;;                            ;; i.e. the fact that the relations were considering are ones
-;;                            ;; involving a supertype of the input entity(-uid) implies
-;;                            ;; that the relations also apply to the entity(-uid) itself.
-;;                            ;; nonetheless, this mechanism supplies some validation/confirmation
-;;                            ;; we can be assured that structures based on
-;;                            ;; anything that makes it through this
-;;                            ;; are in fact semantically verifiable
-;;                            compatible (filter #(roles-compatible? entity-uid (:rel_type_uid %))
-;;                                             filtered)]
-;;                        {:level level
-;;                         :ancestor ancestor
-;;                         :relations (vec compatible)}))]
-;;         ;; Return vector preserving order
-;;         (vec (filter #(seq (:relations %)) levels)))
-;;       (catch Exception e
-;;         (log/error "Error in get-inherited-relations:" (ex-message e))
-;;         [])))))
+;; ---------------------------------------------------
 
 (defn get-inherited-relations
   "Get relations that could apply through inheritance, preserving lineage order
@@ -348,71 +340,72 @@
   ([entity-uid rel-types {:keys [filter-fn include-subtypes?]
                           :or {include-subtypes? true}}]
    (go
-    (try
-      (let [lineage (get-lineage entity-uid)
-            ;; Process each ancestor sequentially within the go block
-            levels (loop [ancestors lineage
-                          level 0
-                          result []]
-                     (if (empty? ancestors)
-                       result
-                       (let [
-                             ancestor (first ancestors)
-                             relations (<! (get-relations ancestor
-                                                         {:edge-type rel-types
-                                                          :include-subtypes? include-subtypes?}))
-                             pre-filtered (filter #(not (contains? #{1146 ;; specialization
-                                                                     1981 ;; synonym
-                                                                     1986 ;; inverse
-                                                                     } (:rel_type_uid %))) relations)
-                             filtered (if filter-fn
-                                       (filter filter-fn pre-filtered)
-                                       pre-filtered)
+     (try
+       (let [lineage (get-lineage entity-uid)
+             ;; Process each ancestor sequentially within the go block
+             levels (loop [ancestors lineage
+                           level 0
+                           result []]
+                      (if (empty? ancestors)
+                        result
+                        (let [ancestor (first ancestors)
+                              relations (<! (get-relations ancestor
+                                                           {:edge-type rel-types
+                                                            :include-subtypes? include-subtypes?}))
+                              pre-filtered (filter #(not (contains? #{1146 ;; specialization
+                                                                      1981 ;; synonym
+                                                                      1986} ;; inverse
+                                                                    (:rel_type_uid %))) relations)
+                              filtered (if filter-fn
+                                         (filter filter-fn pre-filtered)
+                                         pre-filtered)
 
-                             ;; _ (pp/pprint filtered)
-                             ;; Process each relation sequentially to check compatibility
-                             ;; compatible (loop [rels filtered
-                             ;;                  compatible-rels []]
-                             ;;              (if (empty? rels)
-                             ;;                compatible-rels
-                             ;;                (let [rel (first rels)
-                             ;;                      is-compatible? (<! (roles-compatible? entity-uid (:rel_type_uid rel)))]
-                             ;;                  (recur (rest rels)
-                             ;;                         (if is-compatible?
-                             ;;                           (conj compatible-rels rel)
-                             ;;                           compatible-rels)))))
-                             level-map {:level level
-                                        :ancestor ancestor
-                                        :relations (vec filtered)}
-                             ]
-                         (recur (rest ancestors)
-                                (inc level)
-                                (if (seq (:relations level-map))
-                                  (conj result level-map)
-                                  result)))))]
-        ;; Return vector preserving order
-        (vec levels))
-      (catch Exception e
-        (log/error "Error in get-inherited-relations:" (ex-message e))
-        [])))))
+                              ;; _ (pp/pprint filtered)
+                              ;; Process each relation sequentially to check compatibility
+                              ;; compatible (loop [rels filtered
+                              ;;                  compatible-rels []]
+                              ;;              (if (empty? rels)
+                              ;;                compatible-rels
+                              ;;                (let [rel (first rels)
+                              ;;                      is-compatible? (<! (roles-compatible? entity-uid (:rel_type_uid rel)))]
+                              ;;                  (recur (rest rels)
+                              ;;                         (if is-compatible?
+                              ;;                           (conj compatible-rels rel)
+                              ;;                           compatible-rels)))))
+                              level-map {:level level
+                                         :ancestor ancestor
+                                         :relations (vec filtered)}]
+
+                          (recur (rest ancestors)
+                                 (inc level)
+                                 (if (seq (:relations level-map))
+                                   (conj result level-map)
+                                   result)))))]
+         ;; Return vector preserving order
+         (vec levels))
+       (catch Exception e
+         (log/error "Error in get-inherited-relations:" (ex-message e))
+         [])))))
+
 
 (comment
 
   (go
     (let [val (<! (get-inherited-relations 1146))]
-      (pp/pprint val)))
+      (pp/pprint val))))
 
-)
+
+
 ;; Role validation
-(defn validate-role-players
-  "Validate that entities can play the required roles in a relation"
-  [relation-type lh-object rh-object]
-  (go
-    (let [[req-role1 req-role2] (<! (get-required-roles relation-type))
-          lh-roles (<! (get-inheritable-roles lh-object))
-          rh-roles (<! (get-inheritable-roles rh-object))]
-      (and (some #(compatible-role? % req-role1) lh-roles)
-           (some #(compatible-role? % req-role2) rh-roles)))))
+;; (defn validate-role-players
+;;   "Validate that entities can play the required roles in a relation"
+;;   [relation-type lh-object rh-object]
+;;   (go
+;;     (let [[req-role1 req-role2] (<! (get-required-roles relation-type))
+;;           lh-roles (<! (get-inheritable-roles lh-object))
+;;           rh-roles (<! (get-inheritable-roles rh-object))]
+;;       (and (some #(compatible-role? % req-role1) lh-roles)
+;;            (some #(compatible-role? % req-role2) rh-roles)))))
 
 (comment
   ;; Example usage
@@ -430,9 +423,9 @@
 
   (println))
 
-  ;; ---------------------------------------------------
+;; ---------------------------------------------------
 
-  ;; Example usage of the functions)
+;; Example usage of the functions)
 
 (comment
 
@@ -454,6 +447,12 @@
 
   (go
     (let [val (<! (get-required-roles 1922))]
+      (pp/pprint val)))
+
+  ;; ----------------------------------------------
+
+  (go
+    (let [val (<! (get-relation-role-players 1146))]
       (pp/pprint val)))
 
   ;; ----------------------------------------------
@@ -497,12 +496,5 @@
       (pp/pprint val)))
 
   ;; ----------------------------------------------
-
-  ;; (go
-  ;;   (let [val (<! (expand-binary-relation 193671 1922 193671))]
-  ;;     (pp/pprint val)))
-
-  ;; ----------------------------------------------
-
 
   (print))

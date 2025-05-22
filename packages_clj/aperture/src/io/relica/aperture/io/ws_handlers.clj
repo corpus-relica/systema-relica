@@ -1,5 +1,6 @@
 (ns io.relica.aperture.io.ws-handlers
   (:require [clojure.tools.logging :as log]
+            [clojure.pprint :as pp]
             [io.relica.common.websocket.server :as common-ws]
             [io.relica.aperture.io.ws-server :as ws]
             [io.relica.aperture.config :refer [get-default-environment]]
@@ -450,4 +451,42 @@
     (log/error e "Failed to deselect entity")
     (respond-error :database-error
                    "Failed to deselect entity"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :aperture.relation/required-roles-load
+  (let [result (<! (env/load-required-roles
+                    (:user-id ?data)
+                    (:environment-id ?data)
+                    (:uid ?data)))]
+    (respond-success {:facts (:facts result)});;(:environment result)
+    (when (:success result)
+      (ws/broadcast!
+       {:type :aperture.facts/loaded
+        :facts (:facts result)
+        :user-id (:user-id ?data)
+        :environment-id (:environment-id ?data)}
+       10)))
+  (catch Exception e
+    (log/error e "Failed to load required roles")
+    (respond-error :database-error
+                   "Failed to load required roles"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :aperture.relation/role-players-load
+  (let [result (<! (env/load-role-players
+                    (:user-id ?data)
+                    (:environment-id ?data)
+                    (:uid ?data)))]
+    (respond-success {:facts (:facts result)});;(:environment result)
+    (when (:success result)
+      (ws/broadcast!
+       {:type :aperture.facts/loaded
+        :facts (:facts result)
+        :user-id (:user-id ?data)
+        :environment-id (:environment-id ?data)}
+       10)))
+  (catch Exception e
+    (log/error e "Failed to load role players")
+    (respond-error :database-error
+                   "Failed to load role players"
                    {:exception (str e)})))

@@ -2,7 +2,7 @@
   (:require [clojure.core.async :refer [<! go]]
             [clojure.tools.logging :as log]
             [io.relica.common.services.cache-service :as cache :refer [cache-service-comp]]
-            [io.relica.archivist.services.graph-service :as graph :refer [graph-service]]
+            [io.relica.archivist.services.graph-service :as graph :refer [graph-service-comp]]
             [io.relica.archivist.db.neo-queries :as queries]
             [clojure.pprint :as pp]
             [neo4j-clj.core :as neo4j]))
@@ -88,29 +88,31 @@
                         (<! (if include-subtypes?
                               (expand-types edge-type)
                               #{edge-type})))
-            results (case direction
-                      :outgoing (graph/exec-query @graph-service
+            results  (case direction
+                         :outgoing (graph/exec-query @graph-service-comp
+                                                     (if rel-types related-facts-in related-facts)
+                                                     {:start_uid uid
+                                                      :rel_type_uids (or rel-types [])})
+                         :incoming (graph/exec-query @graph-service-comp
+                                                     (if rel-types related-facts-reverse-in related-facts)
+                                                     {:start_uid uid
+                                                      :rel_type_uids (or rel-types [])})
+                         :both (concat
+                                (graph/exec-query @graph-service-comp
                                                   (if rel-types related-facts-in related-facts)
                                                   {:start_uid uid
                                                    :rel_type_uids (or rel-types [])})
-                      :incoming (graph/exec-query @graph-service
-                                                  (if rel-types related-facts-reverse-in related-facts)
+                                (graph/exec-query @graph-service-comp
+                                                  (if rel-types related-facts-reverse-in related-facts-reverse)
                                                   {:start_uid uid
-                                                   :rel_type_uids (or rel-types [])})
-                      :both (concat
-                             (graph/exec-query @graph-service
-                                               (if rel-types related-facts-in related-facts)
-                                               {:start_uid uid
-                                                :rel_type_uids (or rel-types [])})
-                             (graph/exec-query @graph-service
-                                               (if rel-types related-facts-reverse-in related-facts-reverse)
-                                               {:start_uid uid
-                                                :rel_type_uids (or rel-types [])})))
+                                                   :rel_type_uids (or rel-types [])})))
             transformed (graph/transform-results results)]
         transformed)
       (catch Exception e
         (log/error "Error in get-relations:" (ex-message e))
         []))))
+
+;; (go (let [foo (<!(get-relations 1146))] (println "FOO->" foo)))
 
 (defn get-relations-r
   "Recursive relation traversal with cycle detection.

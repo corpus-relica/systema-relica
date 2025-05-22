@@ -8,7 +8,7 @@ from src.meridian.client import WebSocketClient
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("clarity-client")
 
 # Load environment variables
@@ -180,19 +180,71 @@ class ClarityClient:
 
 clarity_client = ClarityClient()
 
-# Example usage
-# async def test_clarity_client():
-#     client = ClarityClient()
-#     connected = await client.connect()
+class ClarityClientProxy:
+    """A proxy class for ClarityClient that automatically injects user/env context."""
+    def __init__(self, user_id, env_id):
+        self.user_id = user_id
+        self.env_id = env_id
+        # Hold a reference to the singleton client
+        self._target_client = clarity_client
 
-#     if connected:
-#         # Process a user query
-#         result = await client.process_user_input("What is the meaning of life?")
-#         print(f"Processing result: {result}")
+    async def _proxy_call(self, method_name, *args, **kwargs):
+        """Injects context and calls the target client's method."""
+        target_method = getattr(self._target_client, method_name)
 
-#         # Wait for some responses
-#         await asyncio.sleep(5)
+        # Construct the final arguments by prepending user_id and env_id
+        final_args = (self.user_id, self.env_id) + args
+        final_kwargs = kwargs  # Pass kwargs through as is
 
-#         await client.disconnect()
-#     else:
-#         print("Failed to connect to Clarity")
+        logger.debug(f"Proxying call to {method_name} with args: {final_args}, kwargs: {final_kwargs}")
+        return await target_method(*final_args, **final_kwargs)
+
+    # --- Connection methods that don't need user context --- #
+    
+    async def connect(self, *args, **kwargs):
+        # Connection doesn't usually need user context, forward directly
+        return await self._target_client.connect(*args, **kwargs)
+
+    async def disconnect(self, *args, **kwargs):
+        return await self._target_client.disconnect(*args, **kwargs)
+
+    # --- API methods --- #
+
+    async def process_user_input(self, *args, **kwargs):
+        # This method likely doesn't need user/env context, so we'll call it directly
+        return await self._target_client.process_user_input(*args, **kwargs)
+
+    async def specializeKind(self, *args, **kwargs):
+        return await self._proxy_call('specializeKind', *args, **kwargs)
+
+    async def classifyIndividual(self, *args, **kwargs):
+        return await self._proxy_call('classifyIndividual', *args, **kwargs)
+
+    async def retrieveModels(self, *args, **kwargs):
+        return await self._proxy_call('retrieveModels', *args, **kwargs)
+
+# For testing directly
+async def main():
+    # Example usage of the proxy
+    user_id_test = 123
+    env_id_test = 'test-env-proxy'
+    proxy_client = ClarityClientProxy(user_id_test, env_id_test)
+
+    connected = await proxy_client.connect()
+    if connected:
+        logger.info(f"Proxy connected successfully for user {user_id_test}")
+
+        # Test processing a user query via proxy
+        result = await proxy_client.process_user_input("What is the meaning of life?")
+        logger.info(f"Proxy processed user input: {result}")
+
+        await proxy_client.disconnect()
+        logger.info("Proxy disconnected.")
+    else:
+        logger.error("Proxy failed to connect.")
+
+# If you want to run this test main:
+# if __name__ == "__main__":
+#     import asyncio
+#     logging.basicConfig(level=logging.INFO)
+#     asyncio.run(main())

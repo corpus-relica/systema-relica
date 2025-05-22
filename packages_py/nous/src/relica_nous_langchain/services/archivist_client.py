@@ -466,16 +466,237 @@ class ArchivistClient:
 # Create a singleton instance
 archivist_client = ArchivistClient()
 
+class ArchivistClientProxy:
+    """A proxy class for ArchivistClient that automatically injects user/env context."""
+    def __init__(self, user_id, env_id):
+        self.user_id = user_id
+        self.env_id = env_id
+        # Hold a reference to the singleton client
+        self._target_client = archivist_client
+
+    async def _proxy_call(self, method_name, *args, **kwargs):
+        """Injects context and calls the target client's method."""
+        target_method = getattr(self._target_client, method_name)
+
+        # Construct the final arguments by prepending user_id and env_id
+        # Note: Not all methods may need both user_id and env_id, but we'll follow
+        # the same pattern as ApertureClientProxy for consistency
+
+        # final_args = (self.user_id, self.env_id) + args
+        final_args = args
+        final_kwargs = kwargs  # Pass kwargs through as is
+
+        logger.debug(f"Proxying call to {method_name} with args: {final_args}, kwargs: {final_kwargs}")
+        return await target_method(*final_args, **final_kwargs)
+
+    # --- Connection methods that don't need user context --- #
+    
+    async def connect(self, *args, **kwargs):
+        # Connection doesn't usually need user context, forward directly
+        return await self._target_client.connect(*args, **kwargs)
+
+    async def disconnect(self, *args, **kwargs):
+        return await self._target_client.disconnect(*args, **kwargs)
+
+    # --- Query and search operations --- #
+
+    async def execute_query(self, *args, **kwargs):
+        return await self._proxy_call('execute_query', *args, **kwargs)
+
+    async def resolve_uids(self, *args, **kwargs):
+        return await self._proxy_call('resolve_uids', *args, **kwargs)
+
+    async def get_kinds(self, *args, **kwargs):
+        return await self._proxy_call('get_kinds', *args, **kwargs)
+
+    async def get_collections(self, *args, **kwargs):
+        return await self._proxy_call('get_collections', *args, **kwargs)
+
+    async def get_entity_type(self, *args, **kwargs):
+        return await self._proxy_call('get_entity_type', *args, **kwargs)
+
+    async def get_entity_category(self, *args, **kwargs):
+        return await self._proxy_call('get_entity_category', *args, **kwargs)
+
+    async def text_search(self, *args, **kwargs):
+        return await self._proxy_call('text_search', *args, **kwargs)
+
+    # --- Aspect operations --- #
+
+    async def get_aspects(self, *args, **kwargs):
+        return await self._proxy_call('get_aspects', *args, **kwargs)
+
+    async def create_aspect(self, *args, **kwargs):
+        return await self._proxy_call('create_aspect', *args, **kwargs)
+
+    async def update_aspect(self, *args, **kwargs):
+        return await self._proxy_call('update_aspect', *args, **kwargs)
+
+    async def delete_aspect(self, *args, **kwargs):
+        return await self._proxy_call('delete_aspect', *args, **kwargs)
+
+    # --- Completion operations --- #
+
+    async def get_completions(self, *args, **kwargs):
+        return await self._proxy_call('get_completions', *args, **kwargs)
+
+    # --- Concept operations --- #
+
+    async def get_concept(self, *args, **kwargs):
+        return await self._proxy_call('get_concept', *args, **kwargs)
+
+    async def create_concept(self, *args, **kwargs):
+        return await self._proxy_call('create_concept', *args, **kwargs)
+
+    async def update_concept(self, *args, **kwargs):
+        return await self._proxy_call('update_concept', *args, **kwargs)
+
+    # --- Definition operations --- #
+
+    async def get_definition(self, *args, **kwargs):
+        return await self._proxy_call('get_definition', *args, **kwargs)
+
+    async def create_definition(self, *args, **kwargs):
+        return await self._proxy_call('create_definition', *args, **kwargs)
+
+    async def update_definition(self, *args, **kwargs):
+        return await self._proxy_call('update_definition', *args, **kwargs)
+
+    # --- Fact operations --- #
+
+    async def get_facts(self, *args, **kwargs):
+        return await self._proxy_call('get_facts', *args, **kwargs)
+
+    async def get_all_related(self, *args, **kwargs):
+        return await self._proxy_call('get_all_related', *args, **kwargs)
+
+    async def create_fact(self, *args, **kwargs):
+        return await self._proxy_call('create_fact', *args, **kwargs)
+
+    async def update_fact(self, *args, **kwargs):
+        return await self._proxy_call('update_fact', *args, **kwargs)
+
+    async def delete_fact(self, *args, **kwargs):
+        return await self._proxy_call('delete_fact', *args, **kwargs)
+
+    async def get_definitive_facts(self, *args, **kwargs):
+        return await self._proxy_call('get_definitive_facts', *args, **kwargs)
+
+    async def get_facts_relating_entities(self, *args, **kwargs):
+        return await self._proxy_call('get_facts_relating_entities', *args, **kwargs)
+
+    async def get_related_on_uid_subtype_cone(self, *args, **kwargs):
+        return await self._proxy_call('get_related_on_uid_subtype_cone', *args, **kwargs)
+
+    async def get_inherited_relation(self, *args, **kwargs):
+        return await self._proxy_call('get_inherited_relation', *args, **kwargs)
+
+    async def get_core_sample(self, *args, **kwargs):
+        return await self._proxy_call('get_core_sample', *args, **kwargs)
+
+    async def get_core_sample_rh(self, *args, **kwargs):
+        return await self._proxy_call('get_core_sample_rh', *args, **kwargs)
+
+    async def get_classification_fact(self, *args, **kwargs):
+        return await self._proxy_call('get_classification_fact', *args, **kwargs)
+
+    async def get_related_to(self, *args, **kwargs):
+        return await self._proxy_call('get_related_to', *args, **kwargs)
+
+    async def get_related_to_subtype_cone(self, *args, **kwargs):
+        return await self._proxy_call('get_related_to_subtype_cone', *args, **kwargs)
+
+    async def get_classified(self, *args, **kwargs):
+        return await self._proxy_call('get_classified', *args, **kwargs)
+
+    async def get_subtypes(self, *args, **kwargs):
+        return await self._proxy_call('get_subtypes', *args, **kwargs)
+
+    async def get_subtypes_cone(self, *args, **kwargs):
+        return await self._proxy_call('get_subtypes_cone', *args, **kwargs)
+
+    # --- Individual operations --- #
+
+    async def get_individual(self, *args, **kwargs):
+        return await self._proxy_call('get_individual', *args, **kwargs)
+
+    async def create_individual(self, *args, **kwargs):
+        return await self._proxy_call('create_individual', *args, **kwargs)
+
+    async def update_individual(self, *args, **kwargs):
+        return await self._proxy_call('update_individual', *args, **kwargs)
+
+    # --- Kind operations --- #
+
+    async def get_kind(self, *args, **kwargs):
+        return await self._proxy_call('get_kind', *args, **kwargs)
+
+    async def create_kind(self, *args, **kwargs):
+        return await self._proxy_call('create_kind', *args, **kwargs)
+
+    async def update_kind(self, *args, **kwargs):
+        return await self._proxy_call('update_kind', *args, **kwargs)
+
+    async def delete_kind(self, *args, **kwargs):
+        return await self._proxy_call('delete_kind', *args, **kwargs)
+
+    # --- Search operations --- #
+
+    async def uid_search(self, *args, **kwargs):
+        return await self._proxy_call('uid_search', *args, **kwargs)
+
+    async def individual_search(self, *args, **kwargs):
+        return await self._proxy_call('individual_search', *args, **kwargs)
+
+    async def kind_search(self, *args, **kwargs):
+        return await self._proxy_call('kind_search', *args, **kwargs)
+
+    # --- Specialization operations --- #
+
+    async def get_specialization_hierarchy(self, *args, **kwargs):
+        return await self._proxy_call('get_specialization_hierarchy', *args, **kwargs)
+
+    # --- Transaction operations --- #
+
+    async def get_transaction(self, *args, **kwargs):
+        return await self._proxy_call('get_transaction', *args, **kwargs)
+
+    async def create_transaction(self, *args, **kwargs):
+        return await self._proxy_call('create_transaction', *args, **kwargs)
+
+    async def commit_transaction(self, *args, **kwargs):
+        return await self._proxy_call('commit_transaction', *args, **kwargs)
+
+    async def rollback_transaction(self, *args, **kwargs):
+        return await self._proxy_call('rollback_transaction', *args, **kwargs)
+
+    # --- Validation operations --- #
+
+    async def validate_entity(self, *args, **kwargs):
+        return await self._proxy_call('validate_entity', *args, **kwargs)
+
 # For testing directly
-# async def test_archivist_client():
-#     client = ArchivistClient()
-#     connected = await client.connect()
-#
-#     if connected:
-#         logger.info("Connection successful!")
-#         kinds = await client.get_kinds({"sort": ["name", "ASC"], "range": [0, 10], "filter": {}})
-#         logger.info(f"Kinds: {kinds}")
-#
-#         await client.disconnect()
-#     else:
-#         logger.error("Failed to connect to Archivist")
+async def main():
+    # Example usage of the proxy
+    user_id_test = 123
+    env_id_test = 'test-env-proxy'
+    proxy_client = ArchivistClientProxy(user_id_test, env_id_test)
+
+    connected = await proxy_client.connect()
+    if connected:
+        logger.info(f"Proxy connected successfully for user {user_id_test}")
+
+        # Test getting kinds via proxy
+        kinds = await proxy_client.get_kinds({"sort": ["name", "ASC"], "range": [0, 10], "filter": {}})
+        logger.info(f"Proxy retrieved kinds: {kinds}")
+
+        await proxy_client.disconnect()
+        logger.info("Proxy disconnected.")
+    else:
+        logger.error("Proxy failed to connect.")
+
+# If you want to run this test main:
+# if __name__ == "__main__":
+#     import asyncio
+#     logging.basicConfig(level=logging.INFO)
+#     asyncio.run(main())

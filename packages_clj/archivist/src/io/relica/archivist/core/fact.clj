@@ -27,8 +27,8 @@
                          :relationTypeUIDs rel-type-uids}
           _ (println "RESOLVED CONF " resolved-conf)
           func (if (nil? rel-type-uids)
-                           queries/get-facts-batch
-                           queries/get-facts-batch-on-relation-type)
+                   queries/get-facts-batch
+                   queries/get-facts-batch-on-relation-type)
           _ (println "FUNC " func)
           raw-result (graph/exec-query
                          graph/graph-service
@@ -132,31 +132,30 @@
         (log/error "Error in get-all-related-facts:" (ex-message e))
         []))))
 
-(defn get-all-related-facts-recursive [uid depth]
-  (go
-    (try
-      (let [max-depth 3
-            actual-depth (min depth max-depth)
+  ;; (go
+  ;;   (try
+  ;;     (let [max-depth 3
+  ;;           actual-depth (min depth max-depth)
 
-            ;; Define recursive function
-            recurse (fn recurse-fn [current-uid curr-depth]
-                      (go
-                        (if (< curr-depth actual-depth)
-                          (let [result (<! (get-all-related-facts current-uid))
-                                next-uids (map :lh_object_uid result)
-                                recursive-results (map #(recurse-fn % (inc curr-depth)) next-uids)
-                                all-results (<! (traversal/await-all recursive-results))]
-                            (concat result (flatten all-results)))
-                          [])))
+  ;;           ;; Define recursive function
+  ;;           recurse (fn recurse-fn [current-uid curr-depth]
+  ;;                     (go
+  ;;                       (if (< curr-depth actual-depth)
+  ;;                         (let [result (<! (get-all-related-facts current-uid))
+  ;;                               next-uids (map :lh_object_uid result)
+  ;;                               recursive-results (map #(recurse-fn % (inc curr-depth)) next-uids)
+  ;;                               all-results (<! (traversal/await-all recursive-results))]
+  ;;                           (concat result (flatten all-results)))
+  ;;                         [])))
 
-            ;; Execute recursive function
-            prelim-result (<! (recurse uid 0))]
+  ;;           ;; Execute recursive function
+  ;;           prelim-result (<! (recurse uid 0))]
 
-        ;; Deduplicate results
-        (traversal/deduplicate-facts prelim-result))
-      (catch Exception e
-        (log/error "Error in get-all-related-facts-recursive:" (ex-message e))
-        []))))
+  ;;       ;; Deduplicate results
+  ;;       (traversal/deduplicate-facts prelim-result))
+  ;;     (catch Exception e
+  ;;       (log/error "Error in get-all-related-facts-recursive:" (ex-message e))
+  ;;       []))))
 
 (defn get-related-on-uid-subtype-cone [lh-object-uid rel-type-uid]
   (go
@@ -473,6 +472,6 @@
 
 
 
-(comment
+(comment)
 
-  )
+  
