@@ -12,7 +12,6 @@ const AssistantMessage = ({ content }: AssistantMessageProps) => {
       sx={{
         p: 2,
         bgcolor: 'background.paper',
-        color: 'rgb(144, 202, 249)',
         maxWidth: '90%',
         alignSelf: 'flex-start',
         borderRadius: '1rem',
@@ -22,10 +21,11 @@ const AssistantMessage = ({ content }: AssistantMessageProps) => {
         lineHeight: { xs: 1.5, sm: 1.55, md: 1.55, lg: 1.55 }
       }}
     >
-      <Box className="prose" style={{color:'#fff'}}>
+      {/* prose-invert for dark mode, max-w-none to override prose's max-width */}
+      <Box className="prose prose-invert max-w-none prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-code:text-blue-300 prose-code:bg-gray-800 prose-code:before:content-[''] prose-code:after:content-['']">
         <ReactMarkdown>
           {content}
-          </ReactMarkdown>
+        </ReactMarkdown>
       </Box>
     </Paper>
   );

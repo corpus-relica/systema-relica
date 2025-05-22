@@ -1,10 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
+import tailwindcss from "@tailwindcss/vite";
 
 // Remove the absolute Docker path and let Vite use the current directory
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     preserveSymlinks: true,
     alias: {
