@@ -1,5 +1,6 @@
 (ns io.relica.aperture.io.ws-handlers
   (:require [clojure.tools.logging :as log]
+            [clojure.pprint :as pp]
             [io.relica.common.websocket.server :as common-ws]
             [io.relica.aperture.io.ws-server :as ws]
             [io.relica.aperture.config :refer [get-default-environment]]
@@ -457,7 +458,7 @@
                     (:user-id ?data)
                     (:environment-id ?data)
                     (:uid ?data)))]
-    (respond-success (:environment result))
+    (respond-success {:facts (:facts result)});;(:environment result)
     (when (:success result)
       (ws/broadcast!
        {:type :aperture.facts/loaded
@@ -466,9 +467,9 @@
         :environment-id (:environment-id ?data)}
        10)))
   (catch Exception e
-    (log/error e "Failed to load connections-in")
+    (log/error e "Failed to load required roles")
     (respond-error :database-error
-                   "Failed to load connections-in"
+                   "Failed to load required roles"
                    {:exception (str e)})))
 
 (response/def-ws-handler :aperture.relation/role-players-load
@@ -476,7 +477,7 @@
                     (:user-id ?data)
                     (:environment-id ?data)
                     (:uid ?data)))]
-    (respond-success (:environment result))
+    (respond-success {:facts (:facts result)});;(:environment result)
     (when (:success result)
       (ws/broadcast!
        {:type :aperture.facts/loaded
@@ -485,28 +486,7 @@
         :environment-id (:environment-id ?data)}
        10)))
   (catch Exception e
-    (log/error e "Failed to load connections-in")
+    (log/error e "Failed to load role players")
     (respond-error :database-error
-                   "Failed to load connections-in"
-                   {:exception (str e)})))
-
-(response/def-ws-handler :aperture.relation/role-players-load
-  (let [result (<! (env/deselect-entity
-                    (:user-id ?data)
-                    (:environment-id ?data)
-                    (:uid ?data)))]
-    (if (:success result)
-      (respond-success {:success true})
-      (respond-error :database-error "Failed to deselect entity"))
-    (when (:success result)
-      (ws/broadcast!
-       {:type :aperture.entity/deselected
-        :user-id (:user-id ?data)
-        :environment-id (or (:environment-id ?data)
-                            (:id (get-default-environment (:user-id ?data))))}
-       10)))
-  (catch Exception e
-    (log/error e "Failed to deselect entity")
-    (respond-error :database-error
-                   "Failed to deselect entity"
+                   "Failed to load role players"
                    {:exception (str e)})))

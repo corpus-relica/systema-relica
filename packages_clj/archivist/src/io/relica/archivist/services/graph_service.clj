@@ -137,7 +137,7 @@
 (defn create-graph-service [session-factory]
   (->GraphService session-factory))
 
-(def service (atom nil))
+(defonce graph-service-comp (atom nil))
 
 (defn start []
   (let [uri-str (str "bolt://" (get-in db-config [:neo4j :host]) ":" (get-in db-config [:neo4j :port]))
@@ -148,14 +148,14 @@
                (get-in db-config [:neo4j :password]))
         session-factory (fn [] (neo4j/get-session conn))
         svc (create-graph-service session-factory)]
-    (reset! service svc)
+    (reset! graph-service-comp svc)
     ;; service
     svc))
 
 (defn stop []
   ;; disconnect
   ;; (neo4j/close (neo4j/get-conn @graph-service))
-  (reset! service nil))
+  (reset! graph-service-comp nil))
 
 ;; GRAPH SERVICE
 

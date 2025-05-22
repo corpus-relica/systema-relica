@@ -143,7 +143,6 @@ Specialization Operations:
 - loadDirectSupertype: Retrieve immediate generalizations
 - loadDirectSubtypes: Retrieve immediate specializations
 - loadLineage: Retrieve complete path to root concept
-- loadSubtypeCone: Retrieve closure of specializing kinds <currently unavailable>
 
 Classification Operations:
 - loadClassifier: Retrieve kind(s) that classifies an individual
@@ -154,11 +153,9 @@ Relation Operations:
 - loadRoleRequirements: Retrieve roles required by a relation type
 - loadRolePlayers: Retrieve entities playing roles in a relation
 
-Knowledge Order Operations:
-- getDefinitionalRelations: Retrieve relations true by definition
-- getPossibilityRelations: Retrieve relations expressing possibilities
-- getNecessityRelations: Retrieve relations expressing requirements
-
+Focus Operations:
+- getEntityDefinition: Get textual description/definition of an entity and make it the current selection
+ 
 </available_capabilities>
 
 <interaction_approach>
@@ -189,11 +186,19 @@ Your primary function is to help users bridge their natural understanding with t
    - Identify when user goals align with particular knowledge orders
 
 Always ground explanations in the formal structures while making them accessible. Your goal is to make the underlying formal model transparent and navigable to users who may not be versed in its mathematical foundations.
-</interaction_approach>
-
 Be concise and to the point.
 Don't make anything up!!!
+Do your best to maintain the level of discourse at the level of a 12th grader.
+</interaction_approach>
+
 """
+# - loadSubtypeCone: Retrieve closure of specializing kinds <currently unavailable>
+
+# Knowledge Order Operations:
+# - getDefinitionalRelations: Retrieve relations true by definition
+# - getPossibilityRelations: Retrieve relations expressing possibilities
+# - getNecessityRelations: Retrieve relations expressing requirements
+
 # - Navigate the taxonomic hierarchy (loadSpecializationHierarchy, loadSubtypes, loadSpecializationFact)
 # - Explore classifications (loadClassified, loadClassificationFact)
 # - Examine entity relationships (loadEntity, getEntityOverview, getEntityDetails)

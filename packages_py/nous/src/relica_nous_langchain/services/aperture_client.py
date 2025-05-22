@@ -547,6 +547,12 @@ class ApertureClientProxy:
         # This method didn't seem to take user/env id, check signature in ApertureClient
         return await self._proxy_call('loadEntity', *args, **kwargs)
 
+    async def loadRequiredRoles(self, *args, **kwargs):
+        return await self._proxy_call('loadRequiredRoles', *args, **kwargs)
+        
+    async def loadRolePlayers(self, *args, **kwargs):
+        return await self._proxy_call('loadRolePlayers', *args, **kwargs)
+
     async def emit_event(self, *args, **kwargs):
         return await self._proxy_call('emit_event', *args, **kwargs)
 

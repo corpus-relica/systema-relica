@@ -1,5 +1,6 @@
 (ns io.relica.aperture.core.environment
   (:require [clojure.tools.logging :as log]
+            [clojure.pprint :as pp]
             [io.relica.aperture.config :refer [get-user-environment get-user-environments
                                                update-user-environment! select-entity!
                                                deselect-entity! get-default-environment
@@ -739,3 +740,71 @@
 ;;           (log/info "Stopping Environment Service...")
 ;;           ;; Reset the handlers' reference to the service
 ;;           (ws-handlers/set-environment-service! nil)))
+
+(defn load-required-roles [user-id env-id rel-type-uid]
+  (go
+    (try
+      (let [result (<! (archivist/get-required-roles archivist-client rel-type-uid))
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            ;; TODO - check (:success data)
+            facts (:data result)
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with composition"}))
+      (catch Exception e))))
+
+
+(defn load-role-players [user-id env-id rel-type-uid]
+  (go
+    (try
+      (let [result (<! (archivist/get-role-players archivist-client rel-type-uid))
+            _ (println "RESULT")
+            _ (println result)
+            env-id (or env-id (:id (get-default-environment user-id)))
+            env (get-user-environment user-id env-id)
+            old-facts (:facts env)
+            ;; facts (:facts result)
+            data (:data result)
+            a (first data)
+            b (second data)
+            facts [
+                   (:requirement a)
+                   (:player a)
+                   (:requirement b)
+                   (:player b)]
+            combined-facts (concat old-facts facts)
+            new-facts (deduplicate-facts combined-facts)
+            updated-env (when facts
+                          (update-user-environment! user-id env-id {:facts new-facts}))]
+        (println "FOOBARBAZ!!")
+        (pp/pprint facts)
+        (if updated-env
+          {:success true
+           :environment updated-env
+           :facts facts}
+          {:error "Failed to update environment with composition"}))
+      (catch Exception e))))
+
+
+(comment
+
+  (go
+    (let [foo (<! (load-required-roles 1 1 4714))]
+      (println foo)))
+
+  (go
+    (let [foo (<! (load-role-players 1 1 4714))]
+      (println foo)))
+
+  (clear-entities 1 1)
+
+  (print)
+  )

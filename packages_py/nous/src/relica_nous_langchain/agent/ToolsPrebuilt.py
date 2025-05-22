@@ -267,13 +267,14 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
         if result is None or ('facts' not in result):
             return "No relation with that uid exists or no facts returned"
 
-        related_str = facts_to_related_entities_str(result["facts"])
+        related_str = facts_to_relations_str(result["facts"])
 
         ret =  (
-            f"\tRelated Entities (uid:name):\n"
+            f"\tRequired Roles of Relation:\n"
             f"{related_str}\n"
         )
         return ret
+
 
     async def loadRolePlayers(uid: int)->str:
         """Use this to retrieve the role players of a relation entity.
@@ -287,49 +288,59 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
         if result is None or ('facts' not in result):
             return "No relation with that uid exists or no facts returned"
 
-        related_str = facts_to_related_entities_str(result["facts"])
+        related_str = facts_to_relations_str(result["facts"])
 
         ret =  (
-            f"\tRelated Entities (uid:name):\n"
+            f"\tRole Players of Relation:\n"
             f"{related_str}\n"
         )
         return ret
 
-    # --- Active Tools --- #
+     
+    # Active Tools --- #
 
-    async def loadEntity(uid: int) -> str:
-        """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
+    async def getEntityDefinition(uid: int) -> str | None:
+        """Gets textual definition of an entity identified by its UID. Also selects this entity as the current focus."""
         uid = int(uid)
-        result = await aperture_proxy.loadEntity(uid)
-
-        if result is None:
-            return "No entity with that uid exists"
-
-        related_str = facts_to_related_entities_str(result["facts"])
-        relationships_str = facts_to_relations_str(result["facts"])
-
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-            f"{relationships_str}"
-        )
-
-        return ret
-
-
-    async def getEntityOverview(uid: int)->str | None:
-        """Gets a high-level overview or representation of an entity identified by its UID. Also selects this entity as the current focus."""
-        uid = int(uid)
-
-        content = semantic_model.getModelRepresentation(uid)
-
-        if content is None:
-            return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
-
+        content = await archivist_proxy.get_definition(uid)
+        # if content is None:
+        #     return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
         await aperture_proxy.selectEntity(uid)
+        return '\n'.join(content)  # Correct way to join strings with newlines
 
-        return content
+    # async def loadEntity(uid: int) -> str:
+    #     """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
+    #     uid = int(uid)
+    #     result = await aperture_proxy.loadEntity(uid)
+
+    #     if result is None:
+    #         return "No entity with that uid exists"
+
+    #     related_str = facts_to_related_entities_str(result["facts"])
+    #     relationships_str = facts_to_relations_str(result["facts"])
+
+    #     ret =  (
+    #         f"\tRelated Entities (uid:name):\n"
+    #         f"{related_str}\n"
+    #         f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+    #         f"{relationships_str}"
+    #     )
+
+    #     return ret
+
+
+    # async def getEntityOverview(uid: int)->str | None:
+    #     """Gets a high-level overview or representation of an entity identified by its UID. Also selects this entity as the current focus."""
+    #     uid = int(uid)
+
+    #     content = semantic_model.getModelRepresentation(uid)
+
+    #     if content is None:
+    #         return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
+
+    #     await aperture_proxy.selectEntity(uid)
+
+    #     return content
 
 
     # async def cutToFinalAnswer(message: str)->str:
@@ -337,25 +348,25 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
     #     return "cut to the chase"
 
 
-    async def getEntityDetails(uid: int)->str:
-        """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
-        uid = int(uid)
-        result = await aperture_proxy.loadAllRelatedFacts(uid)
+    # async def getEntityDetails(uid: int)->str:
+    #     """Loads detailed information about a specific entity identified by its UID. Returns related entities and relationships."""
+    #     uid = int(uid)
+    #     result = await aperture_proxy.loadAllRelatedFacts(uid)
 
-        if result is None:
-            return "No entity with that uid exists"
+    #     if result is None:
+    #         return "No entity with that uid exists"
 
-        related_str = facts_to_related_entities_str(result["facts"])
-        relationships_str = facts_to_relations_str(result["facts"])
+    #     related_str = facts_to_related_entities_str(result["facts"])
+    #     relationships_str = facts_to_relations_str(result["facts"])
 
-        ret =  (
-            f"\tRelated Entities (uid:name):\n"
-            f"{related_str}\n"
-            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
-            f"{relationships_str}"
-        )
+    #     ret =  (
+    #         f"\tRelated Entities (uid:name):\n"
+    #         f"{related_str}\n"
+    #         f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+    #         f"{relationships_str}"
+    #     )
 
-        return ret
+    #     return ret
 
 
     # Commented Out / Inactive Tools (Preserved) --- #
@@ -419,17 +430,22 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
 
     active_tools = [
         # --------------------------------------
-        # textSearchLoad,
-        # uidSearchLoad,
+        textSearchLoad,
+        uidSearchLoad,
         #
-        # loadDirectSupertypes,
-        # loadDirectSubtypes,
-        # loadLineage,
+        loadDirectSupertypes,
+        loadDirectSubtypes,
+        loadLineage,
         #
-        # loadClassifier,
-        # loadClassified,
+        loadClassifier,
+        loadClassified,
         #
-        loadRelations
+        loadRelations,
+        loadRoleRequirements,
+        loadRolePlayers,
+        # loadRolePlayers (of role)
+        #
+        getEntityDefinition
         ]
 
     return {

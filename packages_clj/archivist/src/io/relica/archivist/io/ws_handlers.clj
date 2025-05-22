@@ -1,9 +1,12 @@
 (ns io.relica.archivist.io.ws-handlers
   (:require [clojure.tools.logging :as log]
+            [clojure.pprint :as pp]
             [clojure.core.async :as async :refer [<! go chan]]
+            [io.relica.archivist.basis.relation :as relation]
             [io.relica.archivist.core.gellish-base :as gellish-base]
             [io.relica.archivist.core.kind :as kind]
             [io.relica.archivist.core.fact :as fact]
+            [io.relica.archivist.core.definition :as definition]
             [io.relica.archivist.core.linearization :as linearization]
             [io.relica.archivist.core.entity-retrieval :as entity]
             [io.relica.archivist.core.general-search :as general-search]
@@ -22,6 +25,22 @@
                    "Failed to execute query"
                    {:exception (str e)})))
 
+;; DEFINITION OPERATIONS
+
+(response/def-ws-handler :archivist.definition/get
+  (let [result (<! (definition/get-definition (:uid ?data)))]
+    (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    (println result)
+    (respond-success {:payload result}))
+  (catch Exception e
+    (log/error e "Failed to get definition")
+    (respond-error :query-execution-failed
+                   "Failed to get definition"
+                   {:exception (str e)})))
+
+;; (response/def-ws-handler :archivist.definition/create
+;; (response/def-ws-handler :archivist.definition/update
+ 
 ;; FACT SERVICE
 
 (response/def-ws-handler :archivist.fact/batch-get
@@ -292,4 +311,33 @@
   (catch Exception e
     (log/error e "Failed to calculate lineage for UID:" (:uid ?data))
     (respond-error :database-error "Failed to calculate lineage"
+                   {:exception (str e) :uid (:uid ?data)})))
+
+;; RELATION
+
+(response/def-ws-handler :archivist.relation/get-required-roles
+  (let [uid (:uid ?data)]
+    (if (nil? uid)
+      (respond-error :missing-required-field "Missing UID in request data" {:field "uid"})
+      (go
+        (let [required-roles (<! (relation/get-required-roles uid))]
+          (println "REQUIRED ROLES FOOO!!!! " required-roles)
+          (pp/pprint required-roles)
+          (respond-success {:data required-roles})))))
+  (catch Exception e
+    (log/error e "Failed to get required roles for UID:" (:uid ?data))
+    (respond-error :database-error "Failed to get required roles"
+                   {:exception (str e) :uid (:uid ?data)})))
+
+
+(response/def-ws-handler :archivist.relation/get-role-players
+  (let [uid (:uid ?data)]
+    (if (nil? uid)
+      (respond-error :missing-required-field "Missing UID in request data" {:field "uid"})
+      (go
+        (let [role-players (<! (relation/get-relation-role-players uid))]
+          (respond-success {:data role-players})))))
+  (catch Exception e
+    (log/error e "Failed to get role players for UID:" (:uid ?data))
+    (respond-error :database-error "Failed to get role players"
                    {:exception (str e) :uid (:uid ?data)})))

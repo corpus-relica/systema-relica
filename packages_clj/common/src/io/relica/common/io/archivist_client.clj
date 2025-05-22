@@ -88,7 +88,11 @@
   (send-heartbeat! [this])
 
   ;; Lineage operations
-  (get-lineage [this uid]))
+  (get-lineage [this uid])
+
+  ;; Relation operations
+  (get-required-roles [this rel-type-uid])
+  (get-role-players [this rel-type-uid]))
 
 
 (defprotocol ConnectionManagement
@@ -391,8 +395,17 @@
 
   (get-lineage [this uid]
     (when-not (connected? this) (connect! this))
-    (ws/send-message! client :archivist.lineage/get {:uid uid} (:timeout options))))
+    (ws/send-message! client :archivist.lineage/get {:uid uid} (:timeout options)))
 
+  ;; Relation operations
+
+  (get-required-roles [this rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :archivist.relation/get-required-roles {:uid rel-type-uid} (:timeout options)))
+
+  (get-role-players [this rel-type-uid]
+    (when-not (connected? this) (connect! this))
+    (ws/send-message! client :archivist.relation/get-role-players {:uid rel-type-uid} (:timeout options))))
 
 ;; Heartbeat scheduler
 (defn start-heartbeat-scheduler! [aperture-client interval-ms]

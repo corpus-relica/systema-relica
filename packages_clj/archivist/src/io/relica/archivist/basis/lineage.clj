@@ -4,8 +4,7 @@
                                                     get-relations-r]]
            ;;                                         get-paths-between-entities]]
             [io.relica.common.services.cache-service :as cache :refer [cache-service-comp]]
-            [io.relica.archivist.services.linearization-service :as linearization
-             :refer [linearization-service-comp]]))
+            [io.relica.archivist.core.linearization :as linearization]))
 
 
 
@@ -31,7 +30,7 @@
   returns list of uids"
   [uid]
   ;; maybe use get-paths-between-two-entitties
-  (linearization/calculate-lineage @linearization-service-comp uid))
+  (linearization/calculate-lineage uid))
 
 (defn get-lineage
   "get deterministic ordered list of all ancestors of input uid;
