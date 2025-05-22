@@ -118,10 +118,41 @@ const Graph = observer(() => {
   const [selectedEdge, setSelectedEdge] = useState<string | number | null>(null);
 
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [panelWidth, setPanelWidth] = useState(576); // Default width in pixels
   const [dividerPosition, setDividerPosition] = useState(50); // 50% as default position
+  const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
   const [searchUIOpen, setSearchUIOpen] = useState(false);
   const [filter, setFilter] = useState<number>(0);
   
+  // Effect for horizontal resizing
+  useEffect(() => {
+    const handleMouseMove = (e: globalThis.MouseEvent) => {
+      if (!isDraggingHorizontal) return;
+      
+      // Calculate the new width based on the mouse position
+      const windowWidth = window.innerWidth;
+      const newWidth = windowWidth - e.clientX;
+      
+      // Limit the width between 300px and 800px
+      const limitedWidth = Math.min(Math.max(newWidth, 300), 800);
+      setPanelWidth(limitedWidth);
+    };
+    
+    const handleMouseUp = () => {
+      setIsDraggingHorizontal(false);
+    };
+    
+    if (isDraggingHorizontal) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingHorizontal]);
+
   const handleDividerResize = (position: number) => {
     setDividerPosition(position);
   };
@@ -288,15 +319,25 @@ const Graph = observer(() => {
           paletteMap={paletteMap}
           setSearchUIOpen={setSearchUIOpen}
         />
-        {/* Toggle button for the right panel */}
+        {/* Horizontal resize handle and toggle button */}
         <Box
           sx={{
             position: "absolute",
-            right: isPanelOpen ? "576px" : 0,
-            top: "50%",
-            transform: "translateY(-50%)",
+            right: isPanelOpen ? `${panelWidth}px` : 0,
+            top: 0,
+            bottom: 0,
+            width: "10px",
+            cursor: "ew-resize",
+            backgroundColor: "#333",
             zIndex: 1000,
-            transition: "right 0.3s ease",
+            transition: isPanelOpen ? "none" : "right 0.3s ease",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseDown={(e: React.MouseEvent) => {
+            setIsDraggingHorizontal(true);
+            e.preventDefault();
           }}
         >
           <IconButton
@@ -304,6 +345,8 @@ const Graph = observer(() => {
             sx={{
               backgroundColor: "#333",
               color: "white",
+              width: "24px",
+              height: "24px",
               "&:hover": {
                 backgroundColor: "#444",
               },
@@ -318,7 +361,7 @@ const Graph = observer(() => {
           sx={{
             display: "flex",
             flexDirection: "column",
-            width: "576px", // 1.5x the original width (384px)
+            width: `${panelWidth}px`,
             backgroundColor: "#515151",
             overflow: "hidden", // Hide overflow on the container
             position: "absolute",
