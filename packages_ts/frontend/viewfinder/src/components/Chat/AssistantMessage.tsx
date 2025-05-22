@@ -67,9 +67,17 @@ const AssistantMessage = ({ content }: AssistantMessageProps) => {
         prose-ul:pl-4 prose-ol:pl-4
         
         /* Tables */
-        prose-table:text-sm prose-table:border-collapse prose-table:w-full
-        prose-th:bg-gray-800 prose-th:text-left prose-th:p-1 prose-th:border prose-th:border-gray-700
-        prose-td:border prose-td:border-gray-700 prose-td:p-1
+        prose-table:text-sm 
+        prose-table:border-collapse
+        prose-table:w-full
+        prose-th:bg-gray-800
+        prose-th:text-left
+        prose-th:p-1
+        prose-th:border
+        prose-th:border-gray-700
+        prose-td:border 
+        prose-td:border-gray-700 
+        prose-td:p-1
         
         /* Blockquotes */
         prose-blockquote:border-l-2 prose-blockquote:border-blue-300 prose-blockquote:pl-2

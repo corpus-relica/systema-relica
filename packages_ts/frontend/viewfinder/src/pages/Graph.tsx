@@ -1,17 +1,9 @@
-import React, { useState, useCallback } from "react";
-
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useStores } from "../context/RootStoreContext.js";
-
 import { observer } from "mobx-react";
-
-import { useStore } from "react-admin";
-
 import { sockSendCC, sendSocketMessage, portalWs } from "../socket.js";
-
-import { Drawer, IconButton, Paper, Slide } from "@mui/material";
-
+import { IconButton, Paper, Slide } from "@mui/material";
 import Box from "@mui/material/Box";
-
 import Fab from "@mui/material/Fab";
 import CopyAllIcon from "@mui/icons-material/CopyAll.js";
 import {
@@ -29,6 +21,84 @@ import { Fact } from "../types.js";
 
 import { getAuthToken } from "../providers/AuthProvider.js";
 import Chat, { Message } from "../components/Chat/index.js";
+import SelectionDetails from "../components/SelectionDetails/index.js";
+
+// Component for the resizable divider
+interface ResizableDividerProps {
+  onResize: (position: number) => void;
+  position: number;
+  setPosition: (position: number) => void;
+}
+
+const ResizableDivider = ({ onResize, position, setPosition }: ResizableDividerProps) => {
+  const dividerRef = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    e.preventDefault();
+  };
+  
+  useEffect(() => {
+    const handleMouseMove = (e: globalThis.MouseEvent) => {
+      if (!isDragging) return;
+      
+      if (dividerRef.current && dividerRef.current.parentElement) {
+        const container = dividerRef.current.parentElement;
+        const containerRect = container.getBoundingClientRect();
+        const newPosition = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+        
+        // Limit the position between 10% and 90%
+        const limitedPosition = Math.min(Math.max(newPosition, 10), 90);
+        setPosition(limitedPosition);
+        onResize(limitedPosition);
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+    
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, onResize, setPosition]);
+  
+  return (
+    <Box
+      ref={dividerRef}
+      sx={{
+        height: '8px',
+        width: '100%',
+        backgroundColor: '#333',
+        cursor: 'row-resize',
+        position: 'relative',
+        zIndex: 10,
+        '&:hover': {
+          backgroundColor: '#444',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '30px',
+          height: '4px',
+          backgroundColor: '#666',
+          borderRadius: '2px',
+        }
+      }}
+      onMouseDown={handleMouseDown}
+    />
+  );
+};
 
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
@@ -43,12 +113,18 @@ const Graph = observer(() => {
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
 
-  const [selectedNode] = useStore("selectedNode");
-  const [selectedEdge] = useStore("selectedEdge");
+  // Using local state for selected node/edge instead of useStore
+  const [selectedNode, setSelectedNode] = useState<string | number | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<string | number | null>(null);
 
-  const [chatOpen, setChatOpen] = useState(true);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [dividerPosition, setDividerPosition] = useState(50); // 50% as default position
   const [searchUIOpen, setSearchUIOpen] = useState(false);
   const [filter, setFilter] = useState<number>(0);
+  
+  const handleDividerResize = (position: number) => {
+    setDividerPosition(position);
+  };
 
 
   const token = getAuthToken();
@@ -62,6 +138,7 @@ const Graph = observer(() => {
   const [relType, setRelType] = useState(0);
 
   const selectNode = (id: number) => {
+    setSelectedNode(id);
     sendSocketMessage(SELECT_ENTITY, { uid: id });
   };
 
@@ -97,7 +174,8 @@ const Graph = observer(() => {
   }, []);
 
   const handleEdgeClick = (uid: any) => {
-    sockSendCC(USER, "selectFact", { uid });
+    setSelectedEdge(uid);
+    sockSendCC("selectFact", { uid });
   };
 
   const onStageClick = () => {
@@ -150,6 +228,7 @@ const Graph = observer(() => {
             p: 2,
           }}
         >
+          {/* @ts-ignore */}
           <FactTable
             baseUrl={import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2174"}
             token={token}
@@ -181,8 +260,8 @@ const Graph = observer(() => {
           aria-label="add"
           sx={{
             position: "absolute",
-            top: 10,
-            right: 395,
+            top: 60,
+            right: 10,
           }}
           onClick={copyAll}
         >
@@ -209,62 +288,99 @@ const Graph = observer(() => {
           paletteMap={paletteMap}
           setSearchUIOpen={setSearchUIOpen}
         />
-        <Drawer
-          variant="permanent"
-          anchor="right"
-          open={chatOpen}
+        {/* Toggle button for the right panel */}
+        <Box
           sx={{
-            width: chatOpen ? 400 : 400,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: 400,
-              position: "fixed",
-              height: "calc(100vh - 64px)",
-              top: 64,
-              borderLeft: "1px solid rgba(0, 0, 0, 0.12)",
-              transition: "transform 0.3s ease",
-              transform: chatOpen ? "translateX(0)" : "translateX(380px)",
-            },
+            position: "absolute",
+            right: isPanelOpen ? "576px" : 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 1000,
+            transition: "right 0.3s ease",
           }}
         >
           <IconButton
-            onClick={() => setChatOpen(!chatOpen)}
+            onClick={() => setIsPanelOpen(!isPanelOpen)}
             sx={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: "24px",
-              borderRadius: 0,
-              borderRight: "1px solid rgba(0, 0, 0, 0.12)",
-              backgroundColor: "background.paper",
+              backgroundColor: "#333",
+              color: "white",
               "&:hover": {
-                backgroundColor: "action.hover",
+                backgroundColor: "#444",
               },
             }}
           >
-            {chatOpen ? <ChevronRight /> : <ChevronLeft />}
+            {isPanelOpen ? <ChevronRight /> : <ChevronLeft />}
           </IconButton>
-          <Paper
-            elevation={0}
+        </Box>
+
+        {/* Right Panel with Selection Details and Chat */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "576px", // 1.5x the original width (384px)
+            backgroundColor: "#515151",
+            overflow: "hidden", // Hide overflow on the container
+            position: "absolute",
+            right: 0,
+            top: 0,
+            bottom: 0,
+            transform: isPanelOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 0.3s ease",
+            zIndex: 100,
+          }}
+        >
+          {/* Selection Details Container */}
+          <Box
             sx={{
-              ml: 3,
-              height: "100%",
-              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              height: `${dividerPosition}%`,
+              overflow: "hidden",
             }}
           >
-            <div
-              style={{
-                height: "calc(100% - 40px)",
-                backgroundColor: "rgba(0, 0, 0, 0.04)",
-                borderRadius: 1,
-                padding: 2,
+            <Box
+              sx={{
+                flexGrow: 1,
+                paddingTop: "50px",
+                overflowY: "auto", // Enable vertical scrolling
+                "&::-webkit-scrollbar": {
+                  width: "0.4em",
+                },
+                "&::-webkit-scrollbar-track": {
+                  boxShadow: "inset 0 0 6px rgba(0,0,0,0.00)",
+                  webkitBoxShadow: "inset 0 0 6px rgba(0,0,0,0.00)",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "rgba(0,0,0,.1)",
+                  outline: "1px solid slategrey",
+                },
               }}
             >
-              <Chat messages={nousDataStore.messages} onSubmit={onUserInputSubmit} />
-            </div>
-          </Paper>
-        </Drawer>
+              <SelectionDetails />
+            </Box>
+          </Box>
+
+          {/* Resizable Divider */}
+          <ResizableDivider
+            onResize={handleDividerResize}
+            position={dividerPosition}
+            setPosition={setDividerPosition}
+          />
+
+          {/* Chat Container */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              height: `${100 - dividerPosition}%`,
+              overflow: "hidden",
+              padding: 2,
+            }}
+          >
+            <Chat messages={nousDataStore.messages} onSubmit={onUserInputSubmit} />
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

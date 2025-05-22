@@ -3,10 +3,37 @@ import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 
 // Import your components here
-import GraphContextMenu from "../components/GraphContextMenu";
-import GraphLegend from "../components/GraphLegend";
+import GraphContextMenu from "../components/GraphContextMenu/index.js";
+import GraphLegend from "../components/GraphLegend.js";
 import GraphView from "@relica/3d-graph-ui";
-import SelectionDetails from "../components/SelectionDetails";
+
+// Type assertion to handle component return type issues
+const GraphContextMenuComponent = GraphContextMenu as any;
+const GraphLegendComponent = GraphLegend as any;
+const GraphViewComponent = GraphView as any;
+
+
+interface GraphAndSelectionLayoutProps {
+  open: boolean;
+  handleClose: () => void;
+  x: number;
+  y: number;
+  uid: string | number;
+  type: string;
+  relType?: string;
+  categories: any[];
+  facts: any[];
+  selectNode: (nodeId: string | number) => void;
+  handleContextMenuTrigger: (uid: string | number, type: string, event: React.MouseEvent, relType?: string) => void;
+  onStageClick: () => void;
+  handleEdgeRollOver: (edgeId: string | number) => void;
+  handleEdgeRollOut: () => void;
+  handleEdgeClick: (edgeId: string | number) => void;
+  selectedNode: string | number | null;
+  selectedEdge: string | number | null;
+  paletteMap: Record<string, string>;
+  setSearchUIOpen: (isOpen: boolean) => void;
+}
 
 const GraphAndSelectionLayout = ({
   open,
@@ -28,7 +55,7 @@ const GraphAndSelectionLayout = ({
   selectedEdge,
   paletteMap,
   setSearchUIOpen,
-}) => {
+}: GraphAndSelectionLayoutProps) => {
   const theme = useTheme();
 
   return (
@@ -50,7 +77,7 @@ const GraphAndSelectionLayout = ({
           overflow: "hidden", // Prevent scrolling in the graph view
         }}
       >
-        <GraphContextMenu
+        <GraphContextMenuComponent
           open={open}
           handleClose={handleClose}
           x={x}
@@ -60,21 +87,21 @@ const GraphAndSelectionLayout = ({
           relType={relType}
           setSearchUIOpen={setSearchUIOpen}
         />
-        <GraphLegend />
+        <GraphLegendComponent />
         <Box sx={{ flexGrow: 1, position: "relative" }}>
-          <GraphView
+          <GraphViewComponent
             categories={categories}
             facts={facts}
             onNodeClick={selectNode}
-            onNodeRightClick={(uid, event) =>
+            onNodeRightClick={(uid: string | number, event: React.MouseEvent) =>
               handleContextMenuTrigger(uid, "entity", event)
             }
             onStageClick={onStageClick}
             onEdgeRollOver={handleEdgeRollOver}
             onEdgeRollOut={handleEdgeRollOut}
             onEdgeClick={handleEdgeClick}
-            onEdgeRightClick={(uid, event) => {
-              const fact = facts.find((fact) => fact.fact_uid === uid);
+            onEdgeRightClick={(uid: string | number, event: React.MouseEvent) => {
+              const fact = facts.find((fact: any) => fact.fact_uid === uid);
               handleContextMenuTrigger(
                 uid,
                 "fact",
@@ -86,37 +113,6 @@ const GraphAndSelectionLayout = ({
             selectedEdge={selectedEdge}
             paletteMap={paletteMap}
           />
-        </Box>
-      </Box>
-
-      {/* Selection Details Container */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          width: "384px",
-          backgroundColor: "#515151",
-          overflow: "hidden", // Hide overflow on the container
-        }}
-      >
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflowY: "auto", // Enable vertical scrolling
-            "&::-webkit-scrollbar": {
-              width: "0.4em",
-            },
-            "&::-webkit-scrollbar-track": {
-              boxShadow: "inset 0 0 6px rgba(0,0,0,0.00)",
-              webkitBoxShadow: "inset 0 0 6px rgba(0,0,0,0.00)",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "rgba(0,0,0,.1)",
-              outline: "1px solid slategrey",
-            },
-          }}
-        >
-          <SelectionDetails />
         </Box>
       </Box>
     </Box>
