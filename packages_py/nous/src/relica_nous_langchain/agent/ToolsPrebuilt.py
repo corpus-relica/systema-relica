@@ -150,10 +150,13 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
             return "No kind with that uid exists or no facts returned"
 
         related_str = facts_to_related_entities_str(result["facts"])
+        relationships_str = facts_to_relations_str(result["facts"])
 
         ret =  (
             f"\tRelated Entities (uid:name):\n"
             f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
         )
         return ret
 
@@ -247,10 +250,13 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
             return "No kind with that uid exists or no facts returned"
 
         related_str = facts_to_related_entities_str(result["facts"])
+        relationships_str = facts_to_relations_str(result["facts"])
 
         ret =  (
             f"\tRelated Entities (uid:name):\n"
             f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
         )
         return ret
 
@@ -268,10 +274,13 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
             return "No relation with that uid exists or no facts returned"
 
         related_str = facts_to_relations_str(result["facts"])
+        relationships_str = facts_to_relations_str(result["facts"])
 
         ret =  (
-            f"\tRequired Roles of Relation:\n"
+            f"\tRelated Entities (uid:name):\n"
             f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
         )
         return ret
 
@@ -289,10 +298,13 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
             return "No relation with that uid exists or no facts returned"
 
         related_str = facts_to_relations_str(result["facts"])
+        relationships_str = facts_to_relations_str(result["facts"])
 
         ret =  (
-            f"\tRole Players of Relation:\n"
+            f"\tRelated Entities (uid:name):\n"
             f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
         )
         return ret
 

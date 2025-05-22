@@ -105,7 +105,8 @@
                     (:user-id ?data)
                     (:uid ?data)
                     (:environment-id ?data)))]
-    (respond-success (:environment result))
+    (respond-success {:facts (:facts result)
+                      :environment (:environment result)})
     (when (:success result)
       (ws/broadcast!
        {:type :aperture.facts/loaded
@@ -125,7 +126,8 @@
                     (:user-id ?data)
                     (:entity-uid ?data)
                     (:environment-id ?data)))]
-    (respond-success result)
+    (respond-success {:facts (:facts result)
+                      :environment (:environment result)})
     (when (:success result)
       (ws/broadcast!
        {:type :aperture.facts/loaded
@@ -223,7 +225,8 @@
                     (:user-id ?data)
                     (:environment-id ?data)
                     (:entity-uid ?data)))]
-    (respond-success (:environment result))
+    (respond-success {:facts (:facts result)
+                      :environment (:environment result)})
     (when (:success result)
       (ws/broadcast!
        {:type :aperture.facts/loaded
@@ -281,7 +284,8 @@
                     (:user-id ?data)
                     (:environment-id ?data)
                     (:entity-uid ?data)))]
-    (respond-success (:environment result))
+    (respond-success {:facts (:facts result)
+                      :environment (:environment result)})
     (when (:success result)
       (ws/broadcast!
        {:type :aperture.facts/loaded
@@ -300,7 +304,8 @@
                     (:user-id ?data)
                     (:environment-id ?data)
                     (:entity-uid ?data)))]
-    (respond-success (:environment result))
+    (respond-success {:facts (:facts result)
+                      :environment (:environment result)})
     (when (:success result)
       (ws/broadcast!
        {:type :aperture.facts/loaded
