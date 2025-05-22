@@ -243,8 +243,8 @@ class NOUSAgent:
 
         # Compile the workflow and store it as an instance variable
         self.app = create_react_agent(
-            llm,
-            # "anthropic:claude-3-7-sonnet-latest",
+            # llm,
+            "anthropic:claude-3-7-sonnet-latest",
             tools=t['tools'],
             prompt=prompt,
         )
