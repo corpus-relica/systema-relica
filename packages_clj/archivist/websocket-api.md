@@ -68,12 +68,19 @@ Messages are categorized based on their semantic meaning:
 | Identifier | Description |
 | ---------- | ----------- |
 | `:archivist.fact/create` | Create a new fact |
+| `:archivist.fact/batch-create` | Create multiple facts in a batch operation |
 | `:archivist.aspect/create` | Create a new aspect |
 | `:archivist.concept/create` | Create a new concept |
 | `:archivist.definition/create` | Create a new definition |
 | `:archivist.individual/create` | Create a new individual |
 | `:archivist.kind/create` | Create a new kind |
 | `:archivist.transaction/create` | Create a new transaction |
+| `:archivist.submission/update-definition` | Update a fact definition |
+| `:archivist.submission/update-collection` | Update a fact collection |
+| `:archivist.submission/update-name` | Update an entity name on a fact |
+| `:archivist.submission/blanket-rename` | Update entity name at every instance |
+| `:archivist.submission/add-synonym` | Add a synonym to an entity |
+| `:archivist.submission/create-date` | Create a date entity |
 
 ### Update Operations
 
@@ -91,6 +98,7 @@ Messages are categorized based on their semantic meaning:
 | Identifier | Description |
 | ---------- | ----------- |
 | `:archivist.fact/delete` | Delete a fact |
+| `:archivist.fact/batch-delete` | Delete multiple facts by their UIDs |
 | `:archivist.aspect/delete` | Delete an aspect |
 | `:archivist.kind/delete` | Delete a kind |
 
@@ -845,7 +853,164 @@ Retrieves inherited relation facts for a specific entity and relation type. This
 ```clojure
 {
   ;; Required fields
-  :type string "Type of fact (e.g., 'classification', 'composition')"
+  :lh_object_uid number "UID of the left-hand object"
+  :rh_object_uid number "UID of the right-hand object"
+  :rel_type_uid number "UID of the relation type"
+  :rel_type_name string "Name of the relation type"
+  
+  ;; Optional fields
+  (collection_uid) number "UID of the collection this fact belongs to"
+  (collection_name) string "Name of the collection this fact belongs to"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :fact {...} "The created fact"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Creates a new fact in the system. A fact represents a relationship between two entities.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.fact/create
+ :payload {:lh_object_uid 123456
+           :rh_object_uid 789012
+           :rel_type_uid 1225
+           :rel_type_name "is classified as"
+           :collection_uid 5001
+           :collection_name "My Collection"}}
+
+;; Example success response
+{:success true
+ :data {
+   :fact {
+     :fact_uid 345678
+     :lh_object_uid 123456
+     :rh_object_uid 789012
+     :rel_type_uid 1225
+     :rel_type_name "is classified as"
+     :collection_uid 5001
+     :collection_name "My Collection"
+   }
+ }
+}
+```
+
+### Related Messages
+
+- `:archivist.fact/update` - Update an existing fact
+- `:archivist.fact/delete` - Delete a fact
+- `:archivist.fact/batch-create` - Create multiple facts in a batch
+- `:archivist.fact/batch-get` - Get multiple facts by UIDs
+
+---
+
+## `:archivist.fact/batch-create`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Fact
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+[
+  {
+    ;; Required fields for each fact
+    :lh_object_uid number "UID of the left-hand object"
+    :rh_object_uid number "UID of the right-hand object"
+    :rel_type_uid number "UID of the relation type"
+    :rel_type_name string "Name of the relation type"
+    
+    ;; Optional fields
+    (collection_uid) number "UID of the collection this fact belongs to"
+    (collection_name) string "Name of the collection this fact belongs to"
+  }
+  ;; More facts...
+]
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :facts [...] "Array of created facts"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Creates multiple facts in a single batch operation. This is more efficient than making individual create requests for multiple facts. Supports temporary UIDs (1-100) that will be replaced with actual UIDs during creation.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.fact/batch-create
+ :payload [
+   {:lh_object_uid 123456
+    :rh_object_uid 789012
+    :rel_type_uid 1225
+    :rel_type_name "is classified as"},
+   {:lh_object_uid 1  ; Temporary UID that will be replaced
+    :rh_object_uid 789012
+    :rel_type_uid 1226
+    :rel_type_name "is part of"}
+ ]}
+
+;; Example success response
+{:success true
+ :data {
+   :facts [
+     {:fact_uid 345678
+      :lh_object_uid 123456
+      :rh_object_uid 789012
+      :rel_type_uid 1225
+      :rel_type_name "is classified as"},
+     {:fact_uid 345679
+      :lh_object_uid 234567  ; New UID assigned to replace temporary UID 1
+      :rh_object_uid 789012
+      :rel_type_uid 1226
+      :rel_type_name "is part of"}
+   ]
+ }
+}
+```
+
+### Related Messages
+
+- `:archivist.fact/create` - Create a single fact
+- `:archivist.fact/batch-delete` - Delete multiple facts
   :lh map "Left-hand entity data"
   :rh map "Right-hand entity data"
   
@@ -1034,6 +1199,71 @@ Deletes a fact from the system. This permanently removes the relationship from t
 
 - `:archivist.fact/create` - Create a new fact
 - `:archivist.fact/update` - Update an existing fact
+- `:archivist.fact/batch-delete` - Delete multiple facts by their UIDs
+
+---
+
+## `:archivist.fact/batch-delete`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Fact
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+{
+  ;; Required fields
+  :uids [number] "Array of fact UIDs to delete"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :result string "Success message"
+    :uids [number] "UIDs of the deleted facts"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Deletes multiple facts from the system by their UIDs in a single operation.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.fact/batch-delete
+ :payload {:uids [345678, 345679, 345680]}}
+
+;; Example success response
+{:success true
+ :data {
+   :result "success"
+   :uids [345678, 345679, 345680]
+ }
+}
+```
+
+### Related Messages
+
+- `:archivist.fact/delete` - Delete a single fact
+- `:archivist.fact/batch-create` - Create multiple facts
 
 ---
 
@@ -1202,6 +1432,393 @@ Sends a heartbeat message to maintain the WebSocket connection. Clients should s
 {:success true
  :data {
    :timestamp 1621234567895
+ }
+}
+```
+
+---
+
+## `:archivist.submission/update-definition`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Submission
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+{
+  ;; Required fields
+  :fact_uid number "UID of the fact to update"
+  :partial_definition string "Partial definition text"
+  :full_definition string "Full definition text"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :result {...} "Result of the update operation"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Updates the definition of a fact identified by its UID.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.submission/update-definition
+ :payload {:fact_uid 123456
+           :partial_definition "A partial definition"
+           :full_definition "A complete definition of the concept"}}
+
+;; Example success response
+{:success true
+ :data {
+   :result {
+     :fact_uid 123456
+     :partial_definition "A partial definition"
+     :full_definition "A complete definition of the concept"
+   }
+ }
+}
+```
+
+---
+
+## `:archivist.submission/update-collection`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Submission
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+{
+  ;; Required fields
+  :fact_uid number "UID of the fact to update"
+  :collection_uid number "UID of the collection"
+  :collection_name string "Name of the collection"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :result {...} "Result of the update operation"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Updates the collection of a fact identified by its UID.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.submission/update-collection
+ :payload {:fact_uid 123456
+           :collection_uid 5001
+           :collection_name "My Collection"}}
+
+;; Example success response
+{:success true
+ :data {
+   :result {
+     :fact_uid 123456
+     :collection_uid 5001
+     :collection_name "My Collection"
+   }
+ }
+}
+```
+
+---
+
+## `:archivist.submission/update-name`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Submission
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+{
+  ;; Required fields
+  :fact_uid number "UID of the fact to update"
+  :name string "New name for the entity"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :result {...} "Result of the update operation"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Updates the name of an entity in a fact identified by its UID.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.submission/update-name
+ :payload {:fact_uid 123456
+           :name "New Entity Name"}}
+
+;; Example success response
+{:success true
+ :data {
+   :result {
+     :fact_uid 123456
+     :name "New Entity Name"
+   }
+ }
+}
+```
+
+---
+
+## `:archivist.submission/blanket-rename`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Submission
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+{
+  ;; Required fields
+  :entity_uid number "UID of the entity to rename"
+  :name string "New name for the entity"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :result {...} "Result of the update operation"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Updates the name of an entity at every instance where it appears in the system.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.submission/blanket-rename
+ :payload {:entity_uid 123456
+           :name "New Entity Name"}}
+
+;; Example success response
+{:success true
+ :data {
+   :result {
+     :entity_uid 123456
+     :name "New Entity Name"
+     :updated_facts 5  // Number of facts updated
+   }
+ }
+}
+```
+
+---
+
+## `:archivist.submission/add-synonym`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Submission
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+{
+  ;; Required fields
+  :uid number "UID of the entity to add synonym to"
+  :synonym string "Synonym to add"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :uid number "UID of the entity"
+    :synonym string "Added synonym"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Adds a synonym to an entity identified by its UID.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.submission/add-synonym
+ :payload {:uid 123456
+           :synonym "Alternative Name"}}
+
+;; Example success response
+{:success true
+ :data {
+   :uid 123456
+   :synonym "Alternative Name"
+ }
+}
+```
+
+---
+
+## `:archivist.submission/create-date`
+
+**Type:** Command
+
+**Component:** Archivist
+
+**Resource:** Submission
+
+**Direction:** Client→Server
+
+### Payload Schema
+
+```clojure
+{
+  ;; Required fields
+  :date_uid number "UID for the date entity"
+  :collection_uid number "UID of the collection"
+  :collection_name string "Name of the collection"
+}
+```
+
+### Response
+
+```clojure
+{
+  :success boolean "Whether the operation succeeded"
+  :data {
+    :fact {...} "The created date fact"
+  }
+  :error {
+    :code number "Error code"
+    :type string "Error type"
+    :message string "Error message"
+    :details map "Additional error details"
+  }
+}
+```
+
+### Description
+
+Creates a date entity and classifies it as a date.
+
+### Examples
+
+```clojure
+;; Example request
+{:type :archivist.submission/create-date
+ :payload {:date_uid 123456
+           :collection_uid 5001
+           :collection_name "My Collection"}}
+
+;; Example success response
+{:success true
+ :data {
+   :fact {
+     :fact_uid 345678
+     :lh_object_uid 123456
+     :lh_object_name "123456"
+     :rel_type_uid 1225
+     :rel_type_name "is classified as"
+     :rh_object_uid 550571
+     :rh_object_name "date"
+     :collection_uid 5001
+     :collection_name "My Collection"
+   }
  }
 }
 ```

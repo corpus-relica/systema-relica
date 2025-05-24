@@ -13,9 +13,9 @@
 (defn serialize-record [record]
   (reduce-kv (fn [m k v]
                (assoc m k
-                     (cond
-                       (instance? java.time.LocalDate v) (.toString v)
-                       :else v)))
+                      (cond
+                        (instance? java.time.LocalDate v) (.toString v)
+                        :else v)))
              {}
              record))
 
@@ -27,13 +27,13 @@
                          :relationTypeUIDs rel-type-uids}
           _ (println "RESOLVED CONF " resolved-conf)
           func (if (nil? rel-type-uids)
-                   queries/get-facts-batch
-                   queries/get-facts-batch-on-relation-type)
+                 queries/get-facts-batch
+                 queries/get-facts-batch-on-relation-type)
           _ (println "FUNC " func)
           raw-result (graph/exec-query
-                         graph/graph-service
-                         func
-                         resolved-conf)
+                      graph/graph-service
+                      func
+                      resolved-conf)
           _ (println "RAW RESULT " raw-result)
           result (map (fn [record]
                         (serialize-record (:r record)))
@@ -47,8 +47,8 @@
 (defn get-count [this]
   (let [result (graph/exec-query graph/graph-service queries/get-facts-count {})
         transformed-result (-> result
-                             first
-                             :count)]
+                               first
+                               :count)]
     (println transformed-result)
     transformed-result))
 
@@ -132,38 +132,38 @@
         (log/error "Error in get-all-related-facts:" (ex-message e))
         []))))
 
-  ;; (go
-  ;;   (try
-  ;;     (let [max-depth 3
-  ;;           actual-depth (min depth max-depth)
+;; (go
+;;   (try
+;;     (let [max-depth 3
+;;           actual-depth (min depth max-depth)
 
-  ;;           ;; Define recursive function
-  ;;           recurse (fn recurse-fn [current-uid curr-depth]
-  ;;                     (go
-  ;;                       (if (< curr-depth actual-depth)
-  ;;                         (let [result (<! (get-all-related-facts current-uid))
-  ;;                               next-uids (map :lh_object_uid result)
-  ;;                               recursive-results (map #(recurse-fn % (inc curr-depth)) next-uids)
-  ;;                               all-results (<! (traversal/await-all recursive-results))]
-  ;;                           (concat result (flatten all-results)))
-  ;;                         [])))
+;;           ;; Define recursive function
+;;           recurse (fn recurse-fn [current-uid curr-depth]
+;;                     (go
+;;                       (if (< curr-depth actual-depth)
+;;                         (let [result (<! (get-all-related-facts current-uid))
+;;                               next-uids (map :lh_object_uid result)
+;;                               recursive-results (map #(recurse-fn % (inc curr-depth)) next-uids)
+;;                               all-results (<! (traversal/await-all recursive-results))]
+;;                           (concat result (flatten all-results)))
+;;                         [])))
 
-  ;;           ;; Execute recursive function
-  ;;           prelim-result (<! (recurse uid 0))]
+;;           ;; Execute recursive function
+;;           prelim-result (<! (recurse uid 0))]
 
-  ;;       ;; Deduplicate results
-  ;;       (traversal/deduplicate-facts prelim-result))
-  ;;     (catch Exception e
-  ;;       (log/error "Error in get-all-related-facts-recursive:" (ex-message e))
-  ;;       []))))
+;;       ;; Deduplicate results
+;;       (traversal/deduplicate-facts prelim-result))
+;;     (catch Exception e
+;;       (log/error "Error in get-all-related-facts-recursive:" (ex-message e))
+;;       []))))
 
 (defn get-related-on-uid-subtype-cone [lh-object-uid rel-type-uid]
   (go
     (try
       (let [results (<! (traversal/traverse-with-subtypes
-                          lh-object-uid
-                          rel-type-uid
-                          :outgoing))]
+                         lh-object-uid
+                         rel-type-uid
+                         :outgoing))]
         (tap> "------------------- GET RELATED ON UID SUBTYPE CONE -------------------")
         (tap> results)
         (tap> "------------------- GET RELATED ON UID SUBTYPE CONE UNIQUE -------------------")
@@ -177,9 +177,9 @@
   (go
     (try
       (let [results (<! (traversal/traverse-with-subtypes
-                          rh-object-uid
-                          rel-type-uid
-                          :incoming))]
+                         rh-object-uid
+                         rel-type-uid
+                         :incoming))]
         (tap> "------------------- GET RELATED TO ON UID SUBTYPE CONE -------------------")
         (tap> results)
         (tap> "------------------- GET RELATED TO ON UID SUBTYPE CONE UNIQUE -------------------")
@@ -309,9 +309,9 @@
   (go
     (try
       (let [results (graph/exec-query graph/graph-service
-                                       queries/facts-relating-entities
-                                       {:uid1 uid1
-                                        :uid2 uid2})
+                                      queries/facts-relating-entities
+                                      {:uid1 uid1
+                                       :uid2 uid2})
             res (graph/transform-results results)]
         res)
       (catch Exception e
@@ -322,9 +322,9 @@
   (go
     (try
       (let [results (graph/exec-query graph/graph-service
-                                       queries/related-to
-                                       {:end_uid uid
-                                        :rel_type_uids [rel-type-uid]})
+                                      queries/related-to
+                                      {:end_uid uid
+                                       :rel_type_uids [rel-type-uid]})
             res (graph/transform-results results)]
         res)
       (catch Exception e
@@ -337,9 +337,9 @@
       (let [rel-subtypes (cache/all-descendants-of cache/cache-service rel-type-uid)
             all-rel-types (conj rel-subtypes rel-type-uid)
             results (graph/exec-query graph/graph-service
-                                       queries/related-to
-                                       {:end_uid lh-object-uid
-                                        :rel_type_uids all-rel-types})
+                                      queries/related-to
+                                      {:end_uid lh-object-uid
+                                       :rel_type_uids all-rel-types})
             res (graph/transform-results results)]
         res)
       (catch Exception e
@@ -351,10 +351,10 @@
     (try
       (log/info (str "Getting flattened recursive relations for uid: " uid " with relation type: " rel-type-uid))
       (<! (traversal/traverse-recursive
-            uid
-            rel-type-uid
-            :outgoing
-            max-depth))
+           uid
+           rel-type-uid
+           :outgoing
+           max-depth))
       (catch Exception e
         (log/error "Error in get-recursive-relations:" (ex-message e))
         []))))
@@ -364,10 +364,10 @@
     (try
       (log/info (str "Getting flattened recursive relations-to for uid: " uid " with relation type: " rel-type-uid))
       (<! (traversal/traverse-recursive
-            uid
-            rel-type-uid
-            :incoming
-            max-depth))
+           uid
+           rel-type-uid
+           :incoming
+           max-depth))
       (catch Exception e
         (log/error "Error in get-recursive-relations-to:" (ex-message e))
         []))))
@@ -461,17 +461,234 @@
         nil))))
 
 (defn delete-fact [uid]
-    (let [query queries/delete-fact
-          result (graph/exec-write-query graph/graph-service query {:uid uid})]
-      result))
+  (let [query queries/delete-fact
+        result (graph/exec-write-query graph/graph-service query {:uid uid})]
+    result))
 
 (defn delete-entity [uid]
   (let [query queries/delete-entity
         result (graph/exec-write-query graph/graph-service query {:uid uid})]
     result))
 
+(defn create-fact
+  "Create a new fact with the given properties.
+   Handles temporary UIDs and updates the lineage cache."
+  [fact]
+  (try
+    (let [;; Reserve UIDs if needed
+          [lh-object-uid rh-object-uid fact-uid] (uid/reserve-uid uid/uid-service 3)
 
+          ;; Create a copy of the fact with the new fact_uid
+          final-fact (assoc fact :fact_uid fact-uid)
+
+          ;; Handle temporary lh_object_uid (1-100)
+          final-fact (if (and (>= (Integer/parseInt (str (:lh_object_uid fact))) 1)
+                              (<= (Integer/parseInt (str (:lh_object_uid fact))) 100))
+                       (let [_ (graph/exec-write-query
+                                graph/graph-service
+                                "MERGE (n:Entity {uid: $uid}) RETURN n"
+                                {:uid lh-object-uid})]
+                         (assoc final-fact :lh_object_uid lh-object-uid))
+                       final-fact)
+
+          ;; Handle temporary rh_object_uid (1-100)
+          final-fact (if (and (>= (Integer/parseInt (str (:rh_object_uid fact))) 1)
+                              (<= (Integer/parseInt (str (:rh_object_uid fact))) 100))
+                       (let [_ (graph/exec-write-query
+                                graph/graph-service
+                                "MERGE (n:Entity {uid: $uid}) RETURN n"
+                                {:uid rh-object-uid})]
+                         (assoc final-fact :rh_object_uid rh-object-uid))
+                       final-fact)
+
+          ;; Create the fact in the database
+          result (graph/exec-write-query
+                  graph/graph-service
+                  queries/create-fact
+                  {:lh_object_uid (:lh_object_uid final-fact)
+                   :rh_object_uid (:rh_object_uid final-fact)
+                   :properties final-fact})]
+
+      ;; Check if the creation was successful
+      (if (or (nil? result) (empty? result))
+        {:success false
+         :message "Execution of create-fact failed"}
+
+        ;; Process the result
+        (let [converted-result (-> (first result)
+                                   (.toObject)
+                                   :r
+                                   (graph/convert-neo4j-ints))
+              return-fact (assoc converted-result :rel_type_name (:rel_type_name final-fact))]
+
+          ;; Update cache
+          (doseq [uid [(:lh_object_uid return-fact) (:rh_object_uid return-fact)]]
+            (cache/update-facts-involving-entity cache/cache-service uid))
+
+          {:success true
+           :fact return-fact})))
+    (catch Exception e
+      (log/error "Error in create-fact:" (ex-message e))
+      {:success false
+       :message (ex-message e)})))
+
+(defn update-fact
+  "Update an existing fact with the given properties."
+  [fact]
+  (try
+    (let [{:keys [fact_uid]} fact
+
+          ;; Update the fact in the database
+          result (graph/exec-write-query
+                  graph/graph-service
+                  "MATCH (r:Fact {fact_uid: $fact_uid})
+                   SET r += $properties
+                   RETURN r"
+                  {:fact_uid fact_uid
+                   :properties fact})]
+
+      ;; Check if the update was successful
+      (if (or (nil? result) (empty? result))
+        {:success false
+         :message "Execution of update-fact failed"}
+
+        ;; Process the result
+        (let [converted-result (-> (first result)
+                                   (.toObject)
+                                   :r
+                                   (graph/convert-neo4j-ints))
+              return-fact (assoc converted-result :rel_type_name (:rel_type_name fact))]
+
+          ;; Update cache
+          (doseq [uid [(:lh_object_uid return-fact) (:rh_object_uid return-fact)]]
+            (cache/update-facts-involving-entity cache/cache-service uid))
+
+          {:success true
+           :fact return-fact})))
+    (catch Exception e
+      (log/error "Error in update-fact:" (ex-message e))
+      {:success false
+       :message (ex-message e)})))
+
+(defn create-facts
+  "Create multiple facts in a batch operation.
+   Handles temporary UIDs and updates the lineage cache."
+  [facts]
+  (try
+    (log/info "Creating multiple facts")
+
+    ;; Find all temporary UIDs (1-100)
+    (let [is-temp-uid? (fn [uid]
+                         (and (>= (Integer/parseInt (str uid)) 1)
+                              (<= (Integer/parseInt (str uid)) 100)))
+
+          ;; Extract all temporary UIDs from the facts
+          temp-uids (into #{}
+                          (for [fact facts
+                                :let [lh-uid (:lh_object_uid fact)
+                                      rh-uid (:rh_object_uid fact)
+                                      rel-uid (:rel_type_uid fact)]
+                                :when (or (is-temp-uid? lh-uid)
+                                          (is-temp-uid? rh-uid)
+                                          (is-temp-uid? rel-uid))]
+                            (cond
+                              (is-temp-uid? lh-uid) lh-uid
+                              (is-temp-uid? rh-uid) rh-uid
+                              (is-temp-uid? rel-uid) rel-uid)))
+
+          ;; Create a mapping of temporary UIDs to new UIDs
+          new-uid-map (reduce (fn [acc temp-uid]
+                                (assoc acc temp-uid (first (uid/reserve-uid uid/uid-service 1))))
+                              {}
+                              temp-uids)
+
+          ;; Resolve facts with new UIDs
+          resolved-facts (map (fn [fact]
+                                (let [{:keys [lh_object_uid rh_object_uid rel_type_uid]} fact
+                                      fact-uid (first (uid/reserve-uid uid/uid-service 1))]
+                                  (-> fact
+                                      (assoc :fact_uid fact-uid)
+                                      (assoc :lh_object_uid (if (is-temp-uid? lh_object_uid)
+                                                              (get new-uid-map lh_object_uid)
+                                                              lh_object_uid))
+                                      (assoc :rh_object_uid (if (is-temp-uid? rh_object_uid)
+                                                              (get new-uid-map rh_object_uid)
+                                                              rh_object_uid))
+                                      (assoc :rel_type_uid (if (is-temp-uid? rel_type_uid)
+                                                             (get new-uid-map rel_type_uid)
+                                                             rel_type_uid)))))
+                              facts)
+
+          ;; Create nodes for all entities
+          node-params (mapcat (fn [item]
+                                [{:uid (Integer/parseInt (str (:lh_object_uid item)))}
+                                 {:uid (Integer/parseInt (str (:rh_object_uid item)))}])
+                              resolved-facts)
+
+          _ (graph/exec-write-query
+             graph/graph-service
+             "UNWIND $params AS param
+              MERGE (n:Entity {uid: param.uid})
+              RETURN n"
+             {:params node-params})
+
+          ;; Create relationships for all facts
+          relationship-params (map (fn [item]
+                                     {:lh_object_uid (:lh_object_uid item)
+                                      :rh_object_uid (:rh_object_uid item)
+                                      :rel_type_uid (:rel_type_uid item)
+                                      :rel_type_name (:rel_type_name item)
+                                      :properties item})
+                                   resolved-facts)
+
+          result (graph/exec-write-query
+                  graph/graph-service
+                  "UNWIND $params AS param
+                   MATCH (lh:Entity {uid: param.lh_object_uid})
+                   MATCH (rh:Entity {uid: param.rh_object_uid})
+                   CREATE (r:Fact)
+                   SET r += param.properties
+                   WITH lh, rh, r
+                   CALL apoc.create.relationship(lh, 'role', {}, r) YIELD rel AS rel1
+                   CALL apoc.create.relationship(r, 'role', {}, rh) YIELD rel AS rel2
+                   RETURN r"
+                  {:params relationship-params})
+
+          ;; Process the results
+          return-facts (map (fn [item]
+                              (assoc (into {} (-> item (.toObject) :r :properties))
+                                     :rel_type_name (-> item (.get "r") .type)))
+                            result)]
+
+      ;; Update cache
+      (doseq [fact resolved-facts]
+        (let [lh-uid (:lh_object_uid fact)
+              rh-uid (:rh_object_uid fact)
+              fact-uid (:fact_uid fact)]
+          (cache/add-to-entity-facts-cache cache/cache-service lh-uid fact-uid)
+          (cache/add-to-entity-facts-cache cache/cache-service rh-uid fact-uid)))
+
+      {:success true
+       :facts return-facts})
+    (catch Exception e
+      (log/error "Error in create-facts:" (ex-message e))
+      {:success false
+       :message (ex-message e)})))
+
+(defn delete-facts
+  "Delete multiple facts by their UIDs."
+  [uids]
+  (try
+    (let [results (mapv delete-fact uids)]
+      {:success true
+       :results results})
+    (catch Exception e
+      (log/error "Error in delete-facts:" (ex-message e))
+      {:success false
+       :message (ex-message e)})))
 
 (comment)
+
+  
 
   
