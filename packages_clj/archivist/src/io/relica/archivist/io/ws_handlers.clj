@@ -10,6 +10,7 @@
             [io.relica.archivist.core.linearization :as linearization]
             [io.relica.archivist.core.entity-retrieval :as entity]
             [io.relica.archivist.core.general-search :as general-search]
+            [io.relica.archivist.core.submission :as submission]
             [io.relica.archivist.services.graph-service :as graph]
             [io.relica.common.utils.response :as response]))
 
@@ -40,7 +41,7 @@
 
 ;; (response/def-ws-handler :archivist.definition/create
 ;; (response/def-ws-handler :archivist.definition/update
- 
+
 ;; FACT SERVICE
 
 (response/def-ws-handler :archivist.fact/batch-get
@@ -196,6 +197,166 @@
   (catch Exception e
     (log/error e "Failed to get core sample")
     (respond-error :database-error "Failed to get core sample"
+                   {:exception (str e)})))
+
+;; FACT CRUD OPERATIONS
+
+(response/def-ws-handler :archivist.fact/create
+  (let [result (fact/create-fact ?data)]
+    (if (:success result)
+      (do
+        ;; Update the lineage cache
+        (when-let [lh-uid (get-in result [:fact :lh_object_uid])]
+          (<! (linearization/calculate-lineage lh-uid))
+          (cache/clear-descendants cache/cache-service))
+        (respond-success {:fact (:fact result)}))
+      (respond-error :database-error
+                     (or (:message result) "Failed to create fact")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to create fact")
+    (respond-error :database-error
+                   "Failed to create fact"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.fact/update
+  (let [result (fact/update-fact ?data)]
+    (if (:success result)
+      (respond-success {:fact (:fact result)})
+      (respond-error :database-error
+                     (or (:message result) "Failed to update fact")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to update fact")
+    (respond-error :database-error
+                   "Failed to update fact"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.fact/delete
+  (if-let [uid (:uid ?data)]
+    (try
+      (let [result (fact/delete-fact uid)]
+        (respond-success {:result "success" :uid uid}))
+      (catch Exception e
+        (log/error e "Failed to delete fact")
+        (respond-error :database-error
+                       "Failed to delete fact"
+                       {:exception (str e)})))
+    (respond-error :missing-required-field
+                   "Missing UID in request data"
+                   {:field "uid"})))
+
+(response/def-ws-handler :archivist.fact/batch-create
+  (let [result (fact/create-facts ?data)]
+    (if (:success result)
+      (do
+        ;; Update the lineage cache for all facts
+        (doseq [fact (:facts result)]
+          (when-let [lh-uid (:lh_object_uid fact)]
+            (<! (linearization/calculate-lineage lh-uid))))
+        (cache/clear-descendants cache/cache-service)
+        (respond-success {:facts (:facts result)}))
+      (respond-error :database-error
+                     (or (:message result) "Failed to create facts")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to create facts")
+    (respond-error :database-error
+                   "Failed to create facts"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.fact/batch-delete
+  (if-let [uids (:uids ?data)]
+    (try
+      (let [result (fact/delete-facts uids)]
+        (respond-success {:result "success" :uids uids}))
+      (catch Exception e
+        (log/error e "Failed to delete facts")
+        (respond-error :database-error
+                       "Failed to delete facts"
+                       {:exception (str e)})))
+    (respond-error :missing-required-field
+                   "Missing UIDs in request data"
+                   {:field "uids"})))
+
+;; SUBMISSION OPERATIONS
+
+(response/def-ws-handler :archivist.submission/update-definition
+  (let [result (submission/update-definition ?data)]
+    (if (:success result)
+      (respond-success {:result (:result result)})
+      (respond-error :database-error
+                     (or (:message result) "Failed to update definition")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to update definition")
+    (respond-error :database-error
+                   "Failed to update definition"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.submission/update-collection
+  (let [result (submission/update-collection ?data)]
+    (if (:success result)
+      (respond-success {:result (:result result)})
+      (respond-error :database-error
+                     (or (:message result) "Failed to update collection")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to update collection")
+    (respond-error :database-error
+                   "Failed to update collection"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.submission/update-name
+  (let [result (submission/update-name ?data)]
+    (if (:success result)
+      (respond-success {:result (:result result)})
+      (respond-error :database-error
+                     (or (:message result) "Failed to update name")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to update name")
+    (respond-error :database-error
+                   "Failed to update name"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.submission/blanket-rename
+  (let [result (submission/blanket-rename ?data)]
+    (if (:success result)
+      (respond-success {:result (:result result)})
+      (respond-error :database-error
+                     (or (:message result) "Failed to blanket rename")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to blanket rename")
+    (respond-error :database-error
+                   "Failed to blanket rename"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.submission/add-synonym
+  (let [result (submission/add-synonym ?data)]
+    (if (:success result)
+      (respond-success {:uid (:uid result) :synonym (:synonym result)})
+      (respond-error :database-error
+                     (or (:message result) "Failed to add synonym")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to add synonym")
+    (respond-error :database-error
+                   "Failed to add synonym"
+                   {:exception (str e)})))
+
+(response/def-ws-handler :archivist.submission/create-date
+  (let [result (submission/submit-date ?data)]
+    (if (:success result)
+      (respond-success {:fact (:fact result)})
+      (respond-error :database-error
+                     (or (:message result) "Failed to create date")
+                     {:details result})))
+  (catch Exception e
+    (log/error e "Failed to create date")
+    (respond-error :database-error
+                   "Failed to create date"
                    {:exception (str e)})))
 
 (response/def-ws-handler :archivist.entity/batch-resolve
