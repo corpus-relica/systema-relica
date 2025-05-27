@@ -36,3 +36,7 @@ seed_xls/.~*
 
 seed_csv/
 **/.claude/settings.local.json
+/.lsp
+.lsp/
+.lsp/*
+.nrepl-port
