@@ -23,6 +23,10 @@ The Shutter REST API endpoints are categorized based on their functional areas:
 | `/api/guest-auth` | POST | Obtain a limited guest token for setup process |
 | `/api/validate` | POST | Validate an existing JWT token |
 | `/auth/profile` | GET | Retrieve user profile information |
+| `/api/tokens/create` | POST | Create a new API access token |
+| `/api/tokens` | GET | List all active tokens for authenticated user |
+| `/api/tokens/:id` | DELETE | Revoke an API access token |
+| `/api/validate-token` | POST | Validate an API access token (internal use) |
 
 ### System Endpoints
 
@@ -245,6 +249,175 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   "sub": "123",
   "username": "user@example.com"
 }
+```
+
+### `POST /api/tokens/create`
+
+**Authentication Required**: Yes (JWT)
+
+**Description**:
+Creates a new API access token for programmatic access to the Relica system. The token is shown only once during creation and must be stored securely by the user.
+
+**Request Parameters**:
+
+Headers:
+- `Authorization`: Bearer token containing the JWT
+- `Content-Type`: application/json
+
+Body:
+```json
+{
+  "name": "My API Token",
+  "description": "Token for CI/CD pipeline",
+  "scopes": ["read", "write"],
+  "expires_in_days": 90
+}
+```
+
+**Response Format**:
+```json
+{
+  "token": "srt_1234567890abcdef...",
+  "token_info": {
+    "id": 1,
+    "name": "My API Token",
+    "description": "Token for CI/CD pipeline",
+    "scopes": ["read", "write"],
+    "expires_at": "2025-08-25T00:00:00Z",
+    "created_at": "2025-05-26T00:00:00Z"
+  }
+}
+```
+
+**Error Response**:
+```json
+{
+  "error": "Token limit exceeded. Maximum 10 tokens allowed per user."
+}
+```
+
+**Example Request**:
+```
+POST /api/tokens/create HTTP/1.1
+Host: api.relica.io
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+
+{
+  "name": "Production API Token",
+  "description": "Used for production deployments",
+  "scopes": ["read", "write"],
+  "expires_in_days": 365
+}
+```
+
+### `GET /api/tokens`
+
+**Authentication Required**: Yes (JWT)
+
+**Description**:
+Lists all active API access tokens for the authenticated user. Token values are never shown in the response for security reasons.
+
+**Request Parameters**:
+
+Headers:
+- `Authorization`: Bearer token containing the JWT
+
+**Response Format**:
+```json
+{
+  "tokens": [
+    {
+      "id": 1,
+      "name": "My API Token",
+      "description": "Token for CI/CD pipeline",
+      "scopes": ["read", "write"],
+      "last_used_at": "2025-05-26T12:00:00Z",
+      "expires_at": "2025-08-25T00:00:00Z",
+      "created_at": "2025-05-26T00:00:00Z"
+    }
+  ]
+}
+```
+
+**Example Request**:
+```
+GET /api/tokens HTTP/1.1
+Host: api.relica.io
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### `DELETE /api/tokens/:id`
+
+**Authentication Required**: Yes (JWT)
+
+**Description**:
+Revokes an API access token by marking it as inactive. Only the token owner can revoke their tokens.
+
+**Request Parameters**:
+
+Headers:
+- `Authorization`: Bearer token containing the JWT
+
+Path Parameters:
+- `id`: The ID of the token to revoke
+
+**Response Format**:
+```json
+{
+  "message": "Token revoked successfully"
+}
+```
+
+**Error Response**:
+```json
+{
+  "error": "Token not found or unauthorized"
+}
+```
+
+**Example Request**:
+```
+DELETE /api/tokens/123 HTTP/1.1
+Host: api.relica.io
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### `POST /api/validate-token`
+
+**Authentication Required**: No
+
+**Description**:
+Validates an API access token. This endpoint is designed for internal service use (e.g., Portal service) to verify API tokens. It accepts the token in the Authorization header and returns validation results.
+
+**Request Parameters**:
+
+Headers:
+- `Authorization`: Bearer token containing the API token (format: `Bearer srt_...`)
+
+**Response Format**:
+```json
+{
+  "valid": true,
+  "user_id": 123,
+  "scopes": ["read", "write"],
+  "token_id": 1
+}
+```
+
+**Error Response**:
+```json
+{
+  "valid": false,
+  "error": "Invalid token"
+}
+```
+
+**Example Request**:
+```
+POST /api/validate-token HTTP/1.1
+Host: api.relica.io
+Authorization: Bearer srt_1234567890abcdef...
 ```
 
 ---

@@ -1,15 +1,17 @@
 (ns io.relica.shutter.core
-  (:require[io.pedestal.http :as http]
-           [io.pedestal.http.route :as route]
-           [io.pedestal.http.cors :as cors]
-           [io.pedestal.interceptor :refer [interceptor]]
-           [cheshire.core :as json]
-           [buddy.sign.jwt :as jwt]
-           [buddy.hashers :as hashers]
-           [next.jdbc :as jdbc]
-           [next.jdbc.result-set :as rs]
-           [clojure.string :as str]
-           [clojure.tools.logging :as log])
+  (:require [io.pedestal.http :as http]
+            [io.pedestal.http.route :as route]
+            [io.pedestal.http.cors :as cors]
+            [io.pedestal.interceptor :refer [interceptor]]
+            [cheshire.core :as json]
+            [buddy.sign.jwt :as jwt]
+            [buddy.hashers :as hashers]
+            [next.jdbc :as jdbc]
+            [next.jdbc.result-set :as rs]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
+            [io.relica.shutter.db :as db]
+            [io.relica.shutter.tokens :as tokens])
   (:gen-class))
 
 (def cors-config
@@ -59,12 +61,12 @@
 (defn create-test-user! [email username password]
   (let [password-hash (hashers/derive password {:algorithm :bcrypt})  ; Just :bcrypt, not :bcrypt+sha512
         result (jdbc/execute-one! ds
-                ["INSERT INTO users
+                                  ["INSERT INTO users
                   (email, username, password_hash, is_active, first_name, last_name)
                   VALUES (?, ?, ?, true, 'Test', 'User')
                   RETURNING id, email, username, is_active"
-                 email username password-hash]
-                {:builder-fn rs/as-unqualified-maps})]
+                                   email username password-hash]
+                                  {:builder-fn rs/as-unqualified-maps})]
     (log/info "Created test user:" (dissoc result :password_hash))
     result))
 
@@ -73,8 +75,8 @@
   (println (str "Password:" password))
   (try
     (when-let [user (jdbc/execute-one! ds
-                      ["SELECT * FROM users WHERE email = ?" email]
-                      {:builder-fn rs/as-unqualified-maps})]
+                                       ["SELECT * FROM users WHERE email = ?" email]
+                                       {:builder-fn rs/as-unqualified-maps})]
       (println (str "Found user:" (dissoc user :password_hash)))
       (println (str "Password hash:" (:password_hash user)))
       (when (:is_active user)
@@ -110,17 +112,17 @@
 
 (def json-body-interceptor
   (interceptor
-    {:name ::json-body
-     :enter (fn [context]
-              (let [body (-> context :request :body slurp)]
-                (try
-                  (if (str/blank? body)
-                    context
-                    (let [json-body (json/parse-string body true)]
-                      (assoc-in context [:request :json-params] json-body)))
-                  (catch Exception e
-                    (assoc context :response {:status 400
-                                              :body {:error "Invalid JSON"}})))))}))
+   {:name ::json-body
+    :enter (fn [context]
+             (let [body (-> context :request :body slurp)]
+               (try
+                 (if (str/blank? body)
+                   context
+                   (let [json-body (json/parse-string body true)]
+                     (assoc-in context [:request :json-params] json-body)))
+                 (catch Exception e
+                   (assoc context :response {:status 400
+                                             :body {:error "Invalid JSON"}})))))}))
 
 (def json-response-interceptor
   (interceptor
@@ -141,16 +143,16 @@
      (let [raw-body (-> context :request :body slurp)
            body (json/parse-string raw-body true)
            {:keys [email password]} body]
-        (println "Parsed body:" body)
-        (println "Email:" email)
-        (println "Password:" password)
+       (println "Parsed body:" body)
+       (println "Email:" email)
+       (println "Password:" password)
        (if-let [user (verify-user email password)]
          (let [claims {:user-id (:id user)
                        :email (:email user)
                        :admin (:is_admin user)}
                token (jwt/sign claims (:jwt-secret env)
-                              {:exp (+ (System/currentTimeMillis)
-                                     (* 24 60 60 1000))})]
+                               {:exp (+ (System/currentTimeMillis)
+                                        (* 24 60 60 1000))})]
            (assoc context :response
                   {:status 200
                    :headers {"Content-Type" "application/json"}
@@ -164,7 +166,7 @@
                         {:error "Invalid credentials"})}))))})
 
 ;; Guest auth handler - provides limited token for setup process
-(def guest-auth-handler 
+(def guest-auth-handler
   {:name ::guest-auth
    :enter
    (fn [context]
@@ -196,6 +198,150 @@
              :body (json/generate-string
                     {:error "Guest authentication failed"})}))})
 
+;; Token management handlers
+
+(def create-token-handler
+  {:name ::create-token
+   :enter
+   (fn [context]
+     (let [user-id (get-in context [:request :identity :user-id])
+           body (get-in context [:request :json-params])
+           {:keys [name description scopes expires-in-days]} body]
+       (try
+         ;; Check rate limiting
+         (let [token-count (db/get-user-token-count ds user-id)]
+           (if-not (tokens/can-create-token? token-count)
+             (assoc context :response
+                    {:status 429
+                     :headers {"Content-Type" "application/json"}
+                     :body (json/generate-string
+                            {:error (str "Token limit exceeded. Maximum "
+                                         tokens/MAX_TOKENS_PER_USER
+                                         " tokens allowed per user.")})})
+             ;; Check if token name already exists
+             (if (db/token-exists? ds user-id name)
+               (assoc context :response
+                      {:status 400
+                       :headers {"Content-Type" "application/json"}
+                       :body (json/generate-string
+                              {:error "Token with this name already exists"})})
+               ;; Create the token
+               (let [raw-token (tokens/generate-secure-token)
+                     token-hash (tokens/hash-token raw-token)
+                     token-data (tokens/prepare-token-data body)
+                     created-token (db/create-token! ds user-id token-hash
+                                                     (:name token-data)
+                                                     (:description token-data)
+                                                     (:scopes token-data)
+                                                     (:expires-at token-data))]
+                 (assoc context :response
+                        {:status 201
+                         :headers {"Content-Type" "application/json"}
+                         :body (json/generate-string
+                                {:token raw-token
+                                 :token_info (tokens/format-token-response created-token)})})))))
+         (catch Exception e
+           (log/error e "Failed to create token")
+           (assoc context :response
+                  {:status 500
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/generate-string
+                          {:error "Failed to create token"})})))))})
+
+(def list-tokens-handler
+  {:name ::list-tokens
+   :enter
+   (fn [context]
+     (let [user-id (get-in context [:request :identity :user-id])]
+       (try
+         (let [tokens (db/list-user-tokens ds user-id)]
+           (assoc context :response
+                  {:status 200
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/generate-string
+                          {:tokens (map tokens/format-token-response tokens)})}))
+         (catch Exception e
+           (log/error e "Failed to list tokens")
+           (assoc context :response
+                  {:status 500
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/generate-string
+                          {:error "Failed to list tokens"})})))))})
+
+(def revoke-token-handler
+  {:name ::revoke-token
+   :enter
+   (fn [context]
+     (let [user-id (get-in context [:request :identity :user-id])
+           token-id (-> context :request :path-params :id)]
+       (try
+         (if (db/revoke-token! ds (parse-long token-id) user-id)
+           (assoc context :response
+                  {:status 200
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/generate-string
+                          {:message "Token revoked successfully"})})
+           (assoc context :response
+                  {:status 404
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/generate-string
+                          {:error "Token not found or unauthorized"})}))
+         (catch Exception e
+           (log/error e "Failed to revoke token")
+           (assoc context :response
+                  {:status 500
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/generate-string
+                          {:error "Failed to revoke token"})})))))})
+
+(def validate-api-token-handler
+  {:name ::validate-api-token
+   :enter
+   (fn [context]
+     (let [auth-header (get-in context [:request :headers "authorization"])
+           token (tokens/extract-token-from-header auth-header)]
+       (if (and token (tokens/valid-token-format? token))
+         (try
+           (if-let [token-data (db/find-token-by-hash ds (tokens/hash-token token))]
+             (if (tokens/token-expired? (:expires-at token-data))
+               (assoc context :response
+                      {:status 401
+                       :headers {"Content-Type" "application/json"}
+                       :body (json/generate-string
+                              {:valid false
+                               :error "Token expired"})})
+               (do
+                 ;; Update last used timestamp
+                 (db/update-token-last-used! ds (:id token-data))
+                 (assoc context :response
+                        {:status 200
+                         :headers {"Content-Type" "application/json"}
+                         :body (json/generate-string
+                                {:valid true
+                                 :user_id (:user-id token-data)
+                                 :scopes (:scopes token-data)
+                                 :token_id (:id token-data)})})))
+             (assoc context :response
+                    {:status 401
+                     :headers {"Content-Type" "application/json"}
+                     :body (json/generate-string
+                            {:valid false
+                             :error "Invalid token"})}))
+           (catch Exception e
+             (log/error e "Token validation error")
+             (assoc context :response
+                    {:status 500
+                     :headers {"Content-Type" "application/json"}
+                     :body (json/generate-string
+                            {:valid false
+                             :error "Token validation failed"})})))
+         (assoc context :response
+                {:status 400
+                 :headers {"Content-Type" "application/json"}
+                 :body (json/generate-string
+                        {:valid false
+                         :error "Invalid token format"})}))))})
+
 (def routes
   #{["/health" :get
      (fn [_]
@@ -213,11 +359,11 @@
                    {:status "unhealthy"
                     :db "disconnected"})})))
      :route-name :health-check]
-    
+
     ["/api/guest-auth" :post
      guest-auth-handler
      :route-name :guest-auth]
-    
+
     ["/api/guest-auth" :options
      (fn [_]
        {:status 200
@@ -230,10 +376,10 @@
     ["/api/login" :post
      (assoc login-handler
             :error (fn [context e]
-                    {:status 401
-                     :headers {"Content-Type" "application/json"}
-                     :body (json/generate-string
-                            {:error "Authentication failed"})}))
+                     {:status 401
+                      :headers {"Content-Type" "application/json"}
+                      :body (json/generate-string
+                             {:error "Authentication failed"})}))
      :route-name :login]
 
     ["/api/validate" :post
@@ -253,7 +399,29 @@
                 :body (json/generate-string
                        {:sub (:user-id identity)
                         :username (:email identity)})})))
-     :route-name :get-profile]})
+     :route-name :get-profile]
+
+    ;; Token management endpoints
+    ["/api/tokens/create" :post
+     (conj common-interceptors json-body-interceptor json-response-interceptor
+           create-token-handler)
+     :route-name :create-token]
+
+    ["/api/tokens" :get
+     (conj common-interceptors json-response-interceptor
+           list-tokens-handler)
+     :route-name :list-tokens]
+
+    ["/api/tokens/:id" :delete
+     (conj common-interceptors json-response-interceptor
+           revoke-token-handler)
+     :route-name :revoke-token]
+
+    ;; API token validation endpoint (no JWT auth required)
+    ["/api/validate-token" :post
+     (conj [json-response-interceptor]
+           validate-api-token-handler)
+     :route-name :validate-api-token]})
 
 (def expanded-routes
   (route/expand-routes routes))
@@ -273,8 +441,7 @@
                          :decode-key-fn keyword}}
       http/default-interceptors
       (update ::http/interceptors conj (cors/allow-origin cors-config))
-      (update ::http/interceptors conj json-response-interceptor)
-      ))
+      (update ::http/interceptors conj json-response-interceptor)))
 
 
 (defonce server (atom nil))
@@ -310,9 +477,9 @@
 
   (verify-user "doesnt.exist@gmail.com","whatever"))
 
-  ;; (create-test-user!
-  ;;   "suck.muhdik@gmail.com"
-  ;;   "john"
-  ;;   "changeme")
+;; (create-test-user!
+;;   "suck.muhdik@gmail.com"
+;;   "john"
+;;   "changeme")
 
   
