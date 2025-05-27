@@ -475,11 +475,51 @@
   ;; Test user verification
   (verify-user "suck.muhdik@gmail.com" "changeme")
 
-  (verify-user "doesnt.exist@gmail.com","whatever"))
+  (verify-user "doesnt.exist@gmail.com","whatever")
+
+  (println (str (tokens/generate-secure-token) "!2"))
+
+  (let [token (tokens/generate-secure-token)]
+    (println "Generated token:" token)
+    (let [hashed-token (tokens/hash-token token)]
+      (println "Hashed token:" hashed-token)
+      (println "Token format valid:" (tokens/valid-token-format? token))
+      (println "Token valid:" (tokens/verify-token token hashed-token))
+      (println "Token invalid:" (tokens/verify-token "invalid-token" hashed-token))))
+
+  (let [token (tokens/generate-secure-token)
+        foo (db/register-token! ds
+                                2
+                                token
+                                "Test Token"
+                                "This is a test token"
+                                ["read" "write"]
+                                (java.time.Instant/parse "2024-12-31T23:59:59Z"))
+        bar (db/find-token-by-hash ds token)]
+
+
+    (println "Created token:" token)
+    (println "registered token:" foo)
+    (println "Found token:" bar))
+
+  (println (db/list-user-tokens ds 2))
+
+  (db/find-token-by-hash ds "srt_40egFxdHBdGRs-3-9Bzbnv1Wj8liJsm85C2jPHtDCLA")
+
+  (db/revoke-token! ds 1 2)
+
+  (hashers/check "bcrypt+sha512$99be381110fcb43a663e7bb196dec8a1$12$d55ebeacc55bee65070a30fb91d7058b03483d511e415275"
+                 "bcrypt+sha512$16a3759c51c25fb9d81e3b36ff715e4a$12$28b20e48ff9f26bd2414684608fc3ba839e72aa060356b33")
+
+  (hashers/verify "srt_40egFxdHBdGRs-3-9Bzbnv1Wj8liJsm85C2jPHtDCLA"
+                  "bcrypt+sha512$16a3759c51c25fb9d81e3b36ff715e4a$12$28b20e48ff9f26bd2414684608fc3ba839e72aa060356b33")
+
+  (println (tokens/hash-token "srt_40egFxdHBdGRs-3-9Bzbnv1Wj8liJsm85C2jPHtDCLA"))
+
+  (print))
+
 
 ;; (create-test-user!
 ;;   "suck.muhdik@gmail.com"
 ;;   "john"
 ;;   "changeme")
-
-  

@@ -9,20 +9,22 @@ API tokens provide a way for users and applications to authenticate with the Rel
 ## Features
 
 ### Core Features (Implemented)
-- **Token Generation**: Secure random tokens with `srt_` prefix
+- **Token Generation**: Secure random tokens with `srt_` prefix and ID-based format (`srt_randompart.id`)
 - **Token Storage**: Bcrypt hashed tokens stored in database
 - **Token Management**: Create, list, and revoke tokens via REST API
 - **Rate Limiting**: Maximum 10 tokens per user
-- **Token Validation**: Internal endpoint for service-to-service validation
+- **Token Validation**: Internal endpoint for service-to-service validation with optimized lookup
 - **Basic Scopes**: Simple read/write permission system
 - **Expiration Support**: Optional token expiration dates
 - **Usage Tracking**: Last used timestamp tracking
+- **Performance Optimization**: Direct token lookup by ID component
 
 ### Security Features
 - Tokens are shown only once during creation
 - All tokens are stored as bcrypt hashes
 - Tokens can be revoked (soft delete)
 - Token format validation (`srt_` prefix required)
+- ID-based format enables efficient token lookup
 - Rate limiting prevents token spam
 
 ## API Endpoints
@@ -56,7 +58,7 @@ Authorization: Bearer <JWT_TOKEN>
 ### Validate Token (Internal Use)
 ```bash
 POST /api/validate-token
-Authorization: Bearer srt_<API_TOKEN>
+Authorization: Bearer srt_<RANDOM_PART>.<TOKEN_ID>
 ```
 
 ## Usage Examples
@@ -85,7 +87,7 @@ curl -X POST http://localhost:2173/api/tokens/create \
 ```bash
 # Use the token with Portal or other services
 curl -X GET http://localhost:3000/api/some-endpoint \
-  -H "Authorization: Bearer srt_your_token_here"
+  -H "Authorization: Bearer srt_your_token_part.123"
 ```
 
 ## Portal Integration
@@ -142,3 +144,23 @@ The following features are planned for future releases:
 - Detailed audit logging
 - Token validation caching
 - Monitoring for suspicious patterns
+
+## Performance Improvements
+
+### ID-Based Token Format
+The API token format has been enhanced to include an ID component: `srt_randompart.id`. This format provides:
+
+1. **Direct Database Lookup**: Tokens can be looked up directly by their ID instead of comparing hashes of all tokens
+2. **Reduced Database Load**: Minimizes the need for expensive bcrypt comparisons across multiple tokens
+3. **Faster Validation**: Significantly improves response time for high-frequency token validation requests
+4. **Scalability**: Maintains performance even with large numbers of tokens in the system
+
+### Token Validation Process
+The updated token validation process:
+
+1. Extracts the token ID from the provided token (the part after the dot)
+2. Performs a direct database lookup using that ID
+3. Verifies the full token string against the stored hash
+4. Updates the last_used_at timestamp only for the specific token
+
+This approach eliminates the need to scan through all tokens and drastically reduces CPU usage for bcrypt hash comparisons.

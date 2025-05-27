@@ -1,26 +1,54 @@
 (ns io.relica.shutter.db
   (:require [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [clojure.tools.logging :as log]))
+            [buddy.hashers :as hashers]
+            [clojure.tools.logging :as log]
+            [clojure.string :as str]))
 
+
+(defn pg-array->vec [obj]
+  (when (instance? org.postgresql.jdbc.PgArray obj)
+    (vec (.getArray obj))))
+
+(defn convert-pg-types [row]
+  (reduce-kv (fn [m k v]
+               (assoc m k (cond
+                           (instance? org.postgresql.jdbc.PgArray v)
+                           (vec (.getArray v))
+
+                           (instance? java.sql.Timestamp v)
+                           (.toInstant v)
+
+                           (instance? java.sql.Date v)
+                           (.toLocalDate v)
+
+                           (instance? java.sql.Time v)
+                           (.toLocalTime v)
+
+                           :else v)))
+             {} row))
 ;; Token-related database operations
 
-(defn create-token!
-  "Create a new access token record in the database"
-  [ds user-id token-hash name description scopes expires-at]
-  (try
+(defn register-token!
+  ;; [ds user-id name description scopes expires-at]
+  [ds user-id token name description scopes expires-at]
+  (let [token-id (inc (or (:max (jdbc/execute-one! ds
+                                                  ["SELECT MAX(id) as max FROM access_tokens"]
+                                                  {:builder-fn rs/as-unqualified-maps})) 0))
+        ;; random-part (generate-random-token 32)
+        full-token (str  token "." token-id)
+        token-hash (hashers/derive full-token)]
+
     (jdbc/execute-one! ds
-                       ["INSERT INTO access_tokens 
-        (user_id, token_hash, name, description, scopes, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-        RETURNING id, name, description, scopes, expires_at, created_at"
-                        user-id token-hash name description
-                        (when scopes (into-array String scopes))
-                        expires-at]
-                       {:builder-fn rs/as-unqualified-maps})
-    (catch Exception e
-      (log/error e "Failed to create access token")
-      (throw e))))
+                      ["INSERT INTO access_tokens (id, user_id, name, description, scopes, expires_at, token_hash)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        RETURNING id, name, description, scopes, expires_at, created_at"
+                       token-id user-id name description
+                       (when scopes (into-array String scopes))
+                       (when expires-at (java.sql.Timestamp/from expires-at))
+                       token-hash]
+                      {:builder-fn rs/as-unqualified-maps})
+    full-token))
 
 (defn list-user-tokens
   "List all active tokens for a specific user"
@@ -38,16 +66,27 @@
       [])))
 
 (defn find-token-by-hash
-  "Find an active token by its hash"
-  [ds token-hash]
+  "Find an active token by checking the provided token against stored hash"
+  [ds provided-token]
   (try
-    (jdbc/execute-one! ds
-                       ["SELECT t.*, u.email, u.username, u.is_admin
-        FROM access_tokens t
-        JOIN users u ON t.user_id = u.id
-        WHERE t.token_hash = ? AND t.is_active = true"
-                        token-hash]
-                       {:builder-fn rs/as-unqualified-maps})
+    ;; Extract token ID from the token
+    (when-let [[_ token-id-str] (str/split provided-token #"\." 2)]
+      (when-let [token-id (try (Integer/parseInt token-id-str)
+                              (catch NumberFormatException _ nil))]
+
+        ;; Direct lookup by ID
+        (when-let [token-record (jdbc/execute-one! ds
+                                                  ["SELECT t.*, u.email, u.username, u.is_admin
+                                                    FROM access_tokens t
+                                                    JOIN users u ON t.user_id = u.id
+                                                    WHERE t.id = ? AND t.is_active = true"
+                                                   token-id]
+                                                  {:builder-fn rs/as-unqualified-maps})]
+
+          ;; Verify the full token against stored hash
+          (when (:valid (hashers/verify provided-token (:token_hash token-record)))
+            (convert-pg-types token-record)))))
+
     (catch Exception e
       (log/error e "Failed to find token by hash")
       nil)))
@@ -57,7 +96,7 @@
   [ds token-id user-id]
   (try
     (let [result (jdbc/execute-one! ds
-                                    ["UPDATE access_tokens 
+                                    ["UPDATE access_tokens
                      SET is_active = false
                      WHERE id = ? AND user_id = ?
                      RETURNING id"
@@ -73,7 +112,7 @@
   [ds token-id]
   (try
     (jdbc/execute-one! ds
-                       ["UPDATE access_tokens 
+                       ["UPDATE access_tokens
         SET last_used_at = CURRENT_TIMESTAMP
         WHERE id = ?"
                         token-id])

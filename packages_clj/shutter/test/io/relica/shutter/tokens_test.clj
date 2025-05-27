@@ -1,72 +1,85 @@
 (ns io.relica.shutter.tokens-test
-  (:require [clojure.test :refer :all]
-            [io.relica.shutter.tokens :as tokens]))
+  (:require [midje.sweet :refer :all]
+            [io.relica.shutter.tokens :as tokens]
+            [clojure.string :as str]))
 
-(deftest test-token-generation
-  (testing "Token generation"
-    (let [token (tokens/generate-secure-token)]
-      (is (string? token))
-      (is (tokens/valid-token-format? token))
-      (is (> (count token) (count tokens/TOKEN_PREFIX))))))
+(facts "about token generation"
+       (fact "generates secure tokens with correct format"
+             (let [token (tokens/generate-secure-token)]
+               token => string?
+               (tokens/valid-token-format? token) => true
+               (count token) => #(> % (count tokens/TOKEN_PREFIX)))))
 
-(deftest test-token-hashing
-  (testing "Token hashing and verification"
-    (let [token "srt_test123"
-          hash (tokens/hash-token token)]
-      (is (string? hash))
-      (is (not= token hash))
-      (is (tokens/verify-token token hash))
-      (is (not (tokens/verify-token "wrong-token" hash))))))
+(facts "about token hashing"
+       (fact "hashes and verifies tokens correctly"
+             (let [token "srt_test123"
+                   hash (tokens/hash-token token)]
+               hash => string?
+               hash =not=> token
+               (:valid (tokens/verify-token token hash)) => true
+               (:valid (tokens/verify-token "wrong-token" hash)) => false)))
 
-(deftest test-token-format-validation
-  (testing "Token format validation"
-    (is (tokens/valid-token-format? "srt_abc123"))
-    (is (not (tokens/valid-token-format? "abc123")))
-    (is (not (tokens/valid-token-format? "srt_")))
-    (is (not (tokens/valid-token-format? nil)))
-    (is (not (tokens/valid-token-format? "")))))
+(facts "about token format validation"
+       (fact "validates token format correctly"
+             (tokens/valid-token-format? "srt_abc123") => true
+             (tokens/valid-token-format? "abc123") => false
+             (tokens/valid-token-format? "srt_") => false
+             (tokens/valid-token-format? nil) => false
+             (tokens/valid-token-format? "") => false))
 
-(deftest test-extract-token-from-header
-  (testing "Token extraction from Authorization header"
-    (is (= "srt_abc123"
-           (tokens/extract-token-from-header "Bearer srt_abc123")))
-    (is (nil? (tokens/extract-token-from-header "srt_abc123")))
-    (is (nil? (tokens/extract-token-from-header "Basic abc123")))
-    (is (nil? (tokens/extract-token-from-header nil)))))
+(facts "about token extraction from header"
+       (fact "extracts token from Authorization header"
+             (tokens/extract-token-from-header "Bearer srt_abc123") => "srt_abc123"
+             (tokens/extract-token-from-header "Bearer srt_abc123.456") => "srt_abc123.456"
+             (tokens/extract-token-from-header "srt_abc123") => nil
+             (tokens/extract-token-from-header "Basic abc123") => nil
+             (tokens/extract-token-from-header nil) => nil))
 
-(deftest test-scope-validation
-  (testing "Scope validation"
-    (is (tokens/validate-scopes ["read" "write"]))
-    (is (not (tokens/validate-scopes ["read" "invalid"])))
-    (is (tokens/has-scope? ["read" "write"] "read"))
-    (is (not (tokens/has-scope? ["read"] "write")))
-    (is (tokens/has-any-scope? ["read" "write"] ["write" "admin"]))
-    (is (not (tokens/has-all-scopes? ["read"] ["read" "write"])))))
+(facts "about scope validation"
+       (fact "validates scopes correctly"
+             (tokens/validate-scopes ["read" "write"]) => true
+             (tokens/validate-scopes ["read" "invalid"]) => false)
 
-(deftest test-token-expiration
-  (testing "Token expiration check"
-    (let [past-date "2020-01-01T00:00:00Z"
-          future-date "2030-01-01T00:00:00Z"]
-      (is (tokens/token-expired? past-date))
-      (is (not (tokens/token-expired? future-date)))
-      (is (not (tokens/token-expired? nil))))))
+       (fact "checks individual scopes"
+             (tokens/has-scope? ["read" "write"] "read") => true
+             (tokens/has-scope? ["read"] "write") => false)
 
-(deftest test-prepare-token-data
-  (testing "Token data preparation"
-    (let [data (tokens/prepare-token-data
-                {:name "Test Token"
-                 :description "Test description"
-                 :scopes ["read" "write"]
-                 :expires-in-days 30})]
-      (is (= "Test Token" (:name data)))
-      (is (= "Test description" (:description data)))
-      (is (= ["read" "write"] (:scopes data)))
-      (is (some? (:expires-at data))))))
+       (fact "checks multiple scopes"
+             (tokens/has-any-scope? ["read" "write"] ["write" "admin"]) => true
+             (tokens/has-all-scopes? ["read"] ["read" "write"]) => false))
 
-(deftest test-rate-limiting
-  (testing "Rate limiting check"
-    (is (tokens/can-create-token? 0))
-    (is (tokens/can-create-token? 5))
-    (is (tokens/can-create-token? 9))
-    (is (not (tokens/can-create-token? 10)))
-    (is (not (tokens/can-create-token? 11)))))
+(facts "about token expiration"
+       (fact "checks token expiration correctly"
+             (let [past-date "2020-01-01T00:00:00Z"
+                   future-date "2030-01-01T00:00:00Z"]
+               (tokens/token-expired? past-date) => true
+               (tokens/token-expired? future-date) => false
+               (tokens/token-expired? nil) => nil)))
+
+(facts "about token data preparation"
+       (fact "prepares token data with defaults"
+             (let [data (tokens/prepare-token-data
+                         {:name "Test Token"
+                          :description "Test description"
+                          :scopes ["read" "write"]
+                          :expires-in-days 30})]
+               (:name data) => "Test Token"
+               (:description data) => "Test description"
+               (:scopes data) => ["read" "write"]
+               (:expires-at data) => some?)))
+
+(facts "about rate limiting"
+       (fact "enforces rate limits"
+             (tokens/can-create-token? 0) => true
+             (tokens/can-create-token? 5) => true
+             (tokens/can-create-token? 9) => true
+             (tokens/can-create-token? 10) => false
+             (tokens/can-create-token? 11) => false))
+
+(facts "about ID-based token format"
+       (fact "validates ID-based token format correctly"
+             (let [token-with-id "srt_abc123.456"]
+               (tokens/valid-token-format? token-with-id) => true
+               (let [[token-part id-part] (str/split token-with-id #"\." 2)]
+                 token-part => "srt_abc123"
+                 id-part => "456"))))

@@ -256,7 +256,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Authentication Required**: Yes (JWT)
 
 **Description**:
-Creates a new API access token for programmatic access to the Relica system. The token is shown only once during creation and must be stored securely by the user.
+Creates a new API access token for programmatic access to the Relica system. The token is shown only once during creation and must be stored securely by the user. The token is formatted as `srt_randompart.id` where the ID component enables efficient lookup and validation.
 
 **Request Parameters**:
 
@@ -277,7 +277,7 @@ Body:
 **Response Format**:
 ```json
 {
-  "token": "srt_1234567890abcdef...",
+  "token": "srt_1234567890abcdef.1",
   "token_info": {
     "id": 1,
     "name": "My API Token",
@@ -388,12 +388,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Authentication Required**: No
 
 **Description**:
-Validates an API access token. This endpoint is designed for internal service use (e.g., Portal service) to verify API tokens. It accepts the token in the Authorization header and returns validation results.
+Validates an API access token. This endpoint is designed for internal service use (e.g., Portal service) to verify API tokens. It accepts the token in the Authorization header and returns validation results. The optimized validation process uses the token's ID component for direct database lookup, significantly improving performance.
 
 **Request Parameters**:
 
 Headers:
-- `Authorization`: Bearer token containing the API token (format: `Bearer srt_...`)
+- `Authorization`: Bearer token containing the API token (format: `Bearer srt_randompart.id`)
 
 **Response Format**:
 ```json
@@ -417,7 +417,7 @@ Headers:
 ```
 POST /api/validate-token HTTP/1.1
 Host: api.relica.io
-Authorization: Bearer srt_1234567890abcdef...
+Authorization: Bearer srt_1234567890abcdef.1
 ```
 
 ---

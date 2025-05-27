@@ -40,7 +40,7 @@
 ;; Token validation
 
 (defn valid-token-format?
-  "Check if token has valid format (starts with srt_)"
+  "Check if token has valid format (starts with srt_ and may include an ID component)"
   [token]
   (and (string? token)
        (str/starts-with? token TOKEN_PREFIX)
