@@ -1,1 +1,14 @@
-.nrepl-port
+# Clojure specific ignores
+# See root .gitignore for common patterns
+
+# Project-specific build directories
+/target/
+/classes/
+/checkouts/
+/resources/public/js/
+
+# REPL specific
+/.rebel_readline_history
+
+# Project-specific files to ignore (if any)
+.shadow-cljs/

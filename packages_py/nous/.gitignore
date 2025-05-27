@@ -1,14 +1,16 @@
-.DS_Store
-.idea
-*.log
-tmp/
+# Python specific ignores
+# See root .gitignore for common patterns
 
-*.py[cod]
-*.egg
-build
-htmlcov
+# Distribution / packaging
+/dist/
+/build/
 
-.cache/
+# Testing
+/.coverage
+/htmlcov/
+
+# Python specific cache
+__pycache__/
+
+# Project-specific files to ignore
 OAI_CONFIG_LIST
-
-.env

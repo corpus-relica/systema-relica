@@ -1,0 +1,26 @@
+# TypeScript/Node.js specific ignores
+#####################################
+# Only include patterns specific to TypeScript/Node.js projects
+# that aren't already covered in the root .gitignore
+
+# Build output specific to this project
+dist/
+dist-ssr/
+lib/
+build/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Local env files specific to this project
+.env*.local
+
+# Testing
+coverage/
+
+# Specific to your TS framework
+.next/
+.nuxt/
+.vuepress/dist
+.serverless/
+.fusebox/

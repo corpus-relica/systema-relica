@@ -1,0 +1,19 @@
+# Clojure specific ignores
+########################
+# Only include patterns specific to Clojure projects
+# that aren't already covered in the root .gitignore
+
+# Build directories specific to this project
+/target/
+/classes/
+/checkouts/
+
+# Project specific artifacts
+/resources/public/js/
+.shadow-cljs/
+
+# REPL specific
+/.rebel_readline_history
+
+# Project-specific dependencies
+/.store/

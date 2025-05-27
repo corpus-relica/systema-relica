@@ -1,15 +1,9 @@
-.DS_Store
-.idea
-*.log
-tmp/
+# TypeScript library specific ignores
+# See root .gitignore for common patterns
 
-*.tern-port
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Build output specific to this library
+/dist/
+/lib/
+
+# TypeScript incremental build info
 *.tsbuildinfo
-.npm
-.eslintcache
-
-dist/

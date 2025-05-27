@@ -1,11 +1,13 @@
-.DS_Store
-.idea
-*.log
-tmp/
+# TypeScript/Node.js specific ignores
+# See root .gitignore for common patterns
 
-data_import/
-dumps/
-data/
-data_bak/
+# Build output specific to this project
+/dist/
+/build/
 
-certs/
+# Database specific
+/data/
+/data_bak/
+
+# Environment and configuration
+.env.local

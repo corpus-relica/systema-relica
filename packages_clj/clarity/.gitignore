@@ -1,30 +1,14 @@
-# System files
-.DS_Store
-.idea/
-*.log
+# Clojure specific ignores
+# See root .gitignore for common patterns
 
-# Build directories
-target/
-classes/
-checkouts/
-tmp/
-node_modules/
-resources/public/js/
+# Project-specific build directories
+/target/
+/classes/
+/checkouts/
+/resources/public/js/
 
-# Clojure/ClojureScript tooling
-.lein-*
-.nrepl-port
-.prepl-port
-.cpcache/
+# REPL specific
+/.rebel_readline_history
+
+# Project-specific files to ignore (if any)
 .shadow-cljs/
-.lsp/
-.clj-kondo/
-profiles.clj
-
-# Build artifacts
-pom.xml
-pom.xml.asc
-*.jar
-*.class
-
-.calva/
