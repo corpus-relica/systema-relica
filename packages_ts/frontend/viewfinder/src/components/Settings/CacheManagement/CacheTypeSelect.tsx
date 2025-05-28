@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 
 interface CacheTypeSelectProps {
   disabled: boolean;
@@ -7,9 +7,9 @@ interface CacheTypeSelectProps {
 }
 
 const CACHE_TYPES = [
-  { id: 'user', label: 'User Cache' },
-  { id: 'system', label: 'System Cache' },
-  { id: 'data', label: 'Data Cache' }
+  { id: 'entity_facts', label: 'Entity Facts Cache' },
+  { id: 'lineage', label: 'Lineage Cache' },
+  { id: 'subtypes', label: 'Subtypes Cache' }
 ];
 
 const CacheTypeSelect = ({
