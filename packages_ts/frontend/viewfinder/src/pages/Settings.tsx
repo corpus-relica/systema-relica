@@ -1,58 +1,40 @@
-import React, { useState } from "react";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import { Card, CardContent } from "@mui/material";
-import { Title } from "react-admin";
-import Button from "@mui/material/Button";
+import React, { useMemo } from 'react';
+import { Sheet } from '../components/ui/sheet.js';
+import CacheManagementSection from '../components/Settings/CacheManagement/index.js';
 
-import { useStore } from "react-admin";
-
-const OPEN_AI_API_KEY = "openai_api_key";
-const ANTHROPIC_API_KEY = "anthropic_api_key";
+interface User {
+  id: string;
+  username: string;
+  role: string;
+}
 
 const Settings = () => {
-  const [openAIAPIKey, setOpenAIAPIKey] = useStore(OPEN_AI_API_KEY, "set key");
-  const [anthropicAPIKey, setAnthropicAPIKey] = useStore(
-    ANTHROPIC_API_KEY,
-    "set key"
-  );
+  const user = useMemo(() => {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  }, []);
 
-  const [localOpenAIAPIKey, setLocalOpenAIAPIKey] = useState(openAIAPIKey);
-  const [localAnthropicAPIKey, setLocalAnthropicAPIKey] =
-    useState(anthropicAPIKey);
-
-  const saveSettings = () => {
-    setOpenAIAPIKey(localOpenAIAPIKey);
-    setAnthropicAPIKey(localAnthropicAPIKey);
-  };
+  const isAdmin = user?.role === 'admin';
 
   return (
-    <Card>
-      <Title title="Settings" />
-      <CardContent>
-        <Box display="flex" flexDirection="column" width="50%">
-          <TextField
-            label="OpenAI API Key"
-            id="OpenAI_API_Key"
-            variant="outlined"
-            margin="normal"
-            value={localOpenAIAPIKey}
-            onChange={(e) => setLocalOpenAIAPIKey(e.target.value)}
-          />
-          <TextField
-            label="Anthropic API Key"
-            id="Anthropic_API_Key"
-            variant="outlined"
-            margin="normal"
-            value={localAnthropicAPIKey}
-            onChange={(e) => setLocalAnthropicAPIKey(e.target.value)}
-          />
-          <Button variant="contained" color="primary" onClick={saveSettings}>
-            Save
-          </Button>
-        </Box>
-      </CardContent>
-    </Card>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      
+      <div className="space-y-6">
+        {/* General Settings Section */}
+        <Sheet className="p-4">
+          <h2 className="text-xl font-semibold mb-4">General Settings</h2>
+          {/* Add general settings here */}
+        </Sheet>
+
+        {/* Cache Management Section - Admin Only */}
+        {isAdmin && (
+          <Sheet className="p-4">
+            <CacheManagementSection />
+          </Sheet>
+        )}
+      </div>
+    </div>
   );
 };
 
