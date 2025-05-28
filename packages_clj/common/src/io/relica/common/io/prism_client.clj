@@ -10,9 +10,14 @@
   (create-admin-user [this username password confirm-password] "Creates an admin user")
   (process-setup-stage [this] "Processes the current setup stage")
   (connected? [this] "Checks if the client is connected")
-  (send-heartbeat! [this] "Sends a heartbeat message to the connected listeners"))
+  (send-heartbeat! [this] "Sends a heartbeat message to the connected listeners")
+
+  ;; Cache management operations
+  (rebuild-cache [this cache-types] "Initiates a rebuild of specified cache types")
+  (cancel-cache-rebuild [this] "Cancels an ongoing cache rebuild operation"))
 
 (defrecord PrismClient [ws-client state]
+
   PrismClientProtocol
 
   (get-setup-status [this]
@@ -41,6 +46,20 @@
   (send-heartbeat! [this]
     (tap> {:event :app/sending-heartbeat})
     (ws/send-message! ws-client :relica.app/heartbeat
+                      {:timestamp (System/currentTimeMillis)}
+                      30000))
+
+  ;; Cache management implementations
+  (rebuild-cache [this cache-types]
+    (log/info "Starting cache rebuild for types:" cache-types)
+    (ws/send-message! ws-client :prism.cache/rebuild
+                      {:cache-types cache-types
+                       :timestamp (System/currentTimeMillis)}
+                      900000)) ;; 15 minutes timeout
+
+  (cancel-cache-rebuild [this]
+    (log/info "Cancelling cache rebuild")
+    (ws/send-message! ws-client :prism.cache/rebuild-cancel
                       {:timestamp (System/currentTimeMillis)}
                       30000)))
 
@@ -85,7 +104,12 @@
                                                  :auto-reconnect true
                                                  :reconnect-delay 5000})]
 
+    ;; Register handlers
     (ws/register-handler! base-client :prism.setup/update (:handle-setup-state-update handlers))
+    (ws/register-handler! base-client :prism.cache/rebuild-start (:handle-cache-rebuild-start handlers))
+    (ws/register-handler! base-client :prism.cache/rebuild-progress (:handle-cache-rebuild-progress handlers))
+    (ws/register-handler! base-client :prism.cache/rebuild-complete (:handle-cache-rebuild-complete handlers))
+    (ws/register-handler! base-client :prism.cache/rebuild-error (:handle-cache-rebuild-error handlers))
 
     ;; Connect the WebSocket client
     (ws/connect! base-client)
