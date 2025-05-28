@@ -34,3 +34,10 @@
                         {:id "server"
                          :type :prism.setup/event
                          :payload message}))
+
+;; Broadcast a message to all connected clients
+(defn broadcast!
+  [message]
+  (when @server-instance
+    (ws-server/broadcast! @server-instance {:message message
+                                            :timestamp (System/currentTimeMillis)})))

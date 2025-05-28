@@ -3,7 +3,9 @@
             [clojure.core.async :as async :refer [go <!]]
             [io.relica.prism.statechart.statechart-controller :as statechart-controller]
             [io.relica.prism.setup :as setup]
-            [clojure.tools.logging :as log]))
+            [io.relica.prism.services.cache-rebuild :as cache-rebuild]
+            [clojure.tools.logging :as log])
+  (:import (java.lang Exception)))
 
 (defmethod ^{:priority 10} common-ws/handle-ws-message
   :relica.app/heartbeat
@@ -13,9 +15,9 @@
     (go
       (try
         (let [heartbeat-data (:uid ?data)
-              _ (log/info heartbeat-data)
+              _ (log/info heartbeat-data)]
               ;; sm (<! (sms/retrieve-semantic-model model-id))
-              ]
+              
           ;; (log/info model)
           ;; (pprint/pprint sm)
           (?reply-fn {:success true
@@ -58,3 +60,36 @@
                 (statechart-controller/send-event :ERROR))))
           (?reply-fn {:success false :message (:message validation)})))
       (?reply-fn {:success false :message "Missing required fields"}))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :prism.cache/rebuild
+  [{:keys [?reply-fn] :as _msg}]
+  (log/info "Starting cache rebuild via WebSocket")
+  (go
+    (try
+      (let [result (<! (cache-rebuild/rebuild-all-caches!))]
+        (?reply-fn {:success result
+                    :message (if result
+                               "Cache rebuild completed successfully"
+                               "Cache rebuild failed")}))
+      (catch Exception e
+        (log/error e "Failed to start cache rebuild")
+        (?reply-fn {:success false
+                    :error (.getMessage e)
+                    :message "Failed to start cache rebuild"})))))
+
+(defmethod ^{:priority 10} common-ws/handle-ws-message
+  :prism.cache/status
+  [{:keys [?reply-fn] :as _msg}]
+  (log/debug "Getting cache rebuild status")
+  (?reply-fn {:success true
+              :data (cache-rebuild/get-rebuild-status)}))
+
+
+(comment
+
+  (cache-rebuild/rebuild-all-caches!)
+
+  (cache-rebuild/get-rebuild-status)
+
+  (print))

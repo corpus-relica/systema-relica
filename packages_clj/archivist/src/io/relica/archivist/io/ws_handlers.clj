@@ -11,6 +11,7 @@
             [io.relica.archivist.core.entity-retrieval :as entity]
             [io.relica.archivist.core.general-search :as general-search]
             [io.relica.archivist.core.submission :as submission]
+            [io.relica.common.services.cache-service :as cache]
             [io.relica.archivist.services.graph-service :as graph]
             [io.relica.common.utils.response :as response]))
 
@@ -241,7 +242,9 @@
         (log/error e "Failed to delete fact")
         (respond-error :database-error
                        "Failed to delete fact"
-                       {:exception (str e)})))
+                       {:exception (str e)}))))
+  (catch Exception e
+    (log/error e "Failed to delete fact")
     (respond-error :missing-required-field
                    "Missing UID in request data"
                    {:field "uid"})))
@@ -274,7 +277,9 @@
         (log/error e "Failed to delete facts")
         (respond-error :database-error
                        "Failed to delete facts"
-                       {:exception (str e)})))
+                       {:exception (str e)}))))
+  (catch Exception e
+    (log/error e "Failed to batch-delete facts")
     (respond-error :missing-required-field
                    "Missing UIDs in request data"
                    {:field "uids"})))
