@@ -68,11 +68,20 @@
       (update-status! {:status :complete
                        :progress 100
                        :message "Cache rebuild completed successfully"})
-      true)
+      (log/info "Cache rebuild completed successfully")
+      true
+      (catch Exception e
+        (log/error e "Error rebuilding caches")
+        (update-status! {:status :error
+                         :error (.getMessage e)
+                         :message "Cache rebuild failed"})
+        false))))
 
-    (catch Exception e
-      (log/error e "Error rebuilding caches")
-      (update-status! {:status :error
-                       :error (.getMessage e)
-                       :message "Cache rebuild failed"})
-      false)))
+(defn reset-rebuild-status!
+  "Resets the rebuild status to idle"
+  []
+  (reset! rebuild-status {:status :idle
+                          :progress 0
+                          :message nil
+                          :error nil})
+  (broadcast-status!))

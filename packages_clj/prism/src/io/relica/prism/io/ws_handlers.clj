@@ -15,9 +15,9 @@
     (go
       (try
         (let [heartbeat-data (:uid ?data)
-              _ (log/info heartbeat-data)
+              _ (log/info heartbeat-data)]
               ;; sm (<! (sms/retrieve-semantic-model model-id))
-              ]
+              
           ;; (log/info model)
           ;; (pprint/pprint sm)
           (?reply-fn {:success true
@@ -85,3 +85,11 @@
   (?reply-fn {:success true
               :data (cache-rebuild/get-rebuild-status)}))
 
+
+(comment
+
+  (cache-rebuild/rebuild-all-caches!)
+
+  (cache-rebuild/get-rebuild-status)
+
+  (print))
