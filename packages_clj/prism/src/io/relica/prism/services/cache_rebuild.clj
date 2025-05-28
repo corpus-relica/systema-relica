@@ -14,7 +14,8 @@
   "Broadcasts the current rebuild status to all connected clients"
   []
   (ws-server/broadcast! {:type :prism.cache/rebuild-progress
-                         :data @rebuild-status}))
+                         :data @rebuild-status}
+                        10))
 
 (defn- update-status!
   "Updates the rebuild status and broadcasts the update"

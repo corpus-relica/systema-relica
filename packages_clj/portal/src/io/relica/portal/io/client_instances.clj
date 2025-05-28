@@ -91,27 +91,33 @@
 ;; PRISM
 
 (def prism-handlers
-  {:handle-setup-state-update (fn [msg]
-                                (tap> "Prism setup update:")
-                                (tap> msg)
-                                (events/publish-event {:type :prism.setup/updated
-                                                       :payload msg}))
-   :handle-cache-rebuild-progress (fn [msg]
-                                    (tap> "Cache rebuild progress:")
-                                    (tap> msg)
+  {:prism.cache/rebuild-start (fn [msg]
+                                 (println "Cache rebuild started:")
+                                 (println msg)
+                                 (events/publish-event {:type :prism.cache/rebuild-start
+                                                        :payload msg}))
+   :prism.cache/rebuild-progress (fn [msg]
+                                    (println "Cache rebuild progress:")
+                                    (println msg)
                                     (events/publish-event {:type :prism.cache/rebuild-progress
                                                            :payload msg}))
-   :handle-cache-rebuild-complete (fn [msg]
-                                    (tap> "Cache rebuild complete:")
-                                    (tap> msg)
+   :prism.cache/rebuild-complete (fn [msg]
+                                    (println "Cache rebuild complete:")
+                                    (println msg)
                                     (events/publish-event {:type :prism.cache/rebuild-complete
                                                            :payload msg}))
-   :handle-cache-rebuild-error (fn [msg]
-                                 (tap> "Cache rebuild error:")
-                                 (tap> msg)
+   :prism.cache/rebuild-error (fn [msg]
+                                 (println "Cache rebuild error:")
+                                 (println msg)
                                  (events/publish-event {:type :prism.cache/rebuild-error
                                                         :payload msg}))
-   ;; Add heartbeat handler
+   ;; Setup handlers
+   :prism.setup/update (fn [msg]
+                          (println "Prism setup update:")
+                          (println msg)
+                          (events/publish-event {:type :prism.setup/updated
+                                                 :payload msg}))
+   ;; System handlers
    "heartbeat" (fn [msg]
                  (log/debug "Received heartbeat from Prism"))
    "ping" (fn [msg]
@@ -123,8 +129,8 @@
                         :handlers (merge
                                    prism-handlers
                                    {:on-connect (fn []
-                                                  (tap> "Connected to PRISM")
+                                                  (println "Connected to PRISM")
                                                   (events/publish-event {:type :prism/connected}))
                                     :on-disconnect (fn []
-                                                     (tap> "Disconnected from PRISM")
+                                                     (println "Disconnected from PRISM")
                                                      (events/publish-event {:type :prism/disconnected}))})}))

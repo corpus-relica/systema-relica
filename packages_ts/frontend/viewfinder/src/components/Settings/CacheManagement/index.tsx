@@ -12,6 +12,7 @@ interface CacheRebuildState {
   error: string | null;
   selectedCacheTypes: string[];
   statusMessage: string;
+  isComplete: boolean;
 }
 
 const CacheManagementSection = () => {
@@ -22,15 +23,37 @@ const CacheManagementSection = () => {
     error: null,
     selectedCacheTypes: [],
     statusMessage: '',
+    isComplete: false,
   });
 
   // Handle state updates from WebSocket events
   const handleStateChange = useCallback((updates: Partial<CacheRebuildState>) => {
-    setState(prev => ({ ...prev, ...updates }));
+
+    console.log('CacheManagementSection initialized with state:', updates);
+
+    const newState = {...state};
+    if (updates.progress !== undefined) {
+      newState.progress = updates.progress;
+    }
+    if (updates.currentPhase !== undefined) {
+      newState.currentPhase = updates.status;
+    }
+    if (updates.statusMessage !== undefined) {
+      newState.statusMessage = updates.statusMessage;
+    }
+    if (updates.error !== undefined) {
+      newState.error = updates.error;
+    }
+    newState.isRebuilding = newState.progress < 100 && newState.currentPhase !== 'completed';
+    newState.isComplete = newState.progress === 100 && newState.currentPhase === 'completed';
+
+    console.log('Updated state:', newState);
+
+    setState(newState);
   }, []);
 
   // Initialize WebSocket hook
-  const { startCacheRebuild, cancelCacheRebuild, isConnected } = useCacheRebuild({
+  const { startCacheRebuild, cancelCacheRebuild, isConnected, acknowledgeCompletion } = useCacheRebuild({
     onStateChange: handleStateChange,
   });
 
@@ -94,6 +117,8 @@ const CacheManagementSection = () => {
         <StatusMessages
           error={state.error}
           message={state.statusMessage}
+          isComplete={state.isComplete}
+          onAcknowledge={acknowledgeCompletion}
         />
       </div>
     </div>

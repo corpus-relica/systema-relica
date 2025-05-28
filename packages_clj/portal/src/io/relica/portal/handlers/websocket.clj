@@ -400,25 +400,26 @@
 ;; Cache rebuild event handlers
 
 (defn handle-cache-rebuild-start-event [payload]
-  (broadcast-to-environment nil
+  (broadcast-to-environment 1;nil
                             {:id "system"
                              :type ":prism.cache/rebuild-start"
                              :payload payload}))
 
 (defn handle-cache-rebuild-progress-event [payload]
-  (broadcast-to-environment nil
+  (print "RICKKY TICKY TAVY !!!!!!!!!!!!!!!!!!!!!!!!111 ")
+  (broadcast-to-environment 1;nil
                             {:id "system"
                              :type ":prism.cache/rebuild-progress"
                              :payload payload}))
 
 (defn handle-cache-rebuild-complete-event [payload]
-  (broadcast-to-environment nil
+  (broadcast-to-environment 1;nil
                             {:id "system"
                              :type ":prism.cache/rebuild-complete"
                              :payload payload}))
 
 (defn handle-cache-rebuild-error-event [payload]
-  (broadcast-to-environment nil
+  (broadcast-to-environment 1;nil
                             {:id "system"
                              :type ":prism.cache/rebuild-error"
                              :payload payload}))
