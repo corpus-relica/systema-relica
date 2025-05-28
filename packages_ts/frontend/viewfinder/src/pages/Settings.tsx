@@ -5,7 +5,8 @@ import CacheManagementSection from '../components/Settings/CacheManagement/index
 interface User {
   id: string;
   username: string;
-  role: string;
+  email: string;
+  is_admin: boolean;
 }
 
 const Settings = () => {
@@ -14,7 +15,7 @@ const Settings = () => {
     return storedUser ? JSON.parse(storedUser) : null;
   }, []);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.is_admin;
 
   return (
     <div className="p-6">
