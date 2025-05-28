@@ -8,6 +8,7 @@ interface CacheRebuildState {
   error: string | null;
   selectedCacheTypes: string[];
   statusMessage: string;
+  isComplete: boolean;  // New flag to track completion state
 }
 
 interface UseCacheRebuildOptions {
@@ -42,7 +43,8 @@ export const useCacheRebuild = ({ onStateChange }: UseCacheRebuildOptions) => {
   }, []);
 
   // Handle rebuild progress event
-  const handleRebuildProgress = useCallback((data: CacheRebuildEventData) => {
+  const handleRebuildProgress = useCallback((d: any) => {
+    const { data } = d;
     console.log('Cache rebuild progress:', data);
     
     // Calculate progress based on provided data
@@ -71,16 +73,18 @@ export const useCacheRebuild = ({ onStateChange }: UseCacheRebuildOptions) => {
       currentPhase: 'Complete',
       error: null,
       statusMessage: data.message || 'Cache rebuild completed successfully!',
+      isComplete: true,
     });
-    
-    // Clear status after 5 seconds
-    setTimeout(() => {
-      onStateChangeRef.current({
-        progress: 0,
-        currentPhase: '',
-        statusMessage: '',
-      });
-    }, 5000);
+  }, []);
+
+  // New function to handle completion acknowledgment
+  const acknowledgeCompletion = useCallback(() => {
+    onStateChangeRef.current({
+      progress: 0,
+      currentPhase: '',
+      statusMessage: '',
+      isComplete: false,
+    });
   }, []);
 
   // Handle rebuild error event
@@ -150,5 +154,6 @@ export const useCacheRebuild = ({ onStateChange }: UseCacheRebuildOptions) => {
     startCacheRebuild,
     cancelCacheRebuild,
     isConnected,
+    acknowledgeCompletion,
   };
 };
