@@ -96,6 +96,21 @@
                                 (tap> msg)
                                 (events/publish-event {:type :prism.setup/updated
                                                        :payload msg}))
+   :handle-cache-rebuild-progress (fn [msg]
+                                    (tap> "Cache rebuild progress:")
+                                    (tap> msg)
+                                    (events/publish-event {:type :prism.cache/rebuild-progress
+                                                           :payload msg}))
+   :handle-cache-rebuild-complete (fn [msg]
+                                    (tap> "Cache rebuild complete:")
+                                    (tap> msg)
+                                    (events/publish-event {:type :prism.cache/rebuild-complete
+                                                           :payload msg}))
+   :handle-cache-rebuild-error (fn [msg]
+                                 (tap> "Cache rebuild error:")
+                                 (tap> msg)
+                                 (events/publish-event {:type :prism.cache/rebuild-error
+                                                        :payload msg}))
    ;; Add heartbeat handler
    "heartbeat" (fn [msg]
                  (log/debug "Received heartbeat from Prism"))
