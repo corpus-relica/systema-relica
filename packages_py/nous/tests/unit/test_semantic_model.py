@@ -759,7 +759,11 @@ class TestSemanticModelFormatting:
         assert 'TOTAL ENTITIES: 4' in result
         assert 'KINDS: 2' in result
         assert 'INDIVIDUALS: 2' in result
-        assert 'ENTITY TYPES: concept, relation, object' in result
+        # Check that all expected entity types are present (order may vary due to set)
+        assert 'concept' in result
+        assert 'relation' in result
+        assert 'object' in result
+        assert 'ENTITY TYPES:' in result
         assert 'FACTS COUNT: 3' in result
         assert 'SELECTED ENTITY: 12345' in result
     
@@ -779,6 +783,7 @@ class TestSemanticModelFormatting:
         test_fact = {
             'lh_object_uid': '12345',
             'lh_object_name': 'Test Entity',
+            'rel_type_uid': '5501',
             'rel_type_name': 'specialization',
             'rh_object_uid': '67890',
             'rh_object_name': 'Parent Entity'
