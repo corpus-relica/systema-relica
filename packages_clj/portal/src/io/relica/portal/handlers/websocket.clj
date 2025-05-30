@@ -373,19 +373,56 @@
         {:success false
          :error (.getMessage e)}))))
 
-;; (defn handle-prism-setup-status [payload]
-;;   (println "PRISM SETUP STATUS")
-;;   (println payload)
-;;   ;; (go
-;;   ;;   (try
-;;   ;;     (let [result (<! (prism/get-setup-status prism-client))]
-;;   ;;       {:success true
-;;   ;;        :status result})
-;;   ;;     (catch Exception e
-;;   ;;       (log/error "Error getting Prism setup status:" e)
-;;   ;;       {:success false
-;;   ;;        :error (.getMessage e)})))
-;;   )
+;; Cache rebuild handlers
+
+(defn handle-cache-rebuild [{:keys [cache-types]}]
+  (go
+    (try
+      (let [response (<! (prism/rebuild-cache prism-client cache-types))]
+        {:success true
+         :message "Cache rebuild initiated"})
+      (catch Exception e
+        (log/error "Error initiating cache rebuild:" e)
+        {:success false
+         :error (.getMessage e)}))))
+
+(defn handle-cache-rebuild-cancel [_]
+  (go
+    (try
+      (let [response (<! (prism/cancel-cache-rebuild prism-client))]
+        {:success true
+         :message "Cache rebuild cancelled"})
+      (catch Exception e
+        (log/error "Error cancelling cache rebuild:" e)
+        {:success false
+         :error (.getMessage e)}))))
+
+;; Cache rebuild event handlers
+
+(defn handle-cache-rebuild-start-event [payload]
+  (broadcast-to-environment 1;nil
+                            {:id "system"
+                             :type ":prism.cache/rebuild-start"
+                             :payload payload}))
+
+(defn handle-cache-rebuild-progress-event [payload]
+  (print "RICKKY TICKY TAVY !!!!!!!!!!!!!!!!!!!!!!!!111 ")
+  (broadcast-to-environment 1;nil
+                            {:id "system"
+                             :type ":prism.cache/rebuild-progress"
+                             :payload payload}))
+
+(defn handle-cache-rebuild-complete-event [payload]
+  (broadcast-to-environment 1;nil
+                            {:id "system"
+                             :type ":prism.cache/rebuild-complete"
+                             :payload payload}))
+
+(defn handle-cache-rebuild-error-event [payload]
+  (broadcast-to-environment 1;nil
+                            {:id "system"
+                             :type ":prism.cache/rebuild-error"
+                             :payload payload}))
 
 ;; Core
 
@@ -524,7 +561,11 @@
    "prism/startSetup" handle-prism-start-setup
    "prism/createUser" handle-prism-create-user
    "prism/processStage" handle-prism-process-stage
-   "setup/update" handle-prism-setup-update-event})
+   "setup/update" handle-prism-setup-update-event
+
+   ;; Cache rebuild handlers
+   ":prism.cache/rebuild" handle-cache-rebuild
+   ":prism.cache/rebuild-cancel" handle-cache-rebuild-cancel})
 
 
 ;; Set up event listener
@@ -542,6 +583,11 @@
           :aperture.entity/deselected (handle-entity-selected-none-event (:payload event))
           :nous.chat/final-answer (handle-final-answer-event (:payload event))
           :prism.setup/updated (handle-prism-setup-update-event (:payload event))
+          ;; Cache rebuild events
+          :prism.cache/rebuild-start (handle-cache-rebuild-start-event (:payload event))
+          :prism.cache/rebuild-progress (handle-cache-rebuild-progress-event (:payload event))
+          :prism.cache/rebuild-complete (handle-cache-rebuild-complete-event (:payload event))
+          :prism.cache/rebuild-error (handle-cache-rebuild-error-event (:payload event))
           ;; Connection events
           :nous/connected (tap> {:message "Nous connected event received"})
           :nous/disconnected (tap> {:message "Nous disconnected event received"})

@@ -30,14 +30,14 @@
 ;; Broadcast a message to all connected clients
 (defn broadcast-setup-update
   [message]
-  (ws-server/broadcast! @server-instance
-                        {:id "server"
-                         :type :prism.setup/event
-                         :payload message}))
+  (ws-server/broadcast! @server-instance message))
 
-;; Broadcast a message to all connected clients
-(defn broadcast!
-  [message]
-  (when @server-instance
-    (ws-server/broadcast! @server-instance {:message message
-                                            :timestamp (System/currentTimeMillis)})))
+(defn broadcast! [message level]
+  (when-let [server @server-instance]
+    (let [notification {:message message
+                        :level level
+                        :timestamp (System/currentTimeMillis)}]
+      ;; (tap> {:event :app/sending-notification
+      ;;        :message message
+      ;;        :level level})
+      (ws-server/broadcast! server message))))
