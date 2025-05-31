@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SelectionDetails takes a snapshot with integer entity 1`] = `
+<div>
+  <div>
+    Integer:
+    5000000001
+  </div>
+</div>
+`;
+
+exports[`SelectionDetails takes a snapshot with no selection 1`] = `
+<div>
+  <div>
+    No entity selected
+  </div>
+</div>
+`;

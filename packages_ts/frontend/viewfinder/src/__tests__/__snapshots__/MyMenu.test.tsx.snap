@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MyMenu takes a snapshot 1`] = `
+<div>
+  <div
+    data-testid="react-admin-menu"
+  >
+    <div
+      data-testid="dashboard-item"
+    >
+      Dashboard
+    </div>
+    <div
+      data-testid="resource-item-db/kinds"
+    >
+      Resource: 
+      db/kinds
+    </div>
+    <div
+      data-testid="menu-item-env/graph"
+    >
+      <span
+        data-testid="menu-icon"
+      >
+        <div
+          data-testid="blur-circular-icon"
+        >
+          Blur Circular Icon
+        </div>
+      </span>
+      <span
+        data-testid="menu-text"
+      >
+        Graph
+      </span>
+    </div>
+  </div>
+</div>
+`;
