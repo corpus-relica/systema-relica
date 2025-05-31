@@ -1,5 +1,5 @@
 import { makeAutoObservable } from "mobx";
-import { Message } from "../components/Chat/index.js";
+import { Message } from "../components/Chat/index";
 
 class NOUSDataStore {
   private _messages: Message[] = [];

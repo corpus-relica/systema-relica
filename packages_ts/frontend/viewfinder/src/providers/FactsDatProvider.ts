@@ -1,5 +1,5 @@
 import { DataProvider } from "react-admin";
-import { portalClient } from "../io/PortalClient.js";
+import { portalClient } from "../io/PortalClient";
 
 console.log("Creating FactsDataProvider...");
 

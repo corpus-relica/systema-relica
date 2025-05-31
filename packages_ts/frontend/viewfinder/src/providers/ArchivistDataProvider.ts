@@ -1,5 +1,5 @@
 import { DataProvider } from "react-admin";
-import { archivistClient } from "../io/ArchivistBaseClient.js";
+import { archivistClient } from "../io/ArchivistBaseClient";
 
 console.log("Creating ArchivistDataProvider...");
 

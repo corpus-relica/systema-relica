@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useStores } from "../context/RootStoreContext.js";
 import { observer } from "mobx-react";
-import { sockSendCC, sendSocketMessage, portalWs } from "../socket.js";
+import { sockSendCC, sendSocketMessage, portalWs } from "../socket";
 import { IconButton, Paper, Slide } from "@mui/material";
 import Box from "@mui/material/Box";
 import Fab from "@mui/material/Fab";
-import CopyAllIcon from "@mui/icons-material/CopyAll.js";
+import CopyAllIcon from "@mui/icons-material/CopyAll";
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,9 +19,9 @@ import Modal from "@mui/material/Modal";
 import GraphAndSelectionLayout from "./GraphToo.js";
 import { Fact } from "../types.js";
 
-import { getAuthToken } from "../providers/AuthProvider.js";
-import Chat, { Message } from "../components/Chat/index.js";
-import SelectionDetails from "../components/SelectionDetails/index.js";
+import { getAuthToken } from "../providers/AuthProvider";
+import Chat, { Message } from "../components/Chat/index";
+import SelectionDetails from "../components/SelectionDetails/index";
 
 // Component for the resizable divider
 interface ResizableDividerProps {
