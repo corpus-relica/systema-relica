@@ -1,6 +1,6 @@
 import { AuthProvider, HttpError } from "react-admin";
-import { shutterClient } from "../io/ShutterClient.js";
-import { initializeWebSocket, closeWebSocket } from "../socket.js";
+import { shutterClient } from "../io/ShutterClient";
+import { initializeWebSocket, closeWebSocket } from "../socket";
 
 export const authProvider: AuthProvider = {
   login: async ({ email, password }: { email: string; password: string }) => {
