@@ -5,11 +5,11 @@ import * as THREE from "three";
 import { Canvas, extend } from "@react-three/fiber";
 import { Stats, Stars } from "@react-three/drei";
 
-import { NodeData, EdgeData, Fact } from "./types.js";
-import GraphRenderer from "./GraphRenderer.js";
+import { NodeData, EdgeData, Fact } from "./types";
+import GraphRenderer from "./GraphRenderer";
 
-import RootStoreContext, { useStores } from "./context/RootStoreContext.js";
-import RootStore from "./stores/RootStore.js";
+import RootStoreContext, { useStores } from "./context/RootStoreContext";
+import RootStore from "./stores/RootStore";
 import { observer } from "mobx-react";
 import { toJS } from "mobx";
 
