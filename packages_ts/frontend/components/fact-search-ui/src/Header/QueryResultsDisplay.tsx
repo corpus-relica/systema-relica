@@ -1,7 +1,7 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
 import { toJS } from "mobx";
-import { useStores } from "../context/RootStoreContext.js";
+import { useStores } from "../context/RootStoreContext";
 // import Box from "@mui/material/Box";
 // import Typography from "@mui/material/Typography";
 // import List from "@mui/material/List";
@@ -9,7 +9,7 @@ import { useStores } from "../context/RootStoreContext.js";
 // import ListItemText from "@mui/material/ListItemText";
 // import Divider from "@mui/material/Divider";
 import { Fact } from "@relica/types";
-import { QueryResults } from "../types.js";
+import { QueryResults } from "../types";
 
 import {
   Box,

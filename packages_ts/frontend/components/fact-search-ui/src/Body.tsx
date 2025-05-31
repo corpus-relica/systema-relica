@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useStores } from "./context/RootStoreContext.js";
-import { RootStore } from "./stores/RootStore.js";
+import { useStores } from "./context/RootStoreContext";
+import { RootStore } from "./stores/RootStore";
 import { observer } from "mobx-react-lite";
 import { Fact } from "@relica/types";
 import { toJS } from "mobx";
@@ -52,7 +52,7 @@ const Body = observer((props: { callback: (fact: Fact) => void }) => {
           rh_object_name
         </Grid>
       </Grid>
-      {facts.map((fact: Fact, idx: number) => (
+      {facts.map((fact: Fact) => (
         <Grid key={fact.fact_uid} container direction="row" spacing={1}>
           <Grid item xs={0.25}>
             <Button onClick={() => toggleExpand(fact.fact_uid)}>

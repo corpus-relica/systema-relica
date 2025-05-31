@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { performQuery } from "../axiosInstance.js";
-import { useStores } from "../context/RootStoreContext.js";
+import { performQuery } from "../axiosInstance";
+import { useStores } from "../context/RootStoreContext";
 import { observer } from "mobx-react-lite";
-// import QueryResults from "./QueryResultsDisplay.js";
-import { useDebounce } from "../utils.js";
+// import QueryResults from "./QueryResultsDisplay";
+import { useDebounce } from "../utils";
 
 // import Grid from "@mui/material/Grid";
 // import TextField from "@mui/material/TextField";

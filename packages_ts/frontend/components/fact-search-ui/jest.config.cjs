@@ -42,9 +42,10 @@ module.exports = {
     "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$":
       "jest-transform-stub",
 
-    // MUI specific mocks
-    "^@mui/material$": "<rootDir>/../../shared/testing/mocks/mui",
-    "^@mui/icons-material$": "<rootDir>/../../shared/testing/mocks/mui",
+    // MUI specific mocks - removed due to conflicts, using manual mocks in tests instead
+
+    // Constants package mock
+    "^@relica/constants$": "<rootDir>/src/__mocks__/@relica/constants.ts",
 
     // Styled components mock
     "^styled-components$": "styled-components",

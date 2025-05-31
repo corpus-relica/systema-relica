@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import FactTable from "./App.js";
+import FactTable from "./App";
 import { Fact } from "@relica/types";
 import { Box } from "@mui/material";
 

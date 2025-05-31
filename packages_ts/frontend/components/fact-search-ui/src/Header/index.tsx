@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { useStores } from "../context/RootStoreContext.js";
+import { useStores } from "../context/RootStoreContext";
 // import Box from "@mui/material/Box";
 // import Grid from "@mui/material/Grid";
 // import Typography from "@mui/material/Typography";
 // import FormControlLabel from "@mui/material/FormControlLabel";
 // import Switch from "@mui/material/Switch";
-import SearchMode from "./SearchMode.js";
-import QueryMode from "./QueryMode.js";
-import QueryResultsDisplay from "./QueryResultsDisplay.js";
+import SearchMode from "./SearchMode";
+import QueryMode from "./QueryMode";
+import QueryResultsDisplay from "./QueryResultsDisplay";
 import { Box, Grid, Typography, Switch, FormControlLabel } from "@mui/material";
 
 interface HeaderProps {
