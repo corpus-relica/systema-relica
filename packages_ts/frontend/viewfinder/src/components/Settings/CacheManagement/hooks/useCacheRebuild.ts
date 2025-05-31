@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { portalWs, sendSocketMessage } from '../../../../socket.js';
+import { portalWs, sendSocketMessage } from '../../../../socket';
 
 interface CacheRebuildState {
   isRebuilding: boolean;

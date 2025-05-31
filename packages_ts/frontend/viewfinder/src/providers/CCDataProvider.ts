@@ -1,5 +1,5 @@
 import { DataProvider } from "react-admin";
-import { ccClient } from "../io/CCBaseClient.js"; // Import the client we created earlier
+import { ccClient } from "../io/CCBaseClient"; // Import the client we created earlier
 
 console.log("Creating CCDataProvider...");
 
