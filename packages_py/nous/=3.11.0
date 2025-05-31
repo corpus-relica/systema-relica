@@ -1,0 +1,46 @@
+Collecting pytest
+  Downloading pytest-8.3.5-py3-none-any.whl.metadata (7.6 kB)
+Collecting pytest-asyncio
+  Downloading pytest_asyncio-1.0.0-py3-none-any.whl.metadata (4.0 kB)
+Collecting pytest-cov
+  Downloading pytest_cov-6.1.1-py3-none-any.whl.metadata (28 kB)
+Collecting pytest-mock
+  Downloading pytest_mock-3.14.1-py3-none-any.whl.metadata (3.9 kB)
+Collecting pytest-timeout
+  Downloading pytest_timeout-2.4.0-py3-none-any.whl.metadata (20 kB)
+Collecting pytest-xdist
+  Downloading pytest_xdist-3.7.0-py3-none-any.whl.metadata (3.0 kB)
+Collecting websocket-client
+  Downloading websocket_client-1.8.0-py3-none-any.whl.metadata (8.0 kB)
+Requirement already satisfied: aiohttp in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (3.11.18)
+Collecting iniconfig (from pytest)
+  Downloading iniconfig-2.1.0-py3-none-any.whl.metadata (2.7 kB)
+Requirement already satisfied: packaging in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from pytest) (24.2)
+Collecting pluggy<2,>=1.5 (from pytest)
+  Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting coverage>=7.5 (from coverage[toml]>=7.5->pytest-cov)
+  Downloading coverage-7.8.2-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (8.9 kB)
+Collecting execnet>=2.1 (from pytest-xdist)
+  Downloading execnet-2.1.1-py3-none-any.whl.metadata (2.9 kB)
+Requirement already satisfied: aiohappyeyeballs>=2.3.0 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from aiohttp) (2.6.1)
+Requirement already satisfied: aiosignal>=1.1.2 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from aiohttp) (1.3.2)
+Requirement already satisfied: attrs>=17.3.0 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from aiohttp) (25.3.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from aiohttp) (1.6.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from aiohttp) (6.4.3)
+Requirement already satisfied: propcache>=0.2.0 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from aiohttp) (0.3.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from aiohttp) (1.20.0)
+Requirement already satisfied: idna>=2.0 in /home/marc/miniconda3/envs/systema-relica-nous/lib/python3.11/site-packages (from yarl<2.0,>=1.17.0->aiohttp) (3.10)
+Downloading pytest-8.3.5-py3-none-any.whl (343 kB)
+Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+Downloading pytest_asyncio-1.0.0-py3-none-any.whl (15 kB)
+Downloading pytest_cov-6.1.1-py3-none-any.whl (23 kB)
+Downloading pytest_mock-3.14.1-py3-none-any.whl (9.9 kB)
+Downloading pytest_timeout-2.4.0-py3-none-any.whl (14 kB)
+Downloading pytest_xdist-3.7.0-py3-none-any.whl (46 kB)
+Downloading websocket_client-1.8.0-py3-none-any.whl (58 kB)
+Downloading coverage-7.8.2-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (244 kB)
+Downloading execnet-2.1.1-py3-none-any.whl (40 kB)
+Downloading iniconfig-2.1.0-py3-none-any.whl (6.0 kB)
+Installing collected packages: websocket-client, pluggy, iniconfig, execnet, coverage, pytest, pytest-xdist, pytest-timeout, pytest-mock, pytest-cov, pytest-asyncio
+
+Successfully installed coverage-7.8.2 execnet-2.1.1 iniconfig-2.1.0 pluggy-1.6.0 pytest-8.3.5 pytest-asyncio-1.0.0 pytest-cov-6.1.1 pytest-mock-3.14.1 pytest-timeout-2.4.0 pytest-xdist-3.7.0 websocket-client-1.8.0
