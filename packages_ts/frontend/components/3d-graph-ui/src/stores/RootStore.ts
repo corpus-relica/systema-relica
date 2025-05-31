@@ -1,7 +1,7 @@
 import { makeAutoObservable, toJS, observable } from "mobx";
-import { NodeData, EdgeData, Fact } from "../types.js";
-import SimulationStore from "./SimulationStore.js";
-import { Position } from "../types.js";
+import { NodeData, EdgeData, Fact } from "../types";
+import SimulationStore from "./SimulationStore";
+import { Position } from "../types";
 // import { ThreeEvent } from "@react-three/fiber";
 
 // Type definition

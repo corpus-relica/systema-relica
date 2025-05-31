@@ -1,5 +1,5 @@
 import { makeAutoObservable } from "mobx";
-import { QueryResults } from "../types.js";
+import { QueryResults } from "../types";
 
 export class RootStore {
   facts = [];

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getCollections, performSearch } from "../axiosInstance.js";
-import { useStores } from "../context/RootStoreContext.js";
+import { getCollections, performSearch } from "../axiosInstance";
+import { useStores } from "../context/RootStoreContext";
 import { observer } from "mobx-react-lite";
 import { ALL } from "@relica/constants";
-import { useDebounce } from "../utils.js";
+import { useDebounce } from "../utils";
 
 // import Grid from "@mui/material/Grid";
 // import IconButton from "@mui/material/IconButton";

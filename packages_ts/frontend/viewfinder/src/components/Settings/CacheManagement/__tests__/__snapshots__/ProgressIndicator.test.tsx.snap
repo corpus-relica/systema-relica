@@ -1,0 +1,141 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ProgressIndicator takes a snapshot at different progress levels: progress-0 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <div
+      class="flex justify-between text-sm"
+    >
+      <span>
+        Processing at 0%
+      </span>
+      <span>
+        0
+        %
+      </span>
+    </div>
+    <div
+      class="w-full bg-gray-200 rounded-full h-2.5"
+    >
+      <div
+        class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+        style="width: 0%;"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ProgressIndicator takes a snapshot at different progress levels: progress-25 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <div
+      class="flex justify-between text-sm"
+    >
+      <span>
+        Processing at 25%
+      </span>
+      <span>
+        25
+        %
+      </span>
+    </div>
+    <div
+      class="w-full bg-gray-200 rounded-full h-2.5"
+    >
+      <div
+        class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+        style="width: 25%;"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ProgressIndicator takes a snapshot at different progress levels: progress-50 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <div
+      class="flex justify-between text-sm"
+    >
+      <span>
+        Processing at 50%
+      </span>
+      <span>
+        50
+        %
+      </span>
+    </div>
+    <div
+      class="w-full bg-gray-200 rounded-full h-2.5"
+    >
+      <div
+        class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+        style="width: 50%;"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ProgressIndicator takes a snapshot at different progress levels: progress-75 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <div
+      class="flex justify-between text-sm"
+    >
+      <span>
+        Processing at 75%
+      </span>
+      <span>
+        75
+        %
+      </span>
+    </div>
+    <div
+      class="w-full bg-gray-200 rounded-full h-2.5"
+    >
+      <div
+        class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+        style="width: 75%;"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ProgressIndicator takes a snapshot at different progress levels: progress-100 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <div
+      class="flex justify-between text-sm"
+    >
+      <span>
+        Processing at 100%
+      </span>
+      <span>
+        100
+        %
+      </span>
+    </div>
+    <div
+      class="w-full bg-gray-200 rounded-full h-2.5"
+    >
+      <div
+        class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+        style="width: 100%;"
+      />
+    </div>
+  </div>
+</div>
+`;

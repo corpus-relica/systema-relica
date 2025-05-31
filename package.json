@@ -9,6 +9,7 @@
     "packages": [
       "packages_ts/libs/constants",
       "packages_ts/libs/types",
+      "packages_ts/shared/testing",
       "packages_ts/core/hsm-manager",
       "packages_ts/backend/archivist",
       "packages_ts/backend/clarity-core",

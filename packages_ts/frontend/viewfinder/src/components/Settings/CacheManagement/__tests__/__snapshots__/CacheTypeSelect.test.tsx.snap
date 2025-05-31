@@ -1,0 +1,157 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CacheTypeSelect takes a snapshot when disabled 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <label
+      class="text-sm font-medium"
+    >
+      Select Cache Types:
+    </label>
+    <div
+      class="space-y-2"
+    >
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          disabled=""
+          type="checkbox"
+        />
+        <span>
+          Entity Facts Cache
+        </span>
+      </label>
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          disabled=""
+          type="checkbox"
+        />
+        <span>
+          Lineage Cache
+        </span>
+      </label>
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          disabled=""
+          type="checkbox"
+        />
+        <span>
+          Subtypes Cache
+        </span>
+      </label>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`CacheTypeSelect takes a snapshot with no selection 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <label
+      class="text-sm font-medium"
+    >
+      Select Cache Types:
+    </label>
+    <div
+      class="space-y-2"
+    >
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          type="checkbox"
+        />
+        <span>
+          Entity Facts Cache
+        </span>
+      </label>
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          type="checkbox"
+        />
+        <span>
+          Lineage Cache
+        </span>
+      </label>
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          type="checkbox"
+        />
+        <span>
+          Subtypes Cache
+        </span>
+      </label>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`CacheTypeSelect takes a snapshot with selections 1`] = `
+<div>
+  <div
+    class="space-y-2"
+  >
+    <label
+      class="text-sm font-medium"
+    >
+      Select Cache Types:
+    </label>
+    <div
+      class="space-y-2"
+    >
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          type="checkbox"
+        />
+        <span>
+          Entity Facts Cache
+        </span>
+      </label>
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          type="checkbox"
+        />
+        <span>
+          Lineage Cache
+        </span>
+      </label>
+      <label
+        class="flex items-center space-x-2 cursor-pointer"
+      >
+        <input
+          class="rounded border-gray-300"
+          type="checkbox"
+        />
+        <span>
+          Subtypes Cache
+        </span>
+      </label>
+    </div>
+  </div>
+</div>
+`;
