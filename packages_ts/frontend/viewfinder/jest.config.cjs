@@ -43,7 +43,8 @@ module.exports = {
   moduleNameMapper: {
     // Path aliases
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^@shared/testing/(.*)$': '<rootDir>/../shared/testing/$1',
+    '^@relica/shared/testing$': '<rootDir>/../../shared/testing/index.ts',
+    '^@relica/shared/testing/(.*)$': '<rootDir>/../../shared/testing/$1',
     
     // Asset mocks
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',

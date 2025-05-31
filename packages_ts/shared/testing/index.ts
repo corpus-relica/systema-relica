@@ -79,6 +79,11 @@ export {
   withTimeout,
 } from "./setup/jest";
 
+// Export preset functions
+export { setup3DGraphUITesting } from "./presets/3d-graph-ui";
+export { setupFactSearchUITesting } from "./presets/fact-search-ui";
+export { setupViewfinderTesting } from "./presets/viewfinder";
+
 // Import for internal use
 import {
   setupTestEnvironment as _setupTestEnvironment,

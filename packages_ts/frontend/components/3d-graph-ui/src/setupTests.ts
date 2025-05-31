@@ -1,11 +1,11 @@
 /**
- * Setup file for Jest tests
+ * Setup file for Jest tests - 3d-graph-ui package
  * This file is executed before each test file
  */
 
 import "@testing-library/jest-dom";
 
-// Setup testing environment for 3d-graph-ui package
+// Basic setup for 3d-graph-ui package
 beforeEach(() => {
   // Clear all mocks before each test
   jest.clearAllMocks();
@@ -68,3 +68,25 @@ Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
     clip: jest.fn(),
   })),
 });
+
+// Mock window.matchMedia
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: jest.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+// Mock ResizeObserver
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
