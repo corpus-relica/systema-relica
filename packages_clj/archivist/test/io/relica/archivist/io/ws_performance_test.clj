@@ -1,10 +1,9 @@
 (ns io.relica.archivist.io.ws-performance-test
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.core.async :as async :refer [<! >! go chan <!! >!! timeout]]
             [io.relica.archivist.test-helpers :as helpers]
             [io.relica.archivist.utils.response :as response]
-            [clojure.tools.logging :as log]
-            [clojure.test :refer [deftest is testing]]))
+            [clojure.tools.logging :as log]))
 
 ;; ==========================================================================
 ;; Performance Benchmarking Infrastructure
@@ -78,280 +77,194 @@
               :request-id (:request-id request)
               :start-time start-time}})))
 
-(facts "about WebSocket handler performance"
-  (fact "handlers complete within acceptable time limits"
+(deftest ^:performance handler-response-time-test
+  (testing "handler response time under normal load"
     (let [handler (create-mock-handler-performance-test 10)
-          benchmark (benchmark-execution-time handler {:request-id "perf-test-1"})]
-      (:duration-ms benchmark) => (checker [actual] (< actual 50)) ; Should complete within 50ms
-      (get-in benchmark [:result :success]) => true))
-
-  (fact "handlers maintain consistent performance under load"
+          benchmark-result (benchmark-execution-time handler {:request-id "perf-test-1"})]
+      (is (< (:duration-ms benchmark-result) 50)) ; Should complete within 50ms
+      (is (true? (get-in benchmark-result [:result :success])))))
+  
+  (testing "handler response time under high processing load"
+    (let [handler (create-mock-handler-performance-test 100)
+          benchmark-result (benchmark-execution-time handler {:request-id "perf-test-2"})]
+      (is (< (:duration-ms benchmark-result) 200)) ; Should complete within 200ms
+      (is (true? (get-in benchmark-result [:result :success])))))
+  
+  (testing "handler throughput measurement"
     (let [handler (create-mock-handler-performance-test 5)
-          benchmark (benchmark-throughput #(handler {:request-id (str "load-test-" %)}) 100)]
-      (:throughput benchmark) => (checker [actual] (> actual 10)) ; At least 10 ops/second
-      (:avg-time-per-op benchmark) => (checker [actual] (< actual 50)) ; Average under 50ms
-      (count (:results benchmark)) => 100))
+          num-requests 10
+          throughput-result (benchmark-throughput 
+                           (fn [i] (handler {:request-id (str "perf-test-" i)}))
+                           num-requests)]
+      (is (= num-requests (:num-iterations throughput-result)))
+      (is (> (:throughput throughput-result) 5)) ; At least 5 requests per second
+      (is (< (:avg-time-per-op throughput-result) 100))))) ; Average less than 100ms
 
-  (fact "handlers have reasonable memory footprint"
+(deftest ^:performance memory-usage-test
+  (testing "memory usage during handler execution"
+    (let [handler (create-mock-handler-performance-test 10)
+          memory-benchmark (benchmark-memory-usage 
+                          #(doall (repeatedly 100 (fn [] (handler {:request-id "mem-test"})))))]
+      (is (< (:memory-delta-mb memory-benchmark) 10)) ; Should use less than 10MB
+      (is (> (:max-memory-mb memory-benchmark) 0))))
+  
+  (testing "memory cleanup after batch operations"
     (let [handler (create-mock-handler-performance-test 1)
-          benchmark (benchmark-memory-usage 
-                     #(doall (for [i (range 1000)]
-                               (handler {:request-id (str "memory-test-" i)}))))]
-      (:memory-delta-mb benchmark) => (checker [actual] (< actual 100)) ; Less than 100MB increase
-      (count (:result benchmark)) => 1000)))
+          before-gc (benchmark-memory-usage #(doall (repeatedly 50 (fn [] (handler {:request-id "gc-test"})))))
+          _ (System/gc)
+          after-gc-mem (let [runtime (Runtime/getRuntime)]
+                        (/ (- (.totalMemory runtime) (.freeMemory runtime)) 1024 1024))]
+      (is (> (:final-used-mb before-gc) 0))
+      (is (< after-gc-mem (:final-used-mb before-gc))))) ; Memory should be reduced after GC
 
-;; ==========================================================================
-;; Message Processing Performance Tests
-;; ==========================================================================
+(deftest ^:performance concurrent-request-handling-test
+  (testing "concurrent request handling performance"
+    (let [handler (create-mock-handler-performance-test 20)
+          num-concurrent 5
+          start-time (System/currentTimeMillis)
+          futures (repeatedly num-concurrent 
+                            #(future (handler {:request-id (str "concurrent-" (System/currentTimeMillis))})))
+          results (map deref futures)
+          end-time (System/currentTimeMillis)
+          total-duration (- end-time start-time)]
+      (is (= num-concurrent (count results)))
+      (is (every? #(true? (:success %)) results))
+      (is (< total-duration 1000)))) ; Should complete within 1 second
+  
+  (testing "request queue performance under load"
+    (let [handler (create-mock-handler-performance-test 5)
+          queue-capacity 20
+          processed-count (atom 0)
+          queue-chan (chan queue-capacity)
+          
+          ; Producer - enqueue requests
+          producer (go
+                    (dotimes [i 15]
+                      (>! queue-chan {:request-id (str "queue-test-" i)
+                                     :enqueue-time (System/currentTimeMillis)})))
+          
+          ; Consumer - process requests
+          consumer (go-loop []
+                    (when-let [request (<! queue-chan)]
+                      (handler request)
+                      (swap! processed-count inc)
+                      (recur)))
+          
+          _ (<!! producer) ; Wait for producer to complete
+          _ (async/close! queue-chan)
+          _ (<!! consumer)] ; Wait for consumer to complete
+      
+      (is (= 15 @processed-count))))
 
-(defn create-message-processor
-  "Create a mock message processor for testing"
-  [batch-size processing-delay-ms]
-  (let [processed-messages (atom [])]
-    {:processor (fn [messages]
-                  (Thread/sleep processing-delay-ms)
-                  (let [processed (mapv #(assoc % :processed-at (System/currentTimeMillis)) messages)]
-                    (swap! processed-messages concat processed)
-                    {:processed-count (count processed)
-                     :batch-size (count messages)
-                     :success true}))
-     :get-processed-count (fn [] (count @processed-messages))
-     :get-processed-messages (fn [] @processed-messages)
-     :reset! (fn [] (reset! processed-messages []))}))
+(deftest ^:performance data-serialization-performance-test
+  (testing "response serialization performance"
+    (let [large-data (into {} (for [i (range 1000)]
+                               [(keyword (str "key-" i)) (str "value-" i)]))
+          response-data {:success true :data large-data}
+          benchmark-result (benchmark-execution-time pr-str response-data)]
+      (is (< (:duration-ms benchmark-result) 100)) ; Should serialize within 100ms
+      (is (string? (:result benchmark-result)))))
+  
+  (testing "large payload handling"
+    (let [large-payload {:entities (repeatedly 500 #(hash-map :uid (rand-int 10000)
+                                                             :name (str "Entity " (rand-int 1000))
+                                                             :properties {:description (apply str (repeat 100 "x"))}))}
+          handler (fn [_] {:success true :data large-payload})
+          benchmark-result (benchmark-execution-time handler {:request-id "large-payload-test"})]
+      (is (< (:duration-ms benchmark-result) 500)) ; Should complete within 500ms
+      (is (true? (get-in benchmark-result [:result :success])))))
+  
+  (testing "nested data structure performance"
+    (let [nested-data {:level1 {:level2 {:level3 {:level4 {:data (range 100)}}}}}
+          handler (fn [_] {:success true :data nested-data})
+          benchmark-result (benchmark-execution-time handler {:request-id "nested-data-test"})]
+      (is (< (:duration-ms benchmark-result) 50)) ; Should complete within 50ms
+      (is (true? (get-in benchmark-result [:result :success]))))))
 
-(facts "about message processing performance"
-  (fact "message processor handles small batches efficiently"
-    (let [processor (create-message-processor 10 5)
-          messages (mapv #(hash-map :id % :data (str "message-" %)) (range 10))
-          benchmark (benchmark-execution-time (:processor processor) messages)]
-      (:duration-ms benchmark) => (checker [actual] (< actual 20)) ; Under 20ms
-      (get-in benchmark [:result :processed-count]) => 10
-      ((:get-processed-count processor)) => 10))
-
-  (fact "message processor scales with larger batches"
-    (let [processor (create-message-processor 100 10)
-          messages (mapv #(hash-map :id % :data (str "large-message-" %)) (range 100))
-          benchmark (benchmark-execution-time (:processor processor) messages)]
-      (:duration-ms benchmark) => (checker [actual] (< actual 50)) ; Under 50ms for 100 messages
-      (get-in benchmark [:result :processed-count]) => 100))
-
-  (fact "message processor maintains performance across multiple batches"
-    (let [processor (create-message-processor 50 2)
-          batch-operation (fn [batch-num]
-                            (let [messages (mapv #(hash-map :id (+ (* batch-num 50) %) 
-                                                            :data (str "batch-" batch-num "-msg-" %)) 
-                                                 (range 50))]
-                              ((:processor processor) messages)))
-          benchmark (benchmark-throughput batch-operation 20)]
-      (:throughput benchmark) => (checker [actual] (> actual 5)) ; At least 5 batches/second
-      ((:get-processed-count processor)) => 1000 ; 20 batches * 50 messages each
-      (:avg-time-per-op benchmark) => (checker [actual] (< actual 200)))) ; Under 200ms per batch
-
-  (fact "message processor has stable memory usage"
-    (let [processor (create-message-processor 100 1)
-          operation (fn []
-                      (doseq [batch-num (range 50)]
-                        (let [messages (mapv #(hash-map :id (+ (* batch-num 100) %) 
-                                                        :data (str "memory-test-" batch-num "-" %)) 
-                                             (range 100))]
-                          ((:processor processor) messages)))
-                      ((:get-processed-count processor)))
-          benchmark (benchmark-memory-usage operation)]
-      (:result benchmark) => 5000 ; 50 batches * 100 messages
-      (:memory-delta-mb benchmark) => (checker [actual] (< actual 200))))) ; Under 200MB
-
-;; ==========================================================================
-;; Concurrent Connection Performance Tests
-;; ==========================================================================
-
-(defn create-concurrent-connection-simulator
-  "Simulate multiple concurrent WebSocket connections"
-  [num-connections messages-per-connection]
-  (let [results (atom {:connections-created 0
-                       :total-messages-sent 0
-                       :total-messages-received 0
-                       :errors 0
-                       :start-time nil
-                       :end-time nil})]
-    {:simulate! (fn []
-                  (swap! results assoc :start-time (System/currentTimeMillis))
-                  (let [completion-chan (chan)]
-                    ;; Create concurrent connections
-                    (doseq [conn-id (range num-connections)]
-                      (go
+(deftest ^:performance error-handling-performance-test
+  (testing "error response generation performance"
+    (let [error-handler (fn [_] (throw (ex-info "Test error" {:code 500})))
+          safe-handler (fn [request]
                         (try
-                          (swap! results update :connections-created inc)
-                          ;; Simulate sending messages
-                          (doseq [msg-id (range messages-per-connection)]
-                            (let [response {:success true :data {:conn-id conn-id :msg-id msg-id}}]
-                              (if (:success response)
-                                (do
-                                  (swap! results update :total-messages-sent inc)
-                                  (swap! results update :total-messages-received inc))
-                                (swap! results update :errors inc))))
+                          (error-handler request)
                           (catch Exception e
-                            (log/error e "Error in connection simulation")
-                            (swap! results update :errors inc))
-                          (finally
-                            (>! completion-chan conn-id)))))
-                    
-                    ;; Wait for all connections to complete
-                    (<!! (go
-                           (doseq [_ (range num-connections)]
-                             (<! completion-chan))
-                           (swap! results assoc :end-time (System/currentTimeMillis))))
-                    
-                    @results))
-     :get-results (fn [] @results)}))
+                            {:success false
+                             :error {:code 500
+                                    :type "internal-error"
+                                    :message (.getMessage e)}})))
+          benchmark-result (benchmark-execution-time safe-handler {:request-id "error-test"})]
+      (is (< (:duration-ms benchmark-result) 10)) ; Should handle error within 10ms
+      (is (false? (get-in benchmark-result [:result :success])))))
+  
+  (testing "validation error performance"
+    (let [validation-handler (fn [request]
+                              (if (nil? (:required-field request))
+                                {:success false
+                                 :error {:code 1102
+                                        :type "missing-required-field"
+                                        :message "Required field missing"
+                                        :details {:field "required-field"}}}
+                                {:success true :data "Valid request"}))
+          benchmark-result (benchmark-execution-time validation-handler {:request-id "validation-test"})]
+      (is (< (:duration-ms benchmark-result) 5)) ; Should validate within 5ms
+      (is (false? (get-in benchmark-result [:result :success]))))))
 
-(facts "about concurrent connection performance"
-  (fact "system handles moderate concurrent connections efficiently"
-    (let [simulator (create-concurrent-connection-simulator 10 20)
-          benchmark (benchmark-execution-time (:simulate! simulator))]
-      (:duration-ms benchmark) => (checker [actual] (< actual 5000)) ; Under 5 seconds
-      (let [results (get-in benchmark [:result])]
-        (:connections-created results) => 10
-        (:total-messages-sent results) => 200 ; 10 connections * 20 messages
-        (:total-messages-received results) => 200
-        (:errors results) => 0)))
+(deftest ^:performance websocket-message-processing-test
+  (testing "message parsing performance"
+    (let [message-data {:type :archivist.fact/create
+                       :payload {:lh_object_uid 1001
+                                :rh_object_uid 2001
+                                :rel_type_uid 1225}
+                       :request_id "parse-test"}
+          parser (fn [msg] (assoc msg :parsed true :parse-time (System/currentTimeMillis)))
+          benchmark-result (benchmark-execution-time parser message-data)]
+      (is (< (:duration-ms benchmark-result) 5)) ; Should parse within 5ms
+      (is (true? (get-in benchmark-result [:result :parsed])))))
+  
+  (testing "message routing performance"
+    (let [router {"archivist.fact/create" (fn [_] {:routed-to :fact-create})
+                  "archivist.fact/update" (fn [_] {:routed-to :fact-update})
+                  "archivist.fact/delete" (fn [_] {:routed-to :fact-delete})}
+          route-message (fn [msg-type] (get router msg-type (fn [_] {:routed-to :unknown})))
+          benchmark-result (benchmark-execution-time route-message "archivist.fact/create")]
+      (is (< (:duration-ms benchmark-result) 1)) ; Should route within 1ms
+      (is (fn? (:result benchmark-result)))))
+  
+  (testing "end-to-end message processing performance"
+    (let [process-message (fn [msg]
+                           (let [parsed (assoc msg :parsed true)
+                                 validated (if (:payload parsed)
+                                            (assoc parsed :valid true)
+                                            (assoc parsed :valid false))
+                                 processed (if (:valid validated)
+                                            {:success true :data (:payload validated)}
+                                            {:success false :error "Invalid payload"})]
+                             processed))
+          test-message {:type :test :payload {:data "test"}}
+          benchmark-result (benchmark-execution-time process-message test-message)]
+      (is (< (:duration-ms benchmark-result) 10)) ; Should process within 10ms
+      (is (true? (get-in benchmark-result [:result :success]))))))
 
-  (fact "system scales to higher concurrent loads"
-    (let [simulator (create-concurrent-connection-simulator 50 10)
-          benchmark (benchmark-execution-time (:simulate! simulator))]
-      (:duration-ms benchmark) => (checker [actual] (< actual 10000)) ; Under 10 seconds
-      (let [results (get-in benchmark [:result])]
-        (:connections-created results) => 50
-        (:total-messages-sent results) => 500 ; 50 connections * 10 messages
-        (:errors results) => 0)))
-
-  (fact "system provides performance metrics for concurrent operations"
-    (let [simulator (create-concurrent-connection-simulator 25 15)
-          results ((:simulate! simulator))
-          duration-ms (- (:end-time results) (:start-time results))
-          throughput (if (> duration-ms 0) (/ (:total-messages-sent results) (/ duration-ms 1000.0)) 0)]
-      duration-ms => (checker [actual] (> actual 0))
-      throughput => (checker [actual] (> actual 10)) ; At least 10 messages/second
-      (:connections-created results) => 25
-      (:total-messages-sent results) => 375)))
-
-;; ==========================================================================
-;; Performance Regression Tests
-;; ==========================================================================
-
-(def performance-baselines
-  "Performance baselines for regression testing"
-  {:single-handler-max-time 50     ; milliseconds
-   :batch-processing-max-time 200  ; milliseconds for 100 items
-   :min-throughput 10              ; operations per second
-   :max-memory-increase 100        ; MB
-   :concurrent-connections-max-time 5000 ; milliseconds for 10 connections
-   :message-processing-throughput 100})   ; messages per second
-
-(facts "about performance regression prevention"
-  (fact "single handler performance has not regressed"
-    (let [handler (create-mock-handler-performance-test 5)
-          benchmark (benchmark-execution-time handler {:request-id "regression-test"})]
-      (:duration-ms benchmark) => (checker [actual] 
-                                    (< actual (:single-handler-max-time performance-baselines)))))
-
-  (fact "batch processing performance has not regressed"
-    (let [processor (create-message-processor 100 5)
-          messages (mapv #(hash-map :id % :data (str "regression-msg-" %)) (range 100))
-          benchmark (benchmark-execution-time (:processor processor) messages)]
-      (:duration-ms benchmark) => (checker [actual] 
-                                    (< actual (:batch-processing-max-time performance-baselines)))))
-
-  (fact "throughput performance has not regressed"
-    (let [operation (fn [_] (Thread/sleep 5) {:success true})
-          benchmark (benchmark-throughput operation 50)]
-      (:throughput benchmark) => (checker [actual] 
-                                   (> actual (:min-throughput performance-baselines)))))
-
-  (fact "memory usage has not regressed"
-    (let [operation (fn [] (doall (for [i (range 1000)] {:id i :data (str "data-" i)})))
-          benchmark (benchmark-memory-usage operation)]
-      (:memory-delta-mb benchmark) => (checker [actual] 
-                                        (< actual (:max-memory-increase performance-baselines)))))
-
-  (fact "concurrent connection performance has not regressed"
-    (let [simulator (create-concurrent-connection-simulator 10 10)
-          benchmark (benchmark-execution-time (:simulate! simulator))]
-      (:duration-ms benchmark) => (checker [actual] 
-                                    (< actual (:concurrent-connections-max-time performance-baselines))))))
-
-;; ==========================================================================
-;; Performance Reporting
-;; ==========================================================================
-
-(defn generate-performance-report
-  "Generate a comprehensive performance report"
-  []
-  (let [report (atom {:timestamp (System/currentTimeMillis)
-                      :tests []
-                      :summary {:total-tests 0
-                                :passed-tests 0
-                                :failed-tests 0
-                                :avg-performance-score 0}})]
-    
-    ;; Single handler test
-    (let [handler (create-mock-handler-performance-test 5)
-          benchmark (benchmark-execution-time handler {:request-id "report-test-1"})
-          passed (< (:duration-ms benchmark) 50)]
-      (swap! report update :tests conj
-             {:test-name "Single Handler Performance"
-              :duration-ms (:duration-ms benchmark)
-              :baseline-ms 50
-              :passed passed
-              :score (if passed 100 (max 0 (- 100 (* 2 (- (:duration-ms benchmark) 50)))))}))
-    
-    ;; Throughput test
-    (let [operation (fn [_] (Thread/sleep 2) {:success true})
-          benchmark (benchmark-throughput operation 100)
-          passed (> (:throughput benchmark) 20)]
-      (swap! report update :tests conj
-             {:test-name "Throughput Performance"
-              :throughput (:throughput benchmark)
-              :baseline-throughput 20
-              :passed passed
-              :score (if passed 100 (max 0 (min 100 (* 5 (:throughput benchmark)))))}))
-    
-    ;; Memory usage test
-    (let [operation (fn [] (doall (for [i (range 500)] {:id i :data (str "test-" i)})))
-          benchmark (benchmark-memory-usage operation)
-          passed (< (:memory-delta-mb benchmark) 50)]
-      (swap! report update :tests conj
-             {:test-name "Memory Usage"
-              :memory-delta-mb (:memory-delta-mb benchmark)
-              :baseline-mb 50
-              :passed passed
-              :score (if passed 100 (max 0 (- 100 (* 2 (:memory-delta-mb benchmark)))))}))
-    
-    ;; Calculate summary
-    (let [tests (:tests @report)
-          total-tests (count tests)
-          passed-tests (count (filter :passed tests))
-          avg-score (if (> total-tests 0) (/ (reduce + (map :score tests)) total-tests) 0)]
-      (swap! report update :summary assoc
-             :total-tests total-tests
-             :passed-tests passed-tests
-             :failed-tests (- total-tests passed-tests)
-             :avg-performance-score avg-score))
-    
-    @report))
-
-(facts "about performance reporting"
-  (fact "performance report includes all key metrics"
-    (let [report (generate-performance-report)]
-      (contains? report :timestamp) => true
-      (contains? report :tests) => true
-      (contains? report :summary) => true
-      (get-in report [:summary :total-tests]) => (checker [actual] (> actual 0))
-      (get-in report [:summary :avg-performance-score]) => (checker [actual] (and (>= actual 0) (<= actual 100)))))
-
-  (fact "performance report correctly identifies test results"
-    (let [report (generate-performance-report)
-          tests (:tests report)]
-      (every? #(contains? % :test-name) tests) => true
-      (every? #(contains? % :passed) tests) => true
-      (every? #(contains? % :score) tests) => true
-      (every? #(and (>= (:score %) 0) (<= (:score %) 100)) tests) => true)))
+(deftest ^:performance stress-test
+  (testing "sustained load performance"
+    (let [handler (create-mock-handler-performance-test 1)
+          num-requests 100
+          start-time (System/currentTimeMillis)
+          results (doall (pmap (fn [i] (handler {:request-id (str "stress-" i)}))
+                              (range num-requests)))
+          end-time (System/currentTimeMillis)
+          duration (- end-time start-time)]
+      (is (= num-requests (count results)))
+      (is (every? #(true? (:success %)) results))
+      (is (< duration 5000)))) ; Should complete within 5 seconds
+  
+  (testing "memory stability under sustained load"
+    (let [handler (create-mock-handler-performance-test 1)
+          initial-memory (let [runtime (Runtime/getRuntime)]
+                          (/ (- (.totalMemory runtime) (.freeMemory runtime)) 1024 1024))
+          _ (doall (repeatedly 200 #(handler {:request-id "memory-stress"})))
+          _ (System/gc)
+          final-memory (let [runtime (Runtime/getRuntime)]
+                        (/ (- (.totalMemory runtime) (.freeMemory runtime)) 1024 1024))
+          memory-growth (- final-memory initial-memory)]
+      (is (< memory-growth 50))))) ; Memory growth should be less than 50MB

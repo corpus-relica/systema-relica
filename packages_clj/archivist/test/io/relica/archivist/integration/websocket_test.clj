@@ -1,19 +1,19 @@
 (ns io.relica.archivist.integration.websocket-test
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.core.async :as async :refer [<! >! go chan <!! >!!]]
             [io.relica.archivist.utils.response :as response]
             [io.relica.archivist.test-helpers :as helpers]))
 
-(fact "about response format interoperability"
-  (fact "success response format is JSON-serializable and matches expected structure"
+(deftest response-format-interoperability-test
+  (testing "success response format is JSON-serializable and matches expected structure"
     (let [response (response/success-response {:key "value"} "req-123")
           ; This represents what client code in Python/TypeScript would expect
           expected {:success true
                     :request_id "req-123"
                     :data {:key "value"}}]
-      response => expected))
+      (is (= expected response))))
   
-  (fact "error response format is JSON-serializable and matches expected structure"
+  (testing "error response format is JSON-serializable and matches expected structure"
     (let [response (response/error-response :validation-error 
                                            "Invalid input" 
                                            {:field "username"}
@@ -25,43 +25,43 @@
                             :type "validation-error"
                             :message "Invalid input"
                             :details {:field "username"}}}]
-      response => expected))
+      (is (= expected response))))
 
-  (fact "response format handles complex nested data structures"
+  (testing "response format handles complex nested data structures"
     (let [complex-data {:entities [{:uid 1001 :name "Entity 1" :relations [{:type "subtype" :target 2001}]}
                                    {:uid 2001 :name "Entity 2" :properties {:definition "A test entity"}}]
                         :metadata {:total 2 :page 1 :page-size 10}}
           response (response/success-response complex-data "req-456")]
-      (:success response) => true
-      (:request_id response) => "req-456"
-      (get-in response [:data :entities 0 :uid]) => 1001
-      (get-in response [:data :metadata :total]) => 2))
+      (is (:success response))
+      (is (= "req-456" (:request_id response)))
+      (is (= 1001 (get-in response [:data :entities 0 :uid])))
+      (is (= 2 (get-in response [:data :metadata :total])))))
 
-  (fact "error response format handles different error types with proper codes"
+  (testing "error response format handles different error types with proper codes"
     (let [database-error (response/error-response :database-error "Connection failed" {} "req-789")
           missing-field-error (response/error-response :missing-required-field "Field required" {:field "uid"} "req-790")
           not-found-error (response/error-response :resource-not-found "Entity not found" {:uid 99999} "req-791")]
       
-      (:success database-error) => false
-      (get-in database-error [:error :code]) => 1001
-      (get-in database-error [:error :type]) => "database-error"
+      (is (false? (:success database-error)))
+      (is (= 1001 (get-in database-error [:error :code])))
+      (is (= "database-error" (get-in database-error [:error :type])))
       
-      (:success missing-field-error) => false
-      (get-in missing-field-error [:error :code]) => 1102
-      (get-in missing-field-error [:error :type]) => "missing-required-field"
+      (is (false? (:success missing-field-error)))
+      (is (= 1102 (get-in missing-field-error [:error :code])))
+      (is (= "missing-required-field" (get-in missing-field-error [:error :type])))
       
-      (:success not-found-error) => false
-      (get-in not-found-error [:error :code]) => 1201
-      (get-in not-found-error [:error :type]) => "resource-not-found"))
+      (is (false? (:success not-found-error)))
+      (is (= 1201 (get-in not-found-error [:error :code])))
+      (is (= "resource-not-found" (get-in not-found-error [:error :type])))))
 
-  (fact "response format handles empty data gracefully"
+  (testing "response format handles empty data gracefully"
     (let [empty-response (response/success-response {} "req-empty")
           null-response (response/success-response nil "req-null")]
-      (:success empty-response) => true
-      (:data empty-response) => {}
-      (:success null-response) => true
-      (:data null-response) => nil))
+      (is (:success empty-response))
+      (is (= {} (:data empty-response)))
+      (is (:success null-response))
+      (is (nil? (:data null-response)))))
 
-  (fact "response format includes proper timestamp for debugging"
+  (testing "response format includes proper timestamp for debugging"
     (let [response (response/success-response {:test "data"} "req-time")]
-      (:timestamp response) => (roughly (System/currentTimeMillis) 1000)))))
+      (is (<= (Math/abs (- (:timestamp response) (System/currentTimeMillis))) 1000)))))
