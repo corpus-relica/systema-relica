@@ -1,5 +1,5 @@
 (ns io.relica.archivist.io.ws-handlers-test
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.core.async :as async :refer [<! >! go chan]]
             [io.relica.archivist.utils.response :as response]
             [io.relica.archivist.test-helpers :as helpers]
@@ -99,475 +99,478 @@
                 (swap! responses conj response))}))
 
 ;; Test fact CRUD operations
-(facts "about fact CRUD operations"
-       (fact "create-fact handler should create a fact and update lineage cache"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:lh_object_uid 1001
-                              :rh_object_uid 2001
-                              :rel_type_uid 1225
-                              :rel_type_name "is classified as"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/create)))]
+(deftest fact-crud-operations-test
+  (testing "create-fact handler should create a fact and update lineage cache"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:lh_object_uid 1001
+                     :rh_object_uid 2001
+                     :rel_type_uid 1225
+                     :rel_type_name "is classified as"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/create)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :fact]) => (contains {:lh_object_uid 1001})
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (contains? (get-in @(:responses response-handler) [0 :data :fact]) :lh_object_uid))
+      (is (= 1001 (get-in @(:responses response-handler) [0 :data :fact :lh_object_uid])))
 
-               ;; Check that lineage was calculated
-               (get @mock-linearization :calculate-lineage) => 1001
+      ;; Check that lineage was calculated
+      (is (= 1001 (get @mock-linearization :calculate-lineage)))
 
-               ;; Check that descendants were cleared
-               (get @mock-cache :descendants-cleared) => true))
+      ;; Check that descendants were cleared
+      (is (true? (get @mock-cache :descendants-cleared)))))
 
-       (fact "create-fact handler should handle database errors gracefully"
-             (setup-mocks)
-             (with-redefs [fact/create-fact (fn [_] (throw (ex-info "Database connection failed" {})))]
-               (let [response-handler (mock-response-handler)
-                     test-data {:lh_object_uid 1001
-                                :rh_object_uid 2001
-                                :rel_type_uid 1225}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.fact/create)))]
+  (testing "create-fact handler should handle database errors gracefully"
+    (setup-mocks)
+    (with-redefs [fact/create-fact (fn [_] (throw (ex-info "Database connection failed" {})))]
+      (let [response-handler (mock-response-handler)
+            test-data {:lh_object_uid 1001
+                       :rh_object_uid 2001
+                       :rel_type_uid 1225}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.fact/create)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check error response
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => false
-                 (get-in @(:responses response-handler) [0 :error :type]) => "database-error")))
+        ;; Check error response
+        (is (= 1 (count @(:responses response-handler))))
+        (is (false? (get-in @(:responses response-handler) [0 :success])))
+        (is (= "database-error" (get-in @(:responses response-handler) [0 :error :type]))))))
 
-       (fact "create-fact handler should handle missing required fields"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:lh_object_uid 1001
-                              ;; Missing rh_object_uid and rel_type_uid
-                              :rel_type_name "is classified as"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/create)))]
+  (testing "create-fact handler should handle missing required fields"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:lh_object_uid 1001
+                     ;; Missing rh_object_uid and rel_type_uid
+                     :rel_type_name "is classified as"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/create)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Should still process but may fail at business logic level
-               (count @(:responses response-handler)) => 1))
+      ;; Should still process but may fail at business logic level
+      (is (= 1 (count @(:responses response-handler))))))
 
-       (fact "create-fact handler should handle failed fact creation"
-             (setup-mocks)
-             (with-redefs [fact/create-fact (fn [_] {:success false
-                                                     :message "Validation failed"
-                                                     :details {:field "lh_object_uid"}})]
-               (let [response-handler (mock-response-handler)
-                     test-data {:lh_object_uid 1001
-                                :rh_object_uid 2001
-                                :rel_type_uid 1225}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.fact/create)))]
+  (testing "create-fact handler should handle failed fact creation"
+    (setup-mocks)
+    (with-redefs [fact/create-fact (fn [_] {:success false
+                                            :message "Validation failed"
+                                            :details {:field "lh_object_uid"}})]
+      (let [response-handler (mock-response-handler)
+            test-data {:lh_object_uid 1001
+                       :rh_object_uid 2001
+                       :rel_type_uid 1225}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.fact/create)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check error response
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => false
-                 (get-in @(:responses response-handler) [0 :error :type]) => "database-error")))
+        ;; Check error response
+        (is (= 1 (count @(:responses response-handler))))
+        (is (false? (get-in @(:responses response-handler) [0 :success])))
+        (is (= "database-error" (get-in @(:responses response-handler) [0 :error :type]))))))
 
-       (fact "update-fact handler should update a fact"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:fact_uid 12345
-                              :lh_object_uid 1001
-                              :rh_object_uid 2001
-                              :rel_type_uid 1225
-                              :rel_type_name "is classified as"
-                              :updated_field "new value"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/update)))]
+  (testing "update-fact handler should update a fact"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:fact_uid 12345
+                     :lh_object_uid 1001
+                     :rh_object_uid 2001
+                     :rel_type_uid 1225
+                     :rel_type_name "is classified as"
+                     :updated_field "new value"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/update)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :fact]) => (contains {:fact_uid 12345})))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (contains? (get-in @(:responses response-handler) [0 :data :fact]) :fact_uid))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :fact :fact_uid])))))
 
-       (fact "delete-fact handler should delete a fact"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:uid 12345}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/delete)))]
+  (testing "delete-fact handler should delete a fact"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:uid 12345}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/delete)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :result]) => "success"
-               (get-in @(:responses response-handler) [0 :data :uid]) => 12345))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= "success" (get-in @(:responses response-handler) [0 :data :result])))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :uid])))))
 
-       (fact "batch-create handler should create multiple facts and update lineage cache"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data [{:lh_object_uid 1001
-                               :rh_object_uid 2001
-                               :rel_type_uid 1225
-                               :rel_type_name "is classified as"}
-                              {:lh_object_uid 1002
-                               :rh_object_uid 2002
-                               :rel_type_uid 1226
-                               :rel_type_name "is part of"}]
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/batch-create)))]
+  (testing "batch-create handler should create multiple facts and update lineage cache"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data [{:lh_object_uid 1001
+                      :rh_object_uid 2001
+                      :rel_type_uid 1225
+                      :rel_type_name "is classified as"}
+                     {:lh_object_uid 1002
+                      :rh_object_uid 2002
+                      :rel_type_uid 1226
+                      :rel_type_name "is part of"}]
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/batch-create)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (count (get-in @(:responses response-handler) [0 :data :facts])) => 2
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= 2 (count (get-in @(:responses response-handler) [0 :data :facts]))))
 
-               ;; Check that lineage was calculated for both facts
-               (get @mock-linearization :calculate-lineage) => 1002  ; Last one processed
+      ;; Check that lineage was calculated for both facts
+      (is (= 1002 (get @mock-linearization :calculate-lineage))) ; Last one processed
 
-               ;; Check that descendants were cleared
-               (get @mock-cache :descendants-cleared) => true))
+      ;; Check that descendants were cleared
+      (is (true? (get @mock-cache :descendants-cleared)))))
 
-       (fact "batch-delete handler should delete multiple facts"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:uids [12345 12346 12347]}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/batch-delete)))]
+  (testing "batch-delete handler should delete multiple facts"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:uids [12345 12346 12347]}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/batch-delete)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :result]) => "success"
-               (count (get-in @(:responses response-handler) [0 :data :uids])) => 3)))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= "success" (get-in @(:responses response-handler) [0 :data :result])))
+      (is (= 3 (count (get-in @(:responses response-handler) [0 :data :uids])))))))
 
 ;; Test submission operations
-(facts "about submission operations"
-       (fact "update-definition handler should update a fact definition"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:fact_uid 12345
-                              :partial_definition "A partial definition"
-                              :full_definition "A complete definition of the concept"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.submission/update-definition)))]
+(deftest submission-operations-test
+  (testing "update-definition handler should update a fact definition"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:fact_uid 12345
+                     :partial_definition "A partial definition"
+                     :full_definition "A complete definition of the concept"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.submission/update-definition)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :result :fact-uid]) => 12345))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :result :fact-uid])))))
 
-       (fact "update-collection handler should update a fact collection"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:fact_uid 12345
-                              :collection_uid 5001
-                              :collection_name "My Collection"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.submission/update-collection)))]
+  (testing "update-collection handler should update a fact collection"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:fact_uid 12345
+                     :collection_uid 5001
+                     :collection_name "My Collection"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.submission/update-collection)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :result :fact-uid]) => 12345))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :result :fact-uid])))))
 
-       (fact "update-name handler should update an entity name on a fact"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:fact_uid 12345
-                              :name "New Entity Name"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.submission/update-name)))]
+  (testing "update-name handler should update an entity name on a fact"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:fact_uid 12345
+                     :name "New Entity Name"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.submission/update-name)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :result :fact-uid]) => 12345))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :result :fact-uid])))))
 
-       (fact "blanket-rename handler should update entity name at every instance"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:entity_uid 12345
-                              :name "New Entity Name"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.submission/blanket-rename)))]
+  (testing "blanket-rename handler should update entity name at every instance"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:entity_uid 12345
+                     :name "New Entity Name"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.submission/blanket-rename)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :result :entity-uid]) => 12345))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :result :entity-uid])))))
 
-       (fact "add-synonym handler should add a synonym to an entity"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:uid 12345
-                              :synonym "Alternative Name"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.submission/add-synonym)))]
+  (testing "add-synonym handler should add a synonym to an entity"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:uid 12345
+                     :synonym "Alternative Name"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.submission/add-synonym)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :uid]) => 12345
-               (get-in @(:responses response-handler) [0 :data :synonym]) => "Alternative Name"))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :uid])))
+      (is (= "Alternative Name" (get-in @(:responses response-handler) [0 :data :synonym])))))
 
-       (fact "create-date handler should create a date entity"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {:date_uid 12345
-                              :collection_uid 5001
-                              :collection_name "My Collection"}
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.submission/create-date)))]
+  (testing "create-date handler should create a date entity"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {:date_uid 12345
+                     :collection_uid 5001
+                     :collection_name "My Collection"}
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.submission/create-date)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check responses
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => true
-               (get-in @(:responses response-handler) [0 :data :fact :fact_uid]) => 12345))
+      ;; Check responses
+      (is (= 1 (count @(:responses response-handler))))
+      (is (true? (get-in @(:responses response-handler) [0 :success])))
+      (is (= 12345 (get-in @(:responses response-handler) [0 :data :fact :fact_uid]))))))
 
 ;; Test additional WebSocket handlers for better coverage
-(facts "about additional WebSocket handlers"
-       (fact "graph/execute-query handler should execute queries successfully"
-             (setup-mocks)
-             (with-redefs [graph/exec-query (fn [_ query params]
-                                              (go {:results [{:uid 1001 :name "Test Entity"}]
-                                                   :total 1}))]
-               (let [response-handler (mock-response-handler)
-                     test-data {:query "MATCH (n) RETURN n LIMIT 1"
-                                :params {}}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.graph/execute-query)))]
+(deftest additional-websocket-handlers-test
+  (testing "graph/execute-query handler should execute queries successfully"
+    (setup-mocks)
+    (with-redefs [graph/exec-query (fn [_ query params]
+                                     (go {:results [{:uid 1001 :name "Test Entity"}]
+                                          :total 1}))]
+      (let [response-handler (mock-response-handler)
+            test-data {:query "MATCH (n) RETURN n LIMIT 1"
+                       :params {}}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.graph/execute-query)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check responses
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => true
-                 (get-in @(:responses response-handler) [0 :data :results]) => (contains {:uid 1001}))))
+        ;; Check responses
+        (is (= 1 (count @(:responses response-handler))))
+        (is (true? (get-in @(:responses response-handler) [0 :success])))
+        (is (contains? (first (get-in @(:responses response-handler) [0 :data :results])) :uid))
+        (is (= 1001 (:uid (first (get-in @(:responses response-handler) [0 :data :results]))))))))
 
-       (fact "graph/execute-query handler should handle query failures"
-             (setup-mocks)
-             (with-redefs [graph/exec-query (fn [_ _ _]
-                                              (throw (ex-info "Invalid Cypher syntax" {})))]
-               (let [response-handler (mock-response-handler)
-                     test-data {:query "INVALID QUERY SYNTAX"
-                                :params {}}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.graph/execute-query)))]
+  (testing "graph/execute-query handler should handle query failures"
+    (setup-mocks)
+    (with-redefs [graph/exec-query (fn [_ _ _]
+                                     (throw (ex-info "Invalid Cypher syntax" {})))]
+      (let [response-handler (mock-response-handler)
+            test-data {:query "INVALID QUERY SYNTAX"
+                       :params {}}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.graph/execute-query)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check error response
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => false
-                 (get-in @(:responses response-handler) [0 :error :type]) => "query-execution-failed")))
+        ;; Check error response
+        (is (= 1 (count @(:responses response-handler))))
+        (is (false? (get-in @(:responses response-handler) [0 :success])))
+        (is (= "query-execution-failed" (get-in @(:responses response-handler) [0 :error :type]))))))
 
-       (fact "entity/type-get handler should return entity type"
-             (setup-mocks)
-             (with-redefs [entity/get-entity-type (fn [uid]
-                                                    (go {:type "individual" :uid uid}))]
-               (let [response-handler (mock-response-handler)
-                     test-data {:uid 1001}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.entity/type-get)))]
+  (testing "entity/type-get handler should return entity type"
+    (setup-mocks)
+    (with-redefs [entity/get-entity-type (fn [uid]
+                                           (go {:type "individual" :uid uid}))]
+      (let [response-handler (mock-response-handler)
+            test-data {:uid 1001}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.entity/type-get)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check responses
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => true
-                 (get-in @(:responses response-handler) [0 :data :type :type]) => "individual")))
+        ;; Check responses
+        (is (= 1 (count @(:responses response-handler))))
+        (is (true? (get-in @(:responses response-handler) [0 :success])))
+        (is (= "individual" (get-in @(:responses response-handler) [0 :data :type :type]))))))
 
-       (fact "entity/type-get handler should handle non-existent entities"
-             (setup-mocks)
-             (with-redefs [entity/get-entity-type (fn [_] (go nil))]
-               (let [response-handler (mock-response-handler)
-                     test-data {:uid 99999999}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.entity/type-get)))]
+  (testing "entity/type-get handler should handle non-existent entities"
+    (setup-mocks)
+    (with-redefs [entity/get-entity-type (fn [_] (go nil))]
+      (let [response-handler (mock-response-handler)
+            test-data {:uid 99999999}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.entity/type-get)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check error response
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => false
-                 (get-in @(:responses response-handler) [0 :error :type]) => "resource-not-found")))
+        ;; Check error response
+        (is (= 1 (count @(:responses response-handler))))
+        (is (false? (get-in @(:responses response-handler) [0 :success])))
+        (is (= "resource-not-found" (get-in @(:responses response-handler) [0 :error :type]))))))
 
-       (fact "lineage/get handler should handle missing UID field"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {} ; Missing :uid field
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.lineage/get)))]
+  (testing "lineage/get handler should handle missing UID field"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {} ; Missing :uid field
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.lineage/get)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check error response
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => false
-               (get-in @(:responses response-handler) [0 :error :type]) => "missing-required-field"
-               (get-in @(:responses response-handler) [0 :error :details :field]) => "uid"))
+      ;; Check error response
+      (is (= 1 (count @(:responses response-handler))))
+      (is (false? (get-in @(:responses response-handler) [0 :success])))
+      (is (= "missing-required-field" (get-in @(:responses response-handler) [0 :error :type])))
+      (is (= "uid" (get-in @(:responses response-handler) [0 :error :details :field])))))
 
-       (fact "fact/delete handler should handle missing UID field"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {} ; Missing :uid field
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/delete)))]
+  (testing "fact/delete handler should handle missing UID field"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {} ; Missing :uid field
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/delete)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check error response
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => false
-               (get-in @(:responses response-handler) [0 :error :type]) => "missing-required-field"
-               (get-in @(:responses response-handler) [0 :error :details :field]) => "uid"))
+      ;; Check error response
+      (is (= 1 (count @(:responses response-handler))))
+      (is (false? (get-in @(:responses response-handler) [0 :success])))
+      (is (= "missing-required-field" (get-in @(:responses response-handler) [0 :error :type])))
+      (is (= "uid" (get-in @(:responses response-handler) [0 :error :details :field])))))
 
-       (fact "fact/batch-delete handler should handle missing UIDs field"
-             (setup-mocks)
-             (let [response-handler (mock-response-handler)
-                   test-data {} ; Missing :uids field
-                   handler (response/with-standard-response
-                             (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                  :archivist.fact/batch-delete)))]
+  (testing "fact/batch-delete handler should handle missing UIDs field"
+    (setup-mocks)
+    (let [response-handler (mock-response-handler)
+          test-data {} ; Missing :uids field
+          handler (response/with-standard-response
+                    (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                         :archivist.fact/batch-delete)))]
 
-               ;; Call the handler
-               (handler {:?data test-data
-                         :?reply-fn (:handler response-handler)})
+      ;; Call the handler
+      (handler {:?data test-data
+                :?reply-fn (:handler response-handler)})
 
-               ;; Check error response
-               (count @(:responses response-handler)) => 1
-               (get-in @(:responses response-handler) [0 :success]) => false
-               (get-in @(:responses response-handler) [0 :error :type]) => "missing-required-field"
-               (get-in @(:responses response-handler) [0 :error :details :field]) => "uids")))
+      ;; Check error response
+      (is (= 1 (count @(:responses response-handler))))
+      (is (false? (get-in @(:responses response-handler) [0 :success])))
+      (is (= "missing-required-field" (get-in @(:responses response-handler) [0 :error :type])))
+      (is (= "uids" (get-in @(:responses response-handler) [0 :error :details :field]))))))
 
 ;; Test search operations
-(facts "about search operations"
-       (fact "search/text handler should execute text searches"
-             (setup-mocks)
-             (with-redefs [general-search/get-text-search (fn [term coll page size filter exact]
-                                                            (go {:results [{:uid 1001 :name "Test Result"}]
-                                                                 :total 1
-                                                                 :page page
-                                                                 :page-size size}))]
-               (let [response-handler (mock-response-handler)
-                     test-data {:searchTerm "test"
-                                :collectionUID 5001
-                                :page 1
-                                :pageSize 10
-                                :exactMatch false}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.search/text)))]
+(deftest search-operations-test
+  (testing "search/text handler should execute text searches"
+    (setup-mocks)
+    (with-redefs [general-search/get-text-search (fn [term coll page size filter exact]
+                                                   (go {:results [{:uid 1001 :name "Test Result"}]
+                                                        :total 1
+                                                        :page page
+                                                        :page-size size}))]
+      (let [response-handler (mock-response-handler)
+            test-data {:searchTerm "test"
+                       :collectionUID 5001
+                       :page 1
+                       :pageSize 10
+                       :exactMatch false}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.search/text)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check responses
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => true
-                 (get-in @(:responses response-handler) [0 :data :results :total]) => 1)))
+        ;; Check responses
+        (is (= 1 (count @(:responses response-handler))))
+        (is (true? (get-in @(:responses response-handler) [0 :success])))
+        (is (= 1 (get-in @(:responses response-handler) [0 :data :results :total]))))))
 
-       (fact "search/uid handler should execute UID searches with string conversion"
-             (setup-mocks)
-             (with-redefs [general-search/get-uid-search (fn [uid coll page size filter]
-                                                           (go {:results [{:uid uid :name "Found Entity"}]
-                                                                :total 1}))]
-               (let [response-handler (mock-response-handler)
-                     test-data {:searchUID "1001" ; String UID that should be converted
-                                :collectionUID 5001
-                                :page 1
-                                :pageSize 10}
-                     handler (response/with-standard-response
-                               (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
-                                                    :archivist.search/uid)))]
+  (testing "search/uid handler should execute UID searches with string conversion"
+    (setup-mocks)
+    (with-redefs [general-search/get-uid-search (fn [uid coll page size filter]
+                                                  (go {:results [{:uid uid :name "Found Entity"}]
+                                                       :total 1}))]
+      (let [response-handler (mock-response-handler)
+            test-data {:searchUID "1001" ; String UID that should be converted
+                       :collectionUID 5001
+                       :page 1
+                       :pageSize 10}
+            handler (response/with-standard-response
+                      (var-get (ns-resolve 'io.relica.archivist.io.ws-handlers
+                                           :archivist.search/uid)))]
 
-                 ;; Call the handler
-                 (handler {:?data test-data
-                           :?reply-fn (:handler response-handler)})
+        ;; Call the handler
+        (handler {:?data test-data
+                  :?reply-fn (:handler response-handler)})
 
-                 ;; Check responses
-                 (count @(:responses response-handler)) => 1
-                 (get-in @(:responses response-handler) [0 :success]) => true
-                 (get-in @(:responses response-handler) [0 :data :results :total]) => 1)))))
+        ;; Check responses
+        (is (= 1 (count @(:responses response-handler))))
+        (is (true? (get-in @(:responses response-handler) [0 :success])))
+        (is (= 1 (get-in @(:responses response-handler) [0 :data :results :total])))))))
