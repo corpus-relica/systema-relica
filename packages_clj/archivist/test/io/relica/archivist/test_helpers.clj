@@ -1,18 +1,16 @@
 (ns io.relica.archivist.test-helpers
   "Test helpers for the archivist module."
-  (:require [midje.sweet :refer :all]
-            [io.relica.common.test.midje-helpers :as midje-helpers]
+  (:require [clojure.test :refer [is]]
+            [io.relica.common.test-helpers :as common-helpers]
             [clojure.core.async :refer [go <! >! chan timeout]]))
 
 ;; Re-export common helpers
-(def wait-for midje-helpers/wait-for)
-(def async-fact midje-helpers/async-fact)
-(def mock-ws-message midje-helpers/mock-ws-message)
-(def capture-reply midje-helpers/capture-reply)
-(def ws-handler-test midje-helpers/ws-handler-test)
-(def with-test-db midje-helpers/with-test-db)
-(def mock-request midje-helpers/mock-request)
-(def mock-response midje-helpers/mock-response)
+(def wait-for common-helpers/wait-for)
+(def async-test common-helpers/async-test)
+(def mock-ws-message common-helpers/mock-ws-message)
+(def capture-reply common-helpers/capture-reply)
+(def mock-request common-helpers/mock-request)
+(def mock-response common-helpers/mock-response)
 
 ;; Archivist-specific test helpers
 
@@ -48,9 +46,6 @@
    :name name})
 
 (defn with-mock-db
-  "Macro to run tests with a mock database.
-   Takes a body of code to run with a mock database connection."
-  [& body]
-  `(let [mock-conn# (mock-neo4j-connection)]
-     (with-test-db mock-conn#
-       ~@body)))
+  "Creates a mock database connection for testing."
+  []
+  (mock-neo4j-connection))

@@ -1,5 +1,5 @@
 (ns io.relica.archivist.core.submission-test
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [io.relica.archivist.core.submission :as submission]
             [io.relica.archivist.core.gellish-base :as gellish-base]
             [io.relica.archivist.core.fact :as fact]
@@ -91,100 +91,100 @@
          :updated-entities #{}
          :appended-facts []))
 
-(facts "about update-definition"
-       (fact "Updating a fact definition"
-             (setup-mocks)
-             (let [test-data {:fact_uid 12345
-                              :partial_definition "A partial definition"
-                              :full_definition "A complete definition of the concept"}
-                   result (submission/update-definition test-data)]
+(deftest update-definition-test
+  (testing "Updating a fact definition"
+    (setup-mocks)
+    (let [test-data {:fact_uid 12345
+                     :partial_definition "A partial definition"
+                     :full_definition "A complete definition of the concept"}
+          result (submission/update-definition test-data)]
 
-               ;; Check result
-               (:success result) => true
-               (:result result) => map?
-               (get-in result [:result :fact-uid]) => 12345
+      ;; Check result
+      (is (:success result))
+      (is (map? (:result result)))
+      (is (= 12345 (get-in result [:result :fact-uid])))
 
-               ;; Check mock calls
-               (get-in @mock-gellish-base [:update-definition :fact-uid]) => 12345
-               (get-in @mock-gellish-base [:update-definition :partial-definition]) => "A partial definition"
-               (get-in @mock-gellish-base [:update-definition :full-definition]) => "A complete definition of the concept")))
+      ;; Check mock calls
+      (is (= 12345 (get-in @mock-gellish-base [:update-definition :fact-uid])))
+      (is (= "A partial definition" (get-in @mock-gellish-base [:update-definition :partial-definition])))
+      (is (= "A complete definition of the concept" (get-in @mock-gellish-base [:update-definition :full-definition]))))))
 
-(facts "about update-collection"
-       (fact "Updating a fact collection"
-             (setup-mocks)
-             (let [test-data {:fact_uid 12345
-                              :collection_uid 5001
-                              :collection_name "My Collection"}
-                   result (submission/update-collection test-data)]
+(deftest update-collection-test
+  (testing "Updating a fact collection"
+    (setup-mocks)
+    (let [test-data {:fact_uid 12345
+                     :collection_uid 5001
+                     :collection_name "My Collection"}
+          result (submission/update-collection test-data)]
 
-               ;; Check result
-               (:success result) => true
-               (:result result) => map?
-               (get-in result [:result :fact-uid]) => 12345
+      ;; Check result
+      (is (:success result))
+      (is (map? (:result result)))
+      (is (= 12345 (get-in result [:result :fact-uid])))
 
-               ;; Check mock calls
-               (get-in @mock-gellish-base [:update-collection :fact-uid]) => 12345
-               (get-in @mock-gellish-base [:update-collection :collection-uid]) => 5001
-               (get-in @mock-gellish-base [:update-collection :collection-name]) => "My Collection")))
+      ;; Check mock calls
+      (is (= 12345 (get-in @mock-gellish-base [:update-collection :fact-uid])))
+      (is (= 5001 (get-in @mock-gellish-base [:update-collection :collection-uid])))
+      (is (= "My Collection" (get-in @mock-gellish-base [:update-collection :collection-name]))))))
 
-(facts "about update-name"
-       (fact "Updating an entity name on a fact"
-             (setup-mocks)
-             (let [test-data {:fact_uid 12345
-                              :name "New Entity Name"}
-                   result (submission/update-name test-data)]
+(deftest update-name-test
+  (testing "Updating an entity name on a fact"
+    (setup-mocks)
+    (let [test-data {:fact_uid 12345
+                     :name "New Entity Name"}
+          result (submission/update-name test-data)]
 
-               ;; Check result
-               (:success result) => true
-               (:result result) => map?
-               (get-in result [:result :fact-uid]) => 12345
+      ;; Check result
+      (is (:success result))
+      (is (map? (:result result)))
+      (is (= 12345 (get-in result [:result :fact-uid])))
 
-               ;; Check mock calls
-               (get-in @mock-gellish-base [:update-name :fact-uid]) => 12345
-               (get-in @mock-gellish-base [:update-name :name]) => "New Entity Name")))
+      ;; Check mock calls
+      (is (= 12345 (get-in @mock-gellish-base [:update-name :fact-uid])))
+      (is (= "New Entity Name" (get-in @mock-gellish-base [:update-name :name]))))))
 
-(facts "about blanket-rename"
-       (fact "Updating entity name at every instance"
-             (setup-mocks)
-             (let [test-data {:entity_uid 12345
-                              :name "New Entity Name"}
-                   result (submission/blanket-rename test-data)]
+(deftest blanket-rename-test
+  (testing "Updating entity name at every instance"
+    (setup-mocks)
+    (let [test-data {:entity_uid 12345
+                     :name "New Entity Name"}
+          result (submission/blanket-rename test-data)]
 
-               ;; Check result
-               (:success result) => true
-               (:result result) => map?
-               (get-in result [:result :entity-uid]) => 12345
+      ;; Check result
+      (is (:success result))
+      (is (map? (:result result)))
+      (is (= 12345 (get-in result [:result :entity-uid])))
 
-               ;; Check mock calls
-               (get-in @mock-gellish-base [:blanket-rename :entity-uid]) => 12345
-               (get-in @mock-gellish-base [:blanket-rename :name]) => "New Entity Name")))
+      ;; Check mock calls
+      (is (= 12345 (get-in @mock-gellish-base [:blanket-rename :entity-uid])))
+      (is (= "New Entity Name" (get-in @mock-gellish-base [:blanket-rename :name]))))))
 
-(facts "about add-synonym"
-       (fact "Adding a synonym to an entity"
-             (setup-mocks)
-             (let [test-data {:uid 12345
-                              :synonym "Alternative Name"}
-                   result (submission/add-synonym test-data)]
+(deftest add-synonym-test
+  (testing "Adding a synonym to an entity"
+    (setup-mocks)
+    (let [test-data {:uid 12345
+                     :synonym "Alternative Name"}
+          result (submission/add-synonym test-data)]
 
-               ;; Check result
-               (:success result) => true
-               (:uid result) => 12345
-               (:synonym result) => "Alternative Name")))
+      ;; Check result
+      (is (:success result))
+      (is (= 12345 (:uid result)))
+      (is (= "Alternative Name" (:synonym result))))))
 
-(facts "about submit-date"
-       (fact "Creating a date entity"
-             (setup-mocks)
-             (let [test-data {:date_uid 12345
-                              :collection_uid 5001
-                              :collection_name "My Collection"}
-                   result (submission/submit-date test-data)]
+(deftest submit-date-test
+  (testing "Creating a date entity"
+    (setup-mocks)
+    (let [test-data {:date_uid 12345
+                     :collection_uid 5001
+                     :collection_name "My Collection"}
+          result (submission/submit-date test-data)]
 
-               ;; Check result
-               (:success result) => true
-               (:fact result) => map?
+      ;; Check result
+      (is (:success result))
+      (is (map? (:fact result)))
 
-               ;; Check mock calls
-               (get-in @mock-fact [:create-fact :lh_object_uid]) => 12345
-               (get-in @mock-fact [:create-fact :rh_object_uid]) => 550571
-               (get-in @mock-fact [:create-fact :rel_type_uid]) => 1225
-               (get-in @mock-fact [:create-fact :collection_uid]) => 5001)))
+      ;; Check mock calls
+      (is (= 12345 (get-in @mock-fact [:create-fact :lh_object_uid])))
+      (is (= 550571 (get-in @mock-fact [:create-fact :rh_object_uid])))
+      (is (= 1225 (get-in @mock-fact [:create-fact :rel_type_uid])))
+      (is (= 5001 (get-in @mock-fact [:create-fact :collection_uid]))))))
