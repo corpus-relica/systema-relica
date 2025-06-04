@@ -6,13 +6,15 @@
 
 ## Migration Tasks
 
-### Phase 1: Infrastructure Setup (High Priority)
-- [ ] Update archivist deps.edn: Remove Midje, add Kaocha + clojure.test dependencies
-- [ ] Create tests.edn configuration file for archivist based on common package
-- [ ] Fix test runner reference in deps.edn (replace broken io.relica.common.test.runner)
+### Phase 1: Infrastructure Setup (High Priority) ✅ COMPLETED
+- [x] Update archivist deps.edn: Remove Midje, add Kaocha + clojure.test dependencies
+- [x] Create tests.edn configuration file for archivist based on common package
+- [x] Fix test runner reference in deps.edn (replace broken io.relica.common.test.runner)
+- [x] Update test_helpers.clj to use clojure.test instead of Midje
+- [x] Remove old Midje test runner (test_runner.clj)
 
-### Phase 2: Test Conversion (Medium Priority)
-- [ ] Convert core tests: fact_test.clj and submission_test.clj
+### Phase 2: Test Conversion (Medium Priority) 🚧 IN PROGRESS
+- [x] Convert core tests: fact_test.clj and submission_test.clj
 - [ ] Convert WebSocket tests: ws_connection_test.clj, ws_handlers_test.clj, ws_interface_test.clj
 - [ ] Convert integration tests: websocket_test.clj, gel_query_integration_test.clj
 - [ ] Convert parser tests: gel_parser_test.clj
