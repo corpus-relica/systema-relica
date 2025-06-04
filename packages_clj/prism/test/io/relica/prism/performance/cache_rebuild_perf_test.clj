@@ -48,6 +48,31 @@
          (common-cache/clear-entity-lineage-cache-complete @common-cache/cache-service-comp)
          (common-cache/clear-descendants @common-cache/cache-service-comp)))
 
+;; Access pattern generators
+(defn generate-sequential-access-pattern [size]
+  "Sequential access pattern - common in batch processing"
+  (vec (range size)))
+
+(defn generate-random-access-pattern [size num-accesses]
+  "Random access pattern - simulates real-world usage"
+  (vec (repeatedly num-accesses #(rand-int size))))
+
+(defn generate-hot-spot-access-pattern [size num-accesses hot-spot-ratio]
+  "Hot spot pattern - 80/20 rule where 20% of data gets 80% of accesses"
+  (let [hot-spot-size (int (* size hot-spot-ratio))
+        hot-accesses (int (* num-accesses 0.8))
+        cold-accesses (- num-accesses hot-accesses)]
+    (vec (concat
+          (repeatedly hot-accesses #(rand-int hot-spot-size))
+          (repeatedly cold-accesses #(+ hot-spot-size (rand-int (- size hot-spot-size))))))))
+
+(defn generate-burst-access-pattern [size num-bursts burst-size]
+  "Burst pattern - simulates periodic high-load scenarios"
+  (vec (mapcat (fn [_]
+                 (let [start (rand-int (- size burst-size))]
+                   (range start (+ start burst-size))))
+               (range num-bursts))))
+
 (facts "About cache rebuild performance"
        (fact "handles small dataset (~1000 records) efficiently"
              (let [test-facts (generate-test-facts 1000)
@@ -110,4 +135,126 @@
                  ;; Verify performance metrics
                  result => true
                  time => (roughly 60000 15000)  ; Should complete within 60 seconds (±15s)
-                 memory-used => (roughly 1000 200))))) ; Should use ~1GB (±200MB)
+                 memory-used => (roughly 1000 200)))) ; Should use ~1GB (±200MB)
+       
+       (fact "performs well with sequential access pattern"
+             (let [dataset-size 5000
+                   access-pattern (generate-sequential-access-pattern dataset-size)]
+               
+               ;; Populate cache
+               (doseq [i (range dataset-size)]
+                 (common-cache/add-to-entity-facts-cache 
+                  @common-cache/cache-service-comp 
+                  (str "seq-entity-" i) 
+                  (str "seq-fact-" i)))
+               
+               ;; Measure sequential access performance
+               (let [{:keys [time]} (measure-time 
+                                    (fn []
+                                      (doseq [idx access-pattern]
+                                        (common-cache/all-facts-involving-entity 
+                                         @common-cache/cache-service-comp 
+                                         (str "seq-entity-" idx)))))]
+                 
+                 ;; Sequential access should be very fast
+                 time => (roughly 500 200)))) ; ~500ms ± 200ms
+       
+       (fact "handles random access pattern efficiently"
+             (let [dataset-size 5000
+                   num-accesses 10000
+                   access-pattern (generate-random-access-pattern dataset-size num-accesses)]
+               
+               ;; Populate cache
+               (doseq [i (range dataset-size)]
+                 (common-cache/add-to-entity-facts-cache 
+                  @common-cache/cache-service-comp 
+                  (str "rand-entity-" i) 
+                  (str "rand-fact-" i)))
+               
+               ;; Measure random access performance
+               (let [{:keys [time]} (measure-time 
+                                    (fn []
+                                      (doseq [idx access-pattern]
+                                        (common-cache/all-facts-involving-entity 
+                                         @common-cache/cache-service-comp 
+                                         (str "rand-entity-" idx)))))]
+                 
+                 ;; Random access should still be performant
+                 time => (roughly 1000 300)))) ; ~1000ms ± 300ms
+       
+       (fact "optimizes for hot-spot access pattern"
+             (let [dataset-size 5000
+                   num-accesses 10000
+                   hot-spot-ratio 0.2
+                   access-pattern (generate-hot-spot-access-pattern dataset-size num-accesses hot-spot-ratio)]
+               
+               ;; Populate cache
+               (doseq [i (range dataset-size)]
+                 (common-cache/add-to-entity-facts-cache 
+                  @common-cache/cache-service-comp 
+                  (str "hot-entity-" i) 
+                  (str "hot-fact-" i)))
+               
+               ;; Measure hot-spot access performance
+               (let [{:keys [time]} (measure-time 
+                                    (fn []
+                                      (doseq [idx access-pattern]
+                                        (common-cache/all-facts-involving-entity 
+                                         @common-cache/cache-service-comp 
+                                         (str "hot-entity-" idx)))))]
+                 
+                 ;; Hot-spot pattern should benefit from cache locality
+                 time => (roughly 800 250)))) ; ~800ms ± 250ms
+       
+       (fact "handles burst access pattern gracefully"
+             (let [dataset-size 5000
+                   num-bursts 10
+                   burst-size 100
+                   access-pattern (generate-burst-access-pattern dataset-size num-bursts burst-size)]
+               
+               ;; Populate cache
+               (doseq [i (range dataset-size)]
+                 (common-cache/add-to-entity-facts-cache 
+                  @common-cache/cache-service-comp 
+                  (str "burst-entity-" i) 
+                  (str "burst-fact-" i)))
+               
+               ;; Measure burst access performance
+               (let [burst-times (atom [])]
+                 (doseq [burst (partition burst-size access-pattern)]
+                   (let [{:keys [time]} (measure-time 
+                                        (fn []
+                                          (doseq [idx burst]
+                                            (common-cache/all-facts-involving-entity 
+                                             @common-cache/cache-service-comp 
+                                             (str "burst-entity-" idx)))))]
+                     (swap! burst-times conj time)))
+                 
+                 ;; All bursts should complete quickly
+                 (doseq [burst-time @burst-times]
+                   burst-time => (roughly 50 25))))) ; ~50ms ± 25ms per burst
+       
+       (fact "scales linearly with data size"
+             (let [sizes [1000 2000 5000 10000]
+                   time-ratios (atom [])]
+               
+               (doseq [size sizes]
+                 ;; Populate cache
+                 (let [start-populate (System/currentTimeMillis)]
+                   (doseq [i (range size)]
+                     (common-cache/add-to-entity-facts-cache 
+                      @common-cache/cache-service-comp 
+                      (str "scale-entity-" size "-" i) 
+                      (str "scale-fact-" size "-" i)))
+                   
+                   (let [populate-time (- (System/currentTimeMillis) start-populate)
+                         time-per-item (/ populate-time (double size))]
+                     (swap! time-ratios conj {:size size :time-per-item time-per-item}))))
+               
+               ;; Verify approximately linear scaling
+               (let [ratios (map :time-per-item @time-ratios)
+                     avg-ratio (/ (reduce + ratios) (count ratios))
+                     max-deviation (apply max (map #(Math/abs (- % avg-ratio)) ratios))]
+                 
+                 ;; Time per item should be consistent (linear scaling)
+                 max-deviation => (roughly 0.5 0.3))))
