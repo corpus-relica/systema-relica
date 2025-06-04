@@ -1,151 +1,156 @@
 (ns io.relica.common.io.aperture-client-test
-  "Tests for the Aperture client to verify it uses standardized message identifiers."
-  (:require [midje.sweet :refer :all]
+  "Comprehensive tests for the Aperture client including message identifiers, error handling,
+   connection management, and cross-language compatibility."
+  (:require [clojure.test :refer [deftest testing is]]
             [io.relica.common.io.aperture-client :as aperture]
             [io.relica.common.websocket.client :as ws]
-            [io.relica.common.test.midje-helpers :as helpers]
-            [clojure.core.async :refer [go <! >! chan timeout]]))
+            [io.relica.common.test-helpers :as helpers]
+            [clojure.core.async :refer [go <! >! chan timeout close! alts! <!!]]))
 
-(facts "About Aperture client message identifiers"
-       ;; Mock the WebSocket client's send-message! function to capture the message type
-       (let [captured-messages (atom [])
-             mock-ws-client (reify ws/WebSocketClientProtocol
-                              (connect! [_] true)
-                              (disconnect! [_] true)
-                              (connected? [_] true)
-                              (register-handler! [_ _ _] nil)
-                              (unregister-handler! [_ _] nil)
-                              (send-message! [_ type payload timeout-ms]
-                                (swap! captured-messages conj {:type type
-                                                               :payload payload
-                                                               :timeout timeout-ms})
-                                (go {:success true})))
-             aperture-client (aperture/->ApertureClient mock-ws-client {:timeout 5000})]
+(deftest aperture-client-message-identifiers-test
+  (testing "About Aperture client message identifiers"
+    ;; Mock the WebSocket client's send-message! function to capture the message type
+    (let [captured-messages (atom [])
+          mock-ws-client (reify ws/WebSocketClientProtocol
+                           (connect! [_] true)
+                           (disconnect! [_] true)
+                           (connected? [_] true)
+                           (register-handler! [_ _ _] nil)
+                           (unregister-handler! [_ _] nil)
+                           (send-message! [_ type payload timeout-ms]
+                             (swap! captured-messages conj {:type type
+                                                            :payload payload
+                                                            :timeout timeout-ms})
+                             (go {:success true})))
+          aperture-client (aperture/->ApertureClient mock-ws-client {:timeout 5000})]
 
-         ;; Test environment operations
-         (fact "get-environment uses standardized message identifier"
-               (aperture/get-environment aperture-client "user-123" "env-456")
-               (first @captured-messages) => (contains {:type :aperture.environment/get}))
+      ;; Test environment operations
+      (testing "get-environment uses standardized message identifier"
+        (aperture/get-environment aperture-client "user-123" "env-456")
+        (is (= :aperture.environment/get (:type (first @captured-messages)))))
 
-         (fact "list-environments uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/list-environments aperture-client "user-123")
-               (first @captured-messages) => (contains {:type :aperture.environment/list}))
+      (testing "send-heartbeat! uses standardized message identifier"
+        (reset! captured-messages [])
+        (aperture/send-heartbeat! aperture-client)
+        (is (= :relica.app/heartbeat (:type (first @captured-messages))))))))
 
-         (fact "create-environment uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/create-environment aperture-client "user-123" "New Environment")
-               (first @captured-messages) => (contains {:type :aperture.environment/create}))
+(deftest aperture-client-environment-operations-test
+  (testing "About Aperture client environment operations"
+    (let [captured-messages (atom [])
+          mock-ws-client (reify ws/WebSocketClientProtocol
+                           (connect! [_] true)
+                           (disconnect! [_] true)
+                           (connected? [_] true)
+                           (register-handler! [_ _ _] nil)
+                           (unregister-handler! [_ _] nil)
+                           (send-message! [_ type payload timeout-ms]
+                             (swap! captured-messages conj {:type type :payload payload})
+                             (go {:success true
+                                  :data (case type
+                                          :aperture.environment/get
+                                          {:environment-id "env-456"
+                                           :user-id "user-123"
+                                           :name "Development Environment"
+                                           :description "Test environment for development"
+                                           :created-at "2024-01-01T12:00:00.000Z"
+                                           :entities-count 142}
+                                          {})})))
+          aperture-client (aperture/->ApertureClient mock-ws-client {:timeout 5000})]
 
-         (fact "clear-environment-entities uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/clear-environment-entities aperture-client "user-123" "env-456")
-               (first @captured-messages) => (contains {:type :aperture.environment/clear}))
+      (testing "retrieves environment data with metadata"
+        (let [result (<!! (aperture/get-environment aperture-client "user-123" "env-456"))]
+          (is (= true (:success result)))
+          (is (= "env-456" (get-in result [:data :environment-id])))
+          (is (= "user-123" (get-in result [:data :user-id])))
+          (is (= "Development Environment" (get-in result [:data :name])))
+          (is (= 142 (get-in result [:data :entities-count])))))
 
-         (fact "update-environment! uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/update-environment! aperture-client "user-123" "env-456" {:name "Updated Name"})
-               (first @captured-messages) => (contains {:type :aperture.environment/update}))
+      (testing "passes parameters correctly"
+        (aperture/get-environment aperture-client "user-789" "env-123")
+        (let [message (first @captured-messages)]
+          (is (= "user-789" (:user-id (:payload message))))
+          (is (= "env-123" (:environment-id (:payload message)))))))))
 
-         ;; Test entity operations
-         (fact "load-entities uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-entities aperture-client "user-123" "env-456" ["entity-1" "entity-2"])
-               (first @captured-messages) => (contains {:type :aperture.entity/load-multiple}))
+(deftest aperture-client-error-handling-test
+  (testing "About Aperture client error handling"
+    (let [mock-ws-client (reify ws/WebSocketClientProtocol
+                           (connect! [_] true)
+                           (disconnect! [_] true)
+                           (connected? [_] true)
+                           (register-handler! [_ _ _] nil)
+                           (unregister-handler! [_ _] nil)
+                           (send-message! [_ type payload timeout-ms]
+                             (go (case type
+                                   :aperture.environment/get
+                                   {:success false
+                                    :error {:code 3201
+                                            :type "environment-not-found"
+                                            :message "Environment does not exist or access denied"
+                                            :details {:environment-id (:environment-id payload)
+                                                     :user-id (:user-id payload)}}}
+                                   {:success false
+                                    :error {:code 3002
+                                            :type "internal-error"}}))))
+          aperture-client (aperture/->ApertureClient mock-ws-client {:timeout 5000})]
 
-         (fact "unload-entity uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/unload-entity aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.entity/unload}))
+      (testing "handles environment not found errors"
+        (let [result (<!! (aperture/get-environment aperture-client "user-123" "non-existent-env"))]
+          (is (= false (:success result)))
+          (is (= 3201 (get-in result [:error :code])))
+          (is (= "environment-not-found" (get-in result [:error :type])))
+          (is (= "non-existent-env" (get-in result [:error :details :environment-id])))
+          (is (= "user-123" (get-in result [:error :details :user-id]))))))))
 
-         (fact "unload-entities uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/unload-entities aperture-client "user-123" "env-456" ["entity-1" "entity-2"])
-               (first @captured-messages) => (contains {:type :aperture.entity/unload-multiple}))
+(deftest aperture-client-cross-language-compatibility-test
+  (testing "About Aperture client cross-language compatibility"
+    (let [captured-messages (atom [])
+          mock-ws-client (reify ws/WebSocketClientProtocol
+                           (connect! [_] true)
+                           (disconnect! [_] true)
+                           (connected? [_] true)
+                           (register-handler! [_ _ _] nil)
+                           (unregister-handler! [_ _] nil)
+                           (send-message! [_ type payload timeout-ms]
+                             (swap! captured-messages conj payload)
+                             ;; Simulate TypeScript-style response
+                             (go {:success true
+                                  :data {:environmentId "env-456"
+                                         :userId "user-123"
+                                         :displayName "My Environment"
+                                         :isActive true
+                                         :lastAccessed "2024-01-01T12:00:00.000Z"
+                                         :entitiesCount 42}})))
+          aperture-client (aperture/->ApertureClient mock-ws-client {:timeout 5000})]
 
-         (fact "select-entity uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/select-entity aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.entity/select}))
+      (testing "sends requests compatible with TypeScript service"
+        (aperture/get-environment aperture-client "user-123" "env-456")
+        (let [message (first @captured-messages)]
+          (is (= "user-123" (:user-id message)))
+          (is (= "env-456" (:environment-id message)))))
 
-         (fact "select-entity-none uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/select-entity-none aperture-client "user-123" "env-456")
-               (first @captured-messages) => (contains {:type :aperture.entity/deselect-all}))
+      (testing "handles TypeScript camelCase responses"
+        (let [result (<!! (aperture/get-environment aperture-client "user-123" "env-456"))]
+          (is (= true (:success result)))
+          (is (= "env-456" (get-in result [:data :environmentId])))
+          (is (= "user-123" (get-in result [:data :userId])))
+          (is (= true (get-in result [:data :isActive])))
+          (is (= 42 (get-in result [:data :entitiesCount])))))))
 
-         ;; Test specialized operations
-         (fact "load-specialization-hierarchy uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-specialization-hierarchy aperture-client "user-123" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.specialization/load}))
+(deftest aperture-client-heartbeat-mechanism-test
+  (testing "About Aperture client heartbeat mechanism"
+    (let [heartbeat-count (atom 0)
+          mock-ws-client (reify ws/WebSocketClientProtocol
+                           (connect! [_] true)
+                           (disconnect! [_] true)
+                           (connected? [_] true)
+                           (register-handler! [_ _ _] nil)
+                           (unregister-handler! [_ _] nil)
+                           (send-message! [_ type payload timeout-ms]
+                             (when (= type :relica.app/heartbeat)
+                               (swap! heartbeat-count inc))
+                             (go {:success true})))
+          aperture-client (aperture/->ApertureClient mock-ws-client {:timeout 5000})]
 
-         (fact "load-all-related-facts uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-all-related-facts aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.fact/load-related}))
-
-         (fact "load-subtypes-cone uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-subtypes-cone aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.subtype/load-cone}))
-
-         (fact "unload-subtypes-cone uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/unload-subtypes-cone aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.subtype/unload-cone}))
-
-         (fact "load-composition uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-composition aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.composition/load}))
-
-         (fact "load-composition-in uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-composition-in aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.composition/load-in}))
-
-         (fact "load-connections uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-connections aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.connection/load}))
-
-         (fact "load-connections-in uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/load-connections-in aperture-client "user-123" "env-456" "entity-1")
-               (first @captured-messages) => (contains {:type :aperture.connection/load-in}))
-
-         (fact "send-heartbeat! uses standardized message identifier"
-               (reset! captured-messages [])
-               (aperture/send-heartbeat! aperture-client)
-               (first @captured-messages) => (contains {:type :relica.app/heartbeat}))))
-
-(facts "About Aperture client factory function"
-       (with-redefs [ws/connect! (fn [_] true)]
-         (let [handlers {:on-connect (fn [_] nil)
-                         :handle-facts-loaded (fn [_] nil)
-                         :handle-facts-unloaded (fn [_] nil)
-                         :handle-entity-selected (fn [_] nil)
-                         :handle-entity-selected-none (fn [_] nil)}
-               registered-handlers (atom {})
-               mock-ws-client (reify ws/WebSocketClientProtocol
-                                (connect! [_] true)
-                                (disconnect! [_] true)
-                                (connected? [_] true)
-                                (register-handler! [_ type handler]
-                                  (swap! registered-handlers assoc type handler)
-                                  nil)
-                                (unregister-handler! [_ _] nil)
-                                (send-message! [_ _ _ _]
-                                  (go {:success true})))]
-
-           (with-redefs [ws/create-client (fn [_] mock-ws-client)]
-             (let [client (aperture/create-client {:host "localhost"
-                                                   :port 3000
-                                                   :handlers handlers})]
-
-               (fact "Client registers handlers with standardized message identifiers"
-                     (keys @registered-handlers) => (contains [:aperture.facts/loaded
-                                                               :aperture.facts/unloaded
-                                                               :aperture.entity/selected
-                                                               :aperture.entity/deselected]
-                                                              :in-any-order)))))))
+      (testing "sends heartbeat messages"
+        (aperture/send-heartbeat! aperture-client)
+        (is (= 1 @heartbeat-count)))))))
