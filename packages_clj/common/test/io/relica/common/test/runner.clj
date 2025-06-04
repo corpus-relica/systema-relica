@@ -1,5 +1,5 @@
 (ns io.relica.common.test.runner
-  (:require [midje.runner :as runner]))
+  (:require [midje.repl :as midje]))
 
 (defn -main [& args]
-  (runner/run-tests))
+  (midje/load-facts))
