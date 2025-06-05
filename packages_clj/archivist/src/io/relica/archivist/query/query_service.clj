@@ -7,7 +7,7 @@
 (ns io.relica.archivist.query.query-service
   (:require
    [io.relica.archivist.services.graph-service :as graph :refer [graph-service]]
-   [io.relica.archivist.services.gellish-base-service :as gellish-base :refer [gb-comp]]
+   [io.relica.archivist.core.gellish-base :as gellish-base]
    [io.relica.archivist.query.gellish-to-cypher-converter :as gtc]
    [io.relica.archivist.query.gel-parser :as parser]
    [clojure.tools.logging :as log]
@@ -137,8 +137,8 @@
                                                facts)))
                                   resolved-uids)
           _ (log/error "***************************** Unanchored UIDs:" unanchored-uids)
-          spec-facts (gellish-base/get-specialization-facts @gb-comp unanchored-uids)
-          class-facts (gellish-base/get-classification-facts @gb-comp unanchored-uids)
+          spec-facts (gellish-base/get-specialization-facts unanchored-uids)
+          class-facts (gellish-base/get-classification-facts unanchored-uids)
           total-count (get-total-count table)]
 
       {:facts facts

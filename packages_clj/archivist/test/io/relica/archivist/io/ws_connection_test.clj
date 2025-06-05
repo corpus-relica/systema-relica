@@ -1,10 +1,9 @@
 (ns io.relica.archivist.io.ws-connection-test
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer [deftest testing is use-fixtures]]
             [clojure.core.async :as async :refer [<! >! go chan <!! >!! timeout]]
             [io.relica.archivist.test-helpers :as helpers]
             [io.relica.archivist.utils.response :as response]
             [io.relica.common.websocket.client :as ws-client]
-            [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]))
 
 ;; ==========================================================================
@@ -58,59 +57,59 @@
       ((:disconnect! conn))))
   (reset! test-connections []))
 
+(use-fixtures :each (fn [f] (f) (cleanup-test-connections!)))
+
 ;; Connection Lifecycle Tests
-(facts "about WebSocket connection lifecycle"
-  (background (after :facts (cleanup-test-connections!)))
-
-  (fact "connection can be established successfully"
+(deftest websocket-connection-lifecycle-test
+  (testing "connection can be established successfully"
     (let [conn (create-mock-websocket-connection "test-conn-1")]
-      ((:connected? conn)) => false
+      (is (false? ((:connected? conn))))
       ((:connect! conn))
-      ((:connected? conn)) => true
-      (get-in ((:get-stats conn)) [:connect-time]) => (roughly (System/currentTimeMillis) 1000)))
+      (is (true? ((:connected? conn))))
+      (is (<= (Math/abs (- (get-in ((:get-stats conn)) [:connect-time]) (System/currentTimeMillis))) 1000))))
 
-  (fact "connection can be disconnected gracefully"
+  (testing "connection can be disconnected gracefully"
     (let [conn (create-mock-websocket-connection "test-conn-2")]
       ((:connect! conn))
-      ((:connected? conn)) => true
+      (is (true? ((:connected? conn))))
       ((:disconnect! conn))
-      ((:connected? conn)) => false
-      (get-in ((:get-stats conn)) [:disconnect-time]) => (roughly (System/currentTimeMillis) 1000)))
+      (is (false? ((:connected? conn))))
+      (is (<= (Math/abs (- (get-in ((:get-stats conn)) [:disconnect-time]) (System/currentTimeMillis))) 1000))))
 
-  (fact "connection handles auto-disconnect scenarios"
+  (testing "connection handles auto-disconnect scenarios"
     (let [conn (create-mock-websocket-connection "test-conn-3" :auto-disconnect-after 100)]
       ((:connect! conn))
-      ((:connected? conn)) => true
+      (is (true? ((:connected? conn))))
       ;; Wait for auto-disconnect
       (<!! (timeout 150))
-      ((:connected? conn)) => false))
+      (is (false? ((:connected? conn))))))
 
-  (fact "connection tracks message sending when connected"
+  (testing "connection tracks message sending when connected"
     (let [conn (create-mock-websocket-connection "test-conn-4")]
       ((:connect! conn))
       (let [response (<!! ((:send-message! conn) :test/ping {:ping "test"}))]
-        (:success response) => true
-        (count (get-in ((:get-stats conn)) [:messages-sent])) => 1
-        (get-in ((:get-stats conn)) [:messages-sent 0 :type]) => :test/ping)))
+        (is (:success response))
+        (is (= 1 (count (get-in ((:get-stats conn)) [:messages-sent]))))
+        (is (= :test/ping (get-in ((:get-stats conn)) [:messages-sent 0 :type]))))))
 
-  (fact "connection handles message sending when disconnected"
+  (testing "connection handles message sending when disconnected"
     (let [conn (create-mock-websocket-connection "test-conn-5")]
       ;; Don't connect
       (let [response (<!! ((:send-message! conn) :test/ping {:ping "test"}))]
-        (:success response) => false
-        (get-in response [:error :type]) => "connection-error"
-        (count (get-in ((:get-stats conn)) [:errors])) => 1)))
+        (is (false? (:success response)))
+        (is (= "connection-error" (get-in response [:error :type])))
+        (is (= 1 (count (get-in ((:get-stats conn)) [:errors])))))))
 
-  (fact "connection heartbeat works when connected"
+  (testing "connection heartbeat works when connected"
     (let [conn (create-mock-websocket-connection "test-conn-6")]
       ((:connect! conn))
-      ((:heartbeat! conn)) => true
-      (get-in ((:get-stats conn)) [:last-heartbeat]) => (roughly (System/currentTimeMillis) 1000)))
+      (is (true? ((:heartbeat! conn))))
+      (is (<= (Math/abs (- (get-in ((:get-stats conn)) [:last-heartbeat]) (System/currentTimeMillis))) 1000))))
 
-  (fact "connection heartbeat fails when disconnected"
+  (testing "connection heartbeat fails when disconnected"
     (let [conn (create-mock-websocket-connection "test-conn-7")]
       ;; Don't connect
-      ((:heartbeat! conn)) => falsy)))
+      (is (nil? ((:heartbeat! conn)))))))
 
 ;; ==========================================================================
 ;; WebSocket Message Queue and Delivery Tests
@@ -141,39 +140,39 @@
                                                   (update :pending concat failed)
                                                   (assoc :failed []))))))}))
 
-(facts "about WebSocket message queuing and delivery"
-  (fact "messages can be enqueued successfully"
+(deftest websocket-message-queuing-test
+  (testing "messages can be enqueued successfully"
     (let [queue (create-message-queue-mock)]
       ((:enqueue! queue) {:type :test/message :data {:test "data"}})
-      (count (get-in ((:get-stats queue)) [:pending])) => 1
-      (get-in ((:get-stats queue)) [:pending 0 :type]) => :test/message))
+      (is (= 1 (count (get-in ((:get-stats queue)) [:pending]))))
+      (is (= :test/message (get-in ((:get-stats queue)) [:pending 0 :type])))))
 
-  (fact "messages are delivered with high success rate"
+  (testing "messages are delivered with high success rate"
     (let [queue (create-message-queue-mock)]
       ((:enqueue! queue) {:type :test/message1 :data {:test "data1"}})
       ((:enqueue! queue) {:type :test/message2 :data {:test "data2"}})
       ((:enqueue! queue) {:type :test/message3 :data {:test "data3"}})
       ((:process-pending! queue) 1.0) ; 100% success rate
-      (count (get-in ((:get-stats queue)) [:delivered])) => 3
-      (count (get-in ((:get-stats queue)) [:pending])) => 0
-      (count (get-in ((:get-stats queue)) [:failed])) => 0))
+      (is (= 3 (count (get-in ((:get-stats queue)) [:delivered]))))
+      (is (= 0 (count (get-in ((:get-stats queue)) [:pending]))))
+      (is (= 0 (count (get-in ((:get-stats queue)) [:failed]))))))
 
-  (fact "failed messages can be retried"
+  (testing "failed messages can be retried"
     (let [queue (create-message-queue-mock)]
       ((:enqueue! queue) {:type :test/message1 :data {:test "data1"}})
       ((:enqueue! queue) {:type :test/message2 :data {:test "data2"}})
       ((:process-pending! queue) 0.0) ; 0% success rate - all fail
-      (count (get-in ((:get-stats queue)) [:failed])) => 2
-      (count (get-in ((:get-stats queue)) [:pending])) => 0
+      (is (= 2 (count (get-in ((:get-stats queue)) [:failed]))))
+      (is (= 0 (count (get-in ((:get-stats queue)) [:pending]))))
       
       ;; Retry failed messages
       ((:retry-failed! queue))
-      (count (get-in ((:get-stats queue)) [:pending])) => 2
-      (count (get-in ((:get-stats queue)) [:failed])) => 0
+      (is (= 2 (count (get-in ((:get-stats queue)) [:pending]))))
+      (is (= 0 (count (get-in ((:get-stats queue)) [:failed]))))
       
       ;; Process with 100% success rate
       ((:process-pending! queue) 1.0)
-      (count (get-in ((:get-stats queue)) [:delivered])) => 2)))
+      (is (= 2 (count (get-in ((:get-stats queue)) [:delivered])))))))
 
 ;; ==========================================================================
 ;; WebSocket Performance and Load Tests
@@ -232,27 +231,27 @@
       
       @results)))
 
-(facts "about WebSocket performance characteristics"
-  (fact "system can handle moderate message throughput"
+(deftest websocket-performance-test
+  (testing "system can handle moderate message throughput"
     (let [results (simulate-high-throughput-scenario 100 5)]
-      (:messages-sent results) => 100
-      (:messages-delivered results) => 100
-      (:errors results) => 0
-      (:throughput results) => (checker [actual] (> actual 10)))) ; At least 10 messages per second
+      (is (= 100 (:messages-sent results)))
+      (is (= 100 (:messages-delivered results)))
+      (is (= 0 (:errors results)))
+      (is (> (:throughput results) 10)))) ; At least 10 messages per second
 
-  (fact "system maintains performance under concurrent connections"
+  (testing "system maintains performance under concurrent connections"
     (let [results (simulate-high-throughput-scenario 200 10)]
-      (:messages-sent results) => 200
-      (:messages-delivered results) => 200
-      (:errors results) => 0
-      (:throughput results) => (checker [actual] (> actual 5)))) ; At least 5 messages per second
+      (is (= 200 (:messages-sent results)))
+      (is (= 200 (:messages-delivered results)))
+      (is (= 0 (:errors results)))
+      (is (> (:throughput results) 5)))) ; At least 5 messages per second
 
-  (fact "system provides performance metrics"
+  (testing "system provides performance metrics"
     (let [results (simulate-high-throughput-scenario 50 3)]
-      (contains? results :start-time) => true
-      (contains? results :end-time) => true
-      (contains? results :throughput) => true
-      (< (:start-time results) (:end-time results)) => true)))
+      (is (contains? results :start-time))
+      (is (contains? results :end-time))
+      (is (contains? results :throughput))
+      (is (< (:start-time results) (:end-time results))))))
 
 ;; ==========================================================================
 ;; WebSocket Error Recovery Tests
@@ -279,26 +278,24 @@
                         ((:connect! base-conn)))
             :get-extended-stats (fn [] (merge ((:get-stats base-conn)) @connection-state))})))
 
-(facts "about WebSocket error recovery"
-  (background (after :facts (cleanup-test-connections!)))
-
-  (fact "connection can recover from network failures"
+(deftest websocket-error-recovery-test
+  (testing "connection can recover from network failures"
     (let [conn (create-unreliable-connection "recovery-conn-1" 0.7)] ; 70% failure rate
       ((:connect! conn))
       
       ;; Send multiple messages, expect some failures
       (let [responses (doall (for [i (range 10)]
                                (<!! ((:send-message! conn) :test/recovery {:attempt i}))))]
-        (some #(not (:success %)) responses) => true ; At least one failure expected
+        (is (some #(not (:success %)) responses)) ; At least one failure expected
         
         ;; Check that failures were recorded
-        (get-in ((:get-extended-stats conn)) [:failure-count]) => (checker [actual] (> actual 0)))
+        (is (> (get-in ((:get-extended-stats conn)) [:failure-count]) 0)))
       
       ;; Attempt recovery
       ((:recover! conn))
-      (get-in ((:get-extended-stats conn)) [:recovery-attempts]) => 1))
+      (is (= 1 (get-in ((:get-extended-stats conn)) [:recovery-attempts])))))
 
-  (fact "connection tracks failure patterns for diagnostics"
+  (testing "connection tracks failure patterns for diagnostics"
     (let [conn (create-unreliable-connection "recovery-conn-2" 0.5)] ; 50% failure rate
       ((:connect! conn))
       
@@ -307,8 +304,8 @@
         (<!! ((:send-message! conn) :test/pattern {:attempt i})))
       
       (let [stats ((:get-extended-stats conn))]
-        (:failure-count stats) => (checker [actual] (and (> actual 0) (< actual 20)))
-        (count (:messages-sent stats)) => (checker [actual] (> actual 0))))))
+        (is (and (> (:failure-count stats) 0) (< (:failure-count stats) 20)))
+        (is (> (count (:messages-sent stats)) 0))))))
 
 ;; ==========================================================================
 ;; WebSocket Reconnection Logic Tests  
@@ -338,17 +335,15 @@
                                     ((:disconnect! base-conn)))
             :get-reconnection-stats (fn [] @connection-state)})))
 
-(facts "about WebSocket reconnection logic"
-  (background (after :facts (cleanup-test-connections!)))
-
-  (fact "connection attempts reconnection after disconnect"
+(deftest websocket-reconnection-logic-test
+  (testing "connection attempts reconnection after disconnect"
     (let [conn (create-reconnecting-connection "reconnect-conn-1" 3 50)]
       ((:connect! conn))
-      ((:connected? conn)) => true
+      (is (true? ((:connected? conn))))
       
       ;; Simulate disconnect
       ((:simulate-disconnect! conn))
-      ((:connected? conn)) => false
+      (is (false? ((:connected? conn))))
       
       ;; Start auto-reconnection
       ((:auto-reconnect! conn))
@@ -357,10 +352,10 @@
       (<!! (timeout 200))
       
       (let [stats ((:get-reconnection-stats conn))]
-        (:retry-count stats) => (checker [actual] (> actual 0))
-        (count (:reconnection-attempts stats)) => (checker [actual] (> actual 0)))))
+        (is (> (:retry-count stats) 0))
+        (is (> (count (:reconnection-attempts stats)) 0)))))
 
-  (fact "connection respects maximum retry limits"
+  (testing "connection respects maximum retry limits"
     (let [conn (create-reconnecting-connection "reconnect-conn-2" 2 30)]
       ;; Don't connect initially so reconnection will fail
       ((:auto-reconnect! conn))
@@ -369,5 +364,5 @@
       (<!! (timeout 150))
       
       (let [stats ((:get-reconnection-stats conn))]
-        (:retry-count stats) => 2 ; Should not exceed max-retries
-        (count (:reconnection-attempts stats)) => 2))))
+        (is (= 2 (:retry-count stats))) ; Should not exceed max-retries
+        (is (= 2 (count (:reconnection-attempts stats))))))))
