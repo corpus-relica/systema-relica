@@ -253,7 +253,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 (deftest test-relation-model-timeout-handling
   (testing "Relation model handles timeouts gracefully"
@@ -425,4 +425,4 @@
         (is (not (nil? result)))
         (is (contains? result :uid))
         (is (contains? result :category))
-        (is (= (:category result) "relation"))))))
+        (is (= (:category result) "relation")))))))

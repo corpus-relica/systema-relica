@@ -169,7 +169,7 @@
           (is (vector? (first roles)))
           (is (= 2 (count (first roles)))) ; Two roles in the nested structure
           (is (= 4 (count (first (first roles))))) ; Each role has 4 elements: [rh_uid, rh_name, lh_uid, lh_name]
-          ))))
+          )))))
 
 (deftest test-physical-object-model-merge-behavior
   (testing "Physical object model properly merges with base entity model"
@@ -231,7 +231,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 ;; Integration tests (require actual dependencies)
 (deftest ^:integration test-physical-object-model-integration
@@ -307,4 +307,4 @@
             result (async/<!! (async/go (async/<! result-chan)))]
 
         ;; Should handle empty UID appropriately
-        (is (nil? result)))))
+        (is (nil? result))))))

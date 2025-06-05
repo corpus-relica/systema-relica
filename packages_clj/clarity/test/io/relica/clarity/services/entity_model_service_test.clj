@@ -113,7 +113,7 @@
 
         (is (not (:valid result)))
         (is (contains? result :error))
-        (is (= (:uid result) "error-entity")))))
+        (is (= (:uid result) "error-entity"))))))
 
 ;; Main function tests
 
@@ -155,7 +155,7 @@
 
         (is (not (:valid result)))
         (is (contains? result :error))
-        (is (= (:uid result) "error-entity")))))
+        (is (= (:uid result) "error-entity"))))))
 
 (deftest test-retrieve-individual-entity-model-success
   (testing "Successfully retrieve individual entity model"
@@ -186,7 +186,7 @@
 
         (is (not (:valid result)))
         (is (contains? result :error))
-        (is (= (:uid result) "error-individual")))))
+        (is (= (:uid result) "error-individual"))))))
 
 (deftest test-entity-model-data-validation
   (testing "Entity model validates data structure for kind"
@@ -217,7 +217,7 @@
           (is (keyword? (:nature result)))
           (is (sequential? (:definitions result)))
           (is (sequential? (:supertypes result)))
-          (is (sequential? (:synonyms result)))))))
+          (is (sequential? (:synonyms result))))))))
 
 (deftest test-individual-entity-model-data-validation
   (testing "Entity model validates data structure for individual"
@@ -240,7 +240,7 @@
           (is (string? (:uid result)))
           (is (string? (:name result)))
           (is (keyword? (:nature result)))
-          (is (sequential? (:classifiers result)))))))
+          (is (sequential? (:classifiers result))))))))
 
 (deftest test-entity-model-performance-multiple-requests
   (testing "Entity model service handles multiple concurrent requests"
@@ -266,7 +266,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 (deftest test-entity-model-timeout-handling
   (testing "Entity model handles timeouts gracefully"
@@ -280,7 +280,7 @@
             [result port] (async/<!! (async/go (async/alts! [result-chan timeout-chan])))]
 
         ;; Should timeout since our mock delays exceed the timeout
-        (is (= port timeout-chan)))))
+        (is (= port timeout-chan))))))
 
 (deftest test-entity-model-nil-uid-handling
   (testing "Entity model handles nil UID gracefully"
@@ -293,7 +293,7 @@
             result (async/<!! (async/go (async/<! result-chan)))]
 
         ;; Should handle nil UID appropriately
-        (is (nil? result)))))
+        (is (nil? result))))))
 
 (deftest test-entity-model-empty-uid-handling
   (testing "Entity model handles empty UID gracefully"
@@ -306,7 +306,7 @@
             result (async/<!! (async/go (async/<! result-chan)))]
 
         ;; Should handle empty UID appropriately
-        (is (nil? result)))))
+        (is (nil? result))))))
 
 (deftest test-synonym-deduplication
   (testing "Synonyms are properly deduplicated"
@@ -325,7 +325,7 @@
           (is (= (count (:synonyms result)) 3))
           (is (contains? (set (:synonyms result)) "synonym1"))
           (is (contains? (set (:synonyms result)) "synonym2"))
-          (is (contains? (set (:synonyms result)) "synonym3"))))))
+          (is (contains? (set (:synonyms result)) "synonym3")))))))
 
 (deftest test-fact-filtering-by-relation-type
   (testing "Facts are properly filtered by relation type"
@@ -349,7 +349,7 @@
           ;; The fact with rel_type_uid 9999 should not appear in any category
           (is (not (some #(= (:data %) "other") (:classifications result))))
           (is (not (some #(= (:data %) "other") (:specializations result))))
-          (is (not (some #(= (:data %) "other") (:qualifications result))))))))
+          (is (not (some #(= (:data %) "other") (:qualifications result)))))))))
 
 (deftest test-entity-model-concurrent-access
   (testing "Entity model service handles concurrent access to same UID"
@@ -384,7 +384,7 @@
           ;; All results should be consistent
           (is (= (count results) 3))
           (is (every? #(= (:uid %) "concurrent-test") results))
-          (is (every? #(= (:name %) "Concurrent Test") results))))))
+          (is (every? #(= (:name %) "Concurrent Test") results)))))))
 
 (deftest test-entity-model-empty-collections
   (testing "Entity model handles empty collections gracefully"
@@ -410,7 +410,7 @@
           (is (= (:nature result) :kind))
           (is (empty? (:definitions result)))
           (is (empty? (:supertypes result)))
-          (is (empty? (:synonyms result)))))))
+          (is (empty? (:synonyms result))))))))
 
 (deftest test-individual-entity-model-empty-classifiers
   (testing "Individual entity model handles empty classifiers"
@@ -424,7 +424,7 @@
         (is (= (:uid result) "empty-individual"))
         (is (nil? (:name result))) ; First of empty collection
         (is (= (:nature result) :individual))
-        (is (empty? (:classifiers result))))))
+        (is (empty? (:classifiers result)))))))
 
 ;; Integration tests (require actual dependencies)
 (deftest ^:integration test-entity-model-integration
@@ -440,7 +440,7 @@
         (is (not (nil? result)))
         (is (contains? result :uid))
         (is (contains? result :nature))
-        (is (= (:nature result) :kind)))))
+        (is (= (:nature result) :kind))))))
 
 (deftest test-entity-model-error-propagation
   (testing "Entity model properly propagates archivist API errors"
@@ -457,7 +457,7 @@
           ;; Should handle the error and return error structure
           (is (not (:valid result)))
           (is (contains? result :error))
-          (is (.contains (:error result) error-msg))))))
+          (is (.contains (:error result) error-msg)))))))
 
 (deftest test-entity-model-async-behavior
   (testing "Entity model maintains proper async behavior"
@@ -494,4 +494,4 @@
             
             ;; Should return proper result
             (is (not (nil? result)))
-            (is (= (:name result) "Async Test"))))))
+            (is (= (:name result) "Async Test"))))))))

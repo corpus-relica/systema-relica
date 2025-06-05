@@ -253,7 +253,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 (deftest test-role-model-timeout-handling
   (testing "Role model handles timeouts gracefully"

@@ -122,7 +122,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 (deftest test-occurrence-model-timeout-handling
   (testing "Occurrence model handles timeouts gracefully"
@@ -205,7 +205,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 (deftest test-occurrence-service-consistency
   (testing "Both kind and individual occurrence services produce consistent structure"
@@ -365,7 +365,7 @@
         (is (not (nil? result)))
         (is (contains? result :uid))
         (is (contains? result :category))
-        (is (= (:category result) "occurrence")))))
+        (is (= (:category result) "occurrence"))))))
 
 (deftest test-occurrence-model-error-propagation
   (testing "Occurrence model properly propagates entity model errors"
@@ -407,4 +407,4 @@
             
             ;; Should return proper result
             (is (not (nil? result)))
-            (is (= (:category result) "occurrence"))))))
+            (is (= (:category result) "occurrence"))))))))

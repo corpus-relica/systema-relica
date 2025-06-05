@@ -122,7 +122,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 (deftest test-aspect-model-timeout-handling
   (testing "Aspect model handles timeouts gracefully"
@@ -221,7 +221,7 @@
             
             ;; Should complete within reasonable time
             (is (< duration 1000))
-            (is (not (nil? results))))))))
+            (is (not (nil? results)))))))))
 
 (deftest test-aspect-service-consistency
   (testing "Both kind and individual aspect services produce consistent structure"
@@ -249,4 +249,4 @@
           
           ;; But different types
           (is (= (:type kind-result) "kind"))
-          (is (= (:type individual-result) "individual"))))))
+          (is (= (:type individual-result) "individual")))))))

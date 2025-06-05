@@ -17,7 +17,7 @@
       (is (fn? (get methods :clarity.model/get)))
       (is (fn? (get methods :clarity.model/get-batch)))
       (is (fn? (get methods :clarity.kind/get)))
-      (is (fn? (get methods :clarity.individual/get)))))
+      (is (fn? (get methods :clarity.individual/get))))))
 
 (deftest test-system-operations-separation
   (testing "System operations are properly separated"
@@ -175,4 +175,4 @@
           (is (= (:success response) false))
           (is (contains? response :error))
           (is (= (get-in response [:error :type]) "internal-error"))
-          (is (contains? (get-in response [:error :details]) :exception))))))
+          (is (contains? (get-in response [:error :details]) :exception)))))))
