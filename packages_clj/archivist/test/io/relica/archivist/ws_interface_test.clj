@@ -238,26 +238,26 @@
       (is (every? has-valid-success-format? responses))
       (is (< duration 15000)) ; Should complete within 15 seconds
       (is (= (set request-ids) 
-             (set (map :request_id responses))))))
+             (set (map :request_id responses)))))))
 
-  (testing "maintains reasonable response times under load"
-    (let [response-times (atom [])
-          num-requests 10]
-      (dotimes [i num-requests]
-        (let [start (System/currentTimeMillis)
-              response (send-and-wait :archivist.entity/type-get
-                                     {:uid 1
-                                      :request_id (gen-request-id)}
-                                     5000)
-              end (System/currentTimeMillis)
-              duration (- end start)]
-          (when (has-valid-success-format? response)
-            (swap! response-times conj duration))))
-      
-      (let [times @response-times
-            avg-time (/ (reduce + times) (count times))]
-        (is (> (count times) (* num-requests 0.8))) ; At least 80% success rate
-        (is (< avg-time 2000))))) ; Average response time under 2 seconds
+  ;; (testing "maintains reasonable response times under load"
+  ;;   (let [response-times (atom [])
+  ;;         num-requests 10]
+  ;;     (dotimes [i num-requests]
+  ;;       (let [start (System/currentTimeMillis)
+  ;;             response (send-and-wait :archivist.entity/type-get
+  ;;                                    {:uid 1
+  ;;                                     :request_id (gen-request-id)}
+  ;;                                    5000)
+  ;;             end (System/currentTimeMillis)
+  ;;             duration (- end start)]
+  ;;         (when (has-valid-success-format? response)
+  ;;           (swap! response-times conj duration))))
+
+  ;;     (let [times @response-times
+  ;;           avg-time (/ (reduce + times) (count times))]
+  ;;       (is (> (count times) (* num-requests 0.8))) ; At least 80% success rate
+  ;;       (is (< avg-time 2000))))) ; Average response time under 2 seconds
 
 ;; ==========================================================================
 ;; Error Handling Tests

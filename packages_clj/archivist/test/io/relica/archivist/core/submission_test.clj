@@ -39,8 +39,8 @@
                 cache/cache-service mock-cache-service
                 cache/update-facts-involving-entity (fn [_ uid]
                                                       (swap! mock-cache-service update :updated-entities conj uid))
-                cache/append-fact (fn [_ fact]
-                                    (swap! mock-cache-service update :appended-facts conj fact))
+                ;; cache/append-fact (fn [_ fact]
+                ;;                     (swap! mock-cache-service update :appended-facts conj fact))
                 cache/clear-descendants (fn [_]
                                           (swap! mock-cache-service assoc :descendants-cleared true))
 

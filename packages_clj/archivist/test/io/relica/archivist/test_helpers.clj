@@ -6,7 +6,8 @@
 
 ;; Re-export common helpers
 (def wait-for common-helpers/wait-for)
-(def async-test common-helpers/async-test)
+(defmacro async-test [timeout-ms & body]
+  `(common-helpers/async-test ~timeout-ms ~@body))
 (def mock-ws-message common-helpers/mock-ws-message)
 (def capture-reply common-helpers/capture-reply)
 (def mock-request common-helpers/mock-request)

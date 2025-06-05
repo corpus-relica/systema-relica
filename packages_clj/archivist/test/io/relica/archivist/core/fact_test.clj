@@ -59,6 +59,7 @@
                      :rel_type_uid 1225
                      :rel_type_name "is classified as"}
           result (fact/create-fact test-fact)]
+      (println "Result:" result)
 
       ;; Check result
       (is (:success result))

@@ -1,6 +1,6 @@
 (ns io.relica.archivist.io.ws-performance-test
   (:require [clojure.test :refer [deftest testing is]]
-            [clojure.core.async :as async :refer [<! >! go chan <!! >!! timeout]]
+            [clojure.core.async :as async :refer [<! >! go go-loop chan <!! >!! timeout]]
             [io.relica.archivist.test-helpers :as helpers]
             [io.relica.archivist.utils.response :as response]
             [clojure.tools.logging :as log]))
@@ -115,7 +115,7 @@
           after-gc-mem (let [runtime (Runtime/getRuntime)]
                         (/ (- (.totalMemory runtime) (.freeMemory runtime)) 1024 1024))]
       (is (> (:final-used-mb before-gc) 0))
-      (is (< after-gc-mem (:final-used-mb before-gc))))) ; Memory should be reduced after GC
+      (is (< after-gc-mem (:final-used-mb before-gc)))))) ; Memory should be reduced after GC
 
 (deftest ^:performance concurrent-request-handling-test
   (testing "concurrent request handling performance"
@@ -154,7 +154,7 @@
           _ (async/close! queue-chan)
           _ (<!! consumer)] ; Wait for consumer to complete
       
-      (is (= 15 @processed-count))))
+      (is (= 15 @processed-count)))))
 
 (deftest ^:performance data-serialization-performance-test
   (testing "response serialization performance"
@@ -267,4 +267,6 @@
           final-memory (let [runtime (Runtime/getRuntime)]
                         (/ (- (.totalMemory runtime) (.freeMemory runtime)) 1024 1024))
           memory-growth (- final-memory initial-memory)]
-      (is (< memory-growth 50))))) ; Memory growth should be less than 50MB
+      (is (< memory-growth 50)))))
+
+;;Memory growth should be less than 50MB
