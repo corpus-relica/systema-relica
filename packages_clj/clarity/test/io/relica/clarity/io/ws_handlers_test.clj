@@ -175,4 +175,4 @@
           (is (= (:success response) false))
           (is (contains? response :error))
           (is (= (get-in response [:error :type]) "internal-error"))
-          (is (contains? (get-in response [:error :details]) :exception)))))))
+          (is (contains? (get-in response [:error :details]) :exception))))))
