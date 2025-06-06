@@ -1,41 +1,62 @@
 (ns io.relica.aperture.io.ws-handlers-test
-  (:require [midje.sweet :refer [fact facts contains anything]]
+  (:require [clojure.test :refer :all]
             [io.relica.aperture.io.ws-handlers :as handlers]
             [io.relica.common.websocket.server :as ws-server]
             [io.relica.aperture.test-helpers :as helpers]
-            [clojure.core.async :refer [go <! >! chan timeout]]))
+            [clojure.core.async :refer [go <! >! chan timeout] :as async]))
 
-;; Test that WebSocket message identifiers are correctly defined
-(fact "Get operations are correctly defined"
-      (methods ws-server/handle-ws-message) => (contains {:aperture.environment/get fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.environment/list fn?}))
+(deftest test-get-operations-defined
+  (testing "Get operations are correctly defined"
+    (let [methods (methods ws-server/handle-ws-message)]
+      (is (contains? methods :aperture.environment/get))
+      (is (contains? methods :aperture.environment/list))
+      (is (fn? (get methods :aperture.environment/get)))
+      (is (fn? (get methods :aperture.environment/list))))))
 
-(fact "Load operations are correctly defined"
-      (methods ws-server/handle-ws-message) => (contains {:aperture.search/load-text fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.search/load-uid fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.specialization/load-fact fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.specialization/load fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.fact/load-related fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.entity/load fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.entity/load-multiple fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.subtype/load fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.subtype/load-cone fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.classification/load fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.classification/load-fact fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.composition/load fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.composition/load-in fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.connection/load fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.connection/load-in fn?}))
+(deftest test-load-operations-defined
+  (testing "Load operations are correctly defined"
+    (let [methods (methods ws-server/handle-ws-message)]
+      (is (contains? methods :aperture.search/load-text))
+      (is (contains? methods :aperture.search/load-uid))
+      (is (contains? methods :aperture.specialization/load-fact))
+      (is (contains? methods :aperture.specialization/load))
+      (is (contains? methods :aperture.fact/load-related))
+      (is (contains? methods :aperture.entity/load))
+      (is (contains? methods :aperture.entity/load-multiple))
+      (is (contains? methods :aperture.subtype/load))
+      (is (contains? methods :aperture.subtype/load-cone))
+      (is (contains? methods :aperture.classification/load))
+      (is (contains? methods :aperture.classification/load-fact))
+      (is (contains? methods :aperture.composition/load))
+      (is (contains? methods :aperture.composition/load-in))
+      (is (contains? methods :aperture.connection/load))
+      (is (contains? methods :aperture.connection/load-in))
+      
+      ;; Verify they are functions
+      (is (fn? (get methods :aperture.search/load-text)))
+      (is (fn? (get methods :aperture.entity/load)))
+      (is (fn? (get methods :aperture.classification/load))))))
 
-(fact "Unload operations are correctly defined"
-      (methods ws-server/handle-ws-message) => (contains {:aperture.entity/unload fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.entity/unload-multiple fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.subtype/unload-cone fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.environment/clear fn?}))
+(deftest test-unload-operations-defined
+  (testing "Unload operations are correctly defined"
+    (let [methods (methods ws-server/handle-ws-message)]
+      (is (contains? methods :aperture.entity/unload))
+      (is (contains? methods :aperture.entity/unload-multiple))
+      (is (contains? methods :aperture.subtype/unload-cone))
+      (is (contains? methods :aperture.environment/clear))
+      
+      ;; Verify they are functions
+      (is (fn? (get methods :aperture.entity/unload)))
+      (is (fn? (get methods :aperture.environment/clear))))))
 
-(fact "Other operations are correctly defined"
-      (methods ws-server/handle-ws-message) => (contains {:aperture.environment/create fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.entity/select fn?})
-      (methods ws-server/handle-ws-message) => (contains {:aperture.entity/deselect fn?}))
-
-;; We'll add more tests for response formatting and error handling in future PRs
+(deftest test-other-operations-defined
+  (testing "Other operations are correctly defined"
+    (let [methods (methods ws-server/handle-ws-message)]
+      (is (contains? methods :aperture.environment/create))
+      (is (contains? methods :aperture.entity/select))
+      (is (contains? methods :aperture.entity/deselect))
+      
+      ;; Verify they are functions
+      (is (fn? (get methods :aperture.environment/create)))
+      (is (fn? (get methods :aperture.entity/select)))
+      (is (fn? (get methods :aperture.entity/deselect))))))

@@ -30,13 +30,11 @@
            ;;         :main-opts ["-m" "nrepl.cmdline"
            ;;                   "--middleware" "[vlaaad.reveal.nrepl/middleware]"]}
            :test {:extra-paths ["test"]
-                  :extra-deps {lambdaisland/kaocha {:mvn/version "1.87.1366"}
-                               org.clojure/test.check {:mvn/version "1.1.1"}
-                               midje/midje {:mvn/version "1.10.9"}
-                               org.clojure/tools.namespace {:mvn/version "1.4.4"}}
-                  :main-opts ["-m" "io.relica.common.test.runner"]}
-           :midje {:extra-paths ["test"]
-                   :extra-deps {midje/midje {:mvn/version "1.10.9"}
-                                org.clojure/tools.namespace {:mvn/version "1.4.4"}}
-                   :main-opts ["-m" "midje.repl"]}
+                  :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+                               org.clojure/tools.namespace {:mvn/version "1.4.4"}
+                               org.clojure/data.json {:mvn/version "2.4.0"}
+                               org.clojure/spec.alpha {:mvn/version "0.3.218"}
+                               lambdaisland/kaocha {:mvn/version "1.91.1392"}
+                               clojure.java-time/clojure.java-time {:mvn/version "1.4.2"}}
+                  :main-opts ["-m" "kaocha.runner"]}
            :run {:main-opts ["-m" "io.relica.aperture.core"]}}}
