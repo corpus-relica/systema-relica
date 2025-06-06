@@ -11,7 +11,8 @@
   (testing "creates a standardized success response with data"
     (is (= {:success true
             :request_id nil
-            :data {:test "data"}}
+            :data {:test "data"}
+            :timestamp (number? (:timestamp (response/success-response {:test "data"})))}
            (response/success-response {:test "data"}))))
   
   (testing "creates a standardized success response with data and request-id"
