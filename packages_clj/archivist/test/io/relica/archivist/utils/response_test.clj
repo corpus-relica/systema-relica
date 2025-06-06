@@ -10,10 +10,9 @@
 (deftest success-response-test
   (testing "creates a standardized success response with data"
     (let [response (response/success-response {:test "data"})]
-      (is (= true (:success response)))
+      (is (true? (:success response)))
       (is (nil? (:request_id response)))
       (is (= {:test "data"} (:data response)))
-      (is (contains? response :timestamp))
       (is (number? (:timestamp response)))))
   
   (testing "creates a standardized success response with data and request-id"
