@@ -20,8 +20,8 @@ COPY packages_ts/core/hsm-manager/package.json ./packages_ts/core/hsm-manager/
 COPY packages_ts/frontend/viewfinder/package.json ./packages_ts/frontend/viewfinder/
 COPY packages_ts/shared/testing/package.json ./packages_ts/shared/testing/
 
-# Install dependencies
-RUN yarn install --pure-lockfile --non-interactive --network-timeout 100000
+# Install dependencies (skip dev dependencies by using workspaces focus)
+RUN yarn workspaces focus @relica/viewfinder --production
 
 # Invalidate cache when source changes
 RUN echo "Cache bust: ${CACHE_BUST}"
