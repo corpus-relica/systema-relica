@@ -26,7 +26,7 @@
 (def env
   {:db-spec {:dbtype "postgresql"
              :dbname (or (System/getenv "POSTGRES_DB") "postgres")
-             :host (or (System/getenv "POSTGRES_HOST") "postgres")
+             :host (or (System/getenv "POSTGRES_HOST") "localhost")
              :user (or (System/getenv "POSTGRES_USER") "postgres")
              :password (or (System/getenv "POSTGRES_PASSWORD") "password")
              :port (parse-long (or (System/getenv "POSTGRES_PORT") "5432"))}
@@ -34,15 +34,9 @@
    :port (parse-long (or (System/getenv "PORT") "2173"))})
 
 ;; Database setup
+
 (def ds (jdbc/get-datasource (:db-spec env)))
 
-(defn foo []
-  (try
-    (jdbc/execute-one! ds ["SELECT 1"])
-    (catch Exception e
-      (log/error e "Database connection failed"))))
-
-;; test db connection
 (defn test-db-connection []
   (try
     (do
@@ -52,10 +46,14 @@
       true)
     (catch Exception e
       (do
-        (println (e "- Database connection failed"))
+        (println e "- Database connection failed")
         (log/error e "-> Database connection failed")
         false))))
 
+(println "-----------------------------------------------------------------------------------------------")
+(println  (:db-spec env))
+(println ds)
+(println "Testing database connection...")
 (test-db-connection)
 
 (defn create-test-user! [email username password]
@@ -229,7 +227,7 @@
                (let [raw-token (tokens/generate-secure-token)
                      token-hash (tokens/hash-token raw-token)
                      token-data (tokens/prepare-token-data body)
-                     created-token (db/create-token! ds user-id token-hash
+                     created-token (db/register-token! ds user-id token-hash
                                                      (:name token-data)
                                                      (:description token-data)
                                                      (:scopes token-data)
