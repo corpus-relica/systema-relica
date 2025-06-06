@@ -20,8 +20,11 @@ COPY packages_ts/core/hsm-manager/package.json ./packages_ts/core/hsm-manager/
 COPY packages_ts/frontend/viewfinder/package.json ./packages_ts/frontend/viewfinder/
 COPY packages_ts/shared/testing/package.json ./packages_ts/shared/testing/
 
-# Install dependencies (skip dev dependencies by using workspaces focus)
-RUN yarn workspaces focus @relica/viewfinder --production
+# Remove shared-testing dev dependency from package.json files to avoid workspace resolution issues
+RUN sed -i '/"@relica\/shared-testing"/d' packages_ts/*/package.json packages_ts/*/*/package.json packages_ts/*/*/*/package.json 2>/dev/null || true
+
+# Install dependencies
+RUN yarn install --pure-lockfile --non-interactive --network-timeout 100000
 
 # Invalidate cache when source changes
 RUN echo "Cache bust: ${CACHE_BUST}"
