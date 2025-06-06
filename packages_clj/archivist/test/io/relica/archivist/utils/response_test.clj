@@ -25,13 +25,16 @@
 
 (deftest error-response-test
   (testing "creates a standardized error response with default params"
-    (is (= {:success false
-            :request_id nil
-            :error {:code 1002
-                    :type "internal-error"
-                    :message "Something went wrong"
-                    :details nil}}
-           (response/error-response :internal-error "Something went wrong"))))
+    (let [response (response/error-response :internal-error "Something went wrong")]
+      (is (= {:success false
+              :request_id nil
+              :error {:code 1002
+                      :type "internal-error"
+                      :message "Something went wrong"
+                      :details nil}
+              :timestamp (:timestamp response)}
+             response))
+      (is (number? (:timestamp response)))))
   
   (testing "creates a standardized error response with details"
     (let [response (response/error-response :validation-error "Invalid input" {:field "name"})]
