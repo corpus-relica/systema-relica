@@ -276,6 +276,7 @@ services:
     command: ["clojure", "-M:dev"]
     volumes:
       # Mount code for hot reloading
+      - ./packages_clj/common:/usr/src/app/packages_clj/common
       - ./packages_clj/shutter:/usr/src/app/packages_clj/shutter
     ports:
       - "2173:2173"
@@ -331,9 +332,10 @@ services:
 
   viewfinder:
     container_name: viewfinder
+    init: true  # Proper init process to handle signals and zombie processes
     build:
-      context: ./packages_ts/frontend/viewfinder
-      dockerfile: docker/Dockerfile.dev
+      context: ./ # Set context to repo root
+      dockerfile: ./packages_ts/frontend/viewfinder/docker/Dockerfile.dev
     restart: always
     ports:
       - "5173:5173" # Vite dev server port
@@ -341,7 +343,9 @@ services:
       # Mount all necessary code for hot reloading
       - ./packages_ts/frontend/viewfinder:/usr/src/app/packages_ts/frontend/viewfinder
       - ./packages_ts/frontend/components:/usr/src/app/packages_ts/frontend/components
+      - ./packages_ts/core:/usr/src/app/packages_ts/core
       - ./packages_ts/libs:/usr/src/app/packages_ts/libs
+      - ./packages_ts/shared:/usr/src/app/packages_ts/shared
       - ./packages_ts/config:/usr/src/app/packages_ts/config
       - ./node_modules:/usr/src/app/node_modules
     environment:

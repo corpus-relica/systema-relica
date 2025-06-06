@@ -3,6 +3,9 @@ LABEL maintainer="Marc <xtof@relica.io>"
 
 WORKDIR /usr/src/app
 
+# Copy common dependency
+COPY packages_clj/common /usr/src/app/packages_clj/common
+
 # Copy shutter code
 COPY packages_clj/shutter /usr/src/app/packages_clj/shutter
 

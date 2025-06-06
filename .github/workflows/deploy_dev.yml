@@ -74,6 +74,13 @@ jobs:
             # Start the application
             echo "Starting docker compose..."
             docker-compose down || true
+            
+            # Force rebuild viewfinder with cache busting
+            export CACHE_BUST=$(date +%s)
+            echo "Building with cache bust: $CACHE_BUST"
+            
+            # Build all services, force viewfinder rebuild
+            docker-compose build --no-cache viewfinder
             docker-compose build
             docker-compose up -d
 

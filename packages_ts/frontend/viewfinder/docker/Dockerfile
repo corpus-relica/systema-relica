@@ -2,11 +2,17 @@
 FROM node:latest as build
 LABEL maintainer="Marc <xtof@relica.io>"
 
+# Add cache busting argument
+ARG CACHE_BUST=default
+
 WORKDIR /usr/src/app
 
 # Copy root package files first
 COPY package.json .
 COPY yarn.lock .
+
+# Invalidate cache when source changes
+RUN echo "Cache bust: ${CACHE_BUST}"
 
 # Copy all the required packages and configs
 COPY packages_ts/libs/types ./packages_ts/libs/types
@@ -15,6 +21,7 @@ COPY packages_ts/frontend/components/fact-search-ui ./packages_ts/frontend/compo
 COPY packages_ts/frontend/components/3d-graph-ui ./packages_ts/frontend/components/3d-graph-ui
 COPY packages_ts/core/hsm-manager ./packages_ts/core/hsm-manager
 COPY packages_ts/frontend/viewfinder ./packages_ts/frontend/viewfinder
+COPY packages_ts/shared/testing ./packages_ts/shared/testing
 COPY packages_ts/config/tsconfig.base.json ./packages_ts/config/tsconfig.base.json
 COPY packages_ts/config/tsconfig.lib.json ./packages_ts/config/tsconfig.lib.json
 COPY packages_ts/config/tsconfig.lib-react.json ./packages_ts/config/tsconfig.lib-react.json

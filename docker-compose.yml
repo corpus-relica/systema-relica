@@ -273,6 +273,9 @@ services:
     build:
       context: ./ # Set context to repo root
       dockerfile: ./packages_ts/frontend/viewfinder/docker/Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+        - CACHE_BUST=${CACHE_BUST:-default}
     restart: always
     ports:
       - "80:80"
