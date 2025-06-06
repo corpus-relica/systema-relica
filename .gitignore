@@ -119,3 +119,5 @@ seed_csv/
 **/CLAUDE.local.md
 **/.claude/settings.local.json
 .aider*
+.mcp.json
+.roo/

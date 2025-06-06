@@ -1,18 +1,37 @@
 (ns io.relica.clarity.test-helpers
   "Test helpers for the clarity module."
-  (:require [midje.sweet :refer :all]
-            [io.relica.common.test.midje-helpers :as midje-helpers]
-            [clojure.core.async :refer [go <! >! chan timeout]]))
+  (:require [clojure.test :refer :all]
+            [io.relica.common.test-helpers :as test-helpers]
+            [clojure.core.async :refer [go <! >! chan timeout] :as async]))
 
 ;; Re-export common helpers
-(def wait-for midje-helpers/wait-for)
-(def async-fact midje-helpers/async-fact)
-(def mock-ws-message midje-helpers/mock-ws-message)
-(def capture-reply midje-helpers/capture-reply)
-(def ws-handler-test midje-helpers/ws-handler-test)
-(def with-test-db midje-helpers/with-test-db)
-(def mock-request midje-helpers/mock-request)
-(def mock-response midje-helpers/mock-response)
+(def wait-for test-helpers/wait-for)
+(def mock-ws-message test-helpers/mock-ws-message)
+(def capture-reply test-helpers/capture-reply)
+(def mock-request test-helpers/mock-request)
+(def mock-response test-helpers/mock-response)
+
+;; Additional helpers for Clarity tests
+(defn wait-for-reply
+  "Wait for a reply to be captured by a capture-reply function"
+  [capture-data & [timeout-ms]]
+  (let [timeout (or timeout-ms 1000)
+        end-time (+ (System/currentTimeMillis) timeout)]
+    (loop []
+      (let [responses @(:responses capture-data)]
+        (cond
+          (seq responses) (last responses)
+          (> (System/currentTimeMillis) end-time) nil
+          :else (do (Thread/sleep 10)
+                   (recur)))))))
+
+;; Mock WebSocket handler test helper
+(defn mock-ws-handler-test
+  "Helper for testing WebSocket handlers"
+  [handler-fn message expected-response]
+  (let [capture (capture-reply)]
+    (handler-fn (assoc message :reply (:reply-fn capture)))
+    (wait-for-reply capture)))
 
 ;; Clarity-specific test helpers
 
