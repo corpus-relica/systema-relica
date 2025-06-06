@@ -21,7 +21,7 @@ COPY packages_ts/frontend/viewfinder/package.json ./packages_ts/frontend/viewfin
 COPY packages_ts/shared/testing/package.json ./packages_ts/shared/testing/
 
 # Remove shared-testing dev dependency from package.json files to avoid workspace resolution issues
-RUN sed -i '/"@relica\/shared-testing"/d' packages_ts/*/package.json packages_ts/*/*/package.json packages_ts/*/*/*/package.json 2>/dev/null || true
+RUN find packages_ts -name "package.json" -exec node -e "try { const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); if (pkg.devDependencies && pkg.devDependencies['@relica/shared-testing']) { delete pkg.devDependencies['@relica/shared-testing']; fs.writeFileSync(process.argv[1], JSON.stringify(pkg, null, 2)); } } catch(e) {}" {} \;
 
 # Install dependencies
 RUN yarn install --pure-lockfile --non-interactive --network-timeout 100000
