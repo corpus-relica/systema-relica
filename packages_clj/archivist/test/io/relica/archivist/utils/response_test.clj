@@ -34,13 +34,16 @@
            (response/error-response :internal-error "Something went wrong"))))
   
   (testing "creates a standardized error response with details"
-    (is (= {:success false
-            :request_id nil
-            :error {:code 1101
-                    :type "validation-error"
-                    :message "Invalid input"
-                    :details {:field "name"}}}
-           (response/error-response :validation-error "Invalid input" {:field "name"}))))
+    (let [response (response/error-response :validation-error "Invalid input" {:field "name"})]
+      (is (= {:success false
+              :request_id nil
+              :error {:code 1101
+                      :type "validation-error"
+                      :message "Invalid input"
+                      :details {:field "name"}}
+              :timestamp (:timestamp response)}
+             response)
+      (is (number? (:timestamp response))))))
 
   (testing "creates a standardized error response with details and request-id"
     (is (= {:success false
