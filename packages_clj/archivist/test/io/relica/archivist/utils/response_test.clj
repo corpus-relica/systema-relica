@@ -49,22 +49,28 @@
       (is (number? (:timestamp response)))))
 
   (testing "creates a standardized error response with details and request-id"
-    (is (= {:success false
-            :request_id "req-456"
-            :error {:code 1206
-                    :type "database-error"
-                    :message "DB query failed"
-                    :details {:table "users"}}}
-           (response/error-response :database-error "DB query failed" {:table "users"} "req-456"))))
+    (let [response (response/error-response :database-error "DB query failed" {:table "users"} "req-456")]
+      (is (= {:success false
+              :request_id "req-456"
+              :error {:code 1206
+                      :type "database-error"
+                      :message "DB query failed"
+                      :details {:table "users"}}
+              :timestamp (:timestamp response)}
+             response))
+      (is (number? (:timestamp response)))))
   
   (testing "uses default code for unknown error types"
-    (is (= {:success false
-            :request_id nil
-            :error {:code 1002  ; Default internal error code
-                    :type "unknown-error-type"
-                    :message "Unknown error occurred"
-                    :details nil}}
-           (response/error-response :unknown-error-type "Unknown error occurred")))))
+    (let [response (response/error-response :unknown-error-type "Unknown error occurred")]
+      (is (= {:success false
+              :request_id nil
+              :error {:code 1002  ; Default internal error code
+                      :type "unknown-error-type"
+                      :message "Unknown error occurred"
+                      :details nil}
+              :timestamp (:timestamp response)}
+             response))
+      (is (number? (:timestamp response))))))
 
 ;; ==========================================================================
 ;; Handler wrapper tests
