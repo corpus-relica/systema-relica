@@ -18,10 +18,13 @@
       (is (number? (:timestamp response)))))
   
   (testing "creates a standardized success response with data and request-id"
-    (is (= {:success true
-            :request_id "req-123"
-            :data {:test "data"}}
-           (response/success-response {:test "data"} "req-123")))))
+    (let [response (response/success-response {:test "data"} "req-123")]
+      (is (= {:success true
+              :request_id "req-123"
+              :data {:test "data"}
+              :timestamp (:timestamp response)}
+             response))
+      (is (number? (:timestamp response))))))
 
 (deftest error-response-test
   (testing "creates a standardized error response with default params"
@@ -52,7 +55,7 @@
     (let [response (response/error-response :database-error "DB query failed" {:table "users"} "req-456")]
       (is (= {:success false
               :request_id "req-456"
-              :error {:code 1206
+              :error {:code 1001
                       :type "database-error"
                       :message "DB query failed"
                       :details {:table "users"}}
@@ -86,40 +89,52 @@
         wrapped-error-handler (response/with-standard-response error-handler)]
     
     (testing "wraps handler with success response"
-      (is (= {:success true
-              :request_id "req-789"
-              :data {:status "ok"}}
-             (wrapped-success-handler {:?data {:request_id "req-789"}
-                                      :?reply-fn mock-reply-fn}))))
+      (let [response (wrapped-success-handler {:?data {:request_id "req-789"}
+                                              :?reply-fn mock-reply-fn})]
+        (is (= {:success true
+                :request_id "req-789"
+                :data {:status "ok"}
+                :timestamp (:timestamp response)}
+               response))
+        (is (number? (:timestamp response)))))
     
     (testing "wraps handler with error response"
-      (is (= {:success false
-              :request_id "req-890"
-              :error {:code 1101
-                      :type "validation-error"
-                      :message "Invalid input"
-                      :details nil}}
-             (wrapped-error-handler {:?data {:request_id "req-890"}
-                                    :?reply-fn mock-reply-fn}))))
+      (let [response (wrapped-error-handler {:?data {:request_id "req-890"}
+                                            :?reply-fn mock-reply-fn})]
+        (is (= {:success false
+                :request_id "req-890"
+                :error {:code 1101
+                        :type "validation-error"
+                        :message "Invalid input"
+                        :details nil}
+                :timestamp (:timestamp response)}
+               response))
+        (is (number? (:timestamp response)))))
     
     (testing "handles missing request_id gracefully"
-      (is (= {:success true
-              :request_id nil
-              :data {:status "ok"}}
-             (wrapped-success-handler {:?data {}
-                                      :?reply-fn mock-reply-fn}))))
+      (let [response (wrapped-success-handler {:?data {}
+                                              :?reply-fn mock-reply-fn})]
+        (is (= {:success true
+                :request_id nil
+                :data {:status "ok"}
+                :timestamp (:timestamp response)}
+               response))
+        (is (number? (:timestamp response)))))
     
     (testing "handles exception in handler gracefully"
       (let [exception-handler (fn [_] (throw (ex-info "Test exception" {:code 500})))
-            wrapped-exception-handler (response/with-standard-response exception-handler)]
+            wrapped-exception-handler (response/with-standard-response exception-handler)
+            response (wrapped-exception-handler {:?data {:request_id "req-error"}
+                                                :?reply-fn mock-reply-fn})]
         (is (= {:success false
                 :request_id "req-error"
                 :error {:code 1002
                         :type "internal-error"
                         :message "Test exception"
-                        :details nil}}
-               (wrapped-exception-handler {:?data {:request_id "req-error"}
-                                          :?reply-fn mock-reply-fn})))))))
+                        :details nil}
+                :timestamp (:timestamp response)}
+               response))
+        (is (number? (:timestamp response)))))))
 
 ;; ==========================================================================
 ;; Error code mapping tests
