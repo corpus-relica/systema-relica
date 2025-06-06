@@ -42,8 +42,8 @@
                       :message "Invalid input"
                       :details {:field "name"}}
               :timestamp (:timestamp response)}
-             response)
-      (is (number? (:timestamp response))))))
+             response))
+      (is (number? (:timestamp response)))))
 
   (testing "creates a standardized error response with details and request-id"
     (is (= {:success false
