@@ -24,7 +24,25 @@
     (if-let [config @client-config-atom]
       (let [client (ws/create-client config)]
         (ws/connect! client)
-        (reset! client-atom client))
+        ;; Wait for client registration (up to 5 seconds)
+        (let [start-time (System/currentTimeMillis)]
+          (loop []
+            (cond
+              ;; Success: client is registered
+              (ws/get-client-id client)
+              (do
+                (println "Client registered with ID:" (ws/get-client-id client))
+                (reset! client-atom client))
+              
+              ;; Timeout: registration took too long
+              (> (- (System/currentTimeMillis) start-time) 5000)
+              (throw (ex-info "WebSocket client registration timeout" {}))
+              
+              ;; Keep waiting
+              :else
+              (do
+                (Thread/sleep 100)
+                (recur))))))
       (throw (ex-info "WebSocket client not configured. Call set-config! first." {}))))
   @client-atom)
 
@@ -123,7 +141,7 @@
   (testing "fetching entity type returns standardized success response"
     (let [request-id (gen-request-id)
           response (send-and-wait :archivist.entity/type-get
-                                 {:uid 730000 ; Use a known UID (Thing)
+                                 {:uid 4990 ; Use a known UID (Thing)
                                   :request_id request-id}
                                  5000)]
       (is (has-valid-success-format? response))
@@ -163,7 +181,7 @@
     (let [request-ids (repeatedly 5 gen-request-id)
           responses (pmap (fn [req-id]
                           (send-and-wait :archivist.entity/type-get
-                                        {:uid 730000
+                                        {:uid 4990
                                          :request_id req-id}
                                         5000))
                         request-ids)]
@@ -201,6 +219,9 @@
                                  {:limit 100
                                   :request_id request-id}
                                  10000)] ; Longer timeout for large responses
+      (println "Large response test - actual response:" response)
+      (println "Response keys:" (keys response))
+      (println "Data field:" (get response :data))
       (is (has-valid-success-format? response))
       (is (= request-id (:request_id response)))
       (is (vector? (get-in response [:data])))))
@@ -211,7 +232,7 @@
       ;; Send multiple messages to verify connection stays alive
       (dotimes [i 3]
         (let [response (send-and-wait :archivist.entity/type-get
-                                     {:uid 730000
+                                     {:uid 4990
                                       :request_id (gen-request-id)}
                                      5000)]
           (is (has-valid-success-format? response))))

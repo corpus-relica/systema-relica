@@ -21,6 +21,7 @@
   "Updates the rebuild status and broadcasts the update"
   [status-map]
   (swap! rebuild-status merge status-map)
+  (println "Updating rebuild status:" @rebuild-status)
   (broadcast-status!))
 
 (defn get-rebuild-status

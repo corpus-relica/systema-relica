@@ -44,7 +44,7 @@
                 :error e})
       nil)))
 
-(defn get-count [this]
+(defn get-count []
   (let [result (graph/exec-query graph/graph-service queries/get-facts-count {})
         transformed-result (-> result
                                first

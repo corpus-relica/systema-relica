@@ -96,6 +96,7 @@
   (testing "Taxonomic query (lineage)"
     (let [gel "^40043.pump"
           parsed (parser/parse gel)]
+      (println "Parsed lineage query:" parsed)
       (is (= :lineage (:type (first parsed))))
       (is (= 40043 (get-in (first parsed) [:entity :uid]))))))
 

@@ -8,7 +8,7 @@
 (def ^:const BATCH_SIZE 100) ; Smaller batch size for demonstration
 
 (if (nil? @cache-service-comp)
-     (io.relica.common.services.cache-service/start "suck a dick") nil)
+    (io.relica.common.services.cache-service/start "suck a dick") nil)
 
 ;; --- Entity Facts Cache ---
 
@@ -43,8 +43,8 @@
               (recur (+ offset BATCH_SIZE))))))
       (catch Exception e
         (log/error e "Error building entity facts cache")
-        false))) ; Indicate failure
-  )
+        false)))) ; Indicate failure
+
 
 ;; --- Entity Lineage Cache ---
 
@@ -89,8 +89,8 @@
                 (recur (+ skip BATCH_SIZE))))))
       (catch Exception e
         (log/error e "Error processing nodes for lineage cache")
-        false))) ; Indicate failure
-    )
+        false)))) ; Indicate failure
+
 
 
 (defn build-entity-lineage-cache!
@@ -105,8 +105,8 @@
         (<! (process-nodes-lc)))
       (catch Exception e
         (log/error e "Error initiating entity lineage cache build")
-        false)))
-  )
+        false))))
+
 
 ;; --- Subtypes Cache ---
 
@@ -153,8 +153,8 @@
                 (recur (+ skip BATCH_SIZE))))))
       (catch Exception e
         (log/error e "Error processing nodes for subtypes cache")
-        false))) ; Indicate failure
-    )
+        false)))) ; Indicate failure
+
 
 
 (defn build-subtypes-cache!
@@ -169,7 +169,7 @@
         (<! (process-nodes-sc)))
       (catch Exception e
         (log/error e "Error initiating entity subtypes cache build")
-        false)))
-  )
+        false))))
+
 
 ;; --- Facts Cache ---
