@@ -56,10 +56,10 @@ RUN yarn build
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/fact-search-ui
 RUN echo "VITE_RELICA_ARCHIVIST_API_URL=http://localhost:3000" > .env && \
-    yarn build
+    yarn build:vite
 
 WORKDIR /usr/src/app/packages_ts/frontend/components/3d-graph-ui
-RUN yarn build
+RUN yarn build:vite
 
 # Build the main application
 WORKDIR /usr/src/app/packages_ts/frontend/viewfinder
