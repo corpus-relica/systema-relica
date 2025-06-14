@@ -10,7 +10,6 @@ import { WebSocketModule } from './websocket/websocket.module';
 
 import { CacheService } from './cache/cache.service';
 import { GraphService } from './graph/graph.service';
-import { AppInitService } from './app-init/app-init.service';
 import { GellishBaseService } from './gellish-base/gellish-base.service';
 import { DefinitionService } from './definition/definition.service';
 import { KindSearchService } from './kind-search/kind-search.service';
