@@ -154,4 +154,66 @@ export class EventsGateway {
       return { success: false, error: error.message };
     }
   }
+
+  // QUINTESSENTIAL MODEL OPERATIONS //
+
+  @SubscribeMessage('clarity.quintessential/get-physical-object')
+  async getPhysicalObjectModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET PHYSICAL OBJECT MODEL:', uid);
+    try {
+      const model = await this.modelService.getPhysicalObjectModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving physical object model:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  @SubscribeMessage('clarity.quintessential/get-aspect')
+  async getAspectModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET ASPECT MODEL:', uid);
+    try {
+      const model = await this.modelService.getAspectModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving aspect model:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  @SubscribeMessage('clarity.quintessential/get-role')
+  async getRoleModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET ROLE MODEL:', uid);
+    try {
+      const model = await this.modelService.getRoleModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving role model:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  @SubscribeMessage('clarity.quintessential/get-relation')
+  async getRelationModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET RELATION MODEL:', uid);
+    try {
+      const model = await this.modelService.getRelationModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving relation model:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  @SubscribeMessage('clarity.quintessential/get-occurrence')
+  async getOccurrenceModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET OCCURRENCE MODEL:', uid);
+    try {
+      const model = await this.modelService.getOccurrenceModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving occurrence model:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
