@@ -1,0 +1,35 @@
+# Use Node.js 20 Alpine
+FROM node:20-alpine
+
+# Ensure yarn is available
+RUN which yarn || npm install -g yarn
+
+# Set working directory
+WORKDIR /usr/src/app
+
+# Copy package files
+COPY package.json yarn.lock ./
+COPY packages/prism/package.json ./packages/prism/
+
+# Copy shared packages
+COPY packages/constants ./packages/constants
+COPY packages/types ./packages/types
+
+# Install dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy prism source code
+COPY packages/prism ./packages/prism
+
+# Build the application
+RUN cd packages/prism && yarn build
+
+# Expose port 3005
+EXPOSE 3005
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PRISM_PORT=3005
+
+# Start the application
+CMD ["node", "packages/prism/dist/main.js"]
