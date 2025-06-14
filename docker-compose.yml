@@ -90,6 +90,31 @@ services:
     networks:
       - rlc-net
 
+  shutter:
+    container_name: shutter
+    build:
+      context: ./
+      dockerfile: Dockerfile.shutter
+    restart: always
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=${JWT_SECRET:-development-secret-change-in-production}
+      - PORT=3004
+    command: ["yarn", "start:dev"]
+    volumes:
+      - ./packages/shutter:/usr/src/app/packages/shutter
+      - /usr/src/app/packages/shutter/node_modules
+    ports:
+      - "3004:3004"
+    depends_on:
+      - postgres
+    networks:
+      - rlc-net
+
   clarity-core:
     container_name: clarity-core
     # image: node:latest

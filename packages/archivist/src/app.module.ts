@@ -48,8 +48,6 @@ import { LinearizationService } from './linearization/linearization.service';
 import { QueryController } from './query/query.controller';
 import { QueryService } from './query/query.service';
 import { GellishToCypherConverter } from './query/GellishToCypherConverter';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
@@ -83,8 +81,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       synchronize: true,
     }),
     TransactionModule,
-    AuthModule,
-    UsersModule,
   ],
   controllers: [
     AppController,

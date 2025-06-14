@@ -1,0 +1,31 @@
+FROM node:latest as build
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+COPY yarn.lock .
+COPY packages/shutter ./packages/shutter
+
+RUN yarn install --pure-lockfile --non-interactive
+
+WORKDIR /usr/src/app/packages/shutter
+RUN yarn build
+
+# --------------------------------------
+
+FROM node:latest
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+COPY yarn.lock .
+
+COPY packages/shutter /usr/src/app/packages/shutter
+
+ENV NODE_ENV development
+
+RUN yarn install --pure-lockfile --non-interactive
+
+WORKDIR /usr/src/app/packages/shutter
+
+CMD ["yarn", "start:dev"]
