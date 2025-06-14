@@ -21,11 +21,11 @@ import { prStr } from './printer';
 import { Logger } from '@nestjs/common';
 
 import { ArchivistService } from '../archivist/archivist.service';
-import { EnvironmentService } from '../environment/environment.service';
+// import { EnvironmentService } from '../environment/environment.service';
 import { State, StateService } from '../state/state.service';
 
 import { jsToMal, malToJs } from './utils';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+// import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Fact } from '@relica/types';
 
 @Injectable()
@@ -35,8 +35,8 @@ export class REPLService {
 
   constructor(
     private archivist: ArchivistService,
-    private environment: EnvironmentService,
-    private eventEmitter: EventEmitter2,
+    // private environment: EnvironmentService,
+    // private eventEmitter: EventEmitter2,
     private stateService: StateService,
   ) {
     this.initReplEnv();
@@ -74,6 +74,9 @@ export class REPLService {
       }),
     );
 
+    // Environment-related functions moved to Aperture service
+    // TODO: Implement these as WebSocket calls to Aperture
+    /*
     replEnv.set(
       MalSymbol.get('modelsFromFacts'),
       MalFunction.fromBootstrap(async (facts: MalVector): Promise<MalType> => {
@@ -182,19 +185,21 @@ export class REPLService {
         return MalNil.instance;
       }),
     );
+    */
 
-    replEnv.set(
-      MalSymbol.get('emit'),
-      MalFunction.fromBootstrap(
-        async (event: MalString, payload: MalHashMap) => {
-          this.eventEmitter.emit('emit', {
-            type: event.v,
-            payload: malToJs(payload),
-          });
-          return MalNil.instance;
-        },
-      ),
-    );
+    // Event emitter moved to Aperture service
+    // replEnv.set(
+    //   MalSymbol.get('emit'),
+    //   MalFunction.fromBootstrap(
+    //     async (event: MalString, payload: MalHashMap) => {
+    //       this.eventEmitter.emit('emit', {
+    //         type: event.v,
+    //         payload: malToJs(payload),
+    //       });
+    //       return MalNil.instance;
+    //     },
+    //   ),
+    // );
 
     replEnv.set(
       MalSymbol.get('changeState'),
@@ -204,6 +209,9 @@ export class REPLService {
       }),
     );
 
+    // Environment-related macros moved to Aperture service
+    // TODO: Implement these as WebSocket calls to Aperture
+    /*
     const loadAllRelatedFactsDef = `
 (def! loadAllRelatedFacts (fn* [uid]
 (let* [result (retrieveAllFacts uid)
@@ -225,6 +233,7 @@ payload {:facts facts :models models}]
   (insertModels models)))
 ))`;
     await this.rep(loadSpecializationHierarchyDef, replEnv);
+    */
 
     await this.rep('(def! not (fn* (a) (if a false true)))', replEnv);
 

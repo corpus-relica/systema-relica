@@ -1,6 +1,6 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+// import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -36,16 +36,16 @@ export class StateService {
       this.state = defaultState;
     }
 
-    this.eventEmitter.emit('emit', {
-      type: 'system:stateInitialized',
-      payload: this.state,
-    });
+    // this.eventEmitter.emit('emit', {
+    //   type: 'system:stateInitialized',
+    //   payload: this.state,
+    // });
   }
 
   constructor(
     @InjectRepository(AppState)
     private modelSessionRepository: Repository<AppState>,
-    private readonly eventEmitter: EventEmitter2,
+    // private readonly eventEmitter: EventEmitter2,
   ) {}
 
   getState() {
@@ -59,9 +59,9 @@ export class StateService {
       where: { uid: 1 },
     });
 
-    this.eventEmitter.emit('emit', {
-      type: 'system:stateChanged',
-      payload: this.state,
-    });
+    // this.eventEmitter.emit('emit', {
+    //   type: 'system:stateChanged',
+    //   payload: this.state,
+    // });
   }
 }

@@ -8,13 +8,12 @@ import {
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
-import { EnvironmentService } from '../environment/environment.service';
 import { ArchivistService } from '../archivist/archivist.service';
 import { Logger } from '@nestjs/common';
 import { Fact } from '@relica/types';
 import { REPLService } from 'src/repl/repl.service';
 
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+// import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @WebSocketGateway({
   cors: {
@@ -28,10 +27,9 @@ export class EventsGateway {
   server: Server;
 
   constructor(
-    private readonly environmentService: EnvironmentService,
     private readonly archivistService: ArchivistService,
     private readonly repl: REPLService,
-    private readonly eventEmitter: EventEmitter2,
+    // private readonly eventEmitter: EventEmitter2,
   ) {}
 
   afterInit(server: Server) {
@@ -53,12 +51,12 @@ export class EventsGateway {
   }
 
   // EVENT HANDLER //
-
-  @OnEvent('emit')
-  async handleAddFacts(payload: any) {
-    this.logger.log('EMIT:', payload.type);
-    this.server.emit(payload.type, payload.payload);
-  }
+  // Moved to Aperture service
+  // @OnEvent('emit')
+  // async handleAddFacts(payload: any) {
+  //   this.logger.log('EMIT:', payload.type);
+  //   this.server.emit(payload.type, payload.payload);
+  // }
 
   // NOUS //
 
@@ -202,34 +200,6 @@ export class EventsGateway {
     return;
   }
 
-  @SubscribeMessage('user:deleteEntity')
-  async userDeleteEntity(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('DELETE ENTITY');
-    console.log(uid);
-    const result = await this.archivistService.deleteEntity(uid);
-    // if result is success
-    console.log('DELETE ENTITY RESULT', result);
-    const removedFactUids = await this.environmentService.unloadEntity(uid);
-    // console.log("Entity deleted");
-
-    this.server.emit('system:remFacts', { fact_uids: removedFactUids });
-    return uid;
-  }
-
-  @SubscribeMessage('user:deleteFact')
-  async userDeleteFact(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('DELETE FACT');
-    console.log(uid);
-
-    const result = await this.archivistService.deleteFact(uid);
-    //if result is success
-    console.log('DELETE FACT RESULT', result);
-    this.environmentService.removeFact(uid);
-    // console.log("Fact deleted");
-
-    this.server.emit('system:remFacts', { fact_uids: [uid] });
-    return uid;
-  }
 
   // @SubscribeMessage('user:unloadSubtypesCone')
   // async userRemoveEntitySubtypesRecursive(
@@ -282,79 +252,6 @@ export class EventsGateway {
   //   return uid;
   // }
 
-  @SubscribeMessage('user:unloadSubtypesCone')
-  async userRemoveEntitySubtypesRecursive(
-    @MessageBody('uid') uid: number,
-  ): Promise<number> {
-    console.log('REMOVE ENTITY SUBTYPES RECURSIVE');
-    console.log('UID:', uid);
-    console.log('>// REMOVE ENTITY DESCENDANTS');
-
-    try {
-      const env = await this.environmentService.retrieveEnvironment();
-      const facts = env.facts;
-      let factsToRemove: Fact[] = [];
-      let remainingFacts: Fact[] = [];
-
-      facts.forEach((fact: Fact) => {
-        if (/*fact.lh_object_uid === uid ||*/ fact.rh_object_uid === uid) {
-          factsToRemove.push(fact);
-        } else {
-          remainingFacts.push(fact);
-        }
-      });
-
-      console.log('Facts to remove:', factsToRemove.length);
-      console.log('Remaining facts:', remainingFacts.length);
-
-      let factUIDsToRemove: number[] = [];
-      let lhModelUIDsToRemove: Set<number> = new Set();
-      let rhModelUIDsToRemove: Set<number> = new Set();
-
-      factsToRemove.forEach((fact: Fact) => {
-        factUIDsToRemove.push(fact.fact_uid);
-        lhModelUIDsToRemove.add(fact.lh_object_uid);
-        rhModelUIDsToRemove.add(fact.rh_object_uid);
-      });
-
-      remainingFacts.forEach((fact: Fact) => {
-        lhModelUIDsToRemove.delete(fact.lh_object_uid);
-        lhModelUIDsToRemove.delete(fact.rh_object_uid);
-        rhModelUIDsToRemove.delete(fact.lh_object_uid);
-        rhModelUIDsToRemove.delete(fact.rh_object_uid);
-      });
-
-      const modelsToRemove = new Set([
-        ...lhModelUIDsToRemove,
-        ...rhModelUIDsToRemove,
-      ]);
-      console.log('Models to remove:', modelsToRemove.size);
-
-      await this.environmentService.removeFacts(factUIDsToRemove);
-      await this.environmentService.removeModels(Array.from(modelsToRemove));
-
-      // Uncomment if needed:
-      // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
-
-      const subtypingFacts = factsToRemove.filter(
-        (fact: Fact) =>
-          fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
-      );
-      console.log('SUBTYPING FACTS: ', subtypingFacts.length);
-
-      await Promise.all(
-        subtypingFacts.map(async (fact: Fact) => {
-          console.log('>>> RECURSE ON: ', fact.lh_object_uid);
-          await this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
-        }),
-      );
-
-      return uid;
-    } catch (error) {
-      console.error('Error in userRemoveEntitySubtypesRecursive:', error);
-      throw error;
-    }
-  }
 
   @SubscribeMessage('user:loadAllRelatedFacts')
   async userGetAllRelatedFacts(@MessageBody('uid') uid: number): Promise<any> {
