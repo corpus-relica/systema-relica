@@ -3,17 +3,11 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
 } from '@nestjs/websockets';
-import { from, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
 import { ArchivistService } from '../archivist/archivist.service';
+import { ModelService } from '../model/model.service';
 import { Logger } from '@nestjs/common';
-import { Fact } from '@relica/types';
-import { REPLService } from 'src/repl/repl.service';
-
-// import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @WebSocketGateway({
   cors: {
@@ -28,8 +22,7 @@ export class EventsGateway {
 
   constructor(
     private readonly archivistService: ArchivistService,
-    private readonly repl: REPLService,
-    // private readonly eventEmitter: EventEmitter2,
+    private readonly modelService: ModelService,
   ) {}
 
   afterInit(server: Server) {
@@ -50,214 +43,93 @@ export class EventsGateway {
     this.server.emit('clientLeft', { clientId: client.id });
   }
 
-  // EVENT HANDLER //
-  // Moved to Aperture service
-  // @OnEvent('emit')
-  // async handleAddFacts(payload: any) {
-  //   this.logger.log('EMIT:', payload.type);
-  //   this.server.emit(payload.type, payload.payload);
-  // }
+  // SEMANTIC MODEL OPERATIONS //
 
-  // NOUS //
-
-  @SubscribeMessage('nous:selectEntity')
-  async nouseSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
-    console.log('NOUS:SELECT ENTITY', uid);
-
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectEntity ${uid})`, resolve);
-    });
-    // this.server.emit('system:selectEntity', { uid: uid });
-
-    return result;
+  @SubscribeMessage('clarity.model/get')
+  async getModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET MODEL:', uid);
+    try {
+      const model = await this.modelService.retrieveModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving model:', error);
+      return { success: false, error: error.message };
+    }
   }
 
-  @SubscribeMessage('nous:loadEntity')
-  async nouseLoadEntity(@MessageBody('uid') uid: number): Promise<any> {
-    console.log('NOUS:LOAD ENTITY', uid);
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadEntity ${uid})`, resolve);
-    });
-    return result;
+  @SubscribeMessage('clarity.model/get-batch')
+  async getModels(@MessageBody('uids') uids: number[]): Promise<any> {
+    this.logger.log('GET MODELS:', uids);
+    try {
+      const models = await this.modelService.retrieveModels(uids);
+      return { success: true, data: models };
+    } catch (error) {
+      this.logger.error('Error retrieving models:', error);
+      return { success: false, error: error.message };
+    }
   }
 
-  // COMMAND //
-
-  // @SubscribeMessage('system:command')
-  // async systemCommand(@MessageBody('command') command: string): Promise<void> {
-  //   this.logger.log('SYSTEM:COMMAND');
-  //   const parsedCommand = this.dslParser.parse(command);
-  //   await this.vmExecutor.execute(parsedCommand);
-
-  //   // const newState = await this.stateStore.getState();
-  //   return;
-  // }
-
-  // CLIENT(knowledge-integrator) REPL
-  @SubscribeMessage('repl:eval')
-  async replEval(@MessageBody('command') command: string): Promise<string> {
-    this.logger.log('REPL:EVAL');
-    this.logger.log(command);
-
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(command, resolve);
-    });
-
-    console.log('REPL:EVAL RESULT', result);
-    return result;
+  @SubscribeMessage('clarity.kind/get')
+  async getKindModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET KIND MODEL:', uid);
+    try {
+      const model = await this.modelService.retrieveKindModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving kind model:', error);
+      return { success: false, error: error.message };
+    }
   }
 
-  // LEGACY //
-
-  @SubscribeMessage('user:selectEntity')
-  async userSelectEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectEntity ${uid})`, resolve);
-    });
-
-    return result;
+  @SubscribeMessage('clarity.individual/get')
+  async getIndividualModel(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET INDIVIDUAL MODEL:', uid);
+    try {
+      const model = await this.modelService.retrieveIndividualModel(uid);
+      return { success: true, data: model };
+    } catch (error) {
+      this.logger.error('Error retrieving individual model:', error);
+      return { success: false, error: error.message };
+    }
   }
 
-  @SubscribeMessage('user:selectFact')
-  async userSelectFact(@MessageBody('uid') uid: any): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectFact ${uid})`, resolve);
-    });
-
-    return result;
-  }
-
-  @SubscribeMessage('user:selectNone')
-  async userSelectNone(): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(selectNone)`, resolve);
-    });
-
-    return result;
-  }
-
-  @SubscribeMessage('user:loadSubtypesCone')
-  async userGetSubtypesCone(@MessageBody('uid') uid: any): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadSubtypesCone ${uid})`, resolve);
-    });
-
-    return result;
-  }
-
-  @SubscribeMessage('user:loadSpecializationHierarchy')
-  async userLoadSpecializationHierarchy(
-    @MessageBody('uid') uid: number,
+  @SubscribeMessage('clarity.model/update-definition')
+  async updateDefinition(
+    @MessageBody() data: { uid: number; definition: string }
   ): Promise<any> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadSpecializationHierarchy ${uid})`, resolve);
-    });
-
-    return result;
+    this.logger.log('UPDATE DEFINITION:', data);
+    try {
+      const result = await this.modelService.updateDefinition(data.uid, data.definition);
+      return { success: true, data: result };
+    } catch (error) {
+      this.logger.error('Error updating definition:', error);
+      return { success: false, error: error.message };
+    }
   }
 
-  @SubscribeMessage('user:loadEntity')
-  async userLoadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadEntity ${uid})`, resolve);
-    });
-    return result;
+  @SubscribeMessage('clarity.model/update-name')
+  async updateName(
+    @MessageBody() data: { uid: number; name: string }
+  ): Promise<any> {
+    this.logger.log('UPDATE NAME:', data);
+    try {
+      const result = await this.modelService.updateName(data.uid, data.name);
+      return { success: true, data: result };
+    } catch (error) {
+      this.logger.error('Error updating name:', error);
+      return { success: false, error: error.message };
+    }
   }
 
-  @SubscribeMessage('user:loadEntities')
-  async userLoadEntities(@MessageBody('uids') uids: number[]): Promise<any> {
-    const loadUidsStr = uids.join(' ');
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadEntities [${loadUidsStr}])`, resolve);
-    });
-    return result;
-  }
-
-  @SubscribeMessage('user:unloadEntity')
-  async userUnloadEntity(@MessageBody('uid') uid: number): Promise<number> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(unloadEntity ${uid})`, resolve);
-    });
-    return result;
-  }
-
-  @SubscribeMessage('user:unloadEntities')
-  async userUnloadEntities(
-    @MessageBody('uids') uids: number[],
-  ): Promise<number[]> {
-    const loadUidsStr = uids.join(' ');
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(unloadEntities [${loadUidsStr}])`, resolve);
-    });
-    return result;
-  }
-
-  @SubscribeMessage('user:clearEntities')
-  async userClearEntities(): Promise<void> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(clearEntities)`, resolve);
-    });
-    return;
-  }
-
-
-  // @SubscribeMessage('user:unloadSubtypesCone')
-  // async userRemoveEntitySubtypesRecursive(
-  //   @MessageBody('uid') uid: number,
-  // ): Promise<number> {
-  //   console.log('REMOVE ENTITY SUBTYPES RECURSIVE');
-  //   console.log(uid);
-  //   console.log('>// REMOVE ENTITY DESCENDANTS');
-  //   const env = await this.environmentService.retrieveEnvironment();
-  //   const facts = env.facts;
-  //   let factsToRemove: Fact[] = [];
-  //   let remainingFacts: Fact[] = [];
-  //   facts.forEach((fact: Fact) => {
-  //     if (/* fact.lh_object_uid === uid || */ fact.rh_object_uid === uid) {
-  //       factsToRemove.push(fact);
-  //     } else {
-  //       remainingFacts.push(fact);
-  //     }
-  //   });
-  //   let factUIDsToRemove: number[] = [];
-  //   let candidateModelUIDsToRemove: Set<number> = new Set();
-  //   factsToRemove.forEach((fact: Fact) => {
-  //     factUIDsToRemove.push(fact.fact_uid);
-  //     candidateModelUIDsToRemove.add(fact.lh_object_uid);
-  //     candidateModelUIDsToRemove.add(fact.rh_object_uid);
-  //   });
-  //   remainingFacts.forEach((fact: Fact) => {
-  //     if (candidateModelUIDsToRemove.has(fact.lh_object_uid)) {
-  //       candidateModelUIDsToRemove.delete(fact.lh_object_uid);
-  //     }
-  //     if (candidateModelUIDsToRemove.has(fact.rh_object_uid)) {
-  //       candidateModelUIDsToRemove.delete(fact.rh_object_uid);
-  //     }
-  //   });
-  //   this.environmentService.removeFacts(factUIDsToRemove);
-  //   // TODO: i don't think all the models needing to be removed are being removed
-  //   this.environmentService.removeModels(
-  //     Array.from(candidateModelUIDsToRemove),
-  //   );
-  //   // this.server.emit('system:unloadedFacts', { fact_uids: factUIDsToRemove });
-  //   const subtypingFacts = factsToRemove.filter(
-  //     (fact: Fact) => fact.rel_type_uid === 1146 && fact.rh_object_uid === uid,
-  //   );
-  //   console.log('SUBTYPING FACTS: ', subtypingFacts);
-  //   subtypingFacts.forEach((fact: Fact) => {
-  //     console.log('>>> RECURSE ON: ', fact.lh_object_uid);
-  //     this.userRemoveEntitySubtypesRecursive(fact.lh_object_uid);
-  //   });
-
-  //   return uid;
-  // }
-
-
-  @SubscribeMessage('user:loadAllRelatedFacts')
-  async userGetAllRelatedFacts(@MessageBody('uid') uid: number): Promise<any> {
-    const result = await new Promise<any>((resolve, reject) => {
-      this.repl.exec(`(loadAllRelatedFacts ${uid})`, resolve);
-    });
-    return result;
+  @SubscribeMessage('clarity.facts/get-by-entity')
+  async getFactsByEntity(@MessageBody('uid') uid: number): Promise<any> {
+    this.logger.log('GET FACTS BY ENTITY:', uid);
+    try {
+      const facts = await this.archivistService.getFactsByEntity(uid);
+      return { success: true, data: facts };
+    } catch (error) {
+      this.logger.error('Error retrieving facts:', error);
+      return { success: false, error: error.message };
+    }
   }
 }

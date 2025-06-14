@@ -1,23 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { EventsModule } from './events/events.module';
-
-
 import { ModelModule } from './model/model.module';
 import { ArchivistModule } from './archivist/archivist.module';
-
 import { ArtificialIntelligenceModule } from './artificialIntelligence/artificialIntelligence.module';
-
-import { REPLModule } from './repl/repl.module';
-
-import { StateModule } from './state/state.module';
-import { AppState } from './state/appState.entity';
-
 import { ModellingModule } from './modelling/modelling.module';
 import { ModellingSession } from './modelling/modellingSession.entity';
 
@@ -35,7 +26,6 @@ import { ModellingSession } from './modelling/modellingSession.entity';
       password: process.env.POSTGRES_PASSWORD || 'password',
       database: process.env.POSTGRES_DB || 'postgres',
       entities: [
-        AppState,
         ModellingSession,
       ],
       synchronize: true,
@@ -45,8 +35,6 @@ import { ModellingSession } from './modelling/modellingSession.entity';
     ModelModule,
     ArchivistModule,
     ArtificialIntelligenceModule,
-    REPLModule,
-    StateModule,
     ModellingModule,
   ],
   controllers: [AppController],
