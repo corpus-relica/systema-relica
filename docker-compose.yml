@@ -153,7 +153,7 @@ services:
       - PRISM_SEED_XLS_DIR=/usr/src/app/seed_xls
       - PRISM_CSV_OUTPUT_DIR=/usr/src/app/seed_csv
       - PRISM_NEO4J_IMPORT_DIR=/var/lib/neo4j/import
-    command: ["yarn", "start:dev"]
+    command: ["sh", "-c", "cd packages/prism && yarn start:dev"]
     volumes:
       - ./packages/prism:/usr/src/app/packages/prism
       - ./packages/constants:/usr/src/app/packages/constants

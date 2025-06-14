@@ -159,7 +159,7 @@ export const setupMachine = createMachine({
                 statusMessage: '...finished building entity-facts cache.',
                 cacheResults: ({ context }) => ({
                   ...context.cacheResults,
-                  facts: 'success',
+                  facts: 'success' as const,
                 }),
               }),
             },
@@ -169,7 +169,7 @@ export const setupMachine = createMachine({
                 errorMessage: ({ event }) => event.errorMessage || 'Facts cache build failed',
                 cacheResults: ({ context }) => ({
                   ...context.cacheResults,
-                  facts: 'failed',
+                  facts: 'failed' as const,
                 }),
               }),
             },
@@ -187,7 +187,7 @@ export const setupMachine = createMachine({
                 statusMessage: '...finished building entity-lineage cache.',
                 cacheResults: ({ context }) => ({
                   ...context.cacheResults,
-                  lineage: 'success',
+                  lineage: 'success' as const,
                 }),
               }),
             },
@@ -197,7 +197,7 @@ export const setupMachine = createMachine({
                 errorMessage: ({ event }) => event.errorMessage || 'Lineage cache build failed',
                 cacheResults: ({ context }) => ({
                   ...context.cacheResults,
-                  lineage: 'failed',
+                  lineage: 'failed' as const,
                 }),
               }),
             },
@@ -215,7 +215,7 @@ export const setupMachine = createMachine({
                 statusMessage: '...finished building entity-subtypes cache.',
                 cacheResults: ({ context }) => ({
                   ...context.cacheResults,
-                  subtypes: 'success',
+                  subtypes: 'success' as const,
                 }),
               }),
             },
@@ -225,7 +225,7 @@ export const setupMachine = createMachine({
                 errorMessage: ({ event }) => event.errorMessage || 'Subtypes cache build failed',
                 cacheResults: ({ context }) => ({
                   ...context.cacheResults,
-                  subtypes: 'failed',
+                  subtypes: 'failed' as const,
                 }),
               }),
             },

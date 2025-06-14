@@ -19,7 +19,7 @@ import { HealthService } from '../health/health.service';
   cors: true,
   transports: ['websocket'],
 })
-export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
+export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
