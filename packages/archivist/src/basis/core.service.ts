@@ -1,251 +1,381 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GraphService } from '../graph/graph.service';
-import { TraversalConfig, TraversalResult, FactSetResult, SetOperation } from './types';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class BasisCoreService {
   private readonly logger = new Logger(BasisCoreService.name);
 
-  constructor(private readonly graphService: GraphService) {}
+  constructor(
+    private readonly graphService: GraphService,
+    private readonly cacheService: CacheService
+  ) {}
 
-  async getRelations(
-    uid: number,
-    config: TraversalConfig = {}
-  ): Promise<any[]> {
-    const {
-      direction = 'outgoing',
-      edgeType,
-      includeSubtypes = false,
-      filterFn
-    } = config;
-
-    this.logger.debug(`Getting relations for UID ${uid} with direction ${direction}`);
-
-    let query = '';
-    let params: any = { uid };
-
-    switch (direction) {
-      case 'outgoing':
-        query = `
-          MATCH (n {fact_uid: $uid})-[r]->(m)
-          ${this._buildEdgeTypeFilter('r', edgeType, includeSubtypes)}
-          RETURN n, r, m, r.fact_uid as fact_uid
-        `;
-        break;
-      case 'incoming':
-        query = `
-          MATCH (m)-[r]->(n {fact_uid: $uid})
-          ${this._buildEdgeTypeFilter('r', edgeType, includeSubtypes)}
-          RETURN n, r, m, r.fact_uid as fact_uid
-        `;
-        break;
-      case 'both':
-        query = `
-          MATCH (n {fact_uid: $uid})-[r]-(m)
-          ${this._buildEdgeTypeFilter('r', edgeType, includeSubtypes)}
-          RETURN n, r, m, r.fact_uid as fact_uid
-        `;
-        break;
-    }
-
-    if (edgeType) {
-      if (Array.isArray(edgeType)) {
-        params.edgeTypes = edgeType;
-      } else {
-        params.edgeType = edgeType;
-      }
-    }
-
-    const result = await this.graphService.read(query, params);
-    let facts = result.records.map(record => ({
-      fact_uid: record.get('fact_uid'),
-      lh_object_uid: record.get('n').properties.fact_uid,
-      rh_object_uid: record.get('m').properties.fact_uid,
-      rel_type_uid: record.get('r').type,
-      // Additional properties from the relationship
-      ...record.get('r').properties
-    }));
-
-    if (filterFn) {
-      facts = facts.filter(filterFn);
-    }
-
-    return facts;
+  // Core queries - direct translation from Clojure
+  private async relatedFacts(startUid: number): Promise<any[]> {
+    const query = `
+      MATCH (start:Entity)--(r)-->(end:Entity)
+      WHERE start.uid = $start_uid
+      RETURN r
+    `;
+    const result = await this.graphService.read(query, { start_uid: startUid });
+    return this.graphService.transformResults(result);
   }
 
-  async getRelationsRecursive(
-    uid: number,
-    config: TraversalConfig = {}
-  ): Promise<TraversalResult> {
-    const {
-      maxDepth = 10,
-      direction = 'outgoing',
-      filterFn
-    } = config;
+  private async relatedFactsIn(startUid: number, relTypeUids: number[]): Promise<any[]> {
+    const query = `
+      MATCH (start:Entity)--(r)-->(end:Entity)
+      WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
+      RETURN r
+    `;
+    const result = await this.graphService.read(query, { start_uid: startUid, rel_type_uids: relTypeUids });
+    return this.graphService.transformResults(result);
+  }
 
-    const visited = new Set<number>();
-    const allFacts: any[] = [];
-    const queue: Array<{ uid: number; depth: number; path: number[] }> = [
-      { uid, depth: 0, path: [uid] }
-    ];
+  private async relatedFactsReverse(startUid: number): Promise<any[]> {
+    const query = `
+      MATCH (start:Entity)<--(r)--(end:Entity)
+      WHERE start.uid = $start_uid
+      RETURN r
+    `;
+    const result = await this.graphService.read(query, { start_uid: startUid });
+    return this.graphService.transformResults(result);
+  }
 
-    while (queue.length > 0) {
-      const { uid: currentUid, depth, path } = queue.shift()!;
+  private async relatedFactsReverseIn(startUid: number, relTypeUids: number[]): Promise<any[]> {
+    const query = `
+      MATCH (start:Entity)<--(r)--(end:Entity)
+      WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
+      RETURN r
+    `;
+    const result = await this.graphService.read(query, { start_uid: startUid, rel_type_uids: relTypeUids });
+    return this.graphService.transformResults(result);
+  }
 
-      if (depth >= maxDepth || visited.has(currentUid)) {
-        continue;
+  /**
+   * Expand a type or collection of types to include subtypes
+   */
+  async expandTypes(edgeTypes: number | number[]): Promise<number[]> {
+    try {
+      const types = Array.isArray(edgeTypes) ? edgeTypes : [edgeTypes];
+      const allTypes = new Set<number>();
+      
+      for (const type of types) {
+        const descendants = await this.cacheService.allDescendantsOf(type);
+        allTypes.add(type);
+        descendants.forEach(d => allTypes.add(d));
+      }
+      
+      return Array.from(allTypes);
+    } catch (error) {
+      return Array.isArray(edgeTypes) ? edgeTypes : [edgeTypes];
+    }
+  }
+
+  /**
+   * Deduplicate facts by fact_uid
+   */
+  private dedupeFacts(facts: any[]): any[] {
+    const factMap = new Map();
+    facts.forEach(fact => {
+      factMap.set(fact.fact_uid, fact);
+    });
+    return Array.from(factMap.values());
+  }
+
+  /**
+   * Get direct relations matching params.
+   * Returns sequence of facts.
+   */
+  async getRelations(uid: number, config: {
+    direction?: 'outgoing' | 'incoming' | 'both';
+    edgeType?: number | number[];
+    includeSubtypes?: boolean;
+  } = {}): Promise<any[]> {
+    try {
+      const {
+        direction = 'both',
+        edgeType,
+        includeSubtypes = true
+      } = config;
+
+      let relTypes: number[] | undefined;
+      if (edgeType) {
+        relTypes = includeSubtypes 
+          ? await this.expandTypes(edgeType)
+          : (Array.isArray(edgeType) ? edgeType : [edgeType]);
       }
 
-      visited.add(currentUid);
+      let results: any[];
+      
+      switch (direction) {
+        case 'outgoing':
+          results = relTypes 
+            ? await this.relatedFactsIn(uid, relTypes)
+            : await this.relatedFacts(uid);
+          break;
+        case 'incoming':
+          results = relTypes
+            ? await this.relatedFactsReverseIn(uid, relTypes)
+            : await this.relatedFactsReverse(uid);
+          break;
+        case 'both':
+          const outgoing = relTypes 
+            ? await this.relatedFactsIn(uid, relTypes)
+            : await this.relatedFacts(uid);
+          const incoming = relTypes
+            ? await this.relatedFactsReverseIn(uid, relTypes)
+            : await this.relatedFactsReverse(uid);
+          results = [...outgoing, ...incoming];
+          break;
+        default:
+          results = [];
+      }
 
-      const facts = await this.getRelations(currentUid, {
-        ...config,
-        filterFn: undefined // Apply filter at the end
-      });
+      return results;
+    } catch (error) {
+      this.logger.error(`Error in getRelations: ${error.message}`);
+      return [];
+    }
+  }
 
-      for (const fact of facts) {
-        const nextUid = direction === 'incoming' 
-          ? fact.lh_object_uid 
-          : fact.rh_object_uid;
+  /**
+   * Recursive relation traversal with cycle detection.
+   * Returns sequence of facts.
+   */
+  async getRelationsRecursive(uid: number, config: {
+    direction?: 'outgoing' | 'incoming' | 'both';
+    edgeType?: number | number[];
+    includeSubtypes?: boolean;
+    maxDepth?: number;
+  } = {}): Promise<any[]> {
+    try {
+      const {
+        direction = 'both',
+        edgeType,
+        includeSubtypes = true,
+        maxDepth = 1
+      } = config;
 
-        if (!visited.has(nextUid)) {
-          queue.push({
-            uid: nextUid,
-            depth: depth + 1,
-            path: [...path, nextUid]
-          });
+      const visited = new Set<number>();
+      const allFacts: any[] = [];
+
+      const getRelated = async (currentUid: number): Promise<any[]> => {
+        return this.getRelations(currentUid, {
+          direction,
+          edgeType,
+          includeSubtypes
+        });
+      };
+
+      const traverse = async (currentUid: number, currentDepth: number): Promise<void> => {
+        if (currentDepth >= maxDepth || visited.has(currentUid)) {
+          return;
         }
 
-        allFacts.push({ ...fact, depth, path });
-      }
-    }
+        visited.add(currentUid);
+        const relations = await getRelated(currentUid);
+        allFacts.push(...relations);
 
-    let filteredFacts = allFacts;
-    if (filterFn) {
-      filteredFacts = allFacts.filter(filterFn);
-    }
+        const nextUids = relations.map(fact => {
+          switch (direction) {
+            case 'outgoing':
+              return fact.rh_object_uid;
+            case 'incoming':
+              return fact.lh_object_uid;
+            case 'both':
+              return currentUid === fact.lh_object_uid 
+                ? fact.rh_object_uid 
+                : fact.lh_object_uid;
+            default:
+              return null;
+          }
+        }).filter(uid => uid !== null);
 
-    return {
-      facts: filteredFacts,
-      depth: Math.max(...allFacts.map(f => f.depth)),
-      path: []
-    };
-  }
-
-  async expandTypes(typeUids: number[]): Promise<number[]> {
-    if (typeUids.length === 0) return [];
-
-    const query = `
-      MATCH (subtype)-[:specialization]->(supertype)
-      WHERE supertype.fact_uid IN $typeUids
-      RETURN DISTINCT subtype.fact_uid as subtype_uid
-    `;
-
-    const result = await this.graphService.read(query, { typeUids });
-    const subtypes = result.records.map(record => record.get('subtype_uid'));
-
-    return [...typeUids, ...subtypes];
-  }
-
-  factSetOperation(
-    factSets: any[][],
-    operation: SetOperation,
-    keyFn: (fact: any) => string = (fact) => fact.fact_uid?.toString()
-  ): FactSetResult {
-    if (factSets.length === 0) {
-      return {
-        facts: [],
-        operation_applied: operation,
-        source_sets: 0
+        // Continue recursion
+        for (const nextUid of nextUids) {
+          await traverse(nextUid, currentDepth + 1);
+        }
       };
+
+      // Start traversal
+      await traverse(uid, 0);
+
+      // Return deduplicated results
+      return this.dedupeFacts(allFacts);
+    } catch (error) {
+      this.logger.error(`Error in getRelationsRecursive: ${error.message}`);
+      return [];
     }
-
-    if (factSets.length === 1) {
-      return {
-        facts: factSets[0],
-        operation_applied: operation,
-        source_sets: 1
-      };
-    }
-
-    let result = factSets[0];
-
-    for (let i = 1; i < factSets.length; i++) {
-      const currentSet = factSets[i];
-
-      switch (operation) {
-        case 'union':
-          result = this._unionFacts(result, currentSet, keyFn);
-          break;
-        case 'intersection':
-          result = this._intersectionFacts(result, currentSet, keyFn);
-          break;
-        case 'difference':
-          result = this._differenceFacts(result, currentSet, keyFn);
-          break;
-      }
-    }
-
-    return {
-      facts: result,
-      operation_applied: operation,
-      source_sets: factSets.length
-    };
   }
 
-  private _buildEdgeTypeFilter(
-    relationVar: string,
-    edgeType?: number | number[],
-    includeSubtypes?: boolean
-  ): string {
-    if (!edgeType) return '';
+  /**
+   * Get direct relations matching params and filter function.
+   * Returns sequence of filtered facts.
+   */
+  async getRelationsFiltered(uid: number, config: {
+    direction?: 'outgoing' | 'incoming' | 'both';
+    edgeType?: number | number[];
+    includeSubtypes?: boolean;
+    filterFn: (fact: any) => boolean;
+  }): Promise<any[]> {
+    try {
+      const { filterFn, ...relationsConfig } = config;
+      const relations = await this.getRelations(uid, relationsConfig);
+      return relations.filter(filterFn);
+    } catch (error) {
+      this.logger.error(`Error in getRelationsFiltered: ${error.message}`);
+      return [];
+    }
+  }
 
-    if (Array.isArray(edgeType)) {
-      return `WHERE ${relationVar}.rel_type_uid IN $edgeTypes`;
+  /**
+   * Recursive filtered relation traversal with cycle detection.
+   * Returns sequence of filtered facts.
+   */
+  async getRelationsFilteredRecursive(uid: number, config: {
+    direction?: 'outgoing' | 'incoming' | 'both';
+    edgeType?: number | number[];
+    includeSubtypes?: boolean;
+    maxDepth?: number;
+    filterFns: ((fact: any) => boolean) | ((fact: any) => boolean)[];
+  }): Promise<any[]> {
+    try {
+      const {
+        direction = 'both',
+        edgeType,
+        includeSubtypes = true,
+        maxDepth = 10,
+        filterFns
+      } = config;
+
+      const visited = new Set<number>();
+      const allFacts: any[] = [];
+      const fnsArray = Array.isArray(filterFns) ? filterFns : [filterFns];
+      let filterCount = 0;
+
+      const getRelated = async (currentUid: number): Promise<any[]> => {
+        const relations = await this.getRelations(currentUid, {
+          direction,
+          edgeType,
+          includeSubtypes
+        });
+
+        const filtered = relations.filter(fact => {
+          const filterFn = fnsArray[filterCount % fnsArray.length];
+          const result = filterFn(fact);
+          if (result) {
+            filterCount++;
+          }
+          return result;
+        });
+
+        return filtered;
+      };
+
+      const traverse = async (currentUid: number, currentDepth: number): Promise<void> => {
+        if (currentDepth >= maxDepth || visited.has(currentUid)) {
+          return;
+        }
+
+        visited.add(currentUid);
+        const relations = await getRelated(currentUid);
+        allFacts.push(...relations);
+
+        const nextUids = relations.map(fact => {
+          switch (direction) {
+            case 'outgoing':
+              return fact.rh_object_uid;
+            case 'incoming':
+              return fact.lh_object_uid;
+            case 'both':
+              return currentUid === fact.lh_object_uid 
+                ? fact.rh_object_uid 
+                : fact.lh_object_uid;
+            default:
+              return null;
+          }
+        }).filter(uid => uid !== null);
+
+        // Continue recursion
+        for (const nextUid of nextUids) {
+          await traverse(nextUid, currentDepth + 1);
+        }
+      };
+
+      // Start traversal
+      await traverse(uid, 0);
+
+      // Return deduplicated results
+      return this.dedupeFacts(allFacts);
+    } catch (error) {
+      this.logger.error(`Error in getRelationsFilteredRecursive: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Apply set operation to two collections of facts.
+   */
+  binaryFactSetOp(
+    op: 'union' | 'intersection' | 'difference',
+    facts1: any[],
+    facts2: any[],
+    key1: string = 'fact_uid',
+    key2: string = 'fact_uid'
+  ): Set<any> {
+    const set1 = new Set(facts1.map(fact => fact[key1]));
+    const set2 = new Set(facts2.map(fact => fact[key2]));
+
+    switch (op) {
+      case 'union':
+        return new Set([...set1, ...set2]);
+      case 'intersection':
+        return new Set([...set1].filter(x => set2.has(x)));
+      case 'difference':
+        return new Set([...set1].filter(x => !set2.has(x)));
+      default:
+        return new Set();
+    }
+  }
+
+  /**
+   * Apply sequence of set operations to multiple collections of facts.
+   */
+  factSetOp(
+    ops: string | string[],
+    factColls: any[][],
+    keys: string | string[] | [string, string][]
+  ): Set<any> {
+    // Normalize inputs to sequences
+    const opsSeq = Array.isArray(ops) ? ops : Array(factColls.length - 1).fill(ops);
+    
+    let keysSeq: [string, string][];
+    if (typeof keys === 'string') {
+      keysSeq = Array(factColls.length - 1).fill([keys, keys]);
+    } else if (Array.isArray(keys) && typeof keys[0] === 'string') {
+      // Make pairs cycling through the array
+      const keyPairs: [string, string][] = [];
+      for (let i = 0; i < factColls.length - 1; i++) {
+        const key1 = keys[i % keys.length] as string;
+        const key2 = keys[(i + 1) % keys.length] as string;
+        keyPairs.push([key1, key2]);
+      }
+      keysSeq = keyPairs;
     } else {
-      const baseFilter = `WHERE ${relationVar}.rel_type_uid = $edgeType`;
-      
-      if (includeSubtypes) {
-        return `${baseFilter} OR ${relationVar}.rel_type_uid IN [/* subtypes of edgeType */]`;
-      }
-      
-      return baseFilter;
-    }
-  }
-
-  private _unionFacts(
-    set1: any[],
-    set2: any[],
-    keyFn: (fact: any) => string
-  ): any[] {
-    const keySet = new Set(set1.map(keyFn));
-    const result = [...set1];
-
-    for (const fact of set2) {
-      if (!keySet.has(keyFn(fact))) {
-        result.push(fact);
-        keySet.add(keyFn(fact));
-      }
+      keysSeq = keys as [string, string][];
     }
 
-    return result;
-  }
-
-  private _intersectionFacts(
-    set1: any[],
-    set2: any[],
-    keyFn: (fact: any) => string
-  ): any[] {
-    const keySet2 = new Set(set2.map(keyFn));
-    return set1.filter(fact => keySet2.has(keyFn(fact)));
-  }
-
-  private _differenceFacts(
-    set1: any[],
-    set2: any[],
-    keyFn: (fact: any) => string
-  ): any[] {
-    const keySet2 = new Set(set2.map(keyFn));
-    return set1.filter(fact => !keySet2.has(keyFn(fact)));
+    // Apply operations sequentially
+    const [firstColl, ...restColls] = factColls;
+    
+    return restColls.reduce((acc, coll, index) => {
+      const op = opsSeq[index % opsSeq.length] as 'union' | 'intersection' | 'difference';
+      const [key1, key2] = keysSeq[index % keysSeq.length];
+      
+      // Convert Set back to array for binaryFactSetOp, then back to Set
+      const accArray = Array.from(acc).map(val => ({ [key1]: val }));
+      return this.binaryFactSetOp(op, accArray, coll, key1, key2);
+    }, new Set(firstColl.map(fact => fact[typeof keys === 'string' ? keys : 'fact_uid'])));
   }
 }
