@@ -95,11 +95,15 @@ export class EventsGateway {
 
   @SubscribeMessage('clarity.model/update-definition')
   async updateDefinition(
-    @MessageBody() data: { uid: number; definition: string }
+    @MessageBody() data: { uid: number; partial_definition: string; full_definition: string }
   ): Promise<any> {
     this.logger.log('UPDATE DEFINITION:', data);
     try {
-      const result = await this.modelService.updateDefinition(data.uid, data.definition);
+      const result = await this.modelService.updateDefinition(
+        data.uid, 
+        data.partial_definition, 
+        data.full_definition
+      );
       return { success: true, data: result };
     } catch (error) {
       this.logger.error('Error updating definition:', error);
@@ -121,11 +125,29 @@ export class EventsGateway {
     }
   }
 
+  @SubscribeMessage('clarity.model/update-collection')
+  async updateCollection(
+    @MessageBody() data: { fact_uid: number; collection_uid: number; collection_name: string }
+  ): Promise<any> {
+    this.logger.log('UPDATE COLLECTION:', data);
+    try {
+      const result = await this.modelService.updateCollection(
+        data.fact_uid,
+        data.collection_uid,
+        data.collection_name
+      );
+      return { success: true, data: result };
+    } catch (error) {
+      this.logger.error('Error updating collection:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   @SubscribeMessage('clarity.facts/get-by-entity')
   async getFactsByEntity(@MessageBody('uid') uid: number): Promise<any> {
     this.logger.log('GET FACTS BY ENTITY:', uid);
     try {
-      const facts = await this.archivistService.getFactsByEntity(uid);
+      const facts = await this.archivistService.retrieveAllFacts(uid);
       return { success: true, data: facts };
     } catch (error) {
       this.logger.error('Error retrieving facts:', error);
