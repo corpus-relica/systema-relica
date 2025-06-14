@@ -84,25 +84,25 @@ services:
     networks:
       - rlc-net
 
-  clarity-core:
+  clarity:
     image: node:14
-    container_name: clarity-core
+    container_name: clarity
     working_dir: /usr/src/app
     ports:
       - "3001:3001"
     volumes:
-      - ./packages/clarity-core:/usr/src/app
+      - ./packages/clarity:/usr/src/app
       - /usr/src/app/node_modules
     restart: always
     env_file:
-      - ./packages/clarity-core/.env
+      - ./packages/clarity/.env
     command: sh -c "npm install && npx tsc --outDir dist && npm start"
     depends_on:
       - archivist
     networks:
       rlc-net:
         aliases:
-          - clarity-core
+          - clarity
 
 networks:
   rlc-net:
