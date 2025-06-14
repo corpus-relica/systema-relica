@@ -7,7 +7,7 @@ COPY package.json .
 COPY yarn.lock .
 COPY packages/constants ./packages/constants
 COPY packages/types ./packages/types
-COPY packages/clarity-core ./packages/clarity-core
+COPY packages/clarity ./packages/clarity
 
 RUN yarn install --pure-lockfile --non-interactive
 
@@ -17,7 +17,7 @@ RUN yarn build
 WORKDIR /usr/src/app/packages/types
 RUN yarn build
 
-WORKDIR /usr/src/app/packages/clarity-core
+WORKDIR /usr/src/app/packages/clarity
 RUN yarn build
 
 # --------------------------------------
@@ -35,12 +35,12 @@ COPY --from=build /usr/src/app/packages/constants/dist /usr/src/app/packages/con
 COPY --from=build /usr/src/app/packages/types/package.json /usr/src/app/packages/types/package.json
 COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/dist
 
-COPY packages/clarity-core /usr/src/app/packages/clarity-core
+COPY packages/clarity /usr/src/app/packages/clarity
 
 ENV NODE_ENV development
 
 RUN yarn install --pure-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages/clarity-core
+WORKDIR /usr/src/app/packages/clarity
 
 CMD ["yarn", "start:dev"]
