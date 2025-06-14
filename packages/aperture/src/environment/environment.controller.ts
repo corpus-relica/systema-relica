@@ -1,0 +1,1 @@
+// This file is intentionally empty - Aperture uses WebSocket-only communication
