@@ -35,9 +35,6 @@ import { SubmissionController } from './submission/submission.controller';
 import { SubmissionService } from './submission/submission.service';
 import { UIDController } from './uid/uid.controller';
 import { UIDService } from './uid/uid.service';
-import { RawFactIngestionService } from './raw-fact-ingestion/raw-fact-ingestion.service';
-import { XLSService } from './xls/xls.service';
-import { FileService } from './file/file.service';
 import { KindController } from './kind/kind.controller';
 import { KindService } from './kind/kind.service';
 import { KindsController } from './kinds/kinds.controller';
@@ -49,6 +46,7 @@ import { QueryController } from './query/query.controller';
 import { QueryService } from './query/query.service';
 import { GellishToCypherConverter } from './query/GellishToCypherConverter';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BasisModule } from './basis/basis.module';
 
 @Module({
   imports: [
@@ -81,6 +79,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       synchronize: true,
     }),
     TransactionModule,
+    BasisModule,
   ],
   controllers: [
     AppController,
@@ -118,9 +117,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ValidationService,
     SubmissionService,
     UIDService,
-    RawFactIngestionService,
-    XLSService,
-    FileService,
     KindService,
     KindsService,
     AspectService,
