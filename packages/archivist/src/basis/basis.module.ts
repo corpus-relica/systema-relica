@@ -5,6 +5,7 @@ import { BasisLineageService } from './lineage.service';
 import { BasisRelationService } from './relation.service';
 import { GraphService } from '../graph/graph.service';
 import { CacheService } from '../cache/cache.service';
+import { LinearizationService } from '../linearization/linearization.service';
 // Note: GraphService and CacheService are imported directly as services
 
 @Module({
@@ -16,6 +17,7 @@ import { CacheService } from '../cache/cache.service';
     BasisRelationService,
     GraphService,
     CacheService,
+    LinearizationService,
   ],
   exports: [
     BasisCoreService,
