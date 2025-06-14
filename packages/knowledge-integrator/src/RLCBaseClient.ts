@@ -16,10 +16,13 @@ import {
   SUBMIT_BINARY_FACT_ENDPOINT,
 } from "@relica/constants";
 import { Fact } from "./types";
+import { getAuthToken } from "./authProvider";
+
+console.log('Creating ArchivistDataProvider axios instance...');
+const apiUrl = import.meta.env.VITE_RELICA_DB_API_URL || 'http://localhost:3000';
 
 console.log(
-  "connectins RLC BASE CLIENT ",
-  import.meta.env.VITE_RELICA_DB_API_URL,
+  "connections RLC BASE CLIENT ", apiUrl
 );
 
 const axiosInstance = axios.create({

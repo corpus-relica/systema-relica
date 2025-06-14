@@ -27,7 +27,7 @@ import {
   CLASSIFICATION_FACT_ENDPOINT,
 } from './constants';
 
-const URL = 'http://archivist:3000'; //process.env.RELICA_NEO4J_URL;
+const URL = process.env.ARCHIVIST_URL || 'http://localhost:3000';
 
 @Injectable()
 export class ArchivistService {

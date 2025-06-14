@@ -31,15 +31,16 @@ import { ModellingSession } from './modelling/modellingSession.entity';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['../../.env', '../../.env.local'],
     }),
     EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.RELICA_POSTGRES_HOST,
-      port: parseInt(process.env.RELICA_POSTGRES_PORT),
-      username: process.env.RELICA_POSTGRES_USER,
-      password: process.env.RELICA_POSTGRES_PASSWORD,
-      database: process.env.RELICA_POSTGRES_DB_NAME,
+      host: process.env.POSTGRES_HOST || 'localhost',
+      port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
+      username: process.env.POSTGRES_USER || 'postgres',
+      password: process.env.POSTGRES_PASSWORD || 'password',
+      database: process.env.POSTGRES_DB || 'postgres',
       entities: [
         EnvFact,
         EnvModel,
@@ -47,6 +48,8 @@ import { ModellingSession } from './modelling/modellingSession.entity';
         AppState,
         ModellingSession,
       ],
+      synchronize: true,
+      dropSchema: false,
     }),
     EventsModule,
     EnvironmentModule,

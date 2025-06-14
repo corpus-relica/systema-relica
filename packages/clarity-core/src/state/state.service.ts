@@ -22,7 +22,19 @@ export class StateService {
     const state = await this.modelSessionRepository.find({
       where: { uid: 1 },
     });
-    this.state = state[0].state;
+    
+    if (state.length > 0) {
+      this.state = state[0].state;
+    } else {
+      // Create default state if none exists
+      const defaultState = { mainstate: State.REVIEW };
+      const newAppState = this.modelSessionRepository.create({
+        uid: 1,
+        state: defaultState,
+      });
+      await this.modelSessionRepository.save(newAppState);
+      this.state = defaultState;
+    }
 
     this.eventEmitter.emit('emit', {
       type: 'system:stateInitialized',
