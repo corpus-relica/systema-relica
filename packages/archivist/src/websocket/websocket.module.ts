@@ -9,7 +9,6 @@ import { ConceptHandlers } from './handlers/concept.handlers';
 import { DefinitionHandlers } from './handlers/definition.handlers';
 import { EntityRetrievalHandlers } from './handlers/entity-retrieval.handlers';
 import { KindHandlers } from './handlers/kind.handlers';
-import { AspectHandlers } from './handlers/aspect.handlers';
 import { SubmissionHandlers } from './handlers/submission.handlers';
 import { TransactionHandlers } from './handlers/transaction.handlers';
 import { UIDHandlers } from './handlers/uid.handlers';
@@ -51,7 +50,6 @@ import { TransactionService } from '../transaction/transaction.service';
     DefinitionHandlers,
     EntityRetrievalHandlers,
     KindHandlers,
-    AspectHandlers,
     SubmissionHandlers,
     TransactionHandlers,
     UIDHandlers,

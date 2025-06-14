@@ -28,7 +28,7 @@ export class BasisLineageService {
       edgeType: 1146,
       maxDepth
     });
-    return result.facts;
+    return result;
   }
 
   /**

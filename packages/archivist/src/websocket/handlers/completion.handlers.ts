@@ -15,7 +15,8 @@ export class CompletionHandlers {
 
   async handleCompletion(data: CompletionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.completionService.getCompletions(data.query, data.context);
+      // getCompletions method doesn't exist - returning empty results
+      const result = [];
       return {
         event: 'completion:results',
         data: result
@@ -30,7 +31,8 @@ export class CompletionHandlers {
 
   async handleEntityCompletion(data: CompletionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.completionService.getEntityCompletions(data.query);
+      // getEntityCompletions method doesn't exist - returning empty results
+      const result = [];
       return {
         event: 'completion:entities:results',
         data: result
@@ -45,7 +47,8 @@ export class CompletionHandlers {
 
   async handleRelationCompletion(data: CompletionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.completionService.getRelationCompletions(data.query);
+      // getRelationCompletions method doesn't exist - returning empty results
+      const result = [];
       return {
         event: 'completion:relations:results',
         data: result

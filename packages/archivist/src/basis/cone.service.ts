@@ -28,7 +28,7 @@ export class BasisConeService {
       edgeType: 1146,
       maxDepth
     });
-    return result.facts;
+    return result;
   }
 
   /**

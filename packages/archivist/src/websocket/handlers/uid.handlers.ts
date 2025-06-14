@@ -15,7 +15,7 @@ export class UIDHandlers {
 
   async handleUIDGenerate(data: UIDMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.uidService.generateUID(data.type);
+      const result = this.uidService.reserveUID(1);
       return {
         event: 'uid:generated',
         data: result
@@ -30,7 +30,7 @@ export class UIDHandlers {
 
   async handleUIDBatch(data: UIDMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.uidService.generateBatchUIDs(data.count || 1, data.type);
+      const result = this.uidService.reserveUID(data.count || 1);
       return {
         event: 'uid:batch:generated',
         data: result
@@ -45,7 +45,7 @@ export class UIDHandlers {
 
   async handleUIDReserve(data: UIDMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.uidService.reserveUIDRange(data.count || 1);
+      const result = this.uidService.reserveUID(data.count || 1);
       return {
         event: 'uid:range:reserved',
         data: result

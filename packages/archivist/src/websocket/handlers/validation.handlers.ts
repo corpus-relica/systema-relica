@@ -14,7 +14,7 @@ export class ValidationHandlers {
 
   async handleValidation(data: ValidationMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.validationService.validateFact(data.fact);
+      const result = await this.validationService.simpleValidateBinaryFact(data.fact);
       return {
         event: 'validation:result',
         data: result
@@ -30,7 +30,7 @@ export class ValidationHandlers {
   async handleCollectionValidation(data: { facts: ValidationMessage['fact'][] }, client: Socket): Promise<WsResponse> {
     try {
       const results = await Promise.all(
-        data.facts.map(fact => this.validationService.validateFact(fact))
+        data.facts.map(fact => this.validationService.simpleValidateBinaryFact(fact))
       );
       return {
         event: 'validation:collection:result',

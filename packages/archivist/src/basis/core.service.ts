@@ -18,8 +18,8 @@ export class BasisCoreService {
       WHERE start.uid = $start_uid
       RETURN r
     `;
-    const result = await this.graphService.read(query, { start_uid: startUid });
-    return this.graphService.transformResults(result);
+    const result = await this.graphService.execQuery(query, { start_uid: startUid });
+    return result;
   }
 
   private async relatedFactsIn(startUid: number, relTypeUids: number[]): Promise<any[]> {
@@ -28,8 +28,8 @@ export class BasisCoreService {
       WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
       RETURN r
     `;
-    const result = await this.graphService.read(query, { start_uid: startUid, rel_type_uids: relTypeUids });
-    return this.graphService.transformResults(result);
+    const result = await this.graphService.execQuery(query, { start_uid: startUid, rel_type_uids: relTypeUids });
+    return result;
   }
 
   private async relatedFactsReverse(startUid: number): Promise<any[]> {
@@ -38,8 +38,8 @@ export class BasisCoreService {
       WHERE start.uid = $start_uid
       RETURN r
     `;
-    const result = await this.graphService.read(query, { start_uid: startUid });
-    return this.graphService.transformResults(result);
+    const result = await this.graphService.execQuery(query, { start_uid: startUid });
+    return result;
   }
 
   private async relatedFactsReverseIn(startUid: number, relTypeUids: number[]): Promise<any[]> {
@@ -48,8 +48,8 @@ export class BasisCoreService {
       WHERE start.uid = $start_uid AND r.rel_type_uid IN $rel_type_uids
       RETURN r
     `;
-    const result = await this.graphService.read(query, { start_uid: startUid, rel_type_uids: relTypeUids });
-    return this.graphService.transformResults(result);
+    const result = await this.graphService.execQuery(query, { start_uid: startUid, rel_type_uids: relTypeUids });
+    return result;
   }
 
   /**

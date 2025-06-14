@@ -18,7 +18,6 @@ import { ConceptHandlers } from './handlers/concept.handlers';
 import { DefinitionHandlers } from './handlers/definition.handlers';
 import { EntityRetrievalHandlers } from './handlers/entity-retrieval.handlers';
 import { KindHandlers } from './handlers/kind.handlers';
-import { AspectHandlers } from './handlers/aspect.handlers';
 import { SubmissionHandlers } from './handlers/submission.handlers';
 import { TransactionHandlers } from './handlers/transaction.handlers';
 import { UIDHandlers } from './handlers/uid.handlers';
@@ -48,7 +47,6 @@ export class ArchivistGateway
     private readonly definitionHandlers: DefinitionHandlers,
     private readonly entityRetrievalHandlers: EntityRetrievalHandlers,
     private readonly kindHandlers: KindHandlers,
-    private readonly aspectHandlers: AspectHandlers,
     private readonly submissionHandlers: SubmissionHandlers,
     private readonly transactionHandlers: TransactionHandlers,
     private readonly uidHandlers: UIDHandlers,
@@ -70,7 +68,6 @@ export class ArchivistGateway
     this.definitionHandlers.init(this);
     this.entityRetrievalHandlers.init(this);
     this.kindHandlers.init(this);
-    this.aspectHandlers.init(this);
     this.submissionHandlers.init(this);
     this.transactionHandlers.init(this);
     this.uidHandlers.init(this);
