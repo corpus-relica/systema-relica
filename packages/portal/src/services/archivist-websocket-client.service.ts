@@ -153,7 +153,4 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     return response.payload;
   }
 
-  private generateMessageId(): string {
-    return `archivist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 }

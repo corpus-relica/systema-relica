@@ -13,7 +13,7 @@ import {
 export interface WebSocketServiceClient {
   connect(): Promise<void>;
   disconnect(): void;
-  sendMessage<T = any>(message: ServiceMessage): Promise<ServiceResponse<T>>;
+  sendMessage(message: ServiceMessage): Promise<ServiceResponse>;
   isConnected(): boolean;
 }
 
@@ -100,7 +100,7 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
     return this.socket?.connected || false;
   }
 
-  async sendMessage<T = any>(message: ServiceMessage): Promise<ServiceResponse<T>> {
+  async sendMessage(message: ServiceMessage): Promise<ServiceResponse> {
     if (!this.socket?.connected) {
       throw new Error(`Not connected to ${this.serviceName} service`);
     }
@@ -144,7 +144,7 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
     });
   }
 
-  private generateMessageId(): string {
+  protected generateMessageId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }

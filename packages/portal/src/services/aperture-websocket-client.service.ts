@@ -137,7 +137,4 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     return response.payload;
   }
 
-  private generateMessageId(): string {
-    return `aperture-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 }

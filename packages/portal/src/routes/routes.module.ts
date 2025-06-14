@@ -7,8 +7,10 @@ import { SystemController } from './system.controller';
 import { ModelController } from './model.controller';
 import { EnvironmentController } from './environment.controller';
 import { PrismController } from './prism.controller';
+import { WebSocketClientsModule } from '../services/websocket-clients.module';
 
 @Module({
+  imports: [WebSocketClientsModule],
   controllers: [
     AuthController,
     SearchController,

@@ -57,7 +57,4 @@ export class ShutterWebSocketClientService extends BaseWebSocketClient {
     return response.payload;
   }
 
-  private generateMessageId(): string {
-    return `shutter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 }

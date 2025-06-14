@@ -73,7 +73,4 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     return response.payload;
   }
 
-  private generateMessageId(): string {
-    return `prism-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 }

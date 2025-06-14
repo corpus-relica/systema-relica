@@ -105,7 +105,4 @@ export class ClarityWebSocketClientService extends BaseWebSocketClient {
     return response.payload;
   }
 
-  private generateMessageId(): string {
-    return `clarity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 }
