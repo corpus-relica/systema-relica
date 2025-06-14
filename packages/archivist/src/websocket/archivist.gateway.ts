@@ -16,7 +16,6 @@ import { ValidationHandlers } from './handlers/validation.handlers';
 import { CompletionHandlers } from './handlers/completion.handlers';
 import { ConceptHandlers } from './handlers/concept.handlers';
 import { DefinitionHandlers } from './handlers/definition.handlers';
-import { EntityRetrievalHandlers } from './handlers/entity-retrieval.handlers';
 import { KindHandlers } from './handlers/kind.handlers';
 import { SubmissionHandlers } from './handlers/submission.handlers';
 import { TransactionHandlers } from './handlers/transaction.handlers';
@@ -45,7 +44,6 @@ export class ArchivistGateway
     private readonly completionHandlers: CompletionHandlers,
     private readonly conceptHandlers: ConceptHandlers,
     private readonly definitionHandlers: DefinitionHandlers,
-    private readonly entityRetrievalHandlers: EntityRetrievalHandlers,
     private readonly kindHandlers: KindHandlers,
     private readonly submissionHandlers: SubmissionHandlers,
     private readonly transactionHandlers: TransactionHandlers,
@@ -66,7 +64,6 @@ export class ArchivistGateway
     this.completionHandlers.init(this);
     this.conceptHandlers.init(this);
     this.definitionHandlers.init(this);
-    this.entityRetrievalHandlers.init(this);
     this.kindHandlers.init(this);
     this.submissionHandlers.init(this);
     this.transactionHandlers.init(this);

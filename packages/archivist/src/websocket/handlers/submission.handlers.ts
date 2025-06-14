@@ -14,7 +14,7 @@ export class SubmissionHandlers {
 
   async handleSubmissionSubmit(data: SubmissionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.submissionService.submitFacts(data.facts, data.metadata);
+      const result = await this.submissionService.submitBinaryFacts(data.facts);
       return {
         event: 'submission:completed',
         data: result
@@ -29,7 +29,7 @@ export class SubmissionHandlers {
 
   async handleSubmissionBatch(data: SubmissionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.submissionService.batchSubmitFacts(data.facts, data.metadata);
+      const result = await this.submissionService.submitBinaryFacts(data.facts);
       return {
         event: 'submission:batch:completed',
         data: result

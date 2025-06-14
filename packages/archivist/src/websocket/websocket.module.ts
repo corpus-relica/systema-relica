@@ -7,7 +7,6 @@ import { ValidationHandlers } from './handlers/validation.handlers';
 import { CompletionHandlers } from './handlers/completion.handlers';
 import { ConceptHandlers } from './handlers/concept.handlers';
 import { DefinitionHandlers } from './handlers/definition.handlers';
-import { EntityRetrievalHandlers } from './handlers/entity-retrieval.handlers';
 import { KindHandlers } from './handlers/kind.handlers';
 import { SubmissionHandlers } from './handlers/submission.handlers';
 import { TransactionHandlers } from './handlers/transaction.handlers';
@@ -48,7 +47,6 @@ import { TransactionService } from '../transaction/transaction.service';
     CompletionHandlers,
     ConceptHandlers,
     DefinitionHandlers,
-    EntityRetrievalHandlers,
     KindHandlers,
     SubmissionHandlers,
     TransactionHandlers,

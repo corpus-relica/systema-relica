@@ -16,7 +16,7 @@ export class TransactionHandlers {
 
   async handleTransactionStart(data: TransactionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.transactionService.startTransaction();
+      const result = this.transactionService.startMachine('default');
       return {
         event: 'transaction:started',
         data: result
@@ -31,7 +31,7 @@ export class TransactionHandlers {
 
   async handleTransactionCommit(data: TransactionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.transactionService.commitTransaction(data.transaction_id);
+      const result = this.transactionService.sendEvent({ type: 'COMMIT', transactionId: data.transaction_id });
       return {
         event: 'transaction:committed',
         data: result
@@ -46,7 +46,7 @@ export class TransactionHandlers {
 
   async handleTransactionRollback(data: TransactionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.transactionService.rollbackTransaction(data.transaction_id);
+      const result = this.transactionService.sendEvent({ type: 'ROLLBACK', transactionId: data.transaction_id });
       return {
         event: 'transaction:rolledback',
         data: result
@@ -61,7 +61,7 @@ export class TransactionHandlers {
 
   async handleTransactionGet(data: TransactionMessage, client: Socket): Promise<WsResponse> {
     try {
-      const result = await this.transactionService.getTransaction(data.transaction_id);
+      const result = this.transactionService.getSnapshot();
       return {
         event: 'transaction:retrieved',
         data: result
