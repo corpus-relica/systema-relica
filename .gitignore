@@ -20,3 +20,12 @@ seed_xls/
 
 temp.*
 /postgres_backup/
+/.coverage
+/.env.local
+/.lsp/
+/.mcp.json
+/.roo/
+/CLAUDE.local.md
+/packages/prism/dist/
+/packages/shutter/dist/
+/reference/
