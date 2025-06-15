@@ -1,0 +1,44 @@
+FROM node:18 as build
+
+# Ensure yarn is available
+RUN which yarn || npm install -g yarn
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+COPY yarn.lock .
+COPY packages/portal ./packages/portal
+
+RUN yarn config set network-timeout 300000 && \
+    yarn cache clean && \
+    yarn install --network-timeout 300000
+
+WORKDIR /usr/src/app/packages/portal
+RUN yarn build
+
+# --------------------------------------
+
+FROM node:18
+
+# Ensure yarn is available
+RUN which yarn || npm install -g yarn
+
+# Set PATH to include yarn
+ENV PATH="/usr/local/bin:${PATH}"
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+COPY yarn.lock .
+
+COPY packages/portal /usr/src/app/packages/portal
+
+ENV NODE_ENV development
+
+RUN yarn config set network-timeout 300000 && \
+    yarn cache clean && \
+    yarn install --network-timeout 300000 --production=false
+
+WORKDIR /usr/src/app/packages/portal
+
+CMD ["yarn", "start:dev"]
