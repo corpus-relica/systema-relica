@@ -10,5 +10,4 @@ export declare class ApertureWebSocketClientService extends BaseWebSocketClient 
     loadSpecializationHierarchy(uid: string, userId: string): Promise<any>;
     clearEnvironmentEntities(userId: string, environmentId?: string): Promise<any>;
     loadAllRelatedFacts(uid: string, userId: string): Promise<any>;
-    private generateMessageId;
 }

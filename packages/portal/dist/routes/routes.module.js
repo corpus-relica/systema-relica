@@ -16,11 +16,13 @@ const system_controller_1 = require("./system.controller");
 const model_controller_1 = require("./model.controller");
 const environment_controller_1 = require("./environment.controller");
 const prism_controller_1 = require("./prism.controller");
+const websocket_clients_module_1 = require("../services/websocket-clients.module");
 let RoutesModule = class RoutesModule {
 };
 exports.RoutesModule = RoutesModule;
 exports.RoutesModule = RoutesModule = __decorate([
     (0, common_1.Module)({
+        imports: [websocket_clients_module_1.WebSocketClientsModule],
         controllers: [
             auth_controller_1.AuthController,
             search_controller_1.SearchController,

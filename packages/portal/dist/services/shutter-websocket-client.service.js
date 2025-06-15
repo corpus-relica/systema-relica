@@ -59,9 +59,6 @@ let ShutterWebSocketClientService = class ShutterWebSocketClientService extends 
         }
         return response.payload;
     }
-    generateMessageId() {
-        return `shutter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
 };
 exports.ShutterWebSocketClientService = ShutterWebSocketClientService;
 exports.ShutterWebSocketClientService = ShutterWebSocketClientService = __decorate([

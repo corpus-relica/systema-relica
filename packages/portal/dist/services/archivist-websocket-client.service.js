@@ -143,9 +143,6 @@ let ArchivistWebSocketClientService = class ArchivistWebSocketClientService exte
         }
         return response.payload;
     }
-    generateMessageId() {
-        return `archivist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
 };
 exports.ArchivistWebSocketClientService = ArchivistWebSocketClientService;
 exports.ArchivistWebSocketClientService = ArchivistWebSocketClientService = __decorate([

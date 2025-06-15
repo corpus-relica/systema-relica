@@ -8,5 +8,4 @@ export declare class ShutterWebSocketClientService extends BaseWebSocketClient {
         password: string;
     }): Promise<any>;
     refreshToken(refreshToken: string): Promise<any>;
-    private generateMessageId;
 }
