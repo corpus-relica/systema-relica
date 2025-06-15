@@ -6,7 +6,7 @@ import { ServiceMessage, ServiceResponse } from '../types/websocket-messages';
 @Injectable()
 export class NousWebSocketClientService extends BaseWebSocketClient {
   constructor(configService: ConfigService) {
-    super(configService, 'nous', 3005);
+    super(configService, 'nous', 3006);
   }
 
   async processChatInput(message: string, userId: string, context?: any): Promise<any> {

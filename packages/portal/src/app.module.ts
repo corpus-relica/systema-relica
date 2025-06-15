@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { WebSocketClientsModule } from './services/websocket-clients.module';
+import { RestClientsModule } from './services/rest-clients.module';
 import { PortalGateway } from './gateways/portal.gateway';
 import { RoutesModule } from './routes/routes.module';
 import { AuthGuard } from './guards/auth.guard';
@@ -12,6 +13,7 @@ import { AuthGuard } from './guards/auth.guard';
       isGlobal: true,
     }),
     WebSocketClientsModule,
+    RestClientsModule,
     RoutesModule,
   ],
   providers: [
