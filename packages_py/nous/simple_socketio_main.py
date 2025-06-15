@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from rich import print
 import asyncio
 import logging
@@ -9,18 +11,11 @@ from src.socketio_clients.clarity_client import clarity_client
 from src.socketio_server import nous_socketio_server
 
 from src.relica_nous_langchain.agent.NOUSAgentPrebuilt import NOUSAgent
-# from src.relica_nous_langchain.agent.ToolsPrebuilt import create_agent_tools
-
 from src.relica_nous_langchain.SemanticModel import semantic_model
 
 # Set up logging - suppress EDN format logs
 logging.basicConfig(level=logging.INFO)
-logging.getLogger("edn_format").setLevel(logging.WARNING)  # Suppress EDN logs
-
-# from dotenv import load_dotenv
-# load_dotenv()  # This loads the variables from .env
-
-# #####################################################################################
+logging.getLogger("edn_format").setLevel(logging.WARNING)
 
 messages = []
 
@@ -28,7 +23,6 @@ async def main():
     print("RELICA :: NOUS :: STARTING UP....")
 
     async def retrieveEnv():
-        # print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
         try:
             # Connect if not already connected
             if not aperture_client.is_connected():
@@ -60,20 +54,14 @@ async def main():
         if not archivist_client.is_connected():
             await archivist_client.connect()
 
-        # 1. Generate the tools and metadata using the factory and the user-specific proxy
-        # tool_data = create_agent_tools(aperture_proxy=aperture_proxy)
-
         # 2. Instantiate the NOUSAgent
-        #    (Adjust constructor arguments if NOUSAgent expects different names/structure)
         agent = NOUSAgent(
-            aperture_client=aperture_client, # Pass the Socket.IO client
+            aperture_client=aperture_client,
             archivist_client=archivist_client,
-            semantic_model=semantic_model, # Pass the imported semantic_model instance
+            semantic_model=semantic_model,
         )
 
-
         # 3. Invoke the agent to process the input
-        #    (Replace 'handleInput' with the actual method name if different)
         try:
             # Assuming the agent returns the final answer to send to the user
             messages.append({"role":"user", "content": message})
@@ -117,21 +105,17 @@ async def main():
 
 if __name__ == "__main__":
     import uvicorn
-    from fastapi import FastAPI
-
-    # Create FastAPI app
-    app = FastAPI(title="NOUS Service")
     
-    # Create Socket.IO ASGI app
-    socket_app = socketio.ASGIApp(nous_socketio_server.sio, other_asgi_app=app)
-
-    # Start the uvicorn server in a separate thread
+    # Start Socket.IO server with direct ASGI
     import threading
-    threading.Thread(
-        target=uvicorn.run,
-        kwargs={"app": socket_app, "host": "0.0.0.0", "port": 3006},
-        daemon=True
-    ).start()
+    
+    def run_server():
+        app = socketio.ASGIApp(nous_socketio_server.sio)
+        uvicorn.run(app, host="0.0.0.0", port=3006, log_level="info")
+    
+    # Start server in thread
+    server_thread = threading.Thread(target=run_server, daemon=True)
+    server_thread.start()
 
     # Run the asyncio event loop for our main function
     asyncio.run(main())

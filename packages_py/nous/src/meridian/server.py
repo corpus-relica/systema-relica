@@ -405,7 +405,7 @@ async def websocket_endpoint(websocket: WebSocket, format: str = Query("json"), 
 
 # Initialize WebSocket server
 ws_server = WebSocketServer()
-register_handlers()
+# Note: register_handlers() is called in startup event handler
 
 
 if __name__ == "__main__":
