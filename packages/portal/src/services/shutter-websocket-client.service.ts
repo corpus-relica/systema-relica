@@ -6,7 +6,7 @@ import { ServiceMessage, ServiceResponse } from '../types/websocket-messages';
 @Injectable()
 export class ShutterWebSocketClientService extends BaseWebSocketClient {
   constructor(configService: ConfigService) {
-    super(configService, 'shutter', 3000);
+    super(configService, 'shutter', 3004);
   }
 
   async validateJWT(jwt: string): Promise<any> {

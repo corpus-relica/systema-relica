@@ -15,7 +15,7 @@ const config_1 = require("@nestjs/config");
 const websocket_client_service_1 = require("./websocket-client.service");
 let ArchivistWebSocketClientService = class ArchivistWebSocketClientService extends websocket_client_service_1.BaseWebSocketClient {
     constructor(configService) {
-        super(configService, 'archivist', 3002);
+        super(configService, 'archivist', 3000);
     }
     async getKinds() {
         const message = {
@@ -142,9 +142,6 @@ let ArchivistWebSocketClientService = class ArchivistWebSocketClientService exte
             throw new Error(response.error || 'Failed to delete fact');
         }
         return response.payload;
-    }
-    generateMessageId() {
-        return `archivist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 };
 exports.ArchivistWebSocketClientService = ArchivistWebSocketClientService;

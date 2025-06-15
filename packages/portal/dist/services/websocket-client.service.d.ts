@@ -10,7 +10,7 @@ import { ServiceMessage, ServiceResponse } from '../types/websocket-messages';
 export interface WebSocketServiceClient {
     connect(): Promise<void>;
     disconnect(): void;
-    sendMessage<T = any>(message: ServiceMessage): Promise<ServiceResponse<T>>;
+    sendMessage(message: ServiceMessage): Promise<ServiceResponse>;
     isConnected(): boolean;
 }
 export declare class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit, OnModuleDestroy {
@@ -30,7 +30,7 @@ export declare class BaseWebSocketClient implements WebSocketServiceClient, OnMo
     connect(): Promise<void>;
     disconnect(): void;
     isConnected(): boolean;
-    sendMessage<T = any>(message: ServiceMessage): Promise<ServiceResponse<T>>;
+    sendMessage(message: ServiceMessage): Promise<ServiceResponse>;
     private setupEventHandlers;
-    private generateMessageId;
+    protected generateMessageId(): string;
 }

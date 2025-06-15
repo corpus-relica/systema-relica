@@ -6,7 +6,7 @@ import { ArchivistMessage, ServiceResponse } from '../types/websocket-messages';
 @Injectable()
 export class ArchivistWebSocketClientService extends BaseWebSocketClient {
   constructor(configService: ConfigService) {
-    super(configService, 'archivist', 3002);
+    super(configService, 'archivist', 3000);
   }
 
   async getKinds(): Promise<any> {

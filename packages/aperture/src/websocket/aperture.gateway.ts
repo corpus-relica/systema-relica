@@ -14,7 +14,6 @@ import { EnvironmentService } from '../environment/environment.service';
   cors: {
     origin: '*',
   },
-  namespace: '/aperture',
 })
 export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ApertureGateway.name);

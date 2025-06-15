@@ -73,9 +73,6 @@ let PrismWebSocketClientService = class PrismWebSocketClientService extends webs
         }
         return response.payload;
     }
-    generateMessageId() {
-        return `prism-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
 };
 exports.PrismWebSocketClientService = PrismWebSocketClientService;
 exports.PrismWebSocketClientService = PrismWebSocketClientService = __decorate([

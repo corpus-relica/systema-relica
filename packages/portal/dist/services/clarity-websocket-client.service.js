@@ -101,9 +101,6 @@ let ClarityWebSocketClientService = class ClarityWebSocketClientService extends 
         }
         return response.payload;
     }
-    generateMessageId() {
-        return `clarity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
 };
 exports.ClarityWebSocketClientService = ClarityWebSocketClientService;
 exports.ClarityWebSocketClientService = ClarityWebSocketClientService = __decorate([

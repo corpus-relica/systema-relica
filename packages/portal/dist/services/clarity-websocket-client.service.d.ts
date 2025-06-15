@@ -8,5 +8,4 @@ export declare class ClarityWebSocketClientService extends BaseWebSocketClient {
     getEnvironment(environmentId: string): Promise<any>;
     createModel(modelData: any): Promise<any>;
     updateModel(modelId: string, modelData: any): Promise<any>;
-    private generateMessageId;
 }

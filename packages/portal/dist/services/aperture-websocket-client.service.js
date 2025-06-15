@@ -129,9 +129,6 @@ let ApertureWebSocketClientService = class ApertureWebSocketClientService extend
         }
         return response.payload;
     }
-    generateMessageId() {
-        return `aperture-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
 };
 exports.ApertureWebSocketClientService = ApertureWebSocketClientService;
 exports.ApertureWebSocketClientService = ApertureWebSocketClientService = __decorate([

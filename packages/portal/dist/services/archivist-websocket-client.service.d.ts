@@ -11,5 +11,4 @@ export declare class ArchivistWebSocketClientService extends BaseWebSocketClient
     getSubtypesCone(uid: string): Promise<any>;
     submitFact(factData: any): Promise<any>;
     deleteFact(factId: string): Promise<any>;
-    private generateMessageId;
 }

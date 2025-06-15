@@ -8,7 +8,7 @@ import {
   OnGatewayDisconnect,
   OnGatewayInit,
 } from '@nestjs/websockets';
-import { Server, WebSocket } from 'ws';
+import { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
 import { SetupService } from '../setup/setup.service';
 import { CacheService } from '../cache/cache.service';
@@ -23,7 +23,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   @WebSocketServer()
   server: Server;
 
-  private clients: Set<WebSocket> = new Set();
+  private clients: Set<Socket> = new Set();
 
   constructor(
     private setupService: SetupService,
@@ -36,12 +36,12 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     this.setupService.setWebSocketGateway(this);
   }
 
-  handleConnection(client: WebSocket) {
+  handleConnection(client: Socket) {
     this.clients.add(client);
     console.log(`Client connected. Total clients: ${this.clients.size}`);
     
     // Send connection acknowledgment
-    client.send(JSON.stringify({
+    client.emit('message', {
       type: ':relica.connection/open',
       payload: {
         connectionId: `conn-${Date.now()}`,
@@ -51,10 +51,10 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
           userAgent: 'unknown',
         },
       },
-    }));
+    });
   }
 
-  handleDisconnect(client: WebSocket) {
+  handleDisconnect(client: Socket) {
     this.clients.delete(client);
     console.log(`Client disconnected. Total clients: ${this.clients.size}`);
   }
@@ -209,10 +209,9 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   }
 
   private broadcast(message: any) {
-    const messageStr = JSON.stringify(message);
     this.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(messageStr);
+      if (client.connected) {
+        client.emit('message', message);
       }
     });
   }
