@@ -28,4 +28,5 @@ temp.*
 /CLAUDE.local.md
 /packages/prism/dist/
 /packages/shutter/dist/
+/packages/portal/dist/
 /reference/
