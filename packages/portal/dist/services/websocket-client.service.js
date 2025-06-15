@@ -23,7 +23,10 @@ let BaseWebSocketClient = class BaseWebSocketClient {
         this.pendingRequests = new Map();
     }
     async onModuleInit() {
-        await this.connect();
+        this.connect().catch(err => {
+            this.logger.warn(`Could not connect to ${this.serviceName} on startup: ${err.message}`);
+            this.logger.warn(`Will retry when first request is made`);
+        });
     }
     async onModuleDestroy() {
         this.disconnect();
@@ -77,7 +80,13 @@ let BaseWebSocketClient = class BaseWebSocketClient {
     }
     async sendMessage(message) {
         if (!this.socket?.connected) {
-            throw new Error(`Not connected to ${this.serviceName} service`);
+            this.logger.log(`Not connected to ${this.serviceName}, attempting to connect...`);
+            try {
+                await this.connect();
+            }
+            catch (error) {
+                throw new Error(`Failed to connect to ${this.serviceName} service: ${error.message}`);
+            }
         }
         const messageId = message.id || this.generateMessageId();
         const messageWithId = { ...message, id: messageId };
