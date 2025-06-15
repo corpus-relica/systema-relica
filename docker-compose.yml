@@ -132,6 +132,7 @@ services:
       dockerfile: Dockerfile.aperture
     restart: always
     environment:
+      - NODE_ENV=development
       - PORT=3002
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -145,6 +146,7 @@ services:
     ports:
       - "3002:3002"
     depends_on:
+      - postgres
       - archivist
       - clarity
     healthcheck:
