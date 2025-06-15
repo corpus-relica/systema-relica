@@ -8,9 +8,10 @@ import { ModelController } from './model.controller';
 import { EnvironmentController } from './environment.controller';
 import { PrismController } from './prism.controller';
 import { WebSocketClientsModule } from '../services/websocket-clients.module';
+import { RestClientsModule } from '../services/rest-clients.module';
 
 @Module({
-  imports: [WebSocketClientsModule],
+  imports: [WebSocketClientsModule, RestClientsModule],
   controllers: [
     AuthController,
     SearchController,

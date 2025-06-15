@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { ShutterWebSocketClientService } from '../services/shutter-websocket-client.service';
+import { ShutterRestClientService } from '../services/shutter-rest-client.service';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -11,7 +11,7 @@ export interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-  constructor(private readonly shutterClient: ShutterWebSocketClientService) {}
+  constructor(private readonly shutterClient: ShutterRestClientService) {}
 
   async use(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
@@ -24,11 +24,15 @@ export class AuthMiddleware implements NestMiddleware {
       const jwt = authHeader.substring(7);
       
       // Validate JWT with Shutter service
-      const validationResult = await this.shutterClient.validateJWT(jwt);
+      const validationResult = await this.shutterClient.validateToken(jwt);
+      
+      if (!validationResult.valid || !validationResult.user) {
+        throw new UnauthorizedException('Invalid token');
+      }
       
       // Attach user info to request
       req.user = {
-        userId: validationResult.userId,
+        userId: validationResult.user.id,
         jwt: jwt,
       };
       
