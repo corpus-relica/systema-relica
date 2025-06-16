@@ -63,6 +63,12 @@ export {
   type FactUpdateMessage,
   type FactDeleteMessage,
   type FactQueryMessage,
+  type FactCreateRequest,
+  type FactCreateResponse,
+  type FactGetRequest,
+  type FactGetResponse,
+  type FactDeleteRequest,
+  type FactDeleteResponse,
   
   // Search operations
   SearchActions,
@@ -70,6 +76,8 @@ export {
   type SearchActionType,
   type SearchEventType,
   type SearchMessage,
+  type SearchGeneralRequest,
+  type SearchGeneralResponse,
   
   // Concept operations
   ConceptActions,
@@ -77,6 +85,10 @@ export {
   type ConceptActionType,
   type ConceptEventType,
   type ConceptMessage,
+  type ConceptGetRequest,
+  type ConceptGetResponse,
+  type ConceptDeleteRequest,
+  type ConceptDeleteResponse,
   
   // Query operations
   QueryActions,
@@ -112,6 +124,8 @@ export {
   type DefinitionActionType,
   type DefinitionEventType,
   type DefinitionMessage,
+  type DefinitionUpdateRequest,
+  type DefinitionUpdateResponse,
   
   // Submission operations
   SubmissionActions,
@@ -119,6 +133,8 @@ export {
   type SubmissionActionType,
   type SubmissionEventType,
   type SubmissionMessage,
+  type SubmissionSubmitRequest,
+  type SubmissionSubmitResponse,
   
   // Transaction operations
   TransactionActions,
