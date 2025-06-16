@@ -138,10 +138,10 @@ export const loadUserEnvironment = async (): Promise<any> => {
   return response.data;
 };
 
-// DEBUG: Reset entire system (databases, setup state, etc.)
+// DEBUG: Reset entire system (databases, setup state, etc.) via Prism
 export const resetSystemState = async (): Promise<{ success: boolean; message?: string }> => {
   try {
-    const response = await PortalAxiosInstance.post("/api/debug/reset-system");
+    const response = await PortalAxiosInstance.post("/api/prism/debug/reset-system");
     return response.data;
   } catch (error) {
     console.error('System reset failed:', error);
