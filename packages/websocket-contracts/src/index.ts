@@ -11,14 +11,15 @@
  * ```typescript
  * import { PrismActions, MessageRegistryUtils, ContractUtils } from '@relica/websocket-contracts';
  * 
- * // Get WebSocket topic for Portal action
- * const topic = MessageRegistryUtils.getTopic(PrismActions.GET_SETUP_STATUS);
- * // Returns: ':prism.setup/get-status'
+ * // Use action directly as WebSocket topic
+ * const topic = PrismActions.GET_SETUP_STATUS; // 'setup/get-status'
  * 
  * // Validate message against contract
- * const validation = ContractUtils.validate.request('get-setup-status', message);
+ * const validation = ContractUtils.validate.request(PrismActions.GET_SETUP_STATUS, message);
  * if (validation.success) {
  *   // Message is valid
+ * } else {
+ *   console.error('Validation failed:', validation.error);
  * }
  * ```
  */
@@ -28,6 +29,7 @@ export * from './base';
 
 // Service-specific contracts
 export * from './services/prism';
+export * from './services/archivist';
 
 // Message registry and utilities
 export * from './registry';
@@ -45,4 +47,90 @@ export {
 
 export {
   PrismActions,
+  PrismEvents,
+  SetupStatusBroadcastEventSchema,
+  type SetupStatusBroadcastEvent,
+  type PrismEventType,
 } from './services/prism';
+
+export {
+  // Fact operations
+  FactActions,
+  FactEvents,
+  type FactActionType,
+  type FactEventType,
+  type FactCreateMessage,
+  type FactUpdateMessage,
+  type FactDeleteMessage,
+  type FactQueryMessage,
+  
+  // Search operations
+  SearchActions,
+  SearchEvents,
+  type SearchActionType,
+  type SearchEventType,
+  type SearchMessage,
+  
+  // Concept operations
+  ConceptActions,
+  ConceptEvents,
+  type ConceptActionType,
+  type ConceptEventType,
+  type ConceptMessage,
+  
+  // Query operations
+  QueryActions,
+  QueryEvents,
+  type QueryActionType,
+  type QueryEventType,
+  type QueryMessage,
+  
+  // Kind operations
+  KindActions,
+  KindEvents,
+  type KindActionType,
+  type KindEventType,
+  type KindMessage,
+  
+  // UID operations
+  UIDActions,
+  UIDEvents,
+  type UIDActionType,
+  type UIDEventType,
+  type UIDMessage,
+  
+  // Completion operations
+  CompletionActions,
+  CompletionEvents,
+  type CompletionActionType,
+  type CompletionEventType,
+  type CompletionMessage,
+  
+  // Definition operations
+  DefinitionActions,
+  DefinitionEvents,
+  type DefinitionActionType,
+  type DefinitionEventType,
+  type DefinitionMessage,
+  
+  // Submission operations
+  SubmissionActions,
+  SubmissionEvents,
+  type SubmissionActionType,
+  type SubmissionEventType,
+  type SubmissionMessage,
+  
+  // Transaction operations
+  TransactionActions,
+  TransactionEvents,
+  type TransactionActionType,
+  type TransactionEventType,
+  type TransactionMessage,
+  
+  // Validation operations
+  ValidationActions,
+  ValidationEvents,
+  type ValidationActionType,
+  type ValidationEventType,
+  type ValidationMessage,
+} from './services/archivist';

@@ -1,5 +1,98 @@
 import { z } from 'zod';
 import { PrismActions } from './services/prism';
+import { 
+  FactActions,
+  SearchActions,
+  ConceptActions,
+  QueryActions,
+  KindActions,
+  UIDActions,
+  CompletionActions,
+  DefinitionActions,
+  SubmissionActions,
+  TransactionActions,
+  ValidationActions,
+  // Request schemas
+  FactCreateRequestSchema,
+  FactUpdateRequestSchema,
+  FactDeleteRequestSchema,
+  FactGetRequestSchema,
+  FactGetSubtypesRequestSchema,
+  FactGetSupertypesRequestSchema,
+  FactGetClassifiedRequestSchema,
+  FactValidateRequestSchema,
+  SearchGeneralRequestSchema,
+  SearchIndividualRequestSchema,
+  SearchKindRequestSchema,
+  SearchExecuteRequestSchema,
+  SearchUidRequestSchema,
+  ConceptGetRequestSchema,
+  ConceptCreateRequestSchema,
+  ConceptUpdateRequestSchema,
+  ConceptDeleteRequestSchema,
+  QueryExecuteRequestSchema,
+  QueryValidateRequestSchema,
+  QueryParseRequestSchema,
+  KindGetRequestSchema,
+  KindsListRequestSchema,
+  KindsSearchRequestSchema,
+  UIDGenerateRequestSchema,
+  UIDBatchRequestSchema,
+  UIDReserveRequestSchema,
+  CompletionRequestSchema,
+  CompletionEntitiesRequestSchema,
+  CompletionRelationsRequestSchema,
+  DefinitionGetRequestSchema,
+  DefinitionUpdateRequestSchema,
+  SubmissionSubmitRequestSchema,
+  SubmissionBatchRequestSchema,
+  TransactionStartRequestSchema,
+  TransactionCommitRequestSchema,
+  TransactionRollbackRequestSchema,
+  TransactionGetRequestSchema,
+  ValidationValidateRequestSchema,
+  ValidationCollectionRequestSchema,
+  // Response schemas
+  FactCreateResponseSchema,
+  FactUpdateResponseSchema,
+  FactDeleteResponseSchema,
+  FactGetResponseSchema,
+  FactGetSubtypesResponseSchema,
+  FactGetSupertypesResponseSchema,
+  FactGetClassifiedResponseSchema,
+  FactValidateResponseSchema,
+  SearchGeneralResponseSchema,
+  SearchIndividualResponseSchema,
+  SearchKindResponseSchema,
+  SearchExecuteResponseSchema,
+  SearchUidResponseSchema,
+  ConceptGetResponseSchema,
+  ConceptCreateResponseSchema,
+  ConceptUpdateResponseSchema,
+  ConceptDeleteResponseSchema,
+  QueryExecuteResponseSchema,
+  QueryValidateResponseSchema,
+  QueryParseResponseSchema,
+  KindGetResponseSchema,
+  KindsListResponseSchema,
+  KindsSearchResponseSchema,
+  UIDGenerateResponseSchema,
+  UIDBatchResponseSchema,
+  UIDReserveResponseSchema,
+  CompletionResponseSchema,
+  CompletionEntitiesResponseSchema,
+  CompletionRelationsResponseSchema,
+  DefinitionGetResponseSchema,
+  DefinitionUpdateResponseSchema,
+  SubmissionSubmitResponseSchema,
+  SubmissionBatchResponseSchema,
+  TransactionStartResponseSchema,
+  TransactionCommitResponseSchema,
+  TransactionRollbackResponseSchema,
+  TransactionGetResponseSchema,
+  ValidationValidateResponseSchema,
+  ValidationCollectionResponseSchema,
+} from './services/archivist';
 
 /**
  * Contract definition for a single WebSocket operation
@@ -108,7 +201,332 @@ export const MESSAGE_REGISTRY = {
     description: 'Create admin user during setup',
   },
 
-  // Add more service contracts here...
+  // =====================================================
+  // ARCHIVIST SERVICE CONTRACTS
+  // =====================================================
+  
+  // Fact contracts
+  [FactActions.CREATE]: {
+    action: FactActions.CREATE,
+    service: 'archivist',
+    requestSchema: FactCreateRequestSchema,
+    responseSchema: FactCreateResponseSchema,
+    description: 'Create a new fact in the knowledge graph',
+  },
+
+  [FactActions.UPDATE]: {
+    action: FactActions.UPDATE,
+    service: 'archivist',
+    requestSchema: FactUpdateRequestSchema,
+    responseSchema: FactUpdateResponseSchema,
+    description: 'Update an existing fact',
+  },
+
+  [FactActions.DELETE]: {
+    action: FactActions.DELETE,
+    service: 'archivist',
+    requestSchema: FactDeleteRequestSchema,
+    responseSchema: FactDeleteResponseSchema,
+    description: 'Delete a fact from the knowledge graph',
+  },
+
+  [FactActions.GET]: {
+    action: FactActions.GET,
+    service: 'archivist',
+    requestSchema: FactGetRequestSchema,
+    responseSchema: FactGetResponseSchema,
+    description: 'Get facts about a specific kind/entity',
+  },
+
+  [FactActions.GET_SUBTYPES]: {
+    action: FactActions.GET_SUBTYPES,
+    service: 'archivist',
+    requestSchema: FactGetSubtypesRequestSchema,
+    responseSchema: FactGetSubtypesResponseSchema,
+    description: 'Get subtypes of a specific kind',
+  },
+
+  [FactActions.GET_SUPERTYPES]: {
+    action: FactActions.GET_SUPERTYPES,
+    service: 'archivist',
+    requestSchema: FactGetSupertypesRequestSchema,
+    responseSchema: FactGetSupertypesResponseSchema,
+    description: 'Get supertypes of a specific kind',
+  },
+
+  [FactActions.GET_CLASSIFIED]: {
+    action: FactActions.GET_CLASSIFIED,
+    service: 'archivist',
+    requestSchema: FactGetClassifiedRequestSchema,
+    responseSchema: FactGetClassifiedResponseSchema,
+    description: 'Get classified facts for a specific entity',
+  },
+
+  [FactActions.VALIDATE]: {
+    action: FactActions.VALIDATE,
+    service: 'archivist',
+    requestSchema: FactValidateRequestSchema,
+    responseSchema: FactValidateResponseSchema,
+    description: 'Validate a fact before creation',
+  },
+
+  // Search contracts
+  [SearchActions.GENERAL]: {
+    action: SearchActions.GENERAL,
+    service: 'archivist',
+    requestSchema: SearchGeneralRequestSchema,
+    responseSchema: SearchGeneralResponseSchema,
+    description: 'Perform general text search across all entities',
+  },
+
+  [SearchActions.INDIVIDUAL]: {
+    action: SearchActions.INDIVIDUAL,
+    service: 'archivist',
+    requestSchema: SearchIndividualRequestSchema,
+    responseSchema: SearchIndividualResponseSchema,
+    description: 'Search for individual entities',
+  },
+
+  [SearchActions.KIND]: {
+    action: SearchActions.KIND,
+    service: 'archivist',
+    requestSchema: SearchKindRequestSchema,
+    responseSchema: SearchKindResponseSchema,
+    description: 'Search for kinds/types',
+  },
+
+  [SearchActions.EXECUTE]: {
+    action: SearchActions.EXECUTE,
+    service: 'archivist',
+    requestSchema: SearchExecuteRequestSchema,
+    responseSchema: SearchExecuteResponseSchema,
+    description: 'Execute a complex search query',
+  },
+
+  [SearchActions.UID]: {
+    action: SearchActions.UID,
+    service: 'archivist',
+    requestSchema: SearchUidRequestSchema,
+    responseSchema: SearchUidResponseSchema,
+    description: 'Search by specific UID',
+  },
+
+  // Concept contracts
+  [ConceptActions.GET]: {
+    action: ConceptActions.GET,
+    service: 'archivist',
+    requestSchema: ConceptGetRequestSchema,
+    responseSchema: ConceptGetResponseSchema,
+    description: 'Get a concept by UID',
+  },
+
+  [ConceptActions.CREATE]: {
+    action: ConceptActions.CREATE,
+    service: 'archivist',
+    requestSchema: ConceptCreateRequestSchema,
+    responseSchema: ConceptCreateResponseSchema,
+    description: 'Create a new concept',
+  },
+
+  [ConceptActions.UPDATE]: {
+    action: ConceptActions.UPDATE,
+    service: 'archivist',
+    requestSchema: ConceptUpdateRequestSchema,
+    responseSchema: ConceptUpdateResponseSchema,
+    description: 'Update an existing concept',
+  },
+
+  [ConceptActions.DELETE]: {
+    action: ConceptActions.DELETE,
+    service: 'archivist',
+    requestSchema: ConceptDeleteRequestSchema,
+    responseSchema: ConceptDeleteResponseSchema,
+    description: 'Delete a concept',
+  },
+
+  // Query contracts
+  [QueryActions.EXECUTE]: {
+    action: QueryActions.EXECUTE,
+    service: 'archivist',
+    requestSchema: QueryExecuteRequestSchema,
+    responseSchema: QueryExecuteResponseSchema,
+    description: 'Execute a database query',
+  },
+
+  [QueryActions.VALIDATE]: {
+    action: QueryActions.VALIDATE,
+    service: 'archivist',
+    requestSchema: QueryValidateRequestSchema,
+    responseSchema: QueryValidateResponseSchema,
+    description: 'Validate a query before execution',
+  },
+
+  [QueryActions.PARSE]: {
+    action: QueryActions.PARSE,
+    service: 'archivist',
+    requestSchema: QueryParseRequestSchema,
+    responseSchema: QueryParseResponseSchema,
+    description: 'Parse a query string',
+  },
+
+  // Kind contracts
+  [KindActions.GET]: {
+    action: KindActions.GET,
+    service: 'archivist',
+    requestSchema: KindGetRequestSchema,
+    responseSchema: KindGetResponseSchema,
+    description: 'Get a specific kind by UID',
+  },
+
+  [KindActions.LIST]: {
+    action: KindActions.LIST,
+    service: 'archivist',
+    requestSchema: KindsListRequestSchema,
+    responseSchema: KindsListResponseSchema,
+    description: 'List all kinds with pagination',
+  },
+
+  [KindActions.SEARCH]: {
+    action: KindActions.SEARCH,
+    service: 'archivist',
+    requestSchema: KindsSearchRequestSchema,
+    responseSchema: KindsSearchResponseSchema,
+    description: 'Search for kinds by query',
+  },
+
+  // UID contracts
+  [UIDActions.GENERATE]: {
+    action: UIDActions.GENERATE,
+    service: 'archivist',
+    requestSchema: UIDGenerateRequestSchema,
+    responseSchema: UIDGenerateResponseSchema,
+    description: 'Generate a single unique identifier',
+  },
+
+  [UIDActions.BATCH]: {
+    action: UIDActions.BATCH,
+    service: 'archivist',
+    requestSchema: UIDBatchRequestSchema,
+    responseSchema: UIDBatchResponseSchema,
+    description: 'Generate multiple unique identifiers',
+  },
+
+  [UIDActions.RESERVE]: {
+    action: UIDActions.RESERVE,
+    service: 'archivist',
+    requestSchema: UIDReserveRequestSchema,
+    responseSchema: UIDReserveResponseSchema,
+    description: 'Reserve a range of unique identifiers',
+  },
+
+  // Completion contracts
+  [CompletionActions.REQUEST]: {
+    action: CompletionActions.REQUEST,
+    service: 'archivist',
+    requestSchema: CompletionRequestSchema,
+    responseSchema: CompletionResponseSchema,
+    description: 'Get text completion suggestions',
+  },
+
+  [CompletionActions.ENTITIES]: {
+    action: CompletionActions.ENTITIES,
+    service: 'archivist',
+    requestSchema: CompletionEntitiesRequestSchema,
+    responseSchema: CompletionEntitiesResponseSchema,
+    description: 'Get entity completion suggestions',
+  },
+
+  [CompletionActions.RELATIONS]: {
+    action: CompletionActions.RELATIONS,
+    service: 'archivist',
+    requestSchema: CompletionRelationsRequestSchema,
+    responseSchema: CompletionRelationsResponseSchema,
+    description: 'Get relation completion suggestions',
+  },
+
+  // Definition contracts
+  [DefinitionActions.GET]: {
+    action: DefinitionActions.GET,
+    service: 'archivist',
+    requestSchema: DefinitionGetRequestSchema,
+    responseSchema: DefinitionGetResponseSchema,
+    description: 'Get definition for an entity',
+  },
+
+  [DefinitionActions.UPDATE]: {
+    action: DefinitionActions.UPDATE,
+    service: 'archivist',
+    requestSchema: DefinitionUpdateRequestSchema,
+    responseSchema: DefinitionUpdateResponseSchema,
+    description: 'Update definition for an entity',
+  },
+
+  // Submission contracts
+  [SubmissionActions.SUBMIT]: {
+    action: SubmissionActions.SUBMIT,
+    service: 'archivist',
+    requestSchema: SubmissionSubmitRequestSchema,
+    responseSchema: SubmissionSubmitResponseSchema,
+    description: 'Submit facts to the knowledge graph',
+  },
+
+  [SubmissionActions.BATCH]: {
+    action: SubmissionActions.BATCH,
+    service: 'archivist',
+    requestSchema: SubmissionBatchRequestSchema,
+    responseSchema: SubmissionBatchResponseSchema,
+    description: 'Submit multiple facts in batch',
+  },
+
+  // Transaction contracts
+  [TransactionActions.START]: {
+    action: TransactionActions.START,
+    service: 'archivist',
+    requestSchema: TransactionStartRequestSchema,
+    responseSchema: TransactionStartResponseSchema,
+    description: 'Start a new transaction',
+  },
+
+  [TransactionActions.COMMIT]: {
+    action: TransactionActions.COMMIT,
+    service: 'archivist',
+    requestSchema: TransactionCommitRequestSchema,
+    responseSchema: TransactionCommitResponseSchema,
+    description: 'Commit a transaction',
+  },
+
+  [TransactionActions.ROLLBACK]: {
+    action: TransactionActions.ROLLBACK,
+    service: 'archivist',
+    requestSchema: TransactionRollbackRequestSchema,
+    responseSchema: TransactionRollbackResponseSchema,
+    description: 'Rollback a transaction',
+  },
+
+  [TransactionActions.GET]: {
+    action: TransactionActions.GET,
+    service: 'archivist',
+    requestSchema: TransactionGetRequestSchema,
+    responseSchema: TransactionGetResponseSchema,
+    description: 'Get transaction status',
+  },
+
+  // Validation contracts
+  [ValidationActions.VALIDATE]: {
+    action: ValidationActions.VALIDATE,
+    service: 'archivist',
+    requestSchema: ValidationValidateRequestSchema,
+    responseSchema: ValidationValidateResponseSchema,
+    description: 'Validate a single fact',
+  },
+
+  [ValidationActions.COLLECTION]: {
+    action: ValidationActions.COLLECTION,
+    service: 'archivist',
+    requestSchema: ValidationCollectionRequestSchema,
+    responseSchema: ValidationCollectionResponseSchema,
+    description: 'Validate a collection of facts',
+  },
   
 } as const satisfies Record<string, MessageContract>;
 
