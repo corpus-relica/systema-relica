@@ -68,4 +68,28 @@ export class SetupController {
       },
     };
   }
+
+  @Post('debug/reset-system')
+  async resetSystem() {
+    console.log('🚨 DEBUG: System reset requested');
+    
+    try {
+      const result = await this.setupService.resetSystem();
+      
+      return {
+        success: result.success,
+        message: result.message,
+        errors: result.errors,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('DEBUG: System reset failed:', error);
+      return {
+        success: false,
+        message: `System reset failed: ${error.message}`,
+        errors: [error.message],
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
 }

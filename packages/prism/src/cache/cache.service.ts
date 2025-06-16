@@ -166,4 +166,20 @@ export class CacheService {
     };
     // TODO: Broadcast status update via WebSocket
   }
+
+  async clearCache(): Promise<{ success: boolean; error?: string }> {
+    console.log('[Cache] Clearing Redis cache...');
+    try {
+      await this.redisClient.flushAll();
+      console.log('✅ Successfully cleared Redis cache');
+      
+      // Reset rebuild status
+      this.resetRebuildStatus();
+      
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Failed to clear Redis cache:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }

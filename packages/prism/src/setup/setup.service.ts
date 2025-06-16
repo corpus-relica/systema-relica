@@ -217,4 +217,66 @@ export class SetupService implements OnModuleInit {
       this.sendEvent({ type: 'USER_CREATION_SUCCESS' });
     }, 1000);
   }
+
+  public async resetSystem(): Promise<{ success: boolean; message?: string; errors?: string[] }> {
+    console.log('🚨 Starting system reset...');
+    const errors: string[] = [];
+    
+    try {
+      // Step 1: Reset the state machine to idle
+      console.log('Resetting setup state machine...');
+      if (this.actor) {
+        this.actor.stop();
+        this.actor = createSetupActor();
+        this.actor.subscribe((state) => {
+          console.log('Setup state changed:', state.value, state.context);
+          this.broadcastStateUpdate(state.context, state.value);
+          this.processState(state.value, state.context);
+        });
+        this.actor.start();
+      }
+
+      // Step 2: Clear Neo4j database
+      console.log('Clearing Neo4j database...');
+      const neo4jResult = await this.neo4jService.clearDatabase();
+      if (!neo4jResult.success) {
+        errors.push(`Neo4j: ${neo4jResult.error}`);
+      }
+
+      // Step 3: Clear Redis cache
+      console.log('Clearing Redis cache...');
+      const redisResult = await this.cacheService.clearCache();
+      if (!redisResult.success) {
+        errors.push(`Redis: ${redisResult.error}`);
+      }
+
+      // Step 4: TODO - Clear PostgreSQL databases
+      // This would need to call Clarity and Aperture services to clear their databases
+      console.log('⚠️ PostgreSQL reset not implemented (requires Clarity/Aperture integration)');
+
+      const success = errors.length === 0;
+      const message = success 
+        ? '✅ System reset completed successfully'
+        : `⚠️ System reset completed with ${errors.length} error(s)`;
+
+      console.log(message);
+      if (errors.length > 0) {
+        console.error('Reset errors:', errors);
+      }
+
+      return {
+        success,
+        message,
+        errors: errors.length > 0 ? errors : undefined
+      };
+
+    } catch (error) {
+      console.error('❌ System reset failed:', error);
+      return {
+        success: false,
+        message: `System reset failed: ${error.message}`,
+        errors: [error.message]
+      };
+    }
+  }
 }
