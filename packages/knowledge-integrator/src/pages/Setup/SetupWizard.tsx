@@ -27,6 +27,7 @@ import { SETUP_STATES } from '@relica/constants';
 import { withRetry, SetupError } from '../../utils/ErrorHandler';
 import ProgressStage from './ProgressStage';
 import UserSetupForm from './UserSetupForm';
+import DebugPanel from '../../components/DebugPanel';
 
 const WizardContainer = styled(Container)(({ theme }) => ({
   minHeight: '100vh',
@@ -377,6 +378,9 @@ const SetupWizard: React.FC = () => {
           </Typography>
         </Box>
       </WelcomePaper>
+      
+      {/* Debug panel for setup wizard */}
+      {import.meta.env.DEV && <DebugPanel />}
     </WizardContainer>
   );
 };

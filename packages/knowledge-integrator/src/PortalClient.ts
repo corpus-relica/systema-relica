@@ -137,3 +137,14 @@ export const loadUserEnvironment = async (): Promise<any> => {
   const response = await PortalAxiosInstance.get("/api/environment/user");
   return response.data;
 };
+
+// DEBUG: Reset entire system (databases, setup state, etc.)
+export const resetSystemState = async (): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const response = await PortalAxiosInstance.post("/api/debug/reset-system");
+    return response.data;
+  } catch (error) {
+    console.error('System reset failed:', error);
+    throw new Error(`Failed to reset system: ${error.message}`);
+  }
+};

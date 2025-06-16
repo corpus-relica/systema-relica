@@ -24,6 +24,7 @@ import { authProvider } from "./authProvider";
 import { getSetupStatus, loadUserEnvironment } from "./PortalClient";
 import { SetupWizard } from "./pages/Setup";
 import { portalSocket } from "./PortalSocket";
+import DebugPanel from "./components/DebugPanel";
 
 import CCDataProvider from "./data/CCDataProvider";
 import ArchivistDataProvider from "./data/ArchivistDataProvider";
@@ -200,6 +201,9 @@ export const App = () => {
           <Route path="/settings" element={<Settings />} />
         </CustomRoutes>
       </Admin>
+      
+      {/* Debug panel - only show in development */}
+      {import.meta.env.DEV && <DebugPanel />}
     </QueryClientProvider>
   );
 };
