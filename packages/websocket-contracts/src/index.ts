@@ -30,6 +30,7 @@ export * from './base';
 // Service-specific contracts
 export * from './services/prism';
 export * from './services/archivist';
+export * from './services/aperture';
 
 // Message registry and utilities
 export * from './registry';
@@ -150,3 +151,42 @@ export {
   type ValidationEventType,
   type ValidationMessage,
 } from './services/archivist';
+
+export {
+  // Aperture operations
+  ApertureActions,
+  type EnvironmentGetRequest,
+  type EnvironmentListRequest,
+  type EnvironmentCreateRequest,
+  type EnvironmentClearRequest,
+  type SearchLoadTextRequest,
+  type SearchLoadUidRequest,
+  type SpecializationLoadFactRequest,
+  type SpecializationLoadRequest,
+  type EntityLoadRequest,
+  type EntityUnloadRequest,
+  type EntitySelectRequest,
+  type EntityDeselectRequest,
+  type EntityLoadMultipleRequest,
+  type EntityUnloadMultipleRequest,
+  type SubtypeLoadRequest,
+  type SubtypeLoadConeRequest,
+  type SubtypeUnloadConeRequest,
+  type ClassificationLoadRequest,
+  type ClassificationLoadFactRequest,
+  type CompositionLoadRequest,
+  type CompositionLoadInRequest,
+  type ConnectionLoadRequest,
+  type ConnectionLoadInRequest,
+  type RelationRequiredRolesLoadRequest,
+  type RelationRolePlayersLoadRequest,
+  type ApertureResponse,
+  type SuccessResponse,
+  type ErrorResponse,
+  type FactsLoadedEvent,
+  type FactsUnloadedEvent,
+  type EntitySelectedEvent,
+  type EntityDeselectedEvent,
+  type Fact,
+  type Environment,
+} from './services/aperture';

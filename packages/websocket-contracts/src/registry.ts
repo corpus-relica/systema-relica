@@ -93,6 +93,35 @@ import {
   ValidationValidateResponseSchema,
   ValidationCollectionResponseSchema,
 } from './services/archivist';
+import {
+  ApertureActions,
+  EnvironmentGetRequestSchema,
+  EnvironmentListRequestSchema,
+  EnvironmentCreateRequestSchema,
+  EnvironmentClearRequestSchema,
+  SearchLoadTextRequestSchema,
+  SearchLoadUidRequestSchema,
+  SpecializationLoadFactRequestSchema,
+  SpecializationLoadRequestSchema,
+  EntityLoadRequestSchema,
+  EntityUnloadRequestSchema,
+  EntitySelectRequestSchema,
+  EntityDeselectRequestSchema,
+  EntityLoadMultipleRequestSchema,
+  EntityUnloadMultipleRequestSchema,
+  SubtypeLoadRequestSchema,
+  SubtypeLoadConeRequestSchema,
+  SubtypeUnloadConeRequestSchema,
+  ClassificationLoadRequestSchema,
+  ClassificationLoadFactRequestSchema,
+  CompositionLoadRequestSchema,
+  CompositionLoadInRequestSchema,
+  ConnectionLoadRequestSchema,
+  ConnectionLoadInRequestSchema,
+  RelationRequiredRolesLoadRequestSchema,
+  RelationRolePlayersLoadRequestSchema,
+  ApertureResponseSchema,
+} from './services/aperture';
 
 /**
  * Contract definition for a single WebSocket operation
@@ -526,6 +555,219 @@ export const MESSAGE_REGISTRY = {
     requestSchema: ValidationCollectionRequestSchema,
     responseSchema: ValidationCollectionResponseSchema,
     description: 'Validate a collection of facts',
+  },
+
+  // =====================================================
+  // APERTURE SERVICE CONTRACTS
+  // =====================================================
+  
+  // Environment contracts
+  [ApertureActions.ENVIRONMENT_GET]: {
+    action: ApertureActions.ENVIRONMENT_GET,
+    service: 'aperture',
+    requestSchema: EnvironmentGetRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Get a user environment by ID or default',
+  },
+
+  [ApertureActions.ENVIRONMENT_LIST]: {
+    action: ApertureActions.ENVIRONMENT_LIST,
+    service: 'aperture',
+    requestSchema: EnvironmentListRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'List all environments for a user',
+  },
+
+  [ApertureActions.ENVIRONMENT_CREATE]: {
+    action: ApertureActions.ENVIRONMENT_CREATE,
+    service: 'aperture',
+    requestSchema: EnvironmentCreateRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Create a new environment for a user',
+  },
+
+  [ApertureActions.ENVIRONMENT_CLEAR]: {
+    action: ApertureActions.ENVIRONMENT_CLEAR,
+    service: 'aperture',
+    requestSchema: EnvironmentClearRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Clear all facts from an environment',
+  },
+
+  // Search contracts
+  [ApertureActions.SEARCH_LOAD_TEXT]: {
+    action: ApertureActions.SEARCH_LOAD_TEXT,
+    service: 'aperture',
+    requestSchema: SearchLoadTextRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load facts into environment based on text search',
+  },
+
+  [ApertureActions.SEARCH_LOAD_UID]: {
+    action: ApertureActions.SEARCH_LOAD_UID,
+    service: 'aperture',
+    requestSchema: SearchLoadUidRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load facts into environment based on UID search',
+  },
+
+  // Specialization contracts
+  [ApertureActions.SPECIALIZATION_LOAD_FACT]: {
+    action: ApertureActions.SPECIALIZATION_LOAD_FACT,
+    service: 'aperture',
+    requestSchema: SpecializationLoadFactRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load specialization fact for an entity',
+  },
+
+  [ApertureActions.SPECIALIZATION_LOAD]: {
+    action: ApertureActions.SPECIALIZATION_LOAD,
+    service: 'aperture',
+    requestSchema: SpecializationLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load specialization hierarchy for an entity',
+  },
+
+  // Entity contracts
+  [ApertureActions.ENTITY_LOAD]: {
+    action: ApertureActions.ENTITY_LOAD,
+    service: 'aperture',
+    requestSchema: EntityLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load an entity and its facts into environment',
+  },
+
+  [ApertureActions.ENTITY_UNLOAD]: {
+    action: ApertureActions.ENTITY_UNLOAD,
+    service: 'aperture',
+    requestSchema: EntityUnloadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Unload an entity and its facts from environment',
+  },
+
+  [ApertureActions.ENTITY_SELECT]: {
+    action: ApertureActions.ENTITY_SELECT,
+    service: 'aperture',
+    requestSchema: EntitySelectRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Select an entity in the environment',
+  },
+
+  [ApertureActions.ENTITY_DESELECT]: {
+    action: ApertureActions.ENTITY_DESELECT,
+    service: 'aperture',
+    requestSchema: EntityDeselectRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Deselect the current entity in environment',
+  },
+
+  [ApertureActions.ENTITY_LOAD_MULTIPLE]: {
+    action: ApertureActions.ENTITY_LOAD_MULTIPLE,
+    service: 'aperture',
+    requestSchema: EntityLoadMultipleRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load multiple entities and their facts into environment',
+  },
+
+  [ApertureActions.ENTITY_UNLOAD_MULTIPLE]: {
+    action: ApertureActions.ENTITY_UNLOAD_MULTIPLE,
+    service: 'aperture',
+    requestSchema: EntityUnloadMultipleRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Unload multiple entities and their facts from environment',
+  },
+
+  // Subtype contracts
+  [ApertureActions.SUBTYPE_LOAD]: {
+    action: ApertureActions.SUBTYPE_LOAD,
+    service: 'aperture',
+    requestSchema: SubtypeLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load subtype facts for an entity',
+  },
+
+  [ApertureActions.SUBTYPE_LOAD_CONE]: {
+    action: ApertureActions.SUBTYPE_LOAD_CONE,
+    service: 'aperture',
+    requestSchema: SubtypeLoadConeRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load complete subtype hierarchy cone for an entity',
+  },
+
+  [ApertureActions.SUBTYPE_UNLOAD_CONE]: {
+    action: ApertureActions.SUBTYPE_UNLOAD_CONE,
+    service: 'aperture',
+    requestSchema: SubtypeUnloadConeRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Unload complete subtype hierarchy cone for an entity',
+  },
+
+  // Classification contracts
+  [ApertureActions.CLASSIFICATION_LOAD]: {
+    action: ApertureActions.CLASSIFICATION_LOAD,
+    service: 'aperture',
+    requestSchema: ClassificationLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load classification facts for an entity',
+  },
+
+  [ApertureActions.CLASSIFICATION_LOAD_FACT]: {
+    action: ApertureActions.CLASSIFICATION_LOAD_FACT,
+    service: 'aperture',
+    requestSchema: ClassificationLoadFactRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load classification fact for an entity',
+  },
+
+  // Composition contracts
+  [ApertureActions.COMPOSITION_LOAD]: {
+    action: ApertureActions.COMPOSITION_LOAD,
+    service: 'aperture',
+    requestSchema: CompositionLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load composition relationships for an entity',
+  },
+
+  [ApertureActions.COMPOSITION_LOAD_IN]: {
+    action: ApertureActions.COMPOSITION_LOAD_IN,
+    service: 'aperture',
+    requestSchema: CompositionLoadInRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load incoming composition relationships for an entity',
+  },
+
+  // Connection contracts
+  [ApertureActions.CONNECTION_LOAD]: {
+    action: ApertureActions.CONNECTION_LOAD,
+    service: 'aperture',
+    requestSchema: ConnectionLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load connection relationships for an entity',
+  },
+
+  [ApertureActions.CONNECTION_LOAD_IN]: {
+    action: ApertureActions.CONNECTION_LOAD_IN,
+    service: 'aperture',
+    requestSchema: ConnectionLoadInRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load incoming connection relationships for an entity',
+  },
+
+  // Relation contracts
+  [ApertureActions.RELATION_REQUIRED_ROLES_LOAD]: {
+    action: ApertureActions.RELATION_REQUIRED_ROLES_LOAD,
+    service: 'aperture',
+    requestSchema: RelationRequiredRolesLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load required roles for a relation type',
+  },
+
+  [ApertureActions.RELATION_ROLE_PLAYERS_LOAD]: {
+    action: ApertureActions.RELATION_ROLE_PLAYERS_LOAD,
+    service: 'aperture',
+    requestSchema: RelationRolePlayersLoadRequestSchema,
+    responseSchema: ApertureResponseSchema,
+    description: 'Load role players for a relation type',
   },
   
 } as const satisfies Record<string, MessageContract>;
