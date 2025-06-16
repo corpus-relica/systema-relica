@@ -126,7 +126,10 @@ export const App = () => {
         }
       } catch (error) {
         console.error("Failed to check setup status:", error);
-        // Assume setup is required if we can't check
+        
+        // If we can't check setup status, assume setup is required
+        // This handles cases where the API is down or auth is needed
+        console.log("🔧 Assuming setup is required due to API error");
         setSetupRequired(true);
         setIsCheckingSetup(false);
       }

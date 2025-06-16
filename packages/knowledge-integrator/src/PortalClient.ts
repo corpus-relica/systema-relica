@@ -43,6 +43,21 @@ export const getSetupStatus = async (retries = 3): Promise<SetupStatus> => {
     } catch (error) {
       console.error(`Setup status check failed (attempt ${attempt}/${retries}):`, error);
       
+      // If 401/403 and no token, try to get guest token first
+      if ((error.response?.status === 401 || error.response?.status === 403) && !getAuthToken()) {
+        try {
+          console.log('🔑 Getting guest token for setup status check...');
+          const { token } = await getGuestToken();
+          localStorage.setItem('access_token', token);
+          // Retry the request with the guest token
+          const response = await PortalAxiosInstance.get("/api/prism/setup/status");
+          return response.data;
+        } catch (guestError) {
+          console.error('Failed to get guest token:', guestError);
+          // Continue with normal retry logic
+        }
+      }
+      
       if (attempt === retries) {
         throw new Error(`Failed to get setup status after ${retries} attempts: ${error.message}`);
       }
@@ -88,9 +103,14 @@ export const createAdminUser = async (userData: AdminUserData, retries = 2): Pro
 };
 
 export const getGuestToken = async (retries = 3): Promise<{ token: string }> => {
+  // Create a fresh axios instance without auth interceptor for guest token
+  const guestAxios = axios.create({
+    baseURL: import.meta.env.VITE_PORTAL_API_URL || 'http://localhost:2204',
+  });
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await PortalAxiosInstance.post("/api/auth/guest");
+      const response = await guestAxios.post("/api/auth/guest");
       return response.data;
     } catch (error) {
       console.error(`Get guest token failed (attempt ${attempt}/${retries}):`, error);

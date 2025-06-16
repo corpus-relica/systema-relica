@@ -113,8 +113,8 @@ const SetupWizard: React.FC = () => {
         setupStatus.state.id !== SETUP_STATES.SETUP_COMPLETE) {
       console.log('📡 WebSocket not connected, falling back to polling');
       intervalId = setInterval(() => {
-        checkSetupStatus();
-      }, 3000); // Poll every 3 seconds as fallback
+        checkSetupStatus(false); // Don't show errors during polling
+      }, 5000); // Poll every 5 seconds as fallback (less aggressive)
     }
 
     return () => {
