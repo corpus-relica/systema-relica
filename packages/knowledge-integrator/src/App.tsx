@@ -21,6 +21,8 @@ import {
 import { Route } from "react-router-dom";
 
 import { authProvider } from "./authProvider";
+import { getSetupStatus } from "./PortalClient";
+import { SetupWizard } from "./pages/Setup";
 
 import CCDataProvider from "./data/CCDataProvider";
 import ArchivistDataProvider from "./data/ArchivistDataProvider";
@@ -78,6 +80,8 @@ console.log("vvvv - MEMSTORE vvvv:");
 console.log(memStore);
 
 export const App = () => {
+  const [setupRequired, setSetupRequired] = useState<boolean | null>(null);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
   const rootStore: any = useStores();
 
   console.log("vvvv - ROOT STORE vvvv:");
@@ -107,7 +111,30 @@ export const App = () => {
     setCategories(newCats);
   };
 
+  // Check setup status on app startup
   useEffect(() => {
+    const checkSetup = async () => {
+      try {
+        const setupStatus = await getSetupStatus();
+        setSetupRequired(setupStatus.setupRequired);
+        setIsCheckingSetup(false);
+        
+        if (!setupStatus.setupRequired) {
+          // If setup is complete, initialize the app
+          await initializeApp();
+        }
+      } catch (error) {
+        console.error("Failed to check setup status:", error);
+        // Assume setup is required if we can't check
+        setSetupRequired(true);
+        setIsCheckingSetup(false);
+      }
+    };
+
+    checkSetup();
+  }, []);
+
+  const initializeApp = async () => {
     const retrieveEnv = async () => {
       const env = await retrieveEnvironment();
       console.log("vvvv - ENVIRONMENT vvvv:");
@@ -123,9 +150,30 @@ export const App = () => {
       console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
     };
 
-    foobarbaz();
-  }, []);
+    await foobarbaz();
+  };
 
+  // Show loading screen while checking setup
+  if (isCheckingSetup) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem'
+      }}>
+        🔄 Initializing Systema Relica...
+      </div>
+    );
+  }
+
+  // Show setup wizard if setup is required
+  if (setupRequired) {
+    return <SetupWizard />;
+  }
+
+  // Show main application
   return (
     <QueryClientProvider client={queryClient}>
       <Admin

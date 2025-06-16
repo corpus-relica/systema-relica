@@ -1,5 +1,5 @@
 import { AuthProvider, HttpError } from "react-admin";
-import data from "./users.json";
+import { checkAuthenticationStatus } from "./PortalClient";
 
 export const getAuthToken = () => {
   const token = localStorage.getItem('access_token');
@@ -8,11 +8,12 @@ export const getAuthToken = () => {
 };
 
 /**
- * This authProvider is only for test purposes. Don't use it in production.
+ * Enhanced authProvider with setup wizard integration
  */
 export const authProvider: AuthProvider = {
   login: async ({ username, password }) => {
-    const response = await fetch('http://localhost:3000/auth/login', {
+    const portalUrl = import.meta.env.VITE_PORTAL_API_URL || 'http://localhost:2204';
+    const response = await fetch(`${portalUrl}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,36 +27,60 @@ export const authProvider: AuthProvider = {
       });
     }
 
-    const user = await response.json();
-    const { access_token } = user;
+    const result = await response.json();
+    const { access_token, user } = result;
     localStorage.setItem("access_token", access_token);
-    return Promise.resolve(user);
+    localStorage.setItem("user", JSON.stringify(user));
+    return Promise.resolve(result);
   },
   logout: () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
     return Promise.resolve();
   },
   checkError: () => Promise.resolve(),
-  checkAuth: () => {
+  checkAuth: async () => {
     const accessToken = localStorage.getItem("access_token");
     if (!accessToken) {
       return Promise.reject();
     }
-    return Promise.resolve();
+    
+    try {
+      const authStatus = await checkAuthenticationStatus();
+      if (!authStatus.authenticated) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user");
+        return Promise.reject();
+      }
+      return Promise.resolve();
+    } catch (error) {
+      // If we can't verify, assume token is invalid
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      return Promise.reject();
+    }
   },
   getPermissions: () => {
     return Promise.resolve(undefined);
   },
   getIdentity: () => {
     const accessToken = localStorage.getItem("access_token");
-    if (!accessToken) {
+    const userStr = localStorage.getItem("user");
+    
+    if (!accessToken || !userStr) {
       return Promise.reject();
     }
-    // TODO: get user from backend
-    return Promise.resolve({
-      id: 'user',
-      fullName: 'User',
-    });
+    
+    try {
+      const user = JSON.parse(userStr);
+      return Promise.resolve({
+        id: user.id || user.username,
+        fullName: user.fullName || user.username,
+        avatar: user.avatar,
+      });
+    } catch (error) {
+      return Promise.reject();
+    }
   },
 };
 
