@@ -1,20 +1,13 @@
 import React from 'react';
 import {
   Box,
-  Stepper,
-  Step,
-  StepLabel,
   LinearProgress,
   Typography,
   Alert,
   CircularProgress,
   styled
 } from '@mui/material';
-import { SetupStatus } from '../../PortalClient';
-
-const StyledStepper = styled(Stepper)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
-}));
+import { SETUP_STATES } from '@relica/constants';
 
 const StageBox = styled(Box)(({ theme }) => ({
   textAlign: 'center',
@@ -23,45 +16,27 @@ const StageBox = styled(Box)(({ theme }) => ({
 }));
 
 interface ProgressStageProps {
-  setupStatus: SetupStatus;
+  stage: string;
+  progress: number;
+  status?: string;  // Human-readable status message from backend
+  error?: string;
 }
 
-const STAGE_LABELS = {
-  idle: '🌟 Ready to Begin',
-  checking_db: '🔍 Database Connection',
-  awaiting_user_credentials: '👤 User Credentials',
-  creating_admin_user: '🛠️ Creating Admin User',
-  seeding_db: '🌱 Seeding Database',
-  building_caches: '⚡ Building Caches',
-  setup_complete: '✅ Setup Complete'
-};
-
-const STAGES = Object.keys(STAGE_LABELS) as Array<keyof typeof STAGE_LABELS>;
-
-const ProgressStage: React.FC<ProgressStageProps> = ({ setupStatus }) => {
-  const { stage, progress, message, error } = setupStatus;
-  const currentStepIndex = STAGES.indexOf(stage);
-
+const ProgressStage: React.FC<ProgressStageProps> = ({ stage, progress, status, error }) => {
   return (
     <StageBox>
       <Typography variant="h5" gutterBottom>
         🏗️ System Setup Progress
       </Typography>
-      
-      <StyledStepper activeStep={currentStepIndex} alternativeLabel>
-        {STAGES.map((stageKey) => (
-          <Step key={stageKey}>
-            <StepLabel>{STAGE_LABELS[stageKey]}</StepLabel>
-          </Step>
-        ))}
-      </StyledStepper>
 
       <Box sx={{ mb: 2 }}>
+        {/* Display backend-provided status or fallback to stage */}
         <Typography variant="h6" gutterBottom>
-          {STAGE_LABELS[stage]}
+          {status || stage || 'Processing...'}
         </Typography>
         
-        {stage !== 'idle' && stage !== 'setup_complete' && (
+        {/* Show spinner for any active stage except idle and complete */}
+        {stage && stage !== SETUP_STATES.IDLE && stage !== SETUP_STATES.SETUP_COMPLETE && (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
             <CircularProgress size={24} sx={{ mr: 1 }} />
             <Typography variant="body2">Processing...</Typography>
@@ -78,12 +53,6 @@ const ProgressStage: React.FC<ProgressStageProps> = ({ setupStatus }) => {
           {progress}% Complete
         </Typography>
       </Box>
-
-      {message && (
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          {message}
-        </Typography>
-      )}
 
       {error && (
         <Alert severity="error" sx={{ mt: 2 }}>

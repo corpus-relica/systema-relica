@@ -18,10 +18,15 @@ PortalAxiosInstance.interceptors.request.use((config) => {
 
 export interface SetupStatus {
   setupRequired: boolean;
-  stage: 'idle' | 'checking_db' | 'awaiting_user_credentials' | 'creating_admin_user' | 'seeding_db' | 'building_caches' | 'setup_complete';
+  state: {
+    id: string;
+    substate?: string;
+    full_path: string[];
+  };
   progress: number;
-  message?: string;
+  status: string;  // Human-readable status message from backend
   error?: string;
+  masterUser?: string;
 }
 
 export interface AdminUserData {
@@ -30,24 +35,73 @@ export interface AdminUserData {
   email?: string;
 }
 
-export const getSetupStatus = async (): Promise<SetupStatus> => {
-  const response = await PortalAxiosInstance.get("/api/prism/setup/status");
-  return response.data;
+export const getSetupStatus = async (retries = 3): Promise<SetupStatus> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await PortalAxiosInstance.get("/api/prism/setup/status");
+      return response.data;
+    } catch (error) {
+      console.error(`Setup status check failed (attempt ${attempt}/${retries}):`, error);
+      
+      if (attempt === retries) {
+        throw new Error(`Failed to get setup status after ${retries} attempts: ${error.message}`);
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
+    }
+  }
 };
 
-export const startSetup = async (): Promise<{ success: boolean; message?: string }> => {
-  const response = await PortalAxiosInstance.post("/api/prism/setup/start");
-  return response.data;
+export const startSetup = async (retries = 2): Promise<{ success: boolean; message?: string }> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await PortalAxiosInstance.post("/api/prism/setup/start");
+      return response.data;
+    } catch (error) {
+      console.error(`Start setup failed (attempt ${attempt}/${retries}):`, error);
+      
+      if (attempt === retries) {
+        throw new Error(`Failed to start setup after ${retries} attempts: ${error.message}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+    }
+  }
 };
 
-export const createAdminUser = async (userData: AdminUserData): Promise<{ success: boolean; user?: any; message?: string }> => {
-  const response = await PortalAxiosInstance.post("/api/prism/setup/admin-user", userData);
-  return response.data;
+export const createAdminUser = async (userData: AdminUserData, retries = 2): Promise<{ success: boolean; user?: any; message?: string }> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await PortalAxiosInstance.post("/api/prism/setup/admin-user", userData);
+      return response.data;
+    } catch (error) {
+      console.error(`Create admin user failed (attempt ${attempt}/${retries}):`, error);
+      
+      if (attempt === retries) {
+        throw new Error(`Failed to create admin user after ${retries} attempts: ${error.message}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+    }
+  }
 };
 
-export const getGuestToken = async (): Promise<{ token: string }> => {
-  const response = await PortalAxiosInstance.post("/api/auth/guest");
-  return response.data;
+export const getGuestToken = async (retries = 3): Promise<{ token: string }> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await PortalAxiosInstance.post("/api/auth/guest");
+      return response.data;
+    } catch (error) {
+      console.error(`Get guest token failed (attempt ${attempt}/${retries}):`, error);
+      
+      if (attempt === retries) {
+        throw new Error(`Failed to get guest token after ${retries} attempts: ${error.message}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
 };
 
 export const checkAuthenticationStatus = async (): Promise<{ authenticated: boolean; user?: any }> => {

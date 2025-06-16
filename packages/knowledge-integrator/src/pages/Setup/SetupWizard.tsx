@@ -23,6 +23,8 @@ import {
   addSetupCompleteListener, 
   addSetupErrorListener 
 } from '../../PortalSocket';
+import { SETUP_STATES } from '@relica/constants';
+import { withRetry, SetupError } from '../../utils/ErrorHandler';
 import ProgressStage from './ProgressStage';
 import UserSetupForm from './UserSetupForm';
 
@@ -46,12 +48,14 @@ const WelcomePaper = styled(Paper)(({ theme }) => ({
 const SetupWizard: React.FC = () => {
   const [setupStatus, setSetupStatus] = useState<SetupStatus>({
     setupRequired: true,
-    stage: 'idle',
-    progress: 0
+    state: { id: SETUP_STATES.IDLE, full_path: [SETUP_STATES.IDLE] },
+    progress: 0,
+    status: 'Initializing...'
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [guestTokenObtained, setGuestTokenObtained] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Check setup status on component mount
   useEffect(() => {
@@ -64,10 +68,11 @@ const SetupWizard: React.FC = () => {
       console.log('📊 Received setup progress:', data);
       setSetupStatus(prevStatus => ({
         ...prevStatus,
-        stage: data.stage as any,
+        state: data.state,
         progress: data.progress,
-        message: data.message,
-        error: data.error
+        status: data.status,
+        error: data.error,
+        masterUser: data.masterUser
       }));
     });
 
@@ -75,9 +80,9 @@ const SetupWizard: React.FC = () => {
       console.log('🎉 Setup completed:', data);
       setSetupStatus(prevStatus => ({
         ...prevStatus,
-        stage: 'setup_complete',
+        state: { id: SETUP_STATES.SETUP_COMPLETE, full_path: [SETUP_STATES.SETUP_COMPLETE] },
         progress: 100,
-        message: 'Setup completed successfully!'
+        status: 'Setup completed successfully!'
       }));
     });
 
@@ -103,9 +108,9 @@ const SetupWizard: React.FC = () => {
     
     // Only poll if WebSocket is not connected and setup is in progress
     if (!portalSocket.isConnected() &&
-        setupStatus.stage !== 'idle' && 
-        setupStatus.stage !== 'awaiting_user_credentials' && 
-        setupStatus.stage !== 'setup_complete') {
+        setupStatus.state.id !== SETUP_STATES.IDLE && 
+        setupStatus.state.id !== SETUP_STATES.AWAITING_USER_CREDENTIALS && 
+        setupStatus.state.id !== SETUP_STATES.SETUP_COMPLETE) {
       console.log('📡 WebSocket not connected, falling back to polling');
       intervalId = setInterval(() => {
         checkSetupStatus();
@@ -119,18 +124,31 @@ const SetupWizard: React.FC = () => {
     };
   }, [setupStatus.stage, portalSocket.isConnected()]);
 
-  const checkSetupStatus = async () => {
+  const checkSetupStatus = async (showErrors = true) => {
     try {
-      const status = await getSetupStatus();
+      const status = await withRetry(() => getSetupStatus(), {
+        maxRetries: 3,
+        baseDelay: 1000
+      });
+      
       setSetupStatus(status);
       setLoading(false);
+      setRetryCount(0); // Reset retry count on success
       
       if (status.error) {
         setError(status.error);
+      } else if (error) {
+        setError(''); // Clear any previous errors
       }
     } catch (err) {
       console.error('Failed to check setup status:', err);
-      setError('Failed to connect to server. Please check your connection.');
+      setRetryCount(prev => prev + 1);
+      
+      if (showErrors) {
+        const setupError = err instanceof SetupError ? err : SetupError.fromError(err);
+        setError(`Connection failed: ${setupError.message}${setupError.retryable ? ' (retrying...)' : ''}`);
+      }
+      
       setLoading(false);
     }
   };
@@ -139,12 +157,17 @@ const SetupWizard: React.FC = () => {
     if (guestTokenObtained) return;
     
     try {
-      const { token } = await getGuestToken();
+      const { token } = await withRetry(() => getGuestToken(), {
+        maxRetries: 2,
+        baseDelay: 1000
+      });
+      
       localStorage.setItem('access_token', token);
       setGuestTokenObtained(true);
     } catch (err) {
       console.error('Failed to obtain guest token:', err);
-      setError('Failed to obtain guest access. Please refresh and try again.');
+      const setupError = err instanceof SetupError ? err : SetupError.fromError(err);
+      setError(`Authentication failed: ${setupError.message}. Please refresh and try again.`);
     }
   };
 
@@ -154,16 +177,21 @@ const SetupWizard: React.FC = () => {
     try {
       await obtainGuestToken();
       
-      const result = await startSetup();
+      const result = await withRetry(() => startSetup(), {
+        maxRetries: 2,
+        baseDelay: 2000
+      });
+      
       if (result.success) {
-        // Status will be updated by the polling effect
-        await checkSetupStatus();
+        // Status will be updated by the WebSocket or polling
+        await checkSetupStatus(false); // Don't show errors immediately
       } else {
-        setError(result.message || 'Failed to start setup process');
+        setError(result.message || 'Setup initiation failed');
       }
     } catch (err) {
       console.error('Failed to start setup:', err);
-      setError('Failed to start setup process. Please try again.');
+      const setupError = err instanceof SetupError ? err : SetupError.fromError(err);
+      setError(`Setup failed to start: ${setupError.message}`);
     }
   };
 
@@ -171,16 +199,29 @@ const SetupWizard: React.FC = () => {
     setError('');
     
     try {
-      const result = await createAdminUser(userData);
+      const result = await withRetry(() => createAdminUser(userData), {
+        maxRetries: 2,
+        baseDelay: 2000,
+        retryCondition: (error) => {
+          // Don't retry on validation errors (4xx except timeout/rate limit)
+          const status = error.response?.status;
+          if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+            return false;
+          }
+          return true;
+        }
+      });
+      
       if (result.success) {
-        // Setup will continue automatically, status polling will pick it up
-        await checkSetupStatus();
+        // Setup will continue automatically
+        await checkSetupStatus(false);
       } else {
         setError(result.message || 'Failed to create admin user');
       }
     } catch (err) {
       console.error('Failed to create admin user:', err);
-      setError('Failed to create admin user. Please try again.');
+      const setupError = err instanceof SetupError ? err : SetupError.fromError(err);
+      setError(`User creation failed: ${setupError.message}`);
     }
   };
 
@@ -203,7 +244,7 @@ const SetupWizard: React.FC = () => {
   }
 
   // Setup complete - show success and redirect
-  if (setupStatus.stage === 'setup_complete') {
+  if (setupStatus.state.id === SETUP_STATES.SETUP_COMPLETE) {
     return (
       <WizardContainer maxWidth="md">
         <Fade in timeout={1000}>
@@ -237,12 +278,12 @@ const SetupWizard: React.FC = () => {
   }
 
   // User credentials needed
-  if (setupStatus.stage === 'awaiting_user_credentials') {
+  if (setupStatus.state.id === SETUP_STATES.AWAITING_USER_CREDENTIALS) {
     return (
       <WizardContainer maxWidth="md">
         <UserSetupForm
           onSubmit={handleCreateAdminUser}
-          loading={setupStatus.stage === 'creating_admin_user'}
+          loading={setupStatus.state.id === SETUP_STATES.CREATING_ADMIN_USER}
           error={error}
         />
       </WizardContainer>
@@ -250,7 +291,7 @@ const SetupWizard: React.FC = () => {
   }
 
   // Setup in progress
-  if (setupStatus.stage !== 'idle') {
+  if (setupStatus.state.id !== SETUP_STATES.IDLE) {
     return (
       <WizardContainer maxWidth="md">
         <Paper 
@@ -260,7 +301,12 @@ const SetupWizard: React.FC = () => {
             backdropFilter: 'blur(10px)',
           }}
         >
-          <ProgressStage setupStatus={setupStatus} />
+          <ProgressStage 
+            stage={setupStatus.state.id}
+            progress={setupStatus.progress}
+            status={setupStatus.status}
+            error={setupStatus.error}
+          />
         </Paper>
       </WizardContainer>
     );
@@ -285,7 +331,25 @@ const SetupWizard: React.FC = () => {
         </Typography>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}>
+          <Alert 
+            severity="error" 
+            sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}
+            action={
+              retryCount > 0 && (
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => {
+                    setError('');
+                    setRetryCount(0);
+                    checkSetupStatus();
+                  }}
+                >
+                  🔄 Retry
+                </Button>
+              )
+            }
+          >
             {error}
           </Alert>
         )}

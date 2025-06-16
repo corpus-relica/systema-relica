@@ -2,10 +2,15 @@ import { io, Socket } from "socket.io-client";
 import { getAuthToken } from "./authProvider";
 
 export interface SetupProgressUpdate {
-  stage: string;
+  state: {
+    id: string;
+    substate?: string;
+    full_path: string[];
+  };
   progress: number;
-  message?: string;
+  status: string;
   error?: string;
+  masterUser?: string;
 }
 
 class PortalWebSocketClient {
