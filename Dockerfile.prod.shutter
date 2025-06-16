@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 
 COPY package.json .
 COPY yarn.lock .
+COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/shutter ./packages/shutter
 
 RUN yarn install --pure-lockfile --non-interactive --production=false

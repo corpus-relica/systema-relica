@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { PrismMessage, ServiceResponse } from '../types/websocket-messages';
+import { PrismActions } from '@relica/websocket-contracts';
 
 @Injectable()
 export class PrismWebSocketClientService extends BaseWebSocketClient {
@@ -14,7 +15,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'get-setup-status',
+      action: PrismActions.GET_SETUP_STATUS,
       payload: {},
     };
 
@@ -30,7 +31,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'start-setup',
+      action: PrismActions.START_SETUP,
       payload: {},
     };
 
@@ -46,7 +47,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'create-user',
+      action: PrismActions.CREATE_USER,
       payload: userData,
     };
 
@@ -62,7 +63,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'import-data',
+      action: PrismActions.IMPORT_DATA,
       payload: importData,
     };
 
@@ -78,7 +79,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'reset-system',
+      action: PrismActions.RESET_SYSTEM,
       payload: {},
     };
 

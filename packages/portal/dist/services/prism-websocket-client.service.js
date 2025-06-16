@@ -13,6 +13,7 @@ exports.PrismWebSocketClientService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const websocket_client_service_1 = require("./websocket-client.service");
+const websocket_contracts_1 = require("@relica/websocket-contracts");
 let PrismWebSocketClientService = class PrismWebSocketClientService extends websocket_client_service_1.BaseWebSocketClient {
     constructor(configService) {
         super(configService, 'prism', 3004);
@@ -22,7 +23,7 @@ let PrismWebSocketClientService = class PrismWebSocketClientService extends webs
             id: this.generateMessageId(),
             type: 'request',
             service: 'prism',
-            action: 'get-setup-status',
+            action: websocket_contracts_1.PrismActions.GET_SETUP_STATUS,
             payload: {},
         };
         const response = await this.sendMessage(message);
@@ -36,7 +37,7 @@ let PrismWebSocketClientService = class PrismWebSocketClientService extends webs
             id: this.generateMessageId(),
             type: 'request',
             service: 'prism',
-            action: 'start-setup',
+            action: websocket_contracts_1.PrismActions.START_SETUP,
             payload: {},
         };
         const response = await this.sendMessage(message);
@@ -50,7 +51,7 @@ let PrismWebSocketClientService = class PrismWebSocketClientService extends webs
             id: this.generateMessageId(),
             type: 'request',
             service: 'prism',
-            action: 'create-user',
+            action: websocket_contracts_1.PrismActions.CREATE_USER,
             payload: userData,
         };
         const response = await this.sendMessage(message);
@@ -64,7 +65,7 @@ let PrismWebSocketClientService = class PrismWebSocketClientService extends webs
             id: this.generateMessageId(),
             type: 'request',
             service: 'prism',
-            action: 'import-data',
+            action: websocket_contracts_1.PrismActions.IMPORT_DATA,
             payload: importData,
         };
         const response = await this.sendMessage(message);
@@ -78,7 +79,7 @@ let PrismWebSocketClientService = class PrismWebSocketClientService extends webs
             id: this.generateMessageId(),
             type: 'request',
             service: 'prism',
-            action: 'reset-system',
+            action: websocket_contracts_1.PrismActions.RESET_SYSTEM,
             payload: {},
         };
         const response = await this.sendMessage(message);

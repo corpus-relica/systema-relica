@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 COPY packages/types ./packages/types
+COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/archivist ./packages/archivist
 
 RUN yarn install --pure-lockfile --non-interactive

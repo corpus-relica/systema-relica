@@ -29,6 +29,7 @@
     "@nestjs/websockets": "^10.2.10",
     "@relica/constants": "^0.0.0",
     "@relica/types": "^0.0.0",
+    "@relica/websocket-contracts": "*",
     "neo4j-driver": "^5.14.0",
     "redis": "^4.6.0",
     "reflect-metadata": "^0.1.13",

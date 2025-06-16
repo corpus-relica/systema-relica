@@ -7,6 +7,7 @@ COPY package.json .
 COPY yarn.lock .
 COPY packages/types ./packages/types
 COPY packages/constants ./packages/constants
+COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/fact-search-ui ./packages/fact-search-ui
 COPY packages/3d-graph-ui ./packages/3d-graph-ui
 COPY packages/hsm-manager ./packages/hsm-manager

@@ -92,7 +92,8 @@ export interface PrismMessage extends ServiceMessage {
     | 'get-setup-status'
     | 'start-setup'
     | 'create-user'
-    | 'import-data';
+    | 'import-data'
+    | 'reset-system';
 }
 
 export interface NousMessage extends ServiceMessage {

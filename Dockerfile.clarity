@@ -7,6 +7,7 @@ COPY package.json .
 COPY yarn.lock .
 COPY packages/constants ./packages/constants
 COPY packages/types ./packages/types
+COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/clarity ./packages/clarity
 
 RUN yarn install --pure-lockfile --non-interactive

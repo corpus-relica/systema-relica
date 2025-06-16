@@ -13,6 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { SetupService } from '../setup/setup.service';
 import { CacheService } from '../cache/cache.service';
 import { HealthService } from '../health/health.service';
+import { PrismActions } from '@relica/websocket-contracts';
 
 @Injectable()
 @WebSocketGateway({ 
@@ -71,7 +72,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  @SubscribeMessage(':prism.setup/get-status')
+  @SubscribeMessage(PrismActions.GET_SETUP_STATUS)
   handleGetSetupStatus() {
     console.log('Handling setup status request');
     const status = this.setupService.getSetupState();
@@ -81,7 +82,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  @SubscribeMessage(':prism.setup/start')
+  @SubscribeMessage(PrismActions.START_SETUP)
   handleStartSetup() {
     console.log('Starting setup sequence via WebSocket');
     this.setupService.startSetup();
@@ -91,7 +92,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  @SubscribeMessage(':prism.setup/create-user')
+  @SubscribeMessage(PrismActions.CREATE_USER)
   handleCreateUser(@MessageBody() payload: any) {
     const { username, password, confirmPassword } = payload || {};
     console.log('Creating admin user via WebSocket:', username);
@@ -133,7 +134,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  @SubscribeMessage('reset-system')
+  @SubscribeMessage(PrismActions.RESET_SYSTEM)
   async handleResetSystem() {
     console.log('🚨 Resetting system state via WebSocket');
     try {

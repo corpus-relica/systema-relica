@@ -50,6 +50,28 @@ export class AuthController {
     }
   }
 
+  @Post('guest')
+  @Public()
+  @ApiOperation({ summary: 'Get guest token for setup flow' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Guest token retrieved successfully',
+  })
+  async getGuestToken() {
+    try {
+      const result = await this.shutterClient.getGuestToken();
+      return {
+        success: true,
+        ...result,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to get guest token',
+      };
+    }
+  }
+
   @Post('logout')
   @ApiOperation({ summary: 'User logout' })
   @ApiBearerAuth()

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { PrismWebSocketClientService } from '../services/prism-websocket-client.service';
 import { User } from '../decorators/user.decorator';
+import { Public } from '../decorators/public.decorator';
 
 @ApiTags('Prism')
 @Controller('api/prism/setup')
@@ -9,10 +10,10 @@ export class PrismController {
   constructor(private readonly prismClient: PrismWebSocketClientService) {}
 
   @Get('status')
+  @Public()
   @ApiOperation({ summary: 'Get Prism setup status' })
-  @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Setup status retrieved successfully' })
-  async getSetupStatus(@User() user: any) {
+  async getSetupStatus() {
     try {
       
       const status = await this.prismClient.getSetupStatus();
