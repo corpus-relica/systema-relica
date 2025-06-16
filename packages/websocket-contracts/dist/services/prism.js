@@ -22,7 +22,7 @@ exports.SetupStatusSchema = zod_1.z.object({
  */
 exports.GetSetupStatusRequestSchema = base_1.BaseRequestSchema.extend({
     service: zod_1.z.literal('prism'),
-    action: zod_1.z.literal('get-setup-status'),
+    action: zod_1.z.literal('setup/get-status'),
     payload: zod_1.z.undefined().optional(), // No payload needed
 });
 /**
@@ -39,7 +39,7 @@ exports.GetSetupStatusResponseSchema = base_1.BaseResponseSchema.extend({
  */
 exports.ResetSystemRequestSchema = base_1.BaseRequestSchema.extend({
     service: zod_1.z.literal('prism'),
-    action: zod_1.z.literal('reset-system'),
+    action: zod_1.z.literal('setup/reset-system'),
     payload: zod_1.z.undefined().optional(),
 });
 /**
@@ -53,17 +53,18 @@ exports.ResetSystemResponseSchema = base_1.BaseResponseSchema.extend({
     }).optional(),
 });
 // =====================================================
-// PRISM SERVICE ACTION REGISTRY
+// PRISM SERVICE ACTIONS
 // =====================================================
 /**
- * All supported Prism actions
+ * All supported Prism WebSocket topics/actions
+ * These are the actual topic strings used by both Portal and Prism
  */
 exports.PrismActions = {
-    GET_SETUP_STATUS: 'get-setup-status',
-    START_SETUP: 'start-setup',
-    CREATE_USER: 'create-user',
-    IMPORT_DATA: 'import-data',
-    RESET_SYSTEM: 'reset-system',
+    GET_SETUP_STATUS: 'setup/get-status',
+    START_SETUP: 'setup/start',
+    CREATE_USER: 'setup/create-user',
+    IMPORT_DATA: 'setup/import-data',
+    RESET_SYSTEM: 'setup/reset-system',
 };
 /**
  * Prism request message discriminated union

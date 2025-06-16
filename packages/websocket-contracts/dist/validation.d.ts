@@ -33,13 +33,9 @@ export declare class ContractValidator {
      */
     isValidAction(action: string): boolean;
     /**
-     * Get topic for action (handles the Portal → Service mapping)
+     * Check if action is valid (has a contract)
      */
-    getTopicForAction(action: string): string | null;
-    /**
-     * Get action from topic (reverse lookup for Service → Portal)
-     */
-    getActionFromTopic(topic: string): string | null;
+    hasContract(action: string): boolean;
 }
 /**
  * Global validator instances
@@ -59,12 +55,9 @@ export declare const ContractUtils: {
         baseMessage: (message: unknown) => ValidationResult<any>;
     };
     /**
-     * Quick topic/action conversion
+     * Check if action has a contract
      */
-    convert: {
-        actionToTopic: (action: string) => string | null;
-        topicToAction: (topic: string) => string | null;
-    };
+    hasContract: (action: string) => boolean;
     /**
      * Development helpers
      */
@@ -73,10 +66,7 @@ export declare const ContractUtils: {
             request: (action: string, message: unknown) => ValidationResult<any>;
             response: (action: string, message: unknown) => ValidationResult<any>;
         };
-        convert: {
-            actionToTopic: (action: string) => string | null;
-            topicToAction: (topic: string) => string | null;
-        };
+        hasContract: (action: string) => boolean;
     };
 };
 //# sourceMappingURL=validation.d.ts.map

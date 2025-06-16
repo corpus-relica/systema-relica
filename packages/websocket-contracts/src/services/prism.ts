@@ -24,7 +24,7 @@ export type SetupStatus = z.infer<typeof SetupStatusSchema>;
  */
 export const GetSetupStatusRequestSchema = BaseRequestSchema.extend({
   service: z.literal('prism'),
-  action: z.literal('get-setup-status'),
+  action: z.literal('setup/get-status'),
   payload: z.undefined().optional(), // No payload needed
 });
 
@@ -48,7 +48,7 @@ export type GetSetupStatusResponse = z.infer<typeof GetSetupStatusResponseSchema
  */
 export const ResetSystemRequestSchema = BaseRequestSchema.extend({
   service: z.literal('prism'),
-  action: z.literal('reset-system'),
+  action: z.literal('setup/reset-system'),
   payload: z.undefined().optional(),
 });
 
@@ -68,18 +68,19 @@ export const ResetSystemResponseSchema = BaseResponseSchema.extend({
 export type ResetSystemResponse = z.infer<typeof ResetSystemResponseSchema>;
 
 // =====================================================
-// PRISM SERVICE ACTION REGISTRY
+// PRISM SERVICE ACTIONS
 // =====================================================
 
 /**
- * All supported Prism actions
+ * All supported Prism WebSocket topics/actions
+ * These are the actual topic strings used by both Portal and Prism
  */
 export const PrismActions = {
-  GET_SETUP_STATUS: 'get-setup-status',
-  START_SETUP: 'start-setup',
-  CREATE_USER: 'create-user',
-  IMPORT_DATA: 'import-data',
-  RESET_SYSTEM: 'reset-system',
+  GET_SETUP_STATUS: 'setup/get-status',
+  START_SETUP: 'setup/start',
+  CREATE_USER: 'setup/create-user',
+  IMPORT_DATA: 'setup/import-data',
+  RESET_SYSTEM: 'setup/reset-system',
 } as const;
 
 export type PrismActionType = typeof PrismActions[keyof typeof PrismActions];

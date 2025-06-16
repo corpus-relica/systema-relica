@@ -108,30 +108,10 @@ export class ContractValidator {
   }
 
   /**
-   * Get topic for action (handles the Portal → Service mapping)
+   * Check if action is valid (has a contract)
    */
-  getTopicForAction(action: string): string | null {
-    if (!this.isValidAction(action)) {
-      if (this.isDevelopment) {
-        console.warn(`⚠️ Unknown action: ${action}`);
-      }
-      return null;
-    }
-    
-    return MessageRegistryUtils.getTopic(action as any);
-  }
-
-  /**
-   * Get action from topic (reverse lookup for Service → Portal)
-   */
-  getActionFromTopic(topic: string): string | null {
-    const action = MessageRegistryUtils.getActionFromTopic(topic);
-    
-    if (!action && this.isDevelopment) {
-      console.warn(`⚠️ Unknown topic: ${topic}`);
-    }
-    
-    return action || null;
+  hasContract(action: string): boolean {
+    return MessageRegistryUtils.getContract(action) !== undefined;
   }
 }
 
@@ -155,12 +135,9 @@ export const ContractUtils = {
   },
 
   /**
-   * Quick topic/action conversion
+   * Check if action has a contract
    */
-  convert: {
-    actionToTopic: (action: string) => validator.getTopicForAction(action),
-    topicToAction: (topic: string) => validator.getActionFromTopic(topic),
-  },
+  hasContract: (action: string) => validator.hasContract(action),
 
   /**
    * Development helpers
@@ -170,9 +147,6 @@ export const ContractUtils = {
       request: (action: string, message: unknown) => devValidator.validateRequest(action, message),
       response: (action: string, message: unknown) => devValidator.validateResponse(action, message),
     },
-    convert: {
-      actionToTopic: (action: string) => devValidator.getTopicForAction(action),
-      topicToAction: (topic: string) => devValidator.getActionFromTopic(topic),
-    },
+    hasContract: (action: string) => devValidator.hasContract(action),
   },
 };

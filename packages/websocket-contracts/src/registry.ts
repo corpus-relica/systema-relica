@@ -3,12 +3,11 @@ import { PrismActions } from './services/prism';
 
 /**
  * Contract definition for a single WebSocket operation
+ * Simplified approach: actions ARE the topics
  */
 export interface MessageContract<TRequest = any, TResponse = any> {
-  /** The action name used in Portal client messages */
+  /** The action/topic string used by both Portal and Service */
   action: string;
-  /** The WebSocket topic/event name used by the receiving service */
-  topic: string;
   /** The service that handles this message */
   service: string;
   /** Zod schema for request validation */
@@ -20,8 +19,8 @@ export interface MessageContract<TRequest = any, TResponse = any> {
 }
 
 /**
- * Central registry of all WebSocket message contracts
- * This solves the Portal action → Service topic mapping problem
+ * Simplified registry for development validation only
+ * Actions are now the actual topics - no mapping needed
  */
 export const MESSAGE_REGISTRY = {
   // =====================================================
@@ -29,8 +28,7 @@ export const MESSAGE_REGISTRY = {
   // =====================================================
   
   [PrismActions.GET_SETUP_STATUS]: {
-    action: PrismActions.GET_SETUP_STATUS,
-    topic: 'setup/get-status',
+    action: PrismActions.GET_SETUP_STATUS, // 'setup/get-status'
     service: 'prism',
     requestSchema: z.object({
       service: z.literal('prism'),
@@ -51,8 +49,7 @@ export const MESSAGE_REGISTRY = {
   },
 
   [PrismActions.RESET_SYSTEM]: {
-    action: PrismActions.RESET_SYSTEM,
-    topic: 'setup/reset-system',
+    action: PrismActions.RESET_SYSTEM, // 'setup/reset-system'
     service: 'prism',
     requestSchema: z.object({
       service: z.literal('prism'),
@@ -68,8 +65,7 @@ export const MESSAGE_REGISTRY = {
   },
 
   [PrismActions.START_SETUP]: {
-    action: PrismActions.START_SETUP,
-    topic: 'setup/start',
+    action: PrismActions.START_SETUP, // 'setup/start'
     service: 'prism',
     requestSchema: z.object({
       service: z.literal('prism'),
@@ -83,8 +79,7 @@ export const MESSAGE_REGISTRY = {
   },
 
   [PrismActions.CREATE_USER]: {
-    action: PrismActions.CREATE_USER,
-    topic: 'setup/create-user',
+    action: PrismActions.CREATE_USER, // 'setup/create-user'
     service: 'prism',
     requestSchema: z.object({
       service: z.literal('prism'),
@@ -114,53 +109,29 @@ export const MESSAGE_REGISTRY = {
   },
 
   // Add more service contracts here...
-  // [ArchivistActions.SEARCH]: { ... },
-  // [ClarityActions.MODEL]: { ... },
   
 } as const satisfies Record<string, MessageContract>;
 
 /**
- * Type-safe registry access
- */
-export type MessageRegistryKey = keyof typeof MESSAGE_REGISTRY;
-export type MessageRegistryContract<K extends MessageRegistryKey> = typeof MESSAGE_REGISTRY[K];
-
-/**
- * Utility functions for working with the registry
+ * Simplified utility functions
  */
 export const MessageRegistryUtils = {
   /**
-   * Get contract by action name
+   * Get contract by action (mainly for validation)
    */
-  getContract<K extends MessageRegistryKey>(action: K): MessageRegistryContract<K> {
-    return MESSAGE_REGISTRY[action];
-  },
-
-  /**
-   * Get WebSocket topic for an action
-   */
-  getTopic(action: MessageRegistryKey): string {
-    return MESSAGE_REGISTRY[action].topic;
-  },
-
-  /**
-   * Get action name from WebSocket topic (reverse lookup)
-   */
-  getActionFromTopic(topic: string): MessageRegistryKey | undefined {
-    return Object.keys(MESSAGE_REGISTRY).find(
-      action => MESSAGE_REGISTRY[action as MessageRegistryKey].topic === topic
-    ) as MessageRegistryKey | undefined;
+  getContract(action: string): MessageContract | undefined {
+    return MESSAGE_REGISTRY[action as keyof typeof MESSAGE_REGISTRY];
   },
 
   /**
    * Validate request message against contract
    */
-  validateRequest<K extends MessageRegistryKey>(
-    action: K,
-    message: unknown
-  ): { success: true; data: any } | { success: false; error: string } {
+  validateRequest(action: string, message: unknown): { success: true; data: any } | { success: false; error: string } {
     try {
-      const contract = MESSAGE_REGISTRY[action];
+      const contract = MESSAGE_REGISTRY[action as keyof typeof MESSAGE_REGISTRY];
+      if (!contract) {
+        return { success: false, error: `Unknown action: ${action}` };
+      }
       const result = contract.requestSchema.parse(message);
       return { success: true, data: result };
     } catch (error) {
@@ -174,12 +145,12 @@ export const MessageRegistryUtils = {
   /**
    * Validate response message against contract
    */
-  validateResponse<K extends MessageRegistryKey>(
-    action: K,
-    message: unknown
-  ): { success: true; data: any } | { success: false; error: string } {
+  validateResponse(action: string, message: unknown): { success: true; data: any } | { success: false; error: string } {
     try {
-      const contract = MESSAGE_REGISTRY[action];
+      const contract = MESSAGE_REGISTRY[action as keyof typeof MESSAGE_REGISTRY];
+      if (!contract) {
+        return { success: false, error: `Unknown action: ${action}` };
+      }
       const result = contract.responseSchema.parse(message);
       return { success: true, data: result };
     } catch (error) {

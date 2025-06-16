@@ -88,26 +88,10 @@ class ContractValidator {
         return action in registry_1.MESSAGE_REGISTRY;
     }
     /**
-     * Get topic for action (handles the Portal → Service mapping)
+     * Check if action is valid (has a contract)
      */
-    getTopicForAction(action) {
-        if (!this.isValidAction(action)) {
-            if (this.isDevelopment) {
-                console.warn(`⚠️ Unknown action: ${action}`);
-            }
-            return null;
-        }
-        return registry_1.MessageRegistryUtils.getTopic(action);
-    }
-    /**
-     * Get action from topic (reverse lookup for Service → Portal)
-     */
-    getActionFromTopic(topic) {
-        const action = registry_1.MessageRegistryUtils.getActionFromTopic(topic);
-        if (!action && this.isDevelopment) {
-            console.warn(`⚠️ Unknown topic: ${topic}`);
-        }
-        return action || null;
+    hasContract(action) {
+        return registry_1.MessageRegistryUtils.getContract(action) !== undefined;
     }
 }
 exports.ContractValidator = ContractValidator;
@@ -129,12 +113,9 @@ exports.ContractUtils = {
         baseMessage: (message) => exports.validator.validateBaseMessage(message),
     },
     /**
-     * Quick topic/action conversion
+     * Check if action has a contract
      */
-    convert: {
-        actionToTopic: (action) => exports.validator.getTopicForAction(action),
-        topicToAction: (topic) => exports.validator.getActionFromTopic(topic),
-    },
+    hasContract: (action) => exports.validator.hasContract(action),
     /**
      * Development helpers
      */
@@ -143,10 +124,7 @@ exports.ContractUtils = {
             request: (action, message) => exports.devValidator.validateRequest(action, message),
             response: (action, message) => exports.devValidator.validateResponse(action, message),
         },
-        convert: {
-            actionToTopic: (action) => exports.devValidator.getTopicForAction(action),
-            topicToAction: (topic) => exports.devValidator.getActionFromTopic(topic),
-        },
+        hasContract: (action) => exports.devValidator.hasContract(action),
     },
 };
 //# sourceMappingURL=validation.js.map

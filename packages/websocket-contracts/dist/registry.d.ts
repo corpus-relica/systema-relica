@@ -1,12 +1,11 @@
 import { z } from 'zod';
 /**
  * Contract definition for a single WebSocket operation
+ * Simplified approach: actions ARE the topics
  */
 export interface MessageContract<TRequest = any, TResponse = any> {
-    /** The action name used in Portal client messages */
+    /** The action/topic string used by both Portal and Service */
     action: string;
-    /** The WebSocket topic/event name used by the receiving service */
-    topic: string;
     /** The service that handles this message */
     service: string;
     /** Zod schema for request validation */
@@ -17,23 +16,22 @@ export interface MessageContract<TRequest = any, TResponse = any> {
     description: string;
 }
 /**
- * Central registry of all WebSocket message contracts
- * This solves the Portal action → Service topic mapping problem
+ * Simplified registry for development validation only
+ * Actions are now the actual topics - no mapping needed
  */
 export declare const MESSAGE_REGISTRY: {
-    readonly "get-setup-status": {
-        readonly action: "get-setup-status";
-        readonly topic: "setup/get-status";
+    readonly "setup/get-status": {
+        readonly action: "setup/get-status";
         readonly service: "prism";
         readonly requestSchema: z.ZodObject<{
             service: z.ZodLiteral<"prism">;
-            action: z.ZodLiteral<"get-setup-status">;
+            action: z.ZodLiteral<"setup/get-status">;
         }, "strip", z.ZodTypeAny, {
             service: "prism";
-            action: "get-setup-status";
+            action: "setup/get-status";
         }, {
             service: "prism";
-            action: "get-setup-status";
+            action: "setup/get-status";
         }>;
         readonly responseSchema: z.ZodObject<{
             success: z.ZodBoolean;
@@ -82,19 +80,18 @@ export declare const MESSAGE_REGISTRY: {
         }>;
         readonly description: "Get current setup status from Prism service";
     };
-    readonly "reset-system": {
-        readonly action: "reset-system";
-        readonly topic: "setup/reset-system";
+    readonly "setup/reset-system": {
+        readonly action: "setup/reset-system";
         readonly service: "prism";
         readonly requestSchema: z.ZodObject<{
             service: z.ZodLiteral<"prism">;
-            action: z.ZodLiteral<"reset-system">;
+            action: z.ZodLiteral<"setup/reset-system">;
         }, "strip", z.ZodTypeAny, {
             service: "prism";
-            action: "reset-system";
+            action: "setup/reset-system";
         }, {
             service: "prism";
-            action: "reset-system";
+            action: "setup/reset-system";
         }>;
         readonly responseSchema: z.ZodObject<{
             success: z.ZodBoolean;
@@ -114,19 +111,18 @@ export declare const MESSAGE_REGISTRY: {
         }>;
         readonly description: "Reset system state (clear databases)";
     };
-    readonly "start-setup": {
-        readonly action: "start-setup";
-        readonly topic: "setup/start";
+    readonly "setup/start": {
+        readonly action: "setup/start";
         readonly service: "prism";
         readonly requestSchema: z.ZodObject<{
             service: z.ZodLiteral<"prism">;
-            action: z.ZodLiteral<"start-setup">;
+            action: z.ZodLiteral<"setup/start">;
         }, "strip", z.ZodTypeAny, {
             service: "prism";
-            action: "start-setup";
+            action: "setup/start";
         }, {
             service: "prism";
-            action: "start-setup";
+            action: "setup/start";
         }>;
         readonly responseSchema: z.ZodObject<{
             success: z.ZodBoolean;
@@ -140,13 +136,12 @@ export declare const MESSAGE_REGISTRY: {
         }>;
         readonly description: "Start the setup process";
     };
-    readonly "create-user": {
-        readonly action: "create-user";
-        readonly topic: "setup/create-user";
+    readonly "setup/create-user": {
+        readonly action: "setup/create-user";
         readonly service: "prism";
         readonly requestSchema: z.ZodObject<{
             service: z.ZodLiteral<"prism">;
-            action: z.ZodLiteral<"create-user">;
+            action: z.ZodLiteral<"setup/create-user">;
             payload: z.ZodObject<{
                 username: z.ZodString;
                 password: z.ZodString;
@@ -162,7 +157,7 @@ export declare const MESSAGE_REGISTRY: {
             }>;
         }, "strip", z.ZodTypeAny, {
             service: "prism";
-            action: "create-user";
+            action: "setup/create-user";
             payload: {
                 username: string;
                 password: string;
@@ -170,7 +165,7 @@ export declare const MESSAGE_REGISTRY: {
             };
         }, {
             service: "prism";
-            action: "create-user";
+            action: "setup/create-user";
             payload: {
                 username: string;
                 password: string;
@@ -250,30 +245,17 @@ export declare const MESSAGE_REGISTRY: {
     };
 };
 /**
- * Type-safe registry access
- */
-export type MessageRegistryKey = keyof typeof MESSAGE_REGISTRY;
-export type MessageRegistryContract<K extends MessageRegistryKey> = typeof MESSAGE_REGISTRY[K];
-/**
- * Utility functions for working with the registry
+ * Simplified utility functions
  */
 export declare const MessageRegistryUtils: {
     /**
-     * Get contract by action name
+     * Get contract by action (mainly for validation)
      */
-    getContract<K extends MessageRegistryKey>(action: K): MessageRegistryContract<K>;
-    /**
-     * Get WebSocket topic for an action
-     */
-    getTopic(action: MessageRegistryKey): string;
-    /**
-     * Get action name from WebSocket topic (reverse lookup)
-     */
-    getActionFromTopic(topic: string): MessageRegistryKey | undefined;
+    getContract(action: string): MessageContract | undefined;
     /**
      * Validate request message against contract
      */
-    validateRequest<K extends MessageRegistryKey>(action: K, message: unknown): {
+    validateRequest(action: string, message: unknown): {
         success: true;
         data: any;
     } | {
@@ -283,7 +265,7 @@ export declare const MessageRegistryUtils: {
     /**
      * Validate response message against contract
      */
-    validateResponse<K extends MessageRegistryKey>(action: K, message: unknown): {
+    validateResponse(action: string, message: unknown): {
         success: true;
         data: any;
     } | {

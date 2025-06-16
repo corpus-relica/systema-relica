@@ -35,13 +35,13 @@ export declare const GetSetupStatusRequestSchema: z.ZodObject<{
     type: z.ZodLiteral<"request">;
 } & {
     service: z.ZodLiteral<"prism">;
-    action: z.ZodLiteral<"get-setup-status">;
+    action: z.ZodLiteral<"setup/get-status">;
     payload: z.ZodOptional<z.ZodUndefined>;
 }, "strip", z.ZodTypeAny, {
     id: string;
     type: "request";
     service: "prism";
-    action: "get-setup-status";
+    action: "setup/get-status";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;
@@ -49,7 +49,7 @@ export declare const GetSetupStatusRequestSchema: z.ZodObject<{
     id: string;
     type: "request";
     service: "prism";
-    action: "get-setup-status";
+    action: "setup/get-status";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;
@@ -130,13 +130,13 @@ export declare const ResetSystemRequestSchema: z.ZodObject<{
     type: z.ZodLiteral<"request">;
 } & {
     service: z.ZodLiteral<"prism">;
-    action: z.ZodLiteral<"reset-system">;
+    action: z.ZodLiteral<"setup/reset-system">;
     payload: z.ZodOptional<z.ZodUndefined>;
 }, "strip", z.ZodTypeAny, {
     id: string;
     type: "request";
     service: "prism";
-    action: "reset-system";
+    action: "setup/reset-system";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;
@@ -144,7 +144,7 @@ export declare const ResetSystemRequestSchema: z.ZodObject<{
     id: string;
     type: "request";
     service: "prism";
-    action: "reset-system";
+    action: "setup/reset-system";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;
@@ -201,14 +201,15 @@ export declare const ResetSystemResponseSchema: z.ZodObject<{
 }>;
 export type ResetSystemResponse = z.infer<typeof ResetSystemResponseSchema>;
 /**
- * All supported Prism actions
+ * All supported Prism WebSocket topics/actions
+ * These are the actual topic strings used by both Portal and Prism
  */
 export declare const PrismActions: {
-    readonly GET_SETUP_STATUS: "get-setup-status";
-    readonly START_SETUP: "start-setup";
-    readonly CREATE_USER: "create-user";
-    readonly IMPORT_DATA: "import-data";
-    readonly RESET_SYSTEM: "reset-system";
+    readonly GET_SETUP_STATUS: "setup/get-status";
+    readonly START_SETUP: "setup/start";
+    readonly CREATE_USER: "setup/create-user";
+    readonly IMPORT_DATA: "setup/import-data";
+    readonly RESET_SYSTEM: "setup/reset-system";
 };
 export type PrismActionType = typeof PrismActions[keyof typeof PrismActions];
 /**
@@ -221,13 +222,13 @@ export declare const PrismRequestSchema: z.ZodDiscriminatedUnion<"action", [z.Zo
     type: z.ZodLiteral<"request">;
 } & {
     service: z.ZodLiteral<"prism">;
-    action: z.ZodLiteral<"get-setup-status">;
+    action: z.ZodLiteral<"setup/get-status">;
     payload: z.ZodOptional<z.ZodUndefined>;
 }, "strip", z.ZodTypeAny, {
     id: string;
     type: "request";
     service: "prism";
-    action: "get-setup-status";
+    action: "setup/get-status";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;
@@ -235,7 +236,7 @@ export declare const PrismRequestSchema: z.ZodDiscriminatedUnion<"action", [z.Zo
     id: string;
     type: "request";
     service: "prism";
-    action: "get-setup-status";
+    action: "setup/get-status";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;
@@ -246,13 +247,13 @@ export declare const PrismRequestSchema: z.ZodDiscriminatedUnion<"action", [z.Zo
     type: z.ZodLiteral<"request">;
 } & {
     service: z.ZodLiteral<"prism">;
-    action: z.ZodLiteral<"reset-system">;
+    action: z.ZodLiteral<"setup/reset-system">;
     payload: z.ZodOptional<z.ZodUndefined>;
 }, "strip", z.ZodTypeAny, {
     id: string;
     type: "request";
     service: "prism";
-    action: "reset-system";
+    action: "setup/reset-system";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;
@@ -260,7 +261,7 @@ export declare const PrismRequestSchema: z.ZodDiscriminatedUnion<"action", [z.Zo
     id: string;
     type: "request";
     service: "prism";
-    action: "reset-system";
+    action: "setup/reset-system";
     timestamp?: number | undefined;
     correlationId?: string | undefined;
     payload?: undefined;

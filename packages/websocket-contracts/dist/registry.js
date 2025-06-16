@@ -4,16 +4,15 @@ exports.MessageRegistryUtils = exports.MESSAGE_REGISTRY = void 0;
 const zod_1 = require("zod");
 const prism_1 = require("./services/prism");
 /**
- * Central registry of all WebSocket message contracts
- * This solves the Portal action → Service topic mapping problem
+ * Simplified registry for development validation only
+ * Actions are now the actual topics - no mapping needed
  */
 exports.MESSAGE_REGISTRY = {
     // =====================================================
     // PRISM SERVICE CONTRACTS
     // =====================================================
     [prism_1.PrismActions.GET_SETUP_STATUS]: {
-        action: prism_1.PrismActions.GET_SETUP_STATUS,
-        topic: 'setup/get-status',
+        action: prism_1.PrismActions.GET_SETUP_STATUS, // 'setup/get-status'
         service: 'prism',
         requestSchema: zod_1.z.object({
             service: zod_1.z.literal('prism'),
@@ -33,8 +32,7 @@ exports.MESSAGE_REGISTRY = {
         description: 'Get current setup status from Prism service',
     },
     [prism_1.PrismActions.RESET_SYSTEM]: {
-        action: prism_1.PrismActions.RESET_SYSTEM,
-        topic: 'setup/reset-system',
+        action: prism_1.PrismActions.RESET_SYSTEM, // 'setup/reset-system'
         service: 'prism',
         requestSchema: zod_1.z.object({
             service: zod_1.z.literal('prism'),
@@ -49,8 +47,7 @@ exports.MESSAGE_REGISTRY = {
         description: 'Reset system state (clear databases)',
     },
     [prism_1.PrismActions.START_SETUP]: {
-        action: prism_1.PrismActions.START_SETUP,
-        topic: 'setup/start',
+        action: prism_1.PrismActions.START_SETUP, // 'setup/start'
         service: 'prism',
         requestSchema: zod_1.z.object({
             service: zod_1.z.literal('prism'),
@@ -63,8 +60,7 @@ exports.MESSAGE_REGISTRY = {
         description: 'Start the setup process',
     },
     [prism_1.PrismActions.CREATE_USER]: {
-        action: prism_1.PrismActions.CREATE_USER,
-        topic: 'setup/create-user',
+        action: prism_1.PrismActions.CREATE_USER, // 'setup/create-user'
         service: 'prism',
         requestSchema: zod_1.z.object({
             service: zod_1.z.literal('prism'),
@@ -93,30 +89,16 @@ exports.MESSAGE_REGISTRY = {
         description: 'Create admin user during setup',
     },
     // Add more service contracts here...
-    // [ArchivistActions.SEARCH]: { ... },
-    // [ClarityActions.MODEL]: { ... },
 };
 /**
- * Utility functions for working with the registry
+ * Simplified utility functions
  */
 exports.MessageRegistryUtils = {
     /**
-     * Get contract by action name
+     * Get contract by action (mainly for validation)
      */
     getContract(action) {
         return exports.MESSAGE_REGISTRY[action];
-    },
-    /**
-     * Get WebSocket topic for an action
-     */
-    getTopic(action) {
-        return exports.MESSAGE_REGISTRY[action].topic;
-    },
-    /**
-     * Get action name from WebSocket topic (reverse lookup)
-     */
-    getActionFromTopic(topic) {
-        return Object.keys(exports.MESSAGE_REGISTRY).find(action => exports.MESSAGE_REGISTRY[action].topic === topic);
     },
     /**
      * Validate request message against contract
@@ -124,6 +106,9 @@ exports.MessageRegistryUtils = {
     validateRequest(action, message) {
         try {
             const contract = exports.MESSAGE_REGISTRY[action];
+            if (!contract) {
+                return { success: false, error: `Unknown action: ${action}` };
+            }
             const result = contract.requestSchema.parse(message);
             return { success: true, data: result };
         }
@@ -140,6 +125,9 @@ exports.MessageRegistryUtils = {
     validateResponse(action, message) {
         try {
             const contract = exports.MESSAGE_REGISTRY[action];
+            if (!contract) {
+                return { success: false, error: `Unknown action: ${action}` };
+            }
             const result = contract.responseSchema.parse(message);
             return { success: true, data: result };
         }
