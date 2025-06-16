@@ -5,7 +5,6 @@ import { ClarityWebSocketClientService } from './clarity-websocket-client.servic
 import { ApertureWebSocketClientService } from './aperture-websocket-client.service';
 import { PrismWebSocketClientService } from './prism-websocket-client.service';
 import { NousWebSocketClientService } from './nous-websocket-client.service';
-import { ShutterWebSocketClientService } from './shutter-websocket-client.service';
 
 @Module({
   imports: [ConfigModule],
@@ -15,7 +14,6 @@ import { ShutterWebSocketClientService } from './shutter-websocket-client.servic
     ApertureWebSocketClientService,
     PrismWebSocketClientService,
     NousWebSocketClientService,
-    ShutterWebSocketClientService,
   ],
   exports: [
     ArchivistWebSocketClientService,
@@ -23,7 +21,6 @@ import { ShutterWebSocketClientService } from './shutter-websocket-client.servic
     ApertureWebSocketClientService,
     PrismWebSocketClientService,
     NousWebSocketClientService,
-    ShutterWebSocketClientService,
   ],
 })
 export class WebSocketClientsModule {}

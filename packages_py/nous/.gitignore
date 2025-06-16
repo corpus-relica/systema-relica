@@ -1,0 +1,40 @@
+# Python specific ignores
+#######################
+# Only include patterns specific to Python projects
+# that aren't already covered in the root .gitignore
+
+# Distribution / packaging
+/dist/
+/build/
+/develop-eggs/
+/downloads/
+/eggs/
+/lib/
+/lib64/
+/parts/
+/sdist/
+/var/
+/wheels/
+/share/python-wheels/
+
+# Virtual environments - if not using global ones
+/venv/
+/.venv/
+/env/
+/.env/
+
+# Testing
+/.coverage
+/.pytest_cache/
+/htmlcov/
+
+# Documentation
+/docs/_build/
+/site/
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python

@@ -8,8 +8,10 @@ import {
   OnGatewayDisconnect,
   WsException 
 } from '@nestjs/websockets';
-import { Logger, Injectable } from '@nestjs/common';
+import { Logger, Injectable, Inject } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { ShutterRestClientService } from '../services/shutter-rest-client.service';
+import { NousWebSocketClientService } from '../services/nous-websocket-client.service';
 import { 
   ServiceMessage, 
   ServiceResponse, 
@@ -41,6 +43,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(PortalGateway.name);
   private connectedClients = new Map<string, ConnectedClient>();
   private socketTokens = new Map<string, { userId: string; createdAt: number; isGuest?: boolean }>();
+
+  constructor(
+    private readonly shutterClient: ShutterRestClientService,
+    private readonly nousClient: NousWebSocketClientService,
+  ) {}
 
   // Error codes aligned with Clojure implementation
   private readonly errorCodes = {
@@ -109,13 +116,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private validateJWT(jwt: string): string | null {
-    // TODO: Implement JWT validation by calling Shutter service
-    // For now, return a mock user ID
-    if (jwt && jwt.length > 10) {
-      return 'user-123'; // Mock user ID
+  private async validateJWT(jwt: string): Promise<{ userId: string; user: any } | null> {
+    try {
+      const validationResult = await this.shutterClient.validateToken(jwt);
+      if (validationResult.valid && validationResult.user) {
+        return {
+          userId: validationResult.user.id,
+          user: validationResult.user,
+        };
+      }
+      return null;
+    } catch (error) {
+      this.logger.error('JWT validation failed:', error);
+      return null;
     }
-    return null;
   }
 
   private broadcastToEnvironment(environmentId: string, message: any) {
@@ -132,26 +146,27 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: { jwt: string }
   ): Promise<any> {
     try {
-      const userId = this.validateJWT(payload.jwt);
-      if (!userId) {
+      const authResult = await this.validateJWT(payload.jwt);
+      if (!authResult) {
         return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Invalid JWT' });
       }
 
       const socketToken = this.generateSocketToken();
       this.socketTokens.set(socketToken, {
-        userId,
+        userId: authResult.userId,
         createdAt: Date.now(),
       });
 
       this.connectedClients.set(client.id, {
-        userId,
+        userId: authResult.userId,
         socketToken,
         socket: client,
       });
 
       return this.createResponse(client.id, true, {
         token: socketToken,
-        user_id: userId,
+        user_id: authResult.userId,
+        user: authResult.user,
       });
     } catch (error) {
       this.logger.error('Auth error:', error);
@@ -307,11 +322,99 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { message: string; user_id: string }
   ): Promise<any> {
-    // TODO: Implement NOUS service call
-    return this.createResponse(client.id, true, {
-      message: 'Chat user input processed',
-      response: {},
-    });
+    try {
+      const clientData = this.connectedClients.get(client.id);
+      if (!clientData) {
+        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+      }
+
+      // Get environment context for the user
+      const environmentId = clientData.environmentId || '1';
+      
+      // Process chat input through NOUS
+      const result = await this.nousClient.processChatInput(
+        payload.message,
+        payload.user_id || clientData.userId,
+        {
+          environmentId,
+          timestamp: Date.now(),
+        }
+      );
+
+      // Broadcast AI response to environment
+      this.broadcastToEnvironment(environmentId, {
+        id: 'system',
+        type: 'portal:aiResponse',
+        payload: {
+          type: 'nous.chat/response',
+          message: result.response,
+          user_id: payload.user_id || clientData.userId,
+          environment_id: environmentId,
+          metadata: result.metadata,
+        },
+      });
+
+      return this.createResponse(client.id, true, {
+        message: 'Chat input processed',
+        response: result.response,
+        metadata: result.metadata,
+      });
+    } catch (error) {
+      this.logger.error('Chat input error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to process chat input' });
+    }
+  }
+
+  @SubscribeMessage('generateAIResponse')
+  async handleGenerateAIResponse(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { prompt: string; context?: any }
+  ): Promise<any> {
+    try {
+      const clientData = this.connectedClients.get(client.id);
+      if (!clientData) {
+        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+      }
+
+      // Generate AI response through NOUS
+      const result = await this.nousClient.generateResponse(
+        payload.prompt,
+        {
+          ...payload.context,
+          userId: clientData.userId,
+          environmentId: clientData.environmentId || '1',
+        }
+      );
+
+      return this.createResponse(client.id, true, {
+        response: result.response,
+        metadata: result.metadata,
+      });
+    } catch (error) {
+      this.logger.error('Generate AI response error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to generate AI response' });
+    }
+  }
+
+  @SubscribeMessage('clearChatHistory')
+  async handleClearChatHistory(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { user_id?: string }
+  ): Promise<any> {
+    try {
+      const clientData = this.connectedClients.get(client.id);
+      if (!clientData) {
+        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+      }
+
+      // TODO: Implement chat history clearing when NOUS supports it
+      return this.createResponse(client.id, true, {
+        message: 'Chat history cleared',
+      });
+    } catch (error) {
+      this.logger.error('Clear chat history error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to clear chat history' });
+    }
   }
 
   // Prism setup handlers

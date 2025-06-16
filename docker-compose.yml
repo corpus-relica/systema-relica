@@ -235,6 +235,8 @@ services:
       - SHUTTER_PORT=3004
       - PRISM_HOST=prism
       - PRISM_PORT=3005
+      - NOUS_HOST=nous
+      - NOUS_PORT=3006
     command: ["yarn", "start:dev"]
     volumes:
       - ./packages/portal:/usr/src/app/packages/portal
@@ -257,6 +259,40 @@ services:
         aliases:
           - portal
 
+  nous:
+    container_name: nous
+    build:
+      context: ./
+      dockerfile: Dockerfile.nous
+    restart: always
+    command: ["python", "direct_socketio_main.py"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_py/nous:/usr/src/app/packages_py/nous
+    ports:
+      - "3006:3006"
+    environment:
+      - PYTHONPATH=/usr/src/app
+      - PYTHONUNBUFFERED=1
+      # Use container names for dependencies
+      - CLARITY_HOST=clarity
+      - CLARITY_PORT=3001
+      - APERTURE_HOST=aperture
+      - APERTURE_PORT=3002
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    depends_on:
+      - clarity
+      - aperture
+      - archivist
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   knowledge-integrator:
     container_name: knowledge-integrator
     build:
@@ -277,6 +313,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - portal
+      - nous
     networks:
       rlc-net:
         aliases:
