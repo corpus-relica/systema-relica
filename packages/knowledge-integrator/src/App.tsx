@@ -21,8 +21,9 @@ import {
 import { Route } from "react-router-dom";
 
 import { authProvider } from "./authProvider";
-import { getSetupStatus } from "./PortalClient";
+import { getSetupStatus, loadUserEnvironment } from "./PortalClient";
 import { SetupWizard } from "./pages/Setup";
+import { portalSocket } from "./PortalSocket";
 
 import CCDataProvider from "./data/CCDataProvider";
 import ArchivistDataProvider from "./data/ArchivistDataProvider";
@@ -135,22 +136,27 @@ export const App = () => {
   }, []);
 
   const initializeApp = async () => {
-    const retrieveEnv = async () => {
-      const env = await retrieveEnvironment();
-      console.log("vvvv - ENVIRONMENT vvvv:");
-      console.log(env);
-      factDataStore.addFacts(env.facts);
-      // semanticModelStore.addModels(env.models);
-      // graphViewStore.selectedNode = env.selectedEntity;
-    };
-
-    const foobarbaz = async () => {
+    try {
+      console.log("🚀 Initializing application...");
+      
+      // Load user environment from Portal
+      const userEnv = await loadUserEnvironment();
+      console.log("📦 User environment loaded:", userEnv);
+      
+      // Add facts to store
+      if (userEnv.facts) {
+        factDataStore.addFacts(userEnv.facts);
+      }
+      
+      // Establish categories
       await establishCats();
-      await retrieveEnv();
-      console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
-    };
-
-    await foobarbaz();
+      
+      console.log("✅ Application ready!");
+      
+    } catch (error) {
+      console.error("❌ Failed to initialize application:", error);
+      throw error;
+    }
   };
 
   // Show loading screen while checking setup

@@ -17,6 +17,12 @@ import {
   SetupStatus,
   AdminUserData 
 } from '../../PortalClient';
+import { 
+  portalSocket, 
+  addSetupProgressListener, 
+  addSetupCompleteListener, 
+  addSetupErrorListener 
+} from '../../PortalSocket';
 import ProgressStage from './ProgressStage';
 import UserSetupForm from './UserSetupForm';
 
@@ -52,16 +58,58 @@ const SetupWizard: React.FC = () => {
     checkSetupStatus();
   }, []);
 
-  // Poll for setup progress when setup is in progress
+  // Setup WebSocket listeners for real-time updates
+  useEffect(() => {
+    const removeProgressListener = addSetupProgressListener((data) => {
+      console.log('📊 Received setup progress:', data);
+      setSetupStatus(prevStatus => ({
+        ...prevStatus,
+        stage: data.stage as any,
+        progress: data.progress,
+        message: data.message,
+        error: data.error
+      }));
+    });
+
+    const removeCompleteListener = addSetupCompleteListener((data) => {
+      console.log('🎉 Setup completed:', data);
+      setSetupStatus(prevStatus => ({
+        ...prevStatus,
+        stage: 'setup_complete',
+        progress: 100,
+        message: 'Setup completed successfully!'
+      }));
+    });
+
+    const removeErrorListener = addSetupErrorListener((data) => {
+      console.error('⚠️ Setup error:', data);
+      setError(data.message || 'An error occurred during setup');
+    });
+
+    // Subscribe to setup updates when component mounts
+    portalSocket.subscribeToSetupUpdates();
+
+    return () => {
+      removeProgressListener();
+      removeCompleteListener();
+      removeErrorListener();
+      portalSocket.unsubscribeFromSetupUpdates();
+    };
+  }, []);
+
+  // Fallback polling for setup progress (backup to WebSocket)
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     
-    if (setupStatus.stage !== 'idle' && 
+    // Only poll if WebSocket is not connected and setup is in progress
+    if (!portalSocket.isConnected() &&
+        setupStatus.stage !== 'idle' && 
         setupStatus.stage !== 'awaiting_user_credentials' && 
         setupStatus.stage !== 'setup_complete') {
+      console.log('📡 WebSocket not connected, falling back to polling');
       intervalId = setInterval(() => {
         checkSetupStatus();
-      }, 2000); // Poll every 2 seconds
+      }, 3000); // Poll every 3 seconds as fallback
     }
 
     return () => {
@@ -69,7 +117,7 @@ const SetupWizard: React.FC = () => {
         clearInterval(intervalId);
       }
     };
-  }, [setupStatus.stage]);
+  }, [setupStatus.stage, portalSocket.isConnected()]);
 
   const checkSetupStatus = async () => {
     try {
