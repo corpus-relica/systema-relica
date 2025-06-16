@@ -3,19 +3,26 @@ MAINTAINER Marc <marc@specular-occlusion>
 
 WORKDIR /usr/src/app
 
+# Copy workspace configuration first
 COPY package.json .
 COPY yarn.lock .
+
+# Copy all packages to establish workspace structure
 COPY packages/constants ./packages/constants
 COPY packages/types ./packages/types
 COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/clarity ./packages/clarity
 
+# Install all workspace dependencies
 RUN yarn install --pure-lockfile --non-interactive
 
 WORKDIR /usr/src/app/packages/constants
 RUN yarn build
 
 WORKDIR /usr/src/app/packages/types
+RUN yarn build
+
+WORKDIR /usr/src/app/packages/websocket-contracts
 RUN yarn build
 
 WORKDIR /usr/src/app/packages/clarity
@@ -35,6 +42,9 @@ COPY --from=build /usr/src/app/packages/constants/dist /usr/src/app/packages/con
 
 COPY --from=build /usr/src/app/packages/types/package.json /usr/src/app/packages/types/package.json
 COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/dist
+
+COPY --from=build /usr/src/app/packages/websocket-contracts/package.json /usr/src/app/packages/websocket-contracts/package.json
+COPY --from=build /usr/src/app/packages/websocket-contracts/dist /usr/src/app/packages/websocket-contracts/dist
 
 COPY packages/clarity /usr/src/app/packages/clarity
 
