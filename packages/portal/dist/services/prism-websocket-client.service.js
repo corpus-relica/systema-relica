@@ -73,6 +73,20 @@ let PrismWebSocketClientService = class PrismWebSocketClientService extends webs
         }
         return response.payload;
     }
+    async resetSystem() {
+        const message = {
+            id: this.generateMessageId(),
+            type: 'request',
+            service: 'prism',
+            action: 'reset-system',
+            payload: {},
+        };
+        const response = await this.sendMessage(message);
+        if (!response.success) {
+            throw new Error(response.error || 'Failed to reset system');
+        }
+        return response.payload;
+    }
 };
 exports.PrismWebSocketClientService = PrismWebSocketClientService;
 exports.PrismWebSocketClientService = PrismWebSocketClientService = __decorate([

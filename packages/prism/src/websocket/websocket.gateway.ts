@@ -133,6 +133,28 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
+  @SubscribeMessage('reset-system')
+  async handleResetSystem() {
+    console.log('🚨 Resetting system state via WebSocket');
+    try {
+      const result = await this.setupService.resetSystem();
+      return {
+        success: result.success,
+        message: result.message,
+        errors: result.errors,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('System reset failed via WebSocket:', error);
+      return {
+        success: false,
+        message: `System reset failed: ${error.message}`,
+        errors: [error.message],
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
+
   @SubscribeMessage(':prism.cache/rebuild')
   async handleCacheRebuild() {
     console.log('Starting cache rebuild via WebSocket');

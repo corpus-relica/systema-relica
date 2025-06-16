@@ -13,4 +13,5 @@ export declare class PrismWebSocketClientService extends BaseWebSocketClient {
         dataSource: string;
         options?: any;
     }): Promise<any>;
+    resetSystem(): Promise<any>;
 }

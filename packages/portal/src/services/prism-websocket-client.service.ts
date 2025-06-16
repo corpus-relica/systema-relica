@@ -73,4 +73,20 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     return response.payload;
   }
 
+  async resetSystem(): Promise<any> {
+    const message: PrismMessage = {
+      id: this.generateMessageId(),
+      type: 'request',
+      service: 'prism',
+      action: 'reset-system',
+      payload: {},
+    };
+
+    const response = await this.sendMessage(message);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to reset system');
+    }
+    return response.payload;
+  }
+
 }

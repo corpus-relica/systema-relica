@@ -132,4 +132,30 @@ export class PrismController {
       };
     }
   }
+
+  @Post('debug/reset-system')
+  @ApiOperation({ summary: 'Reset system state (DEBUG ONLY)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'System reset successfully' })
+  async resetSystem(@User() user: any) {
+    try {
+      console.log('🚨 Portal: DEBUG reset system requested by user:', user?.username || 'unknown');
+      
+      const result = await this.prismClient.resetSystem();
+      
+      return {
+        success: true,
+        ...result,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Portal: System reset failed:', error);
+      return {
+        success: false,
+        message: `System reset failed: ${error.message}`,
+        errors: [error.message],
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
 }
