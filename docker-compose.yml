@@ -235,6 +235,8 @@ services:
       - SHUTTER_PORT=3004
       - PRISM_HOST=prism
       - PRISM_PORT=3005
+      - NOUS_HOST=nous
+      - NOUS_PORT=3006
     command: ["yarn", "start:dev"]
     volumes:
       - ./packages/portal:/usr/src/app/packages/portal
@@ -263,7 +265,7 @@ services:
       context: ./
       dockerfile: Dockerfile.nous
     restart: always
-    command: ["python", "main.py"]
+    command: ["python", "direct_socketio_main.py"]
     volumes:
       # Mount code for hot reloading
       - ./packages_py/nous:/usr/src/app/packages_py/nous

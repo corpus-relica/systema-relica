@@ -27,4 +27,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 3006
 
 # Command to run the application
-CMD ["python", "simple_socketio_main.py"]
+CMD ["python", "direct_socketio_main.py"]
