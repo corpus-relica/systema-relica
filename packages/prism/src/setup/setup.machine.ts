@@ -7,6 +7,7 @@ export interface SetupContext {
   dbCheckResult?: 'empty' | 'not-empty' | 'error';
   userCredentials?: {
     username: string;
+    email: string;
     password: string;
   };
   seedFiles: string[];
@@ -22,7 +23,7 @@ export type SetupEvent =
   | { type: 'START_SETUP' }
   | { type: 'DB_CHECK_COMPLETE_EMPTY' }
   | { type: 'DB_CHECK_COMPLETE_NOT_EMPTY' }
-  | { type: 'SUBMIT_CREDENTIALS'; data: { username: string; password: string } }
+  | { type: 'SUBMIT_CREDENTIALS'; data: { username: string; email:string, password: string } }
   | { type: 'USER_CREATION_SUCCESS' }
   | { type: 'SEEDING_COMPLETE' }
   | { type: 'SEEDING_SKIPPED' }

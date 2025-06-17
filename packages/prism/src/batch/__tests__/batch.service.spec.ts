@@ -18,7 +18,15 @@ jest.mock('fs');
 jest.mock('xlsx');
 
 const mockedFs = fs as jest.Mocked<typeof fs>;
-const mockedXLSX = XLSX as jest.Mocked<typeof XLSX>;
+const mockedXLSX = {
+  readFile: jest.fn(),
+  utils: {
+    sheet_to_json: jest.fn()
+  }
+} as any;
+
+// Assign mocked functions to the module
+Object.assign(XLSX, mockedXLSX);
 
 describe('BatchService', () => {
   let service: BatchService;

@@ -68,7 +68,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     return response.data;
   }
 
-  async createUser(userData: { username: string; password: string; confirmPassword: string }): Promise<any> {
+  async createUser(userData: { username: string; email: string; password: string }): Promise<any> {
     const message: PrismMessage = {
       id: this.generateMessageId(),
       type: 'request',

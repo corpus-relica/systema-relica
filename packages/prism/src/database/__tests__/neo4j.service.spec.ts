@@ -90,7 +90,7 @@ describe('Neo4jService', () => {
 
     it('should use default configuration values', async () => {
       // Test with ConfigService returning defaults
-      configService.get = jest.fn((key: string, defaultValue: any) => defaultValue);
+      (configService.get as jest.Mock) = jest.fn((key: string, defaultValue: any) => defaultValue);
       mockDriver.verifyConnectivity.mockResolvedValue(undefined);
 
       await service.onModuleInit();

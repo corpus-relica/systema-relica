@@ -4,6 +4,7 @@ import { SetupService } from '../../setup/setup.service';
 import { Neo4jService } from '../../database/neo4j.service';
 import { BatchService } from '../../batch/batch.service';
 import { CacheService } from '../../cache/cache.service';
+import { UsersService } from '../../database/users/users.service';
 import { SetupModule } from '../../setup/setup.module';
 
 describe('Setup Integration Tests', () => {
@@ -39,6 +40,15 @@ describe('Setup Integration Tests', () => {
     clearCache: jest.fn(),
     getRebuildStatus: jest.fn(),
     resetRebuildStatus: jest.fn(),
+  };
+
+  const mockUsersService = {
+    create: jest.fn(),
+    findByEmail: jest.fn(),
+    findOne: jest.fn(),
+    findById: jest.fn(),
+    clearAllUsers: jest.fn(),
+    count: jest.fn(),
   };
 
   const mockConfigService = {
@@ -78,6 +88,19 @@ describe('Setup Integration Tests', () => {
     mockCacheService.clearCache.mockResolvedValue({ success: true });
     mockCacheService.getRebuildStatus.mockReturnValue({ status: 'idle', progress: 0 });
 
+    mockUsersService.create.mockResolvedValue({
+      id: 1,
+      username: 'admin',
+      email: 'admin@test.com',
+      first_name: 'Admin',
+      last_name: 'User',
+      is_active: true,
+      is_admin: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    mockUsersService.clearAllUsers.mockResolvedValue(undefined);
+
     app = await Test.createTestingModule({
       providers: [
         SetupService,
@@ -92,6 +115,10 @@ describe('Setup Integration Tests', () => {
         {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: UsersService,
+          useValue: mockUsersService,
         },
         {
           provide: ConfigService,
@@ -127,7 +154,7 @@ describe('Setup Integration Tests', () => {
       expect(state.status).toBe('awaiting_user_credentials');
       
       // Submit credentials
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       
       // Wait for full flow completion
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -182,7 +209,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const state = setupService.getSetupState();
@@ -197,7 +224,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const state = setupService.getSetupState();
@@ -212,7 +239,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const state = setupService.getSetupState();
@@ -228,7 +255,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const state = setupService.getSetupState();
@@ -321,7 +348,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('testuser', 'testpass');
+      setupService.submitCredentials('testuser', 'testuser@test.com', 'testpass');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       clearInterval(monitor);
@@ -395,7 +422,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Verify correct sequence
@@ -424,7 +451,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const endTime = Date.now();
@@ -445,7 +472,7 @@ describe('Setup Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       
       // Don't wait for completion - test that service doesn't hang
       await new Promise(resolve => setTimeout(resolve, 500));

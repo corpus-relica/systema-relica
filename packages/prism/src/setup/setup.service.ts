@@ -3,6 +3,7 @@ import { createSetupActor, SetupEvent, SetupContext } from './setup.machine';
 import { Neo4jService } from '../database/neo4j.service';
 import { BatchService } from '../batch/batch.service';
 import { CacheService } from '../cache/cache.service';
+import { UsersService } from '../database/users/users.service';
 import { Actor } from 'xstate';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class SetupService implements OnModuleInit {
     private neo4jService: Neo4jService,
     @Inject(forwardRef(() => BatchService)) private batchService: BatchService,
     @Inject(forwardRef(() => CacheService)) private cacheService: CacheService,
+    private usersService: UsersService,
   ) {}
 
   onModuleInit() {
@@ -124,6 +126,22 @@ export class SetupService implements OnModuleInit {
             await this.handleCacheBuildingActivity(state[1]);
           }
           break;
+        case 'awaiting_user_credentials':
+          // This state is handled by the client submitting credentials
+          break;
+        case 'creating_admin_user':
+          // This state is handled by the client submitting user creation data
+          console.log('Awaiting user credentials submission...');
+          console.log(context)
+          console.log('_________________________________________________________');
+          
+          // Create admin user if credentials are available
+          if (context.userCredentials) {
+            this.createAdminUserActivity(context.userCredentials);
+          }
+          break;
+
+        default:
       }
     } catch (error) {
       console.error('Error in setup activity:', error);
@@ -144,6 +162,59 @@ export class SetupService implements OnModuleInit {
       console.error('Error checking database state:', error);
       this.sendEvent({ type: 'ERROR', errorMessage: `Database check failed: ${error.message}` });
     }
+  }
+
+  private async createAdminUserActivity(userCredentials: { username: string; email: string; password: string }) {
+    console.log('[Activity] Creating admin user:', userCredentials.username);
+    try {
+      // Validate credentials
+      const validation = this.validateCredentials(userCredentials);
+      if (!validation.valid) {
+        this.sendEvent({ type: 'ERROR', errorMessage: validation.message });
+        return;
+      }
+
+      // Create the admin user
+      const user = await this.usersService.create({
+        email: userCredentials.email,
+        username: userCredentials.username,
+        password: userCredentials.password,
+        first_name: 'Admin',
+        last_name: 'User',
+      });
+
+      console.log('Created admin user in PostgreSQL:', { id: user.id, username: user.username, email: user.email });
+      this.sendEvent({ type: 'USER_CREATION_SUCCESS' });
+    } catch (error) {
+      console.error('Error creating admin user:', error);
+      this.sendEvent({ type: 'ERROR', errorMessage: `Failed to create admin user: ${error.message}` });
+    }
+  }
+
+  private validateCredentials(credentials: { username: string; email: string; password: string }) {
+    const { username, password, email } = credentials;
+    
+    if (!username || username.trim().length === 0) {
+      return { valid: false, message: 'Username cannot be blank' };
+    }
+
+    if (username.length < 4) {
+      return { valid: false, message: 'Username must be at least 4 characters' };
+    }
+
+    if (!email || email.trim().length === 0) {
+      return { valid: false, message: 'Email cannot be blank' };
+    }
+
+    if (!password || password.trim().length === 0) {
+      return { valid: false, message: 'Password cannot be blank' };
+    }
+
+    if (password.length < 8) {
+      return { valid: false, message: 'Password must be at least 8 characters' };
+    }
+
+    return { valid: true };
   }
 
   private async seedDatabaseActivity() {
@@ -237,13 +308,8 @@ export class SetupService implements OnModuleInit {
     this.sendEvent({ type: 'START_SETUP' });
   }
 
-  public submitCredentials(username: string, password: string) {
-    this.sendEvent({ type: 'SUBMIT_CREDENTIALS', data: { username, password } });
-    
-    // Simulate user creation for now - this should integrate with Shutter service
-    setTimeout(() => {
-      this.sendEvent({ type: 'USER_CREATION_SUCCESS' });
-    }, 1000);
+  public submitCredentials(username: string, email:string, password: string) {
+    this.sendEvent({ type: 'SUBMIT_CREDENTIALS', data: { username, email, password } });
   }
 
   public async resetSystem(): Promise<{ success: boolean; message?: string; errors?: string[] }> {
@@ -278,9 +344,16 @@ export class SetupService implements OnModuleInit {
         errors.push(`Redis: ${redisResult.error}`);
       }
 
-      // Step 4: TODO - Clear PostgreSQL databases
-      // This would need to call Clarity and Aperture services to clear their databases
-      console.log('⚠️ PostgreSQL reset not implemented (requires Clarity/Aperture integration)');
+      // Step 4: Clear PostgreSQL users managed by Prism
+      console.log('Clearing PostgreSQL users...');
+      try {
+        await this.usersService.clearAllUsers();
+        console.log('✅ PostgreSQL users cleared successfully');
+      } catch (pgError) {
+        errors.push(`PostgreSQL users: ${pgError.message}`);
+      }
+
+      // Note: Other PostgreSQL databases (Clarity/Aperture) would need separate service calls
 
       const success = errors.length === 0;
       const message = success 

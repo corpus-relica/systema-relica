@@ -3,8 +3,8 @@ import { SetupService } from './setup.service';
 
 export interface CreateUserDto {
   username: string;
+  email: string;
   password: string;
-  confirmPassword: string;
 }
 
 @Controller('setup')
@@ -33,32 +33,32 @@ export class SetupController {
 
   @Post('create-user')
   createUser(@Body() createUserDto: CreateUserDto) {
-    const { username, password, confirmPassword } = createUserDto;
+    const { username, email, password } = createUserDto;
 
     // Basic validation
-    if (!username || !password || !confirmPassword) {
+    if (!username || !email || !password) {
       return {
         success: false,
         error: {
           code: 'validation-error',
           type: 'input-validation',
-          message: 'Username, password, and confirmPassword are required',
+          message: 'Username, email, and password are required',
         },
       };
     }
 
-    if (password !== confirmPassword) {
-      return {
-        success: false,
-        error: {
-          code: 'validation-error',
-          type: 'input-validation',
-          message: 'Passwords do not match',
-        },
-      };
-    }
+    // if (password !== confirmPassword) {
+    //   return {
+    //     success: false,
+    //     error: {
+    //       code: 'validation-error',
+    //       type: 'input-validation',
+    //       message: 'Passwords do not match',
+    //     },
+    //   };
+    // }
 
-    this.setupService.submitCredentials(username, password);
+    this.setupService.submitCredentials(username, email, password);
 
     return {
       success: true,

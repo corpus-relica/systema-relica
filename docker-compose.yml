@@ -252,6 +252,11 @@ services:
       - NEO4J_PASSWORD=password
       - REDIS_URL=redis://redis:6379
       - REDIS_PASSWORD=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
       - PRISM_PORT=3005
       - PRISM_SEED_XLS_DIR=/usr/src/app/seed_xls
       - PRISM_CSV_OUTPUT_DIR=/usr/src/app/seed_csv
@@ -270,6 +275,8 @@ services:
       neo4j:
         condition: service_healthy
       redis:
+        condition: service_started
+      postgres:
         condition: service_started
     networks:
       - rlc-net

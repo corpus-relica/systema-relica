@@ -146,7 +146,7 @@ describe('WebSocket Integration Tests', () => {
       expect(statuses).toContain('awaiting_user_credentials');
       
       // Submit credentials to continue flow
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -178,7 +178,7 @@ describe('WebSocket Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const broadcasts = getAllBroadcastCalls();
@@ -217,7 +217,7 @@ describe('WebSocket Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const broadcasts = getAllBroadcastCalls();
@@ -310,7 +310,7 @@ describe('WebSocket Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const broadcasts = getAllBroadcastCalls();
@@ -341,7 +341,7 @@ describe('WebSocket Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       
       // Monitor broadcasts during cache building phase
       const progressUpdates: Array<{ stage: string, progress: number }> = [];
@@ -377,7 +377,7 @@ describe('WebSocket Integration Tests', () => {
       setupService.startSetup();
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      setupService.submitCredentials('admin', 'password123');
+      setupService.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const broadcasts = getAllBroadcastCalls();

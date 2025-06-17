@@ -78,7 +78,7 @@ export const startSetup = async (retries = 2): Promise<{ success: boolean; messa
 export const createAdminUser = async (userData: AdminUserData, retries = 2): Promise<{ success: boolean; user?: any; message?: string }> => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await PortalAxiosInstance.post("/api/prism/setup/admin-user", userData);
+      const response = await PortalAxiosInstance.post("/api/prism/setup/create-admin-user", userData);
       return response.data;
     } catch (error) {
       console.error(`Create admin user failed (attempt ${attempt}/${retries}):`, error);

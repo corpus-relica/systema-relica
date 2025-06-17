@@ -94,10 +94,10 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
 
   @SubscribeMessage(PrismActions.CREATE_USER)
   handleCreateUser(@MessageBody() payload: any) {
-    const { username, password, confirmPassword } = payload || {};
+    const { username, email, password } = payload || {};
     console.log('Creating admin user via WebSocket:', username);
 
-    if (!username || !password || !confirmPassword) {
+    if (!username || !password || !email) {
       return {
         success: false,
         error: {
@@ -108,19 +108,19 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
       };
     }
 
-    if (password !== confirmPassword) {
-      return {
-        success: false,
-        error: {
-          code: 'validation-error',
-          type: 'input-validation',
-          message: 'Passwords do not match',
-        },
-      };
-    }
+    // if (password !== confirmPassword) {
+    //   return {
+    //     success: false,
+    //     error: {
+    //       code: 'validation-error',
+    //       type: 'input-validation',
+    //       message: 'Passwords do not match',
+    //     },
+    //   };
+    // }
 
     // Submit credentials to setup service
-    this.setupService.submitCredentials(username, password);
+    this.setupService.submitCredentials(username, email, password);
     
     return {
       success: true,
