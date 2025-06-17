@@ -22,7 +22,7 @@ export class CacheService {
   }
 
   private async initRedisConnection() {
-    const redisUrl = this.configService.get<string>('REDIS_URL', 'redis://redis:6379');
+    const redisUrl = this.configService.get<string>('REDIS_URL', 'redis://localhost:6379');
     
     this.redisClient = createClient({
       url: redisUrl,

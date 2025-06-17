@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PrismResponseSchema = exports.PrismRequestSchema = exports.PrismActions = exports.ResetSystemResponseSchema = exports.ResetSystemRequestSchema = exports.GetSetupStatusResponseSchema = exports.GetSetupStatusRequestSchema = exports.SetupStatusSchema = void 0;
+exports.PrismResponseSchema = exports.PrismRequestSchema = exports.PrismEvents = exports.PrismActions = exports.SetupStatusBroadcastEventSchema = exports.ResetSystemResponseSchema = exports.ResetSystemRequestSchema = exports.GetSetupStatusResponseSchema = exports.GetSetupStatusRequestSchema = exports.SetupStatusSchema = void 0;
 const zod_1 = require("zod");
 const base_1 = require("../base");
 // =====================================================
@@ -53,6 +53,16 @@ exports.ResetSystemResponseSchema = base_1.BaseResponseSchema.extend({
     }).optional(),
 });
 // =====================================================
+// PRISM SETUP STATUS BROADCAST EVENT
+// =====================================================
+/**
+ * Setup Status Broadcast Event - sent to all connected clients when setup state changes
+ */
+exports.SetupStatusBroadcastEventSchema = zod_1.z.object({
+    type: zod_1.z.literal('setup-status-update'),
+    data: exports.SetupStatusSchema,
+});
+// =====================================================
 // PRISM SERVICE ACTIONS
 // =====================================================
 /**
@@ -65,6 +75,12 @@ exports.PrismActions = {
     CREATE_USER: 'setup/create-user',
     IMPORT_DATA: 'setup/import-data',
     RESET_SYSTEM: 'setup/reset-system',
+};
+/**
+ * Prism broadcast events
+ */
+exports.PrismEvents = {
+    SETUP_STATUS_UPDATE: 'setup-status-update',
 };
 /**
  * Prism request message discriminated union

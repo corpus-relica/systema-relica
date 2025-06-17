@@ -35,13 +35,13 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('api/validate')
+  @Post('auth/validate')
   @ApiOperation({ summary: 'Validate JWT token' })
   @ApiBearerAuth()
   validateToken(@Request() req) {
     return {
-      message: 'Token valid',
-      identity: req.user,
+      valid: true,
+      user: req.user,
     };
   }
 

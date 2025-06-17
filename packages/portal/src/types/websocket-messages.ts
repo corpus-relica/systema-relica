@@ -1,32 +1,13 @@
-export interface ServiceMessage {
-  id: string;
-  type: 'request' | 'response' | 'event' | 'error';
-  service: 'archivist' | 'clarity' | 'aperture' | 'prism' | 'shutter' | 'nous';
-  action: string;
-  payload: any;
-  correlation_id?: string;
-  user_id?: string;
-  timestamp?: number;
-}
+// Ruthless alignment with shared contracts - use as single source of truth
+import { BaseRequest, BaseResponse, BaseEvent } from '@relica/websocket-contracts';
+import { PrismActionType } from '@relica/websocket-contracts';
 
-export interface ServiceResponse extends ServiceMessage {
-  type: 'response';
-  success: boolean;
-  error?: string;
-  request_id?: string;
-}
+// All service messages now use shared contract structure
+export type ServiceMessage = BaseRequest;
+export type ServiceResponse = BaseResponse;
+export type ServiceEvent = BaseEvent;
 
-export interface ServiceError extends ServiceMessage {
-  type: 'error';
-  error: string;
-  code?: string;
-}
-
-export interface ServiceEvent extends ServiceMessage {
-  type: 'event';
-  event_type: string;
-}
-
+// Client types (for frontend communication)
 export interface ClientMessage {
   id?: string;
   action: string;
@@ -47,8 +28,14 @@ export interface ClientEvent {
   timestamp?: number;
 }
 
-// Service-specific message types
-export interface ArchivistMessage extends ServiceMessage {
+// Prism uses shared contracts (aligned)
+export interface PrismMessage extends BaseRequest {
+  service: 'prism';
+  action: PrismActionType;
+}
+
+// Other services use shared structure but local action types (for now)
+export interface ArchivistMessage extends BaseRequest {
   service: 'archivist';
   action: 
     | 'get-kinds'
@@ -62,7 +49,7 @@ export interface ArchivistMessage extends ServiceMessage {
     | 'delete-fact';
 }
 
-export interface ClarityMessage extends ServiceMessage {
+export interface ClarityMessage extends BaseRequest {
   service: 'clarity';
   action:
     | 'get-model'
@@ -73,7 +60,7 @@ export interface ClarityMessage extends ServiceMessage {
     | 'get-environment';
 }
 
-export interface ApertureMessage extends ServiceMessage {
+export interface ApertureMessage extends BaseRequest {
   service: 'aperture';
   action:
     | 'get-environment'
@@ -86,24 +73,14 @@ export interface ApertureMessage extends ServiceMessage {
     | 'load-all-related-facts';
 }
 
-export interface PrismMessage extends ServiceMessage {
-  service: 'prism';
-  action:
-    | 'get-setup-status'
-    | 'start-setup'
-    | 'create-user'
-    | 'import-data'
-    | 'reset-system';
-}
-
-export interface NousMessage extends ServiceMessage {
+export interface NousMessage extends BaseRequest {
   service: 'nous';
   action:
     | 'process-chat-input'
     | 'generate-response';
 }
 
-export interface ShutterMessage extends ServiceMessage {
+export interface ShutterMessage extends BaseRequest {
   service: 'shutter';
   action:
     | 'validate-jwt'

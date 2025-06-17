@@ -26,6 +26,9 @@ temp.*
 /.mcp.json
 /.roo/
 /CLAUDE.local.md
+/packages/archivist/dist/
+/packages/clarity/dist/
+/packages/aperture/dist/
 /packages/prism/dist/
 /packages/shutter/dist/
 /packages/portal/dist/

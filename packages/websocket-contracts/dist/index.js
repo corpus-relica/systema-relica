@@ -38,7 +38,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PrismActions = exports.ContractValidator = exports.devValidator = exports.validator = exports.ContractUtils = void 0;
+exports.SetupStatusBroadcastEventSchema = exports.PrismEvents = exports.PrismActions = exports.ContractValidator = exports.devValidator = exports.validator = exports.ContractUtils = void 0;
 // Base message types
 __exportStar(require("./base"), exports);
 // Service-specific contracts
@@ -55,4 +55,6 @@ Object.defineProperty(exports, "devValidator", { enumerable: true, get: function
 Object.defineProperty(exports, "ContractValidator", { enumerable: true, get: function () { return validation_1.ContractValidator; } });
 var prism_1 = require("./services/prism");
 Object.defineProperty(exports, "PrismActions", { enumerable: true, get: function () { return prism_1.PrismActions; } });
+Object.defineProperty(exports, "PrismEvents", { enumerable: true, get: function () { return prism_1.PrismEvents; } });
+Object.defineProperty(exports, "SetupStatusBroadcastEventSchema", { enumerable: true, get: function () { return prism_1.SetupStatusBroadcastEventSchema; } });
 //# sourceMappingURL=index.js.map

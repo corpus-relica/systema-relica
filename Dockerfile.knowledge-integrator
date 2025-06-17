@@ -21,6 +21,9 @@ RUN yarn build
 WORKDIR /usr/src/app/packages/constants
 RUN yarn build
 
+WORKDIR /usr/src/app/packages/websocket-contracts
+RUN yarn build
+
 WORKDIR /usr/src/app/packages/fact-search-ui
 RUN yarn build
 
@@ -47,6 +50,9 @@ COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/d
 
 COPY --from=build /usr/src/app/packages/constants/package.json /usr/src/app/packages/constants/package.json
 COPY --from=build /usr/src/app/packages/constants/dist /usr/src/app/packages/constants/dist
+
+COPY --from=build /usr/src/app/packages/websocket-contracts/package.json /usr/src/app/packages/websocket-contracts/package.json
+COPY --from=build /usr/src/app/packages/websocket-contracts/dist /usr/src/app/packages/websocket-contracts/dist
 
 COPY --from=build /usr/src/app/packages/fact-search-ui/package.json /usr/src/app/packages/fact-search-ui/package.json
 COPY --from=build /usr/src/app/packages/fact-search-ui/dist /usr/src/app/packages/fact-search-ui/dist

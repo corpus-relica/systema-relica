@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { BaseRequestSchema, BaseResponseSchema } from '../base';
 
 // =====================================================
-// PRISM SETUP STATUS CONTRACT - Our Seed Example
+// PRISM SETUP STATUS CONTRACT
 // =====================================================
 
 /**
@@ -68,6 +68,20 @@ export const ResetSystemResponseSchema = BaseResponseSchema.extend({
 export type ResetSystemResponse = z.infer<typeof ResetSystemResponseSchema>;
 
 // =====================================================
+// PRISM SETUP STATUS BROADCAST EVENT
+// =====================================================
+
+/**
+ * Setup Status Broadcast Event - sent to all connected clients when setup state changes
+ */
+export const SetupStatusBroadcastEventSchema = z.object({
+  type: z.literal('setup-status-update'),
+  data: SetupStatusSchema,
+});
+
+export type SetupStatusBroadcastEvent = z.infer<typeof SetupStatusBroadcastEventSchema>;
+
+// =====================================================
 // PRISM SERVICE ACTIONS
 // =====================================================
 
@@ -81,6 +95,13 @@ export const PrismActions = {
   CREATE_USER: 'setup/create-user',
   IMPORT_DATA: 'setup/import-data',
   RESET_SYSTEM: 'setup/reset-system',
+} as const;
+
+/**
+ * Prism broadcast events
+ */
+export const PrismEvents = {
+  SETUP_STATUS_UPDATE: 'setup-status-update',
 } as const;
 
 export type PrismActionType = typeof PrismActions[keyof typeof PrismActions];
@@ -106,3 +127,9 @@ export const PrismResponseSchema = z.union([
 ]);
 
 export type PrismResponse = z.infer<typeof PrismResponseSchema>;
+
+// =====================================================
+// PRISM EVENT EXPORTS
+// =====================================================
+
+export type PrismEventType = typeof PrismEvents[keyof typeof PrismEvents];

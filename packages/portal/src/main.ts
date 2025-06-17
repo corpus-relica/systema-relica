@@ -30,7 +30,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = configService.get<number>('PORT', 2204);
+  const port = configService.get<number>('PORTAL_PORT', 2204);
   await app.listen(port);
   console.log(`🌐 Portal service listening on port ${port}`);
 }

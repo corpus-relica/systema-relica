@@ -12,6 +12,14 @@ services:
       - "6379:6379"
     networks:
       - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
 
   postgres:
     container_name: postgres
@@ -31,6 +39,14 @@ services:
       - "5432:5432"
     networks:
       - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.2"
+          memory: 256M
 
   neo4j:
     container_name: neo4j
@@ -63,6 +79,14 @@ services:
       retries: 5
     networks:
       - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.3"
+          memory: 512M
 
   archivist:
     container_name: archivist
@@ -99,6 +123,14 @@ services:
         condition: service_started
     networks:
       - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
 
   clarity:
     container_name: clarity
@@ -124,6 +156,14 @@ services:
       rlc-net:
         aliases:
           - clarity
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
 
   aperture:
     container_name: aperture
@@ -158,6 +198,14 @@ services:
       rlc-net:
         aliases:
           - aperture
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
 
   shutter:
     container_name: shutter
@@ -183,6 +231,14 @@ services:
       - postgres
     networks:
       - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
 
   prism:
     container_name: prism
@@ -216,6 +272,14 @@ services:
         condition: service_started
     networks:
       - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
 
   portal:
     container_name: portal
@@ -258,6 +322,14 @@ services:
       rlc-net:
         aliases:
           - portal
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
 
   nous:
     container_name: nous
@@ -292,6 +364,14 @@ services:
       - rlc-net
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.3"
+          memory: 512M
 
   knowledge-integrator:
     container_name: knowledge-integrator
@@ -318,6 +398,14 @@ services:
       rlc-net:
         aliases:
           - knowledge-integrator
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
 
 networks:
   rlc-net:

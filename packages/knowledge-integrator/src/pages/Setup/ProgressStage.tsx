@@ -23,6 +23,7 @@ interface ProgressStageProps {
 }
 
 const ProgressStage: React.FC<ProgressStageProps> = ({ stage, progress, status, error }) => {
+  console.log('&&&&&&&&&&&&&&&&&&&!!!!   Rendering ProgressStage', { stage, progress, status, error });
   return (
     <StageBox>
       <Typography variant="h5" gutterBottom>

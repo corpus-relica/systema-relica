@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { io, Socket } from 'socket.io-client';
+import { EventEmitter } from 'events';
 import { 
   ServiceMessage, 
   ServiceResponse, 
@@ -15,17 +16,14 @@ export interface WebSocketServiceClient {
   disconnect(): void;
   sendMessage(message: ServiceMessage): Promise<ServiceResponse>;
   isConnected(): boolean;
+  onBroadcast(callback: (message: any) => void): void;
+  offBroadcast(callback: (message: any) => void): void;
 }
 
 @Injectable()
 export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit, OnModuleDestroy {
   protected socket: Socket | null = null;
   protected readonly logger = new Logger(this.constructor.name);
-  protected pendingRequests = new Map<string, {
-    resolve: (value: ServiceResponse) => void;
-    reject: (error: Error) => void;
-    timeout: NodeJS.Timeout;
-  }>();
 
   constructor(
     protected readonly configService: ConfigService,
@@ -91,13 +89,6 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
       this.socket = null;
       this.logger.log(`Disconnected from ${this.serviceName} service`);
     }
-
-    // Reject all pending requests
-    for (const [id, request] of this.pendingRequests) {
-      clearTimeout(request.timeout);
-      request.reject(new Error(`Connection closed while waiting for response`));
-    }
-    this.pendingRequests.clear();
   }
 
   isConnected(): boolean {
@@ -115,31 +106,31 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
       }
     }
 
-    const messageId = message.id || this.generateMessageId();
-    const messageWithId = { ...message, id: messageId };
-
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pendingRequests.delete(messageId);
         reject(new Error(`Request timeout for ${this.serviceName} service`));
-      }, 30000); // 30 second timeout
+      }, 30000);
 
-      this.pendingRequests.set(messageId, { resolve, reject, timeout });
-      this.socket!.emit('message', messageWithId);
+      // Use Socket.IO acknowledgment callback - much simpler!
+      this.socket!.emit(message.action, message.payload || {}, (response: any) => {
+        clearTimeout(timeout);
+        
+        // Wrap response in our standard format
+        const serviceResponse: ServiceResponse = {
+          id: message.id || this.generateMessageId(),
+          type: 'response',
+          success: response.success !== undefined ? response.success : true,
+          data: response.data || response,
+          error: response.error
+        };
+        
+        resolve(serviceResponse);
+      });
     });
   }
 
   private setupEventHandlers(): void {
     if (!this.socket) return;
-
-    this.socket.on('message', (response: ServiceResponse) => {
-      const pendingRequest = this.pendingRequests.get(response.id);
-      if (pendingRequest) {
-        clearTimeout(pendingRequest.timeout);
-        this.pendingRequests.delete(response.id);
-        pendingRequest.resolve(response);
-      }
-    });
 
     this.socket.on('disconnect', () => {
       this.logger.warn(`Disconnected from ${this.serviceName} service`);
@@ -156,5 +147,15 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
 
   protected generateMessageId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  onBroadcast(callback: (message: any) => void): void {
+    // Implementation will be added by subclasses as needed
+    // This is here to satisfy the interface
+  }
+
+  offBroadcast(callback: (message: any) => void): void {
+    // Implementation will be added by subclasses as needed  
+    // This is here to satisfy the interface
   }
 }

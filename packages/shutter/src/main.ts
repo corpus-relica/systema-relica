@@ -27,7 +27,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 3004;
+  const port = process.env.SHUTTER_PORT || 3004;
   await app.listen(port);
   console.log(`🔐 Shutter service listening on port ${port}`);
 }

@@ -14,15 +14,10 @@ import {
   startSetup, 
   createAdminUser, 
   getGuestToken,
-  SetupStatus,
   AdminUserData 
 } from '../../PortalClient';
-import { 
-  portalSocket, 
-  addSetupProgressListener, 
-  addSetupCompleteListener, 
-  addSetupErrorListener 
-} from '../../PortalSocket';
+import { portalSocket, SetupStatus, SetupStatusBroadcastEvent } from '../../PortalSocket';
+import { PrismEvents } from '@relica/websocket-contracts';
 import { SETUP_STATES } from '@relica/constants';
 import { withRetry, SetupError } from '../../utils/ErrorHandler';
 import ProgressStage from './ProgressStage';
@@ -63,51 +58,52 @@ const SetupWizard: React.FC = () => {
     checkSetupStatus();
   }, []);
 
-  // Setup WebSocket listeners for real-time updates
+  // Setup simple Socket.IO listener for status updates
   useEffect(() => {
-    const removeProgressListener = addSetupProgressListener((data) => {
-      console.log('📊 Received setup progress:', data);
-      setSetupStatus(prevStatus => ({
-        ...prevStatus,
-        state: data.state,
-        progress: data.progress,
-        status: data.status,
-        error: data.error,
-        masterUser: data.masterUser
-      }));
-    });
+    console.log("FOOOBABADFDJKLFDJKLSJKLDFSJKLSDFJKLDSFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLDSF")
+    const handleSetupStatusUpdate = (broadcastEvent: SetupStatusBroadcastEvent) => {
+      console.log('📊 Received setup status update:', broadcastEvent);
+      
+      // Transform canonical format to frontend format
+      const canonicalStatus = broadcastEvent;
+      // const frontendStatus: SetupStatus = {
+      //   setupRequired: canonicalStatus.status !== 'setup_complete',
+      //   state: {
+      //     id: canonicalStatus.status,
+      //     substate: canonicalStatus.stage,
+      //     full_path: canonicalStatus.stage
+      //       ? [canonicalStatus.status, canonicalStatus.stage]
+      //       : [canonicalStatus.status]
+      //   },
+      //   progress: canonicalStatus.progress,
+      //   status: canonicalStatus.message,
+      //   error: canonicalStatus.error,
+      // };
 
-    const removeCompleteListener = addSetupCompleteListener((data) => {
-      console.log('🎉 Setup completed:', data);
-      setSetupStatus(prevStatus => ({
-        ...prevStatus,
-        state: { id: SETUP_STATES.SETUP_COMPLETE, full_path: [SETUP_STATES.SETUP_COMPLETE] },
-        progress: 100,
-        status: 'Setup completed successfully!'
-      }));
-    });
+      setSetupStatus(canonicalStatus);
+      
+      // React to error state
+      if (canonicalStatus.error) {
+        setError(canonicalStatus.error);
+      } else if (error) {
+        setError(''); // Clear previous errors
+      }
+    };
 
-    const removeErrorListener = addSetupErrorListener((data) => {
-      console.error('⚠️ Setup error:', data);
-      setError(data.message || 'An error occurred during setup');
-    });
-
-    // Subscribe to setup updates when component mounts
-    portalSocket.subscribeToSetupUpdates();
+    // Listen for canonical setup status updates
+    portalSocket.on(PrismEvents.SETUP_STATUS_UPDATE, handleSetupStatusUpdate);
 
     return () => {
-      removeProgressListener();
-      removeCompleteListener();
-      removeErrorListener();
-      portalSocket.unsubscribeFromSetupUpdates();
+      portalSocket.off(PrismEvents.SETUP_STATUS_UPDATE, handleSetupStatusUpdate);
     };
-  }, []);
+  }, [error]);
 
   // Fallback polling for setup progress (backup to WebSocket)
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     
     // Only poll if WebSocket is not connected and setup is in progress
+    console.log('🔧 Setup status updated:', setupStatus);
     if (!portalSocket.isConnected() &&
         setupStatus.state.id !== SETUP_STATES.IDLE && 
         setupStatus.state.id !== SETUP_STATES.AWAITING_USER_CREDENTIALS && 
@@ -127,17 +123,17 @@ const SetupWizard: React.FC = () => {
 
   const checkSetupStatus = async (showErrors = true) => {
     try {
-      const status = await withRetry(() => getSetupStatus(), {
+      const result = await withRetry(() => getSetupStatus(), {
         maxRetries: 3,
         baseDelay: 1000
       });
       
-      setSetupStatus(status);
+      setSetupStatus(result.status);
       setLoading(false);
       setRetryCount(0); // Reset retry count on success
       
-      if (status.error) {
-        setError(status.error);
+      if (result.error) {
+        setError(result.error);
       } else if (error) {
         setError(''); // Clear any previous errors
       }
@@ -245,7 +241,7 @@ const SetupWizard: React.FC = () => {
   }
 
   // Setup complete - show success and redirect
-  if (setupStatus.state.id === SETUP_STATES.SETUP_COMPLETE) {
+  if (setupStatus.status === SETUP_STATES.SETUP_COMPLETE) {
     return (
       <WizardContainer maxWidth="md">
         <Fade in timeout={1000}>
@@ -279,7 +275,7 @@ const SetupWizard: React.FC = () => {
   }
 
   // User credentials needed
-  if (setupStatus.state.id === SETUP_STATES.AWAITING_USER_CREDENTIALS) {
+  if (setupStatus.status === SETUP_STATES.AWAITING_USER_CREDENTIALS) {
     return (
       <WizardContainer maxWidth="md">
         <UserSetupForm
@@ -292,7 +288,9 @@ const SetupWizard: React.FC = () => {
   }
 
   // Setup in progress
-  if (setupStatus.state.id !== SETUP_STATES.IDLE) {
+  console.log('🔧 User credentials form rendered');
+  console.log('🔧 Current setup state:', setupStatus, SETUP_STATES.IDLE);
+  if (setupStatus.status !== SETUP_STATES.IDLE) {
     return (
       <WizardContainer maxWidth="md">
         <Paper 
@@ -303,9 +301,9 @@ const SetupWizard: React.FC = () => {
           }}
         >
           <ProgressStage 
-            stage={setupStatus.state.id}
+            stage={setupStatus.status}
             progress={setupStatus.progress}
-            status={setupStatus.status}
+            status={setupStatus.message}
             error={setupStatus.error}
           />
         </Paper>

@@ -16,18 +16,8 @@ PortalAxiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-export interface SetupStatus {
-  setupRequired: boolean;
-  state: {
-    id: string;
-    substate?: string;
-    full_path: string[];
-  };
-  progress: number;
-  status: string;  // Human-readable status message from backend
-  error?: string;
-  masterUser?: string;
-}
+// Import canonical types from contracts
+export type { SetupStatus } from '@relica/websocket-contracts';
 
 export interface AdminUserData {
   username: string;
@@ -110,7 +100,10 @@ export const getGuestToken = async (retries = 3): Promise<{ token: string }> => 
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await guestAxios.post("/api/auth/guest");
+      const response = await guestAxios.post("/auth/guest");
+      if(response.data.success === false) {
+        throw new Error(`Guest token request failed: ${response.data.error}`);
+      }
       return response.data;
     } catch (error) {
       console.error(`Get guest token failed (attempt ${attempt}/${retries}):`, error);

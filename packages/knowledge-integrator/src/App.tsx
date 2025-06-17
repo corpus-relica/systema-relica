@@ -22,6 +22,8 @@ import { Route } from "react-router-dom";
 
 import { authProvider } from "./authProvider";
 import { getSetupStatus, loadUserEnvironment } from "./PortalClient";
+import { SetupStatus } from '@relica/websocket-contracts';
+import { SETUP_STATES } from '@relica/constants';
 import { SetupWizard } from "./pages/Setup";
 import { portalSocket } from "./PortalSocket";
 import DebugPanel from "./components/DebugPanel";
@@ -82,8 +84,9 @@ console.log("vvvv - MEMSTORE vvvv:");
 console.log(memStore);
 
 export const App = () => {
-  const [setupRequired, setSetupRequired] = useState<boolean | null>(null);
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [isCheckingSetup, setIsCheckingSetup] = useState(true);
+  const [setupError, setSetupError] = useState<string>('');
   const rootStore: any = useStores();
 
   console.log("vvvv - ROOT STORE vvvv:");
@@ -117,21 +120,28 @@ export const App = () => {
   useEffect(() => {
     const checkSetup = async () => {
       try {
-        const setupStatus = await getSetupStatus();
-        setSetupRequired(setupStatus.setupRequired);
+        const status = await getSetupStatus();
+        setSetupStatus(status);
         setIsCheckingSetup(false);
         
-        if (!setupStatus.setupRequired) {
+        if (status.status === SETUP_STATES.SETUP_COMPLETE) {
           // If setup is complete, initialize the app
           await initializeApp();
         }
       } catch (error) {
         console.error("Failed to check setup status:", error);
+        setSetupError(`Setup check failed: ${error.message}`);
         
         // If we can't check setup status, assume setup is required
         // This handles cases where the API is down or auth is needed
         console.log("🔧 Assuming setup is required due to API error");
-        setSetupRequired(true);
+        setSetupStatus({
+          status: SETUP_STATES.IDLE,
+          stage: null,
+          message: 'Setup required - unable to verify system status',
+          progress: 0,
+          timestamp: new Date().toISOString()
+        });
         setIsCheckingSetup(false);
       }
     };
@@ -178,8 +188,32 @@ export const App = () => {
     );
   }
 
-  // Show setup wizard if setup is required
-  if (setupRequired) {
+  // Show error if we can't determine setup status
+  if (setupError && !setupStatus) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem',
+        padding: '2rem'
+      }}>
+        <div style={{ marginBottom: '1rem' }}>❌ Setup Status Check Failed</div>
+        <div style={{ fontSize: '1rem', color: '#666', textAlign: 'center' }}>{setupError}</div>
+        <button 
+          onClick={() => window.location.reload()} 
+          style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
+        >
+          🔄 Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Show setup wizard if setup is not complete
+  if (!setupStatus || setupStatus.status !== SETUP_STATES.SETUP_COMPLETE) {
     return <SetupWizard />;
   }
 

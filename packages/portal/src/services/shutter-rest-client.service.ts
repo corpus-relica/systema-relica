@@ -25,7 +25,7 @@ export class ShutterRestClientService {
   }> {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/auth/login`, {
+        this.httpService.post(`${this.baseUrl}/api/login`, {
           username,
           password,
         })
@@ -84,7 +84,7 @@ export class ShutterRestClientService {
   }> {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/auth/guest`, {})
+        this.httpService.post(`${this.baseUrl}/api/guest-auth`, {})
       );
       return response.data;
     } catch (error) {
@@ -117,7 +117,7 @@ export class ShutterRestClientService {
         },
       };
       const response = await firstValueFrom(
-        this.httpService.get(`${this.baseUrl}/auth/me`, config)
+        this.httpService.get(`${this.baseUrl}/auth/profile`, config)
       );
       return response.data;
     } catch (error) {

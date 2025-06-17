@@ -38,106 +38,184 @@ export * from './transaction';
 // Validation operations
 export * from './validation';
 
-// Re-export commonly used action constants
-export {
+// Import actions to create combined object
+import {
   FactActions,
   FactEvents,
   type FactActionType,
   type FactEventType,
 } from './facts';
 
-export {
+import {
   SearchActions,
   SearchEvents,
   type SearchActionType,
   type SearchEventType,
 } from './search';
 
-export {
+import {
   ConceptActions,
   ConceptEvents,
   type ConceptActionType,
   type ConceptEventType,
 } from './concepts';
 
-export {
+import {
   QueryActions,
   QueryEvents,
   type QueryActionType,
   type QueryEventType,
 } from './query';
 
-export {
+import {
   KindActions,
   KindEvents,
   type KindActionType,
   type KindEventType,
 } from './kinds';
 
-export {
+import {
   UIDActions,
   UIDEvents,
   type UIDActionType,
   type UIDEventType,
 } from './uids';
 
-export {
+import {
   CompletionActions,
   CompletionEvents,
   type CompletionActionType,
   type CompletionEventType,
 } from './completion';
 
-export {
+import {
   DefinitionActions,
   DefinitionEvents,
   type DefinitionActionType,
   type DefinitionEventType,
 } from './definition';
 
-export {
+import {
   SubmissionActions,
   SubmissionEvents,
   type SubmissionActionType,
   type SubmissionEventType,
 } from './submission';
 
-export {
+import {
   TransactionActions,
   TransactionEvents,
   type TransactionActionType,
   type TransactionEventType,
 } from './transaction';
 
-export {
+import {
   ValidationActions,
   ValidationEvents,
   type ValidationActionType,
   type ValidationEventType,
 } from './validation';
 
+// Re-export commonly used action constants
+export {
+  FactActions,
+  FactEvents,
+  type FactActionType,
+  type FactEventType,
+};
+
+export {
+  SearchActions,
+  SearchEvents,
+  type SearchActionType,
+  type SearchEventType,
+};
+
+export {
+  ConceptActions,
+  ConceptEvents,
+  type ConceptActionType,
+  type ConceptEventType,
+};
+
+export {
+  QueryActions,
+  QueryEvents,
+  type QueryActionType,
+  type QueryEventType,
+};
+
+export {
+  KindActions,
+  KindEvents,
+  type KindActionType,
+  type KindEventType,
+};
+
+export {
+  UIDActions,
+  UIDEvents,
+  type UIDActionType,
+  type UIDEventType,
+};
+
+export {
+  CompletionActions,
+  CompletionEvents,
+  type CompletionActionType,
+  type CompletionEventType,
+};
+
+export {
+  DefinitionActions,
+  DefinitionEvents,
+  type DefinitionActionType,
+  type DefinitionEventType,
+};
+
+export {
+  SubmissionActions,
+  SubmissionEvents,
+  type SubmissionActionType,
+  type SubmissionEventType,
+};
+
+export {
+  TransactionActions,
+  TransactionEvents,
+  type TransactionActionType,
+  type TransactionEventType,
+};
+
+export {
+  ValidationActions,
+  ValidationEvents,
+  type ValidationActionType,
+  type ValidationEventType,
+};
+
 // All Archivist actions combined
 export const ArchivistActions = {
   // Facts
-  ...require('./facts').FactActions,
+  ...FactActions,
   // Search  
-  ...require('./search').SearchActions,
+  ...SearchActions,
   // Concepts
-  ...require('./concepts').ConceptActions,
+  ...ConceptActions,
   // Query
-  ...require('./query').QueryActions,
+  ...QueryActions,
   // Kinds
-  ...require('./kinds').KindActions,
+  ...KindActions,
   // UIDs
-  ...require('./uids').UIDActions,
+  ...UIDActions,
   // Completion
-  ...require('./completion').CompletionActions,
+  ...CompletionActions,
   // Definition
-  ...require('./definition').DefinitionActions,
+  ...DefinitionActions,
   // Submission
-  ...require('./submission').SubmissionActions,
+  ...SubmissionActions,
   // Transaction
-  ...require('./transaction').TransactionActions,
+  ...TransactionActions,
   // Validation
-  ...require('./validation').ValidationActions,
+  ...ValidationActions,
 } as const;

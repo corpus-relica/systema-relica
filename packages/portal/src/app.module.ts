@@ -11,6 +11,7 @@ import { AuthGuard } from './guards/auth.guard';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['../../.env', '../../.env.local'],
     }),
     WebSocketClientsModule,
     RestClientsModule,

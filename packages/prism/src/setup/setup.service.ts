@@ -44,14 +44,42 @@ export class SetupService implements OnModuleInit {
   }
 
   private formatStateForClient(context: SetupContext, state: any) {
+    const stateId = typeof state === 'string' ? state : state[0] || 'unknown';
+    const substate = Array.isArray(state) ? state[1] : null;
+    
+    // Use canonical contract format
     return {
-      status: typeof state === 'string' ? state : state[0] || 'unknown',
-      stage: Array.isArray(state) ? state[1] : null,
-      message: context.statusMessage,
+      status: stateId,
+      stage: substate,
+      message: context.statusMessage || this.getDefaultStatusMessage(stateId, substate),
       progress: this.calculateProgress(state),
       error: context.errorMessage,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  private getDefaultStatusMessage(stateId: string, substate?: string | null): string {
+    if (substate) {
+      switch (substate) {
+        case 'building_facts_cache': return 'Building entity facts cache...';
+        case 'building_lineage_cache': return 'Building entity lineage cache...';
+        case 'building_subtypes_cache': return 'Building entity subtypes cache...';
+        case 'building_caches_complete': return 'Cache building complete';
+        default: return `Processing ${substate}...`;
+      }
+    }
+    
+    switch (stateId) {
+      case 'idle': return 'System is ready for setup';
+      case 'checking_db': return 'Checking database connection...';
+      case 'awaiting_user_credentials': return 'Waiting for admin user credentials';
+      case 'creating_admin_user': return 'Creating admin user...';
+      case 'seeding_db': return 'Seeding database with initial data...';
+      case 'building_caches': return 'Building system caches...';
+      case 'setup_complete': return 'Setup completed successfully';
+      case 'error': return 'Setup encountered an error';
+      default: return 'Unknown status';
+    }
   }
 
   private calculateProgress(state: any): number {

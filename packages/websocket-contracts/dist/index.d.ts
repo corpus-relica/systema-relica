@@ -27,5 +27,5 @@ export * from './services/prism';
 export * from './registry';
 export * from './validation';
 export { ContractUtils, validator, devValidator, ContractValidator, } from './validation';
-export { PrismActions, } from './services/prism';
+export { PrismActions, PrismEvents, SetupStatusBroadcastEventSchema, type SetupStatusBroadcastEvent, type PrismEventType, } from './services/prism';
 //# sourceMappingURL=index.d.ts.map

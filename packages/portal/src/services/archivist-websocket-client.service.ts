@@ -22,7 +22,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get kinds');
     }
-    return response.payload;
+    return response.data;
   }
 
   async searchText(query: string, limit?: number, offset?: number): Promise<any> {
@@ -38,7 +38,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to search text');
     }
-    return response.payload;
+    return response.data;
   }
 
   async searchUid(uid: string): Promise<any> {
@@ -54,7 +54,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to search UID');
     }
-    return response.payload;
+    return response.data;
   }
 
   async resolveUids(uids: string[]): Promise<any> {
@@ -70,7 +70,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to resolve UIDs');
     }
-    return response.payload;
+    return response.data;
   }
 
   async getClassified(uid: string): Promise<any> {
@@ -86,7 +86,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get classified');
     }
-    return response.payload;
+    return response.data;
   }
 
   async getSubtypes(uid: string): Promise<any> {
@@ -102,7 +102,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get subtypes');
     }
-    return response.payload;
+    return response.data;
   }
 
   async getSubtypesCone(uid: string): Promise<any> {
@@ -118,7 +118,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get subtypes cone');
     }
-    return response.payload;
+    return response.data;
   }
 
   async submitFact(factData: any): Promise<any> {
@@ -134,7 +134,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to submit fact');
     }
-    return response.payload;
+    return response.data;
   }
 
   async deleteFact(factId: string): Promise<any> {
@@ -150,7 +150,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete fact');
     }
-    return response.payload;
+    return response.data;
   }
 
 }
