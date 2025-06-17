@@ -104,9 +104,9 @@ const SetupWizard: React.FC = () => {
     // Only poll if WebSocket is not connected and setup is in progress
     console.log('🔧 Setup status updated:', setupStatus);
     if (!portalSocket.isConnected() &&
-        setupStatus.state.id !== SETUP_STATES.IDLE && 
-        setupStatus.state.id !== SETUP_STATES.AWAITING_USER_CREDENTIALS && 
-        setupStatus.state.id !== SETUP_STATES.SETUP_COMPLETE) {
+        setupStatus.status !== SETUP_STATES.IDLE &&
+        setupStatus.status !== SETUP_STATES.AWAITING_USER_CREDENTIALS &&
+        setupStatus.status !== SETUP_STATES.SETUP_COMPLETE) {
       console.log('📡 WebSocket not connected, falling back to polling');
       intervalId = setInterval(() => {
         checkSetupStatus(false); // Don't show errors during polling
@@ -279,7 +279,7 @@ const SetupWizard: React.FC = () => {
       <WizardContainer maxWidth="md">
         <UserSetupForm
           onSubmit={handleCreateAdminUser}
-          loading={setupStatus.state.id === SETUP_STATES.CREATING_ADMIN_USER}
+          loading={setupStatus.status === SETUP_STATES.CREATING_ADMIN_USER}
           error={error}
         />
       </WizardContainer>

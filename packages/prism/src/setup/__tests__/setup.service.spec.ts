@@ -3,6 +3,7 @@ import { SetupService } from '../setup.service';
 import { Neo4jService } from '../../database/neo4j.service';
 import { BatchService } from '../../batch/batch.service';
 import { CacheService } from '../../cache/cache.service';
+import { UsersService } from '../../database/users/users.service';
 import { 
   mockNeo4jService, 
   setupNeo4jMockDefaults,
@@ -27,6 +28,10 @@ import {
   setupCacheForBuildingException,
   setupCacheForClearError
 } from '../../__tests__/mocks/cache.service.mock';
+import {
+  mockUsersService,
+  setupUsersServiceMockDefaults
+} from '../../__tests__/mocks/users.service.mock';
 import { 
   mockWebSocketGateway, 
   setupWebSocketMockDefaults,
@@ -47,6 +52,7 @@ describe('SetupService', () => {
     setupNeo4jMockDefaults();
     setupBatchMockDefaults();
     setupCacheMockDefaults();
+    setupUsersServiceMockDefaults();
     setupWebSocketMockDefaults();
 
     module = await Test.createTestingModule({
@@ -63,6 +69,10 @@ describe('SetupService', () => {
         {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: UsersService,
+          useValue: mockUsersService,
         },
       ],
     }).compile();
@@ -119,7 +129,7 @@ describe('SetupService', () => {
       expect(state.progress).toBe(10);
 
       // Submit credentials
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       
       // Wait for user creation simulation
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -193,7 +203,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       const state = service.getSetupState();
@@ -208,7 +218,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       const state = service.getSetupState();
@@ -224,7 +234,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       const state = service.getSetupState();
@@ -240,7 +250,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       const state = service.getSetupState();
@@ -256,7 +266,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       const state = service.getSetupState();
@@ -272,7 +282,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       const state = service.getSetupState();
@@ -366,7 +376,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('admin', 'password123');
+      service.submitCredentials('admin', 'admin@test.com', 'password123');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       // Should be in cache building state
@@ -446,7 +456,7 @@ describe('SetupService', () => {
       service.startSetup();
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      service.submitCredentials('testuser', 'testpass123');
+      service.submitCredentials('testuser', 'testuser@test.com', 'testpass123');
       
       // Check that credentials are processed
       const broadcasts = getAllBroadcastCalls();
@@ -459,7 +469,7 @@ describe('SetupService', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
       
       const startTime = Date.now();
-      service.submitCredentials('testuser', 'testpass123');
+      service.submitCredentials('testuser', 'testuser@test.com', 'testpass123');
       
       // Wait for user creation to complete
       await new Promise(resolve => setTimeout(resolve, 1200));
