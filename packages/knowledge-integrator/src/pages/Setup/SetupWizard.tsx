@@ -60,7 +60,6 @@ const SetupWizard: React.FC = () => {
 
   // Setup simple Socket.IO listener for status updates
   useEffect(() => {
-    console.log("FOOOBABADFDJKLFDJKLSJKLDFSJKLSDFJKLDSFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLDSF")
     const handleSetupStatusUpdate = (broadcastEvent: SetupStatusBroadcastEvent) => {
       console.log('📊 Received setup status update:', broadcastEvent);
       
