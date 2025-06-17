@@ -23,9 +23,11 @@ export class CacheService {
 
   private async initRedisConnection() {
     const redisUrl = this.configService.get<string>('REDIS_URL', 'redis://localhost:6379');
+    const redisPassword = this.configService.get<string>('REDIS_PASSWORD', 'redis');
     
     this.redisClient = createClient({
       url: redisUrl,
+      password: redisPassword,
     });
 
     this.redisClient.on('error', (err) => {

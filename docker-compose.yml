@@ -251,6 +251,7 @@ services:
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password
       - REDIS_URL=redis://redis:6379
+      - REDIS_PASSWORD=redis
       - PRISM_PORT=3005
       - PRISM_SEED_XLS_DIR=/usr/src/app/seed_xls
       - PRISM_CSV_OUTPUT_DIR=/usr/src/app/seed_csv
