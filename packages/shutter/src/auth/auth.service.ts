@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 export interface LoginDto {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -27,8 +27,9 @@ export class AuthService {
   ) {}
 
   async signIn(loginDto: LoginDto): Promise<LoginResponse> {
-    const user = await this.usersService.findByEmail(loginDto.email);
-    
+
+    const user = await this.usersService.findByUsername(loginDto.username);
+
     if (!user || !user.is_active) {
       throw new UnauthorizedException('Invalid credentials');
     }
