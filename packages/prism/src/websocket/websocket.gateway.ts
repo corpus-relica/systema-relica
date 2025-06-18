@@ -35,6 +35,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   afterInit() {
     // Wire up the circular dependency after initialization
     this.setupService.setWebSocketGateway(this);
+    this.cacheService.setWebSocketGateway(this);
   }
 
   handleConnection(client: Socket) {

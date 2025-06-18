@@ -29,7 +29,7 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async connect(): Promise<void> {
-    const archivistUrl = this.configService.get<string>('ARCHIVIST_URL', 'http://archivist:3002');
+    const archivistUrl = this.configService.get<string>('ARCHIVIST_URL', 'http://localhost:3000');
     
     this.socket = io(archivistUrl, {
       transports: ['websocket'],
