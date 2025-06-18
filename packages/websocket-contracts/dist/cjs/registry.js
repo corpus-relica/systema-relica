@@ -150,6 +150,20 @@ exports.MESSAGE_REGISTRY = {
         responseSchema: archivist_1.FactValidateResponseSchema,
         description: 'Validate a fact before creation',
     },
+    [archivist_1.FactActions.BATCH_GET]: {
+        action: archivist_1.FactActions.BATCH_GET,
+        service: 'archivist',
+        requestSchema: archivist_1.FactBatchGetRequestSchema,
+        responseSchema: archivist_1.FactBatchGetResponseSchema,
+        description: 'Batch retrieval of facts for cache building operations',
+    },
+    [archivist_1.FactActions.COUNT]: {
+        action: archivist_1.FactActions.COUNT,
+        service: 'archivist',
+        requestSchema: archivist_1.FactCountRequestSchema,
+        responseSchema: archivist_1.FactCountResponseSchema,
+        description: 'Get total count of facts for progress tracking',
+    },
     // Search contracts
     [archivist_1.SearchActions.GENERAL]: {
         action: archivist_1.SearchActions.GENERAL,
@@ -376,6 +390,14 @@ exports.MESSAGE_REGISTRY = {
         requestSchema: archivist_1.ValidationCollectionRequestSchema,
         responseSchema: archivist_1.ValidationCollectionResponseSchema,
         description: 'Validate a collection of facts',
+    },
+    // Lineage contracts
+    [archivist_1.LineageActions.GET]: {
+        action: archivist_1.LineageActions.GET,
+        service: 'archivist',
+        requestSchema: archivist_1.LineageGetRequestSchema,
+        responseSchema: archivist_1.LineageGetResponseSchema,
+        description: 'Calculate entity lineage using C3 linearization algorithm',
     },
     // =====================================================
     // APERTURE SERVICE CONTRACTS

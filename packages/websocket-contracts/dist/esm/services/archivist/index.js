@@ -26,6 +26,8 @@ export * from './submission';
 export * from './transaction';
 // Validation operations
 export * from './validation';
+// Lineage operations
+export * from './lineage';
 // Import actions to create combined object
 import { FactActions, FactEvents, } from './facts';
 import { SearchActions, SearchEvents, } from './search';
@@ -38,6 +40,7 @@ import { DefinitionActions, DefinitionEvents, } from './definition';
 import { SubmissionActions, SubmissionEvents, } from './submission';
 import { TransactionActions, TransactionEvents, } from './transaction';
 import { ValidationActions, ValidationEvents, } from './validation';
+import { LineageActions, LineageEvents, } from './lineage';
 // Re-export commonly used action constants
 export { FactActions, FactEvents, };
 export { SearchActions, SearchEvents, };
@@ -50,6 +53,7 @@ export { DefinitionActions, DefinitionEvents, };
 export { SubmissionActions, SubmissionEvents, };
 export { TransactionActions, TransactionEvents, };
 export { ValidationActions, ValidationEvents, };
+export { LineageActions, LineageEvents, };
 // All Archivist actions combined
 export const ArchivistActions = {
     // Facts
@@ -74,5 +78,7 @@ export const ArchivistActions = {
     ...TransactionActions,
     // Validation
     ...ValidationActions,
+    // Lineage
+    ...LineageActions,
 };
 //# sourceMappingURL=index.js.map

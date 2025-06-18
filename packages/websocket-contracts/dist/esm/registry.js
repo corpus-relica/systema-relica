@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { PrismActions } from './services/prism';
-import { FactActions, SearchActions, ConceptActions, QueryActions, KindActions, UIDActions, CompletionActions, DefinitionActions, SubmissionActions, TransactionActions, ValidationActions, 
+import { FactActions, SearchActions, ConceptActions, QueryActions, KindActions, UIDActions, CompletionActions, DefinitionActions, SubmissionActions, TransactionActions, ValidationActions, LineageActions, 
 // Request schemas
-FactCreateRequestSchema, FactUpdateRequestSchema, FactDeleteRequestSchema, FactGetRequestSchema, FactGetSubtypesRequestSchema, FactGetSupertypesRequestSchema, FactGetClassifiedRequestSchema, FactValidateRequestSchema, SearchGeneralRequestSchema, SearchIndividualRequestSchema, SearchKindRequestSchema, SearchExecuteRequestSchema, SearchUidRequestSchema, ConceptGetRequestSchema, ConceptCreateRequestSchema, ConceptUpdateRequestSchema, ConceptDeleteRequestSchema, QueryExecuteRequestSchema, QueryValidateRequestSchema, QueryParseRequestSchema, KindGetRequestSchema, KindsListRequestSchema, KindsSearchRequestSchema, UIDGenerateRequestSchema, UIDBatchRequestSchema, UIDReserveRequestSchema, CompletionRequestSchema, CompletionEntitiesRequestSchema, CompletionRelationsRequestSchema, DefinitionGetRequestSchema, DefinitionUpdateRequestSchema, SubmissionSubmitRequestSchema, SubmissionBatchRequestSchema, TransactionStartRequestSchema, TransactionCommitRequestSchema, TransactionRollbackRequestSchema, TransactionGetRequestSchema, ValidationValidateRequestSchema, ValidationCollectionRequestSchema, 
+FactCreateRequestSchema, FactUpdateRequestSchema, FactDeleteRequestSchema, FactGetRequestSchema, FactGetSubtypesRequestSchema, FactGetSupertypesRequestSchema, FactGetClassifiedRequestSchema, FactValidateRequestSchema, FactBatchGetRequestSchema, FactCountRequestSchema, SearchGeneralRequestSchema, SearchIndividualRequestSchema, SearchKindRequestSchema, SearchExecuteRequestSchema, SearchUidRequestSchema, ConceptGetRequestSchema, ConceptCreateRequestSchema, ConceptUpdateRequestSchema, ConceptDeleteRequestSchema, QueryExecuteRequestSchema, QueryValidateRequestSchema, QueryParseRequestSchema, KindGetRequestSchema, KindsListRequestSchema, KindsSearchRequestSchema, UIDGenerateRequestSchema, UIDBatchRequestSchema, UIDReserveRequestSchema, CompletionRequestSchema, CompletionEntitiesRequestSchema, CompletionRelationsRequestSchema, DefinitionGetRequestSchema, DefinitionUpdateRequestSchema, SubmissionSubmitRequestSchema, SubmissionBatchRequestSchema, TransactionStartRequestSchema, TransactionCommitRequestSchema, TransactionRollbackRequestSchema, TransactionGetRequestSchema, ValidationValidateRequestSchema, ValidationCollectionRequestSchema, LineageGetRequestSchema, 
 // Response schemas
-FactCreateResponseSchema, FactUpdateResponseSchema, FactDeleteResponseSchema, FactGetResponseSchema, FactGetSubtypesResponseSchema, FactGetSupertypesResponseSchema, FactGetClassifiedResponseSchema, FactValidateResponseSchema, SearchGeneralResponseSchema, SearchIndividualResponseSchema, SearchKindResponseSchema, SearchExecuteResponseSchema, SearchUidResponseSchema, ConceptGetResponseSchema, ConceptCreateResponseSchema, ConceptUpdateResponseSchema, ConceptDeleteResponseSchema, QueryExecuteResponseSchema, QueryValidateResponseSchema, QueryParseResponseSchema, KindGetResponseSchema, KindsListResponseSchema, KindsSearchResponseSchema, UIDGenerateResponseSchema, UIDBatchResponseSchema, UIDReserveResponseSchema, CompletionResponseSchema, CompletionEntitiesResponseSchema, CompletionRelationsResponseSchema, DefinitionGetResponseSchema, DefinitionUpdateResponseSchema, SubmissionSubmitResponseSchema, SubmissionBatchResponseSchema, TransactionStartResponseSchema, TransactionCommitResponseSchema, TransactionRollbackResponseSchema, TransactionGetResponseSchema, ValidationValidateResponseSchema, ValidationCollectionResponseSchema, } from './services/archivist';
+FactCreateResponseSchema, FactUpdateResponseSchema, FactDeleteResponseSchema, FactGetResponseSchema, FactGetSubtypesResponseSchema, FactGetSupertypesResponseSchema, FactGetClassifiedResponseSchema, FactValidateResponseSchema, FactBatchGetResponseSchema, FactCountResponseSchema, SearchGeneralResponseSchema, SearchIndividualResponseSchema, SearchKindResponseSchema, SearchExecuteResponseSchema, SearchUidResponseSchema, ConceptGetResponseSchema, ConceptCreateResponseSchema, ConceptUpdateResponseSchema, ConceptDeleteResponseSchema, QueryExecuteResponseSchema, QueryValidateResponseSchema, QueryParseResponseSchema, KindGetResponseSchema, KindsListResponseSchema, KindsSearchResponseSchema, UIDGenerateResponseSchema, UIDBatchResponseSchema, UIDReserveResponseSchema, CompletionResponseSchema, CompletionEntitiesResponseSchema, CompletionRelationsResponseSchema, DefinitionGetResponseSchema, DefinitionUpdateResponseSchema, SubmissionSubmitResponseSchema, SubmissionBatchResponseSchema, TransactionStartResponseSchema, TransactionCommitResponseSchema, TransactionRollbackResponseSchema, TransactionGetResponseSchema, ValidationValidateResponseSchema, ValidationCollectionResponseSchema, LineageGetResponseSchema, } from './services/archivist';
 import { ApertureActions, EnvironmentGetRequestSchema, EnvironmentListRequestSchema, EnvironmentCreateRequestSchema, EnvironmentClearRequestSchema, SearchLoadTextRequestSchema, SearchLoadUidRequestSchema, SpecializationLoadFactRequestSchema, SpecializationLoadRequestSchema, EntityLoadRequestSchema, EntityUnloadRequestSchema, EntitySelectRequestSchema, EntityDeselectRequestSchema, EntityLoadMultipleRequestSchema, EntityUnloadMultipleRequestSchema, SubtypeLoadRequestSchema, SubtypeLoadConeRequestSchema, SubtypeUnloadConeRequestSchema, ClassificationLoadRequestSchema, ClassificationLoadFactRequestSchema, CompositionLoadRequestSchema, CompositionLoadInRequestSchema, ConnectionLoadRequestSchema, ConnectionLoadInRequestSchema, RelationRequiredRolesLoadRequestSchema, RelationRolePlayersLoadRequestSchema, ApertureResponseSchema, } from './services/aperture';
 /**
  * Simplified registry for development validation only
@@ -150,6 +150,20 @@ export const MESSAGE_REGISTRY = {
         requestSchema: FactValidateRequestSchema,
         responseSchema: FactValidateResponseSchema,
         description: 'Validate a fact before creation',
+    },
+    [FactActions.BATCH_GET]: {
+        action: FactActions.BATCH_GET,
+        service: 'archivist',
+        requestSchema: FactBatchGetRequestSchema,
+        responseSchema: FactBatchGetResponseSchema,
+        description: 'Batch retrieval of facts for cache building operations',
+    },
+    [FactActions.COUNT]: {
+        action: FactActions.COUNT,
+        service: 'archivist',
+        requestSchema: FactCountRequestSchema,
+        responseSchema: FactCountResponseSchema,
+        description: 'Get total count of facts for progress tracking',
     },
     // Search contracts
     [SearchActions.GENERAL]: {
@@ -377,6 +391,14 @@ export const MESSAGE_REGISTRY = {
         requestSchema: ValidationCollectionRequestSchema,
         responseSchema: ValidationCollectionResponseSchema,
         description: 'Validate a collection of facts',
+    },
+    // Lineage contracts
+    [LineageActions.GET]: {
+        action: LineageActions.GET,
+        service: 'archivist',
+        requestSchema: LineageGetRequestSchema,
+        responseSchema: LineageGetResponseSchema,
+        description: 'Calculate entity lineage using C3 linearization algorithm',
     },
     // =====================================================
     // APERTURE SERVICE CONTRACTS

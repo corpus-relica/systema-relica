@@ -127,6 +127,38 @@ export const FactValidateResponseSchema = BaseResponseSchema.extend({
     }).optional(),
 });
 // =====================================================
+// FACT BATCH GET CONTRACT (for cache building)
+// =====================================================
+/**
+ * Fact batch get data structure
+ */
+export const FactBatchGetMessageSchema = z.object({
+    skip: z.number(),
+    range: z.number(),
+    relTypeUids: z.array(z.number()).optional(),
+});
+export const FactBatchGetRequestSchema = BaseRequestSchema.extend({
+    service: z.literal('archivist'),
+    action: z.literal('fact:batch-get'),
+    payload: FactBatchGetMessageSchema,
+});
+export const FactBatchGetResponseSchema = BaseResponseSchema.extend({
+    data: z.array(z.any()), // Array of fact objects
+});
+// =====================================================
+// FACT COUNT CONTRACT (for cache building)
+// =====================================================
+export const FactCountRequestSchema = BaseRequestSchema.extend({
+    service: z.literal('archivist'),
+    action: z.literal('fact:count'),
+    payload: z.object({}), // Empty payload
+});
+export const FactCountResponseSchema = BaseResponseSchema.extend({
+    data: z.object({
+        count: z.number(),
+    }),
+});
+// =====================================================
 // FACT SERVICE ACTIONS
 // =====================================================
 export const FactActions = {
@@ -138,6 +170,8 @@ export const FactActions = {
     GET_SUPERTYPES: 'fact:getSupertypes',
     GET_CLASSIFIED: 'fact:getClassified',
     VALIDATE: 'fact:validate',
+    BATCH_GET: 'fact:batch-get',
+    COUNT: 'fact:count',
 };
 // =====================================================
 // FACT EVENTS
@@ -151,6 +185,8 @@ export const FactEvents = {
     SUPERTYPES: 'fact:supertypes',
     CLASSIFIED: 'fact:classified',
     VALIDATED: 'fact:validated',
+    BATCH_RETRIEVED: 'fact:batch-retrieved',
+    COUNT_RETRIEVED: 'fact:count-retrieved',
     ERROR: 'fact:error',
 };
 //# sourceMappingURL=facts.js.map

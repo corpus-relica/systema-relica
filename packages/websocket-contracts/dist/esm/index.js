@@ -58,7 +58,9 @@ SubmissionActions, SubmissionEvents,
 // Transaction operations
 TransactionActions, TransactionEvents, 
 // Validation operations
-ValidationActions, ValidationEvents, } from './services/archivist';
+ValidationActions, ValidationEvents, 
+// Lineage operations
+LineageActions, LineageEvents, } from './services/archivist';
 export { 
 // Aperture operations
 ApertureActions, } from './services/aperture';

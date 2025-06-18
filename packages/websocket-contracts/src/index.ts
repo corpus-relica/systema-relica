@@ -70,6 +70,11 @@ export {
   type FactGetResponse,
   type FactDeleteRequest,
   type FactDeleteResponse,
+  type FactBatchGetRequest,
+  type FactBatchGetResponse,
+  type FactBatchGetMessage,
+  type FactCountRequest,
+  type FactCountResponse,
   
   // Search operations
   SearchActions,
@@ -150,6 +155,15 @@ export {
   type ValidationActionType,
   type ValidationEventType,
   type ValidationMessage,
+  
+  // Lineage operations
+  LineageActions,
+  LineageEvents,
+  type LineageActionType,
+  type LineageEventType,
+  type LineageQueryMessage,
+  type LineageGetRequest,
+  type LineageGetResponse,
 } from './services/archivist';
 
 export {

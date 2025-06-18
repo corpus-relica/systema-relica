@@ -20,7 +20,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ArchivistActions = exports.ValidationEvents = exports.ValidationActions = exports.TransactionEvents = exports.TransactionActions = exports.SubmissionEvents = exports.SubmissionActions = exports.DefinitionEvents = exports.DefinitionActions = exports.CompletionEvents = exports.CompletionActions = exports.UIDEvents = exports.UIDActions = exports.KindEvents = exports.KindActions = exports.QueryEvents = exports.QueryActions = exports.ConceptEvents = exports.ConceptActions = exports.SearchEvents = exports.SearchActions = exports.FactEvents = exports.FactActions = void 0;
+exports.ArchivistActions = exports.LineageEvents = exports.LineageActions = exports.ValidationEvents = exports.ValidationActions = exports.TransactionEvents = exports.TransactionActions = exports.SubmissionEvents = exports.SubmissionActions = exports.DefinitionEvents = exports.DefinitionActions = exports.CompletionEvents = exports.CompletionActions = exports.UIDEvents = exports.UIDActions = exports.KindEvents = exports.KindActions = exports.QueryEvents = exports.QueryActions = exports.ConceptEvents = exports.ConceptActions = exports.SearchEvents = exports.SearchActions = exports.FactEvents = exports.FactActions = void 0;
 // Fact operations
 __exportStar(require("./facts"), exports);
 // Search operations  
@@ -43,6 +43,8 @@ __exportStar(require("./submission"), exports);
 __exportStar(require("./transaction"), exports);
 // Validation operations
 __exportStar(require("./validation"), exports);
+// Lineage operations
+__exportStar(require("./lineage"), exports);
 // Import actions to create combined object
 const facts_1 = require("./facts");
 Object.defineProperty(exports, "FactActions", { enumerable: true, get: function () { return facts_1.FactActions; } });
@@ -77,6 +79,9 @@ Object.defineProperty(exports, "TransactionEvents", { enumerable: true, get: fun
 const validation_1 = require("./validation");
 Object.defineProperty(exports, "ValidationActions", { enumerable: true, get: function () { return validation_1.ValidationActions; } });
 Object.defineProperty(exports, "ValidationEvents", { enumerable: true, get: function () { return validation_1.ValidationEvents; } });
+const lineage_1 = require("./lineage");
+Object.defineProperty(exports, "LineageActions", { enumerable: true, get: function () { return lineage_1.LineageActions; } });
+Object.defineProperty(exports, "LineageEvents", { enumerable: true, get: function () { return lineage_1.LineageEvents; } });
 // All Archivist actions combined
 exports.ArchivistActions = {
     // Facts
@@ -101,5 +106,7 @@ exports.ArchivistActions = {
     ...transaction_1.TransactionActions,
     // Validation
     ...validation_1.ValidationActions,
+    // Lineage
+    ...lineage_1.LineageActions,
 };
 //# sourceMappingURL=index.js.map
