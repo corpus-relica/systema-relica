@@ -4,6 +4,7 @@ import { UIDService } from 'src/uid/uid.service';
 import { GraphService } from 'src/graph/graph.service';
 import { ConceptService } from 'src/concept/concept.service';
 import { createFact } from 'src/graph/queries';
+import { int, isInt, isDate, isDateTime, isTime, isLocalDateTime, isLocalTime } from 'neo4j-driver';
 
 import {
   subtypes,
@@ -559,8 +560,6 @@ RETURN r
       });
     });
 
-    console.log('resolvedFacts', resolvedFacts);
-
     try {
       // Create nodes
       const createNodesQuery = `
@@ -644,7 +643,10 @@ RETURN r
   // Batch operations for cache building (ported from Clojure)
   async getBatchFacts(skip: number, range: number, relTypeUids?: number[]): Promise<{ facts: any[] }> {
     try {
-      const params = { skip, range };
+      const params = { 
+        skip: int(skip),
+        range: int(range)
+      };
       let query = getFactsBatch;
       
       if (relTypeUids && relTypeUids.length > 0) {
@@ -653,7 +655,7 @@ RETURN r
       }
 
       const result = await this.graphService.execQuery(query, params);
-      
+
       // Transform results to match Clojure format
       const facts = result.map((record) => {
         const factNode = record.toObject().r;
@@ -681,9 +683,24 @@ RETURN r
   private serializeRecord(record: any): any {
     const serialized = {};
     for (const [key, value] of Object.entries(record)) {
-      if (value instanceof Date) {
+      if (isInt(value)) {
+        // Convert to number (be careful with large integers!)
+        serialized[key] = value.toNumber();
+        // Or for large integers: serialized[key] = value.toString();
+      }
+      else if (isDate(value)) {
+        serialized[key] = value.toString(); // Returns YYYY-MM-DD
+      }
+      else if (isDateTime(value) || isLocalDateTime(value)) {
+        serialized[key] = value.toString(); // Returns ISO format
+      }
+      else if (isTime(value) || isLocalTime(value)) {
+        serialized[key] = value.toString();
+      }
+      else if (value instanceof Date) {
         serialized[key] = value.toISOString();
-      } else {
+      }
+      else {
         serialized[key] = value;
       }
     }

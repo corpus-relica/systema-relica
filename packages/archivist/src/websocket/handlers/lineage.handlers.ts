@@ -13,24 +13,27 @@ export class LineageHandlers {
   }
 
   // Lineage operation for cache building (ported from Clojure :archivist.lineage/get)
-  async handleLineageGet(data: any, client: Socket): Promise<WsResponse> {
+  // async handleLineageGet(data: any, client: Socket): Promise<WsResponse> {
+  async handleLineageGet(data: any, client: Socket): Promise<any> {
     try {
       const { uid } = data;
       
       if (!uid) {
-        return {
-          event: LineageEvents.ERROR,
-          data: { message: 'UID is required' }
-        };
+        // return {
+        //   event: LineageEvents.ERROR,
+        //   data: { message: 'UID is required' }
+        // };
+        return { message: 'UID is required' };
       }
 
       // Use existing LinearizationService.calculateLineage() method
       const lineage = await this.linearizationService.calculateLineage(uid);
       
-      return {
-        event: LineageEvents.RETRIEVED,
-        data: { data: lineage } // Match Clojure (respond-success {:data lineage})
-      };
+      return lineage;
+      // {
+      //   event: LineageEvents.RETRIEVED,
+      //   data: { data: lineage } // Match Clojure (respond-success {:data lineage})
+      // };
     } catch (error) {
       return {
         event: 'lineage:error',
