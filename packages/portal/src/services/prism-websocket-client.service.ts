@@ -1,12 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { PrismMessage, ServiceResponse } from '../types/websocket-messages';
+import { PrismActions, PrismEvents, SetupStatusBroadcastEvent } from '@relica/websocket-contracts';
 
 @Injectable()
 export class PrismWebSocketClientService extends BaseWebSocketClient {
+  private portalGateway: any; // Will be injected after initialization to avoid circular dependency
+
   constructor(configService: ConfigService) {
     super(configService, 'prism', 3004);
+  }
+
+  // Method to set the portal gateway reference (called from gateway)
+  setPortalGateway(gateway: any) {
+    this.portalGateway = gateway;
+    this.setupBroadcastListener();
+  }
+
+  private setupBroadcastListener() {
+    if (!this.socket || !this.portalGateway) return;
+
+    // Listen for setup status broadcasts from Prism
+    this.socket.on(PrismEvents.SETUP_STATUS_UPDATE, (broadcastEvent: SetupStatusBroadcastEvent) => {
+      this.logger.log('📡 Received setup status broadcast from Prism, forwarding to frontend clients');
+      
+      // Forward the broadcast to all connected frontend clients via Portal Gateway
+      this.portalGateway.server.emit(PrismEvents.SETUP_STATUS_UPDATE, broadcastEvent);
+    });
+  }
+
+  // Override connect to set up listener after connection
+  async connect(): Promise<void> {
+    await super.connect();
+    this.setupBroadcastListener();
   }
 
   async getSetupStatus(): Promise<any> {
@@ -14,7 +41,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'get-setup-status',
+      action: PrismActions.GET_SETUP_STATUS,
       payload: {},
     };
 
@@ -22,7 +49,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get setup status');
     }
-    return response.payload;
+    return response.data;
   }
 
   async startSetup(): Promise<any> {
@@ -30,7 +57,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'start-setup',
+      action: PrismActions.START_SETUP,
       payload: {},
     };
 
@@ -38,7 +65,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to start setup');
     }
-    return response.payload;
+    return response.data;
   }
 
   async createUser(userData: { username: string; password: string; confirmPassword: string }): Promise<any> {
@@ -46,7 +73,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'create-user',
+      action: PrismActions.CREATE_USER,
       payload: userData,
     };
 
@@ -54,7 +81,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to create user');
     }
-    return response.payload;
+    return response.data;
   }
 
   async importData(importData: { dataSource: string; options?: any }): Promise<any> {
@@ -62,7 +89,7 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'prism',
-      action: 'import-data',
+      action: PrismActions.IMPORT_DATA,
       payload: importData,
     };
 
@@ -70,7 +97,23 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to import data');
     }
-    return response.payload;
+    return response.data;
+  }
+
+  async resetSystem(): Promise<any> {
+    const message: PrismMessage = {
+      id: this.generateMessageId(),
+      type: 'request',
+      service: 'prism',
+      action: PrismActions.RESET_SYSTEM,
+      payload: {},
+    };
+
+    const response = await this.sendMessage(message);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to reset system');
+    }
+    return response.data;
   }
 
 }

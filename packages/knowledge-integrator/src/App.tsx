@@ -21,6 +21,12 @@ import {
 import { Route } from "react-router-dom";
 
 import { authProvider } from "./authProvider";
+import { getSetupStatus, loadUserEnvironment } from "./PortalClient";
+import { SetupStatus } from '@relica/websocket-contracts';
+import { SETUP_STATES } from '@relica/constants';
+import { SetupWizard } from "./pages/Setup";
+import { portalSocket } from "./PortalSocket";
+import DebugPanel from "./components/DebugPanel";
 
 import CCDataProvider from "./data/CCDataProvider";
 import ArchivistDataProvider from "./data/ArchivistDataProvider";
@@ -78,6 +84,9 @@ console.log("vvvv - MEMSTORE vvvv:");
 console.log(memStore);
 
 export const App = () => {
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
+  const [setupError, setSetupError] = useState<string>('');
   const rootStore: any = useStores();
 
   console.log("vvvv - ROOT STORE vvvv:");
@@ -107,25 +116,108 @@ export const App = () => {
     setCategories(newCats);
   };
 
+  // Check setup status on app startup
   useEffect(() => {
-    const retrieveEnv = async () => {
-      const env = await retrieveEnvironment();
-      console.log("vvvv - ENVIRONMENT vvvv:");
-      console.log(env);
-      factDataStore.addFacts(env.facts);
-      // semanticModelStore.addModels(env.models);
-      // graphViewStore.selectedNode = env.selectedEntity;
+    const checkSetup = async () => {
+      try {
+        const status = await getSetupStatus();
+        setSetupStatus(status);
+        setIsCheckingSetup(false);
+        
+        if (status.status === SETUP_STATES.SETUP_COMPLETE) {
+          // If setup is complete, initialize the app
+          await initializeApp();
+        }
+      } catch (error) {
+        console.error("Failed to check setup status:", error);
+        setSetupError(`Setup check failed: ${error.message}`);
+        
+        // If we can't check setup status, assume setup is required
+        // This handles cases where the API is down or auth is needed
+        console.log("🔧 Assuming setup is required due to API error");
+        setSetupStatus({
+          status: SETUP_STATES.IDLE,
+          stage: null,
+          message: 'Setup required - unable to verify system status',
+          progress: 0,
+          timestamp: new Date().toISOString()
+        });
+        setIsCheckingSetup(false);
+      }
     };
 
-    const foobarbaz = async () => {
-      await establishCats();
-      await retrieveEnv();
-      console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
-    };
-
-    foobarbaz();
+    checkSetup();
   }, []);
 
+  const initializeApp = async () => {
+    try {
+      console.log("🚀 Initializing application...");
+      
+      // Load user environment from Portal
+      const userEnv = await loadUserEnvironment();
+      console.log("📦 User environment loaded:", userEnv);
+      
+      // Add facts to store
+      if (userEnv.facts) {
+        factDataStore.addFacts(userEnv.facts);
+      }
+      
+      // Establish categories
+      await establishCats();
+      
+      console.log("✅ Application ready!");
+      
+    } catch (error) {
+      console.error("❌ Failed to initialize application:", error);
+      throw error;
+    }
+  };
+
+  // Show loading screen while checking setup
+  if (isCheckingSetup) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem'
+      }}>
+        🔄 Initializing Systema Relica...
+      </div>
+    );
+  }
+
+  // Show error if we can't determine setup status
+  if (setupError && !setupStatus) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem',
+        padding: '2rem'
+      }}>
+        <div style={{ marginBottom: '1rem' }}>❌ Setup Status Check Failed</div>
+        <div style={{ fontSize: '1rem', color: '#666', textAlign: 'center' }}>{setupError}</div>
+        <button 
+          onClick={() => window.location.reload()} 
+          style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
+        >
+          🔄 Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Show setup wizard if setup is not complete
+  if (!setupStatus || setupStatus.status !== SETUP_STATES.SETUP_COMPLETE) {
+    return <SetupWizard />;
+  }
+
+  // Show main application
   return (
     <QueryClientProvider client={queryClient}>
       <Admin
@@ -143,6 +235,9 @@ export const App = () => {
           <Route path="/settings" element={<Settings />} />
         </CustomRoutes>
       </Admin>
+      
+      {/* Debug panel - only show in development */}
+      {import.meta.env.DEV && <DebugPanel />}
     </QueryClientProvider>
   );
 };

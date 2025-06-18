@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { HttpModule } from '@nestjs/axios';
+import { ConfigModule } from '@nestjs/config';
 import { ArchivistService } from './archivist.service';
+import { ServicesModule } from '../services/services.module';
 
 @Module({
-  imports: [HttpModule],
+  imports: [ConfigModule, ServicesModule],
   providers: [ArchivistService],
   controllers: [],
   exports: [ArchivistService],

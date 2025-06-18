@@ -22,7 +22,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get environment');
     }
-    return response.payload;
+    return response.data;
   }
 
   async createEnvironment(environmentData: any): Promise<any> {
@@ -38,7 +38,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to create environment');
     }
-    return response.payload;
+    return response.data;
   }
 
   async updateEnvironment(environmentId: string, environmentData: any): Promise<any> {
@@ -54,7 +54,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to update environment');
     }
-    return response.payload;
+    return response.data;
   }
 
   async selectEntity(uid: string, userId: string, environmentId?: string): Promise<any> {
@@ -70,7 +70,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to select entity');
     }
-    return response.payload;
+    return response.data;
   }
 
   async loadEntities(environmentId: string, filters?: any): Promise<any> {
@@ -86,7 +86,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to load entities');
     }
-    return response.payload;
+    return response.data;
   }
 
   async loadSpecializationHierarchy(uid: string, userId: string): Promise<any> {
@@ -102,7 +102,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to load specialization hierarchy');
     }
-    return response.payload;
+    return response.data;
   }
 
   async clearEnvironmentEntities(userId: string, environmentId?: string): Promise<any> {
@@ -118,7 +118,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to clear environment entities');
     }
-    return response.payload;
+    return response.data;
   }
 
   async loadAllRelatedFacts(uid: string, userId: string): Promise<any> {
@@ -134,7 +134,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to load all related facts');
     }
-    return response.payload;
+    return response.data;
   }
 
 }

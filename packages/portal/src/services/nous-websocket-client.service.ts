@@ -22,7 +22,7 @@ export class NousWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to process chat input');
     }
-    return response.payload;
+    return response.data;
   }
 
   async generateResponse(prompt: string, context?: any): Promise<any> {
@@ -38,7 +38,7 @@ export class NousWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to generate response');
     }
-    return response.payload;
+    return response.data;
   }
 
 }

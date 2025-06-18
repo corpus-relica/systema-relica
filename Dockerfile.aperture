@@ -7,6 +7,7 @@ WORKDIR /usr/src/app
 
 COPY package.json .
 COPY yarn.lock .
+COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/aperture ./packages/aperture
 
 RUN yarn config set network-timeout 300000 && \
@@ -31,6 +32,7 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 
+COPY packages/websocket-contracts /usr/src/app/packages/websocket-contracts
 COPY packages/aperture /usr/src/app/packages/aperture
 
 ENV NODE_ENV development

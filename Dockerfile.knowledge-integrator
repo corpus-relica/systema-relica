@@ -7,6 +7,7 @@ COPY package.json .
 COPY yarn.lock .
 COPY packages/types ./packages/types
 COPY packages/constants ./packages/constants
+COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/fact-search-ui ./packages/fact-search-ui
 COPY packages/3d-graph-ui ./packages/3d-graph-ui
 COPY packages/hsm-manager ./packages/hsm-manager
@@ -18,6 +19,9 @@ WORKDIR /usr/src/app/packages/types
 RUN yarn build
 
 WORKDIR /usr/src/app/packages/constants
+RUN yarn build
+
+WORKDIR /usr/src/app/packages/websocket-contracts
 RUN yarn build
 
 WORKDIR /usr/src/app/packages/fact-search-ui
@@ -46,6 +50,9 @@ COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/d
 
 COPY --from=build /usr/src/app/packages/constants/package.json /usr/src/app/packages/constants/package.json
 COPY --from=build /usr/src/app/packages/constants/dist /usr/src/app/packages/constants/dist
+
+COPY --from=build /usr/src/app/packages/websocket-contracts/package.json /usr/src/app/packages/websocket-contracts/package.json
+COPY --from=build /usr/src/app/packages/websocket-contracts/dist /usr/src/app/packages/websocket-contracts/dist
 
 COPY --from=build /usr/src/app/packages/fact-search-ui/package.json /usr/src/app/packages/fact-search-ui/package.json
 COPY --from=build /usr/src/app/packages/fact-search-ui/dist /usr/src/app/packages/fact-search-ui/dist

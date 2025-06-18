@@ -12,6 +12,7 @@ import { Logger, Injectable, Inject } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { ShutterRestClientService } from '../services/shutter-rest-client.service';
 import { NousWebSocketClientService } from '../services/nous-websocket-client.service';
+import { PrismWebSocketClientService } from '../services/prism-websocket-client.service';
 import { 
   ServiceMessage, 
   ServiceResponse, 
@@ -36,6 +37,7 @@ interface ConnectedClient {
   },
   transports: ['websocket'],
 })
+
 export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -47,7 +49,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly shutterClient: ShutterRestClientService,
     private readonly nousClient: NousWebSocketClientService,
-  ) {}
+    private readonly prismClient: PrismWebSocketClientService,
+  ) {
+    // Set up the broadcast forwarding after initialization
+    this.prismClient.setPortalGateway(this);
+  }
 
   // Error codes aligned with Clojure implementation
   private readonly errorCodes = {
@@ -87,11 +93,8 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return {
         id,
         type: 'response',
-        service: 'portal' as any,
-        action: '',
-        payload: data,
         success: true,
-        request_id: requestId,
+        data: data,
       };
     } else {
       const errorType = typeof data === 'object' && data.type ? data.type : 'internal-error';
@@ -102,12 +105,8 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return {
         id,
         type: 'response',
-        service: 'portal' as any,
-        action: '',
-        payload: null,
         success: false,
         error: `${errorType}: ${errorMsg}`,
-        request_id: requestId,
       };
     }
   }

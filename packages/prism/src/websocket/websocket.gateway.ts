@@ -13,6 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { SetupService } from '../setup/setup.service';
 import { CacheService } from '../cache/cache.service';
 import { HealthService } from '../health/health.service';
+import { PrismActions, PrismEvents, SetupStatusBroadcastEvent } from '@relica/websocket-contracts';
 
 @Injectable()
 @WebSocketGateway({ 
@@ -71,7 +72,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  @SubscribeMessage(':prism.setup/get-status')
+  @SubscribeMessage(PrismActions.GET_SETUP_STATUS)
   handleGetSetupStatus() {
     console.log('Handling setup status request');
     const status = this.setupService.getSetupState();
@@ -81,7 +82,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  @SubscribeMessage(':prism.setup/start')
+  @SubscribeMessage(PrismActions.START_SETUP)
   handleStartSetup() {
     console.log('Starting setup sequence via WebSocket');
     this.setupService.startSetup();
@@ -91,7 +92,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  @SubscribeMessage(':prism.setup/create-user')
+  @SubscribeMessage(PrismActions.CREATE_USER)
   handleCreateUser(@MessageBody() payload: any) {
     const { username, password, confirmPassword } = payload || {};
     console.log('Creating admin user via WebSocket:', username);
@@ -131,6 +132,28 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
         },
       },
     };
+  }
+
+  @SubscribeMessage(PrismActions.RESET_SYSTEM)
+  async handleResetSystem() {
+    console.log('🚨 Resetting system state via WebSocket');
+    try {
+      const result = await this.setupService.resetSystem();
+      return {
+        success: result.success,
+        message: result.message,
+        errors: result.errors,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('System reset failed via WebSocket:', error);
+      return {
+        success: false,
+        message: `System reset failed: ${error.message}`,
+        errors: [error.message],
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   @SubscribeMessage(':prism.cache/rebuild')
@@ -194,11 +217,15 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
     };
   }
 
-  public broadcastSetupUpdate(data: any) {
-    this.broadcast({
-      type: ':prism.setup/event',
-      payload: data,
-    });
+  public broadcastSetupUpdate(setupStatus: any) {
+    // Create canonical setup status broadcast event
+    const broadcastEvent: SetupStatusBroadcastEvent = {
+      type: PrismEvents.SETUP_STATUS_UPDATE,
+      data: setupStatus,
+    };
+    
+    console.log('Broadcasting canonical setup status update:', broadcastEvent);
+    this.broadcast(broadcastEvent);
   }
 
   public broadcastCacheUpdate(data: any) {
@@ -211,7 +238,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   private broadcast(message: any) {
     this.clients.forEach(client => {
       if (client.connected) {
-        client.emit('message', message);
+        client.emit(message.type, message.data);
       }
     });
   }

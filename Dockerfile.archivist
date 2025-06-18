@@ -6,6 +6,7 @@ COPY package.json .
 COPY yarn.lock .
 COPY packages/types ./packages/types
 COPY packages/hsm-manager ./packages/hsm-manager
+COPY packages/websocket-contracts ./packages/websocket-contracts
 COPY packages/archivist ./packages/archivist
 
 RUN yarn install --pure-lockfile --non-interactive

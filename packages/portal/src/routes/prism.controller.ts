@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { PrismWebSocketClientService } from '../services/prism-websocket-client.service';
 import { User } from '../decorators/user.decorator';
+import { Public } from '../decorators/public.decorator';
 
 @ApiTags('Prism')
 @Controller('api/prism/setup')
@@ -9,10 +10,10 @@ export class PrismController {
   constructor(private readonly prismClient: PrismWebSocketClientService) {}
 
   @Get('status')
+  @Public()
   @ApiOperation({ summary: 'Get Prism setup status' })
-  @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Setup status retrieved successfully' })
-  async getSetupStatus(@User() user: any) {
+  async getSetupStatus() {
     try {
       
       const status = await this.prismClient.getSetupStatus();
@@ -129,6 +130,32 @@ export class PrismController {
       return {
         success: false,
         error: error instanceof BadRequestException ? error.message : 'Failed to start data import',
+      };
+    }
+  }
+
+  @Post('debug/reset-system')
+  @ApiOperation({ summary: 'Reset system state (DEBUG ONLY)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'System reset successfully' })
+  async resetSystem(@User() user: any) {
+    try {
+      console.log('🚨 Portal: DEBUG reset system requested by user:', user?.username || 'unknown');
+      
+      const result = await this.prismClient.resetSystem();
+      
+      return {
+        success: true,
+        ...result,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Portal: System reset failed:', error);
+      return {
+        success: false,
+        message: `System reset failed: ${error.message}`,
+        errors: [error.message],
+        timestamp: new Date().toISOString(),
       };
     }
   }

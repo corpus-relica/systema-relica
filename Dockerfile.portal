@@ -8,6 +8,7 @@ WORKDIR /usr/src/app
 COPY package.json .
 COPY yarn.lock .
 COPY packages/portal ./packages/portal
+COPY packages/websocket-contracts ./packages/websocket-contracts
 
 RUN yarn config set network-timeout 300000 && \
     yarn cache clean && \
@@ -32,6 +33,7 @@ COPY package.json .
 COPY yarn.lock .
 
 COPY packages/portal /usr/src/app/packages/portal
+COPY packages/websocket-contracts /usr/src/app/packages/websocket-contracts
 
 ENV NODE_ENV development
 

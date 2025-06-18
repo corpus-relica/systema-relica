@@ -1,155 +1,85 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-
-import {
-  SUBMIT_DEFINITION_ENDPOINT,
-  SUBMIT_COLLECTION_ENDPOINT,
-  SUBMIT_NAME_ENDPOINT,
-  DELETE_ENTITY_ENDPOINT,
-  DELETE_FACT_ENDPOINT,
-  SPECIALIZATION_HIERARCHY_ENDPOINT,
-  SPECIALIZATION_FACT_ENDPOINT,
-  SUBTYPES_ENDPOINT,
-  SUBTYPES_CONE_ENDPOINT,
-  FACT_ENDPOINT,
-  FACTS_ENDPOINT,
-  ENTITY_ENDPOINT,
-  ENTITY_CATEGORY_ENDPOINT,
-  ALL_RELATED_FACTS_ENDPOINT,
-  DEFINITIVE_FACTS_ENDPOINT,
-  RELATED_ON_SUBTYPE_CONE_ENDPOINT,
-  ENTITY_TYPE_ENDPOINT,
-  FACTS_RELATING_ENTITIES_ENDPOINT,
-  TEXT_SEARCH_ENDPOINT,
-  SUBMIT_BINARY_FACT_ENDPOINT,
-  CLASSIFIED_ENDPOINT,
-  CLASSIFICATION_FACT_ENDPOINT,
-} from './constants';
-
-const URL = process.env.ARCHIVIST_URL || 'http://localhost:3000';
+import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
 
 @Injectable()
 export class ArchivistService {
   private readonly logger = new Logger(ArchivistService.name);
 
-  constructor(private httpService: HttpService) {}
+  constructor(private webSocketClient: ArchivistWebSocketClientService) {}
 
   async getSpecializationHierarchy(uid: number) {
-    const url = `${URL}${SPECIALIZATION_HIERARCHY_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting specialization hierarchy for uid: ${uid}`);
+    return this.webSocketClient.getSpecializationHierarchy(uid);
   }
 
   async getSpecializationFact(uid: number) {
-    const url = `${URL}${SPECIALIZATION_FACT_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting specialization fact for uid: ${uid}`);
+    return this.webSocketClient.getSpecializationFact(uid);
   }
 
   async getSubtypes(uid: number) {
-    const url = `${URL}${SUBTYPES_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting subtypes for uid: ${uid}`);
+    return this.webSocketClient.getSubtypes(uid);
   }
 
   async getSubtypesCone(uid: number) {
-    const url = `${URL}${SUBTYPES_CONE_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting subtypes cone for uid: ${uid}`);
+    return this.webSocketClient.getSubtypesCone(uid);
   }
 
   async getFact(uid: number) {
-    const url = `${URL}${FACT_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting fact for uid: ${uid}`);
+    return this.webSocketClient.getFact(uid);
   }
 
   async getFacts(factUIDs: number[]) {
-    const url = `${URL}${FACTS_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uids: JSON.stringify(factUIDs) } }),
-    );
-    return data;
+    this.logger.log(`Getting facts for uids: ${factUIDs.join(', ')}`);
+    return this.webSocketClient.getFacts(factUIDs);
   }
 
   async getEntity(uid: number) {
-    const url = `${URL}${ENTITY_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting entity for uid: ${uid}`);
+    return this.webSocketClient.getEntity(uid);
   }
 
   async retrieveAllFacts(uid: number) {
-    const url = `${URL}${ALL_RELATED_FACTS_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Retrieving all facts for uid: ${uid}`);
+    return this.webSocketClient.retrieveAllFacts(uid);
   }
 
   async getCategory(uid: number) {
-    const url = `${URL}${ENTITY_CATEGORY_ENDPOINT}`;
-    console.log('\\\\\\\\\\\\\\\\\\ url \\\\\\\\\\\\\\\\\\\\\\\\', url);
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting category for uid: ${uid}`);
+    return this.webSocketClient.getCategory(uid);
   }
 
   async getDefinitiveFacts(uid: number) {
-    const url = `${URL}${DEFINITIVE_FACTS_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting definitive facts for uid: ${uid}`);
+    return this.webSocketClient.getDefinitiveFacts(uid);
   }
 
   async getRelatedOnUIDSubtypeCone(
     lh_object_uid: number,
     rel_type_uid: number,
   ) {
-    const url = `${URL}${RELATED_ON_SUBTYPE_CONE_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { lh_object_uid, rel_type_uid } }),
-    );
-    return data;
+    this.logger.log(`Getting related on UID subtype cone for lh_object_uid: ${lh_object_uid}, rel_type_uid: ${rel_type_uid}`);
+    return this.webSocketClient.getRelatedOnUIDSubtypeCone(lh_object_uid, rel_type_uid);
   }
 
   async getEntityType(uid: number) {
-    const url = `${URL}${ENTITY_TYPE_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting entity type for uid: ${uid}`);
+    return this.webSocketClient.getEntityType(uid);
   }
 
   async getFactsRelatingEntities(uid1: number, uid2: number) {
-    const url = `${URL}${FACTS_RELATING_ENTITIES_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid1, uid2 } }),
-    );
-    return data;
+    this.logger.log(`Getting facts relating entities uid1: ${uid1}, uid2: ${uid2}`);
+    return this.webSocketClient.getFactsRelatingEntities(uid1, uid2);
   }
 
   async textSearchExact(searchTerm: string) {
-    const url = `${URL}${TEXT_SEARCH_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { searchTerm, exactMatch: true } }),
-    );
-    console.log('TEXT SEARCH EXACT: ', data);
-    return data;
+    this.logger.log(`Performing exact text search for: ${searchTerm}`);
+    const result = await this.webSocketClient.textSearchExact(searchTerm);
+    console.log('TEXT SEARCH EXACT: ', result);
+    return result;
   }
 
   async createKind(
@@ -158,19 +88,8 @@ export class ArchivistService {
     name: string,
     definition: string,
   ) {
-    const url = `${URL}${SUBMIT_BINARY_FACT_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.post(url, {
-        lh_object_uid: '1',
-        lh_object_name: name,
-        rel_type_uid: 1146,
-        rel_type_name: 'is a specialization of',
-        rh_object_uid: parentUID,
-        rh_object_name: parentName,
-        full_definition: definition,
-      }),
-    );
-    return data;
+    this.logger.log(`Creating kind: ${name} as specialization of ${parentName} (${parentUID})`);
+    return this.webSocketClient.createKind(parentUID, parentName, name, definition);
   }
 
   async createIndividual(
@@ -179,51 +98,28 @@ export class ArchivistService {
     name: string,
     definition: string,
   ) {
-    const url = `${URL}${SUBMIT_BINARY_FACT_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.post(url, {
-        lh_object_uid: '1',
-        lh_object_name: name,
-        rel_type_uid: 1225,
-        rel_type_name: 'is classified as a',
-        rh_object_uid: kindUID,
-        rh_object_name: kindName,
-        full_definition: definition,
-      }),
-    );
-    return data;
+    this.logger.log(`Creating individual: ${name} classified as ${kindName} (${kindUID})`);
+    return this.webSocketClient.createIndividual(kindUID, kindName, name, definition);
   }
 
   async deleteEntity(uid: number) {
-    const url = `${URL}${DELETE_ENTITY_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.delete(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Deleting entity for uid: ${uid}`);
+    return this.webSocketClient.deleteEntity(uid);
   }
 
   async deleteFact(uid: number) {
-    const url = `${URL}${DELETE_FACT_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.delete(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Deleting fact for uid: ${uid}`);
+    return this.webSocketClient.deleteFact(uid);
   }
 
   async getClassified(uid: number) {
-    const url = `${URL}${CLASSIFIED_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting classified for uid: ${uid}`);
+    return this.webSocketClient.getClassified(uid);
   }
 
   async getClassificationFact(uid: number) {
-    const url = `${URL}${CLASSIFICATION_FACT_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.get(url, { params: { uid } }),
-    );
-    return data;
+    this.logger.log(`Getting classification fact for uid: ${uid}`);
+    return this.webSocketClient.getClassificationFact(uid);
   }
 
   async submitDefinition(
@@ -231,15 +127,8 @@ export class ArchivistService {
     partial_definition: string,
     full_definition: string,
   ) {
-    const url = `${URL}${SUBMIT_DEFINITION_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.put(url, {
-        fact_uid,
-        partial_definition,
-        full_definition,
-      }),
-    );
-    return data;
+    this.logger.log(`Submitting definition for fact_uid: ${fact_uid}`);
+    return this.webSocketClient.submitDefinition(fact_uid, partial_definition, full_definition);
   }
 
   async submitCollection(
@@ -247,25 +136,12 @@ export class ArchivistService {
     collection_uid: number,
     collection_name: string,
   ) {
-    const url = `${URL}${SUBMIT_COLLECTION_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.put(url, {
-        fact_uid,
-        collection_uid,
-        collection_name,
-      }),
-    );
-    return data;
+    this.logger.log(`Submitting collection for fact_uid: ${fact_uid}`);
+    return this.webSocketClient.submitCollection(fact_uid, collection_uid, collection_name);
   }
 
   async submitName(fact_uid: number, name: string) {
-    const url = `${URL}${SUBMIT_NAME_ENDPOINT}`;
-    const { data } = await firstValueFrom(
-      this.httpService.put(url, {
-        fact_uid,
-        name,
-      }),
-    );
-    return data;
+    this.logger.log(`Submitting name for fact_uid: ${fact_uid}`);
+    return this.webSocketClient.submitName(fact_uid, name);
   }
 }

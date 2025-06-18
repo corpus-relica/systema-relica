@@ -14,6 +14,7 @@ COPY packages/prism/package.json ./packages/prism/
 # Copy shared packages
 COPY packages/constants ./packages/constants
 COPY packages/types ./packages/types
+COPY packages/websocket-contracts ./packages/websocket-contracts
 
 # Install dependencies
 RUN yarn install --frozen-lockfile

@@ -52,3 +52,21 @@ export const DELETE_ENTITY_ENDPOINT = "/concept/entity";
 export const ALL = "All";
 export const KIND = "kind";
 export const INDIVIDUAL = "individual";
+
+// Setup State IDs (shared between frontend and backend)
+export const SETUP_STATES = {
+  IDLE: 'idle',
+  CHECKING_DB: 'checking_db',
+  AWAITING_USER_CREDENTIALS: 'awaiting_user_credentials',
+  CREATING_ADMIN_USER: 'creating_admin_user',
+  SEEDING_DB: 'seeding_db',
+  BUILDING_CACHES: 'building_caches',
+  BUILDING_FACTS_CACHE: 'building_facts_cache',
+  BUILDING_LINEAGE_CACHE: 'building_lineage_cache',
+  BUILDING_SUBTYPES_CACHE: 'building_subtypes_cache',
+  BUILDING_CACHES_COMPLETE: 'building_caches_complete',
+  SETUP_COMPLETE: 'setup_complete',
+  ERROR: 'error'
+} as const;
+
+export type SetupStateId = typeof SETUP_STATES[keyof typeof SETUP_STATES];

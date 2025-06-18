@@ -22,7 +22,7 @@ export class ClarityWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get model');
     }
-    return response.payload;
+    return response.data;
   }
 
   async getKindModel(uid: string): Promise<any> {
@@ -38,7 +38,7 @@ export class ClarityWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get kind model');
     }
-    return response.payload;
+    return response.data;
   }
 
   async getIndividualModel(uid: string): Promise<any> {
@@ -54,7 +54,7 @@ export class ClarityWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get individual model');
     }
-    return response.payload;
+    return response.data;
   }
 
   async getEnvironment(environmentId: string): Promise<any> {
@@ -70,7 +70,7 @@ export class ClarityWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to get environment');
     }
-    return response.payload;
+    return response.data;
   }
 
   async createModel(modelData: any): Promise<any> {
@@ -86,7 +86,7 @@ export class ClarityWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to create model');
     }
-    return response.payload;
+    return response.data;
   }
 
   async updateModel(modelId: string, modelData: any): Promise<any> {
@@ -102,7 +102,7 @@ export class ClarityWebSocketClientService extends BaseWebSocketClient {
     if (!response.success) {
       throw new Error(response.error || 'Failed to update model');
     }
-    return response.payload;
+    return response.data;
   }
 
 }

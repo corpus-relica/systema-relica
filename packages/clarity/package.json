@@ -29,10 +29,11 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-socket.io": "^10.3.10",
     "@nestjs/swagger": "^7.3.1",
-    "@nestjs/typeorm": "^10.0.0",
+    "@nestjs/typeorm": "^10.0.2",
     "@nestjs/websockets": "^10.3.10",
-    "@relica/constants": "^0.0.0",
-    "@relica/types": "^0.0.0",
+    "@relica/constants": "*",
+    "@relica/types": "*",
+    "@relica/websocket-contracts": "*",
     "add": "^2.0.6",
     "axios": "^1.7.2",
     "lodash": "^4.17.21",
@@ -40,7 +41,8 @@
     "pg": "^8.12.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.17"
+    "socket.io-client": "^4.7.5",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
