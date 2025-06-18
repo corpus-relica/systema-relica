@@ -44,7 +44,6 @@ export class BatchService {
   }
 
   private formatDate(value: any): string {
-    console.log(`Formatting date value: ${value}: ${typeof value}`);
     if (value instanceof Date) {
       return value.toISOString().split('T')[0]; // YYYY-MM-DD format
     }
