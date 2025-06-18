@@ -16,6 +16,9 @@ import {
   allRelatedFactsQueryd,
   deleteFactQuery,
   deleteEntityQuery,
+  getFactsBatch,
+  getFactsBatchOnRelationType,
+  getFactsCount,
 } from 'src/graph/queries';
 import { GellishBaseService } from 'src/gellish-base/gellish-base.service';
 import { CacheService } from 'src/cache/cache.service';
@@ -637,4 +640,53 @@ RETURN r
       return { success: false, message: error.message };
     }
   };
+
+  // Batch operations for cache building (ported from Clojure)
+  async getBatchFacts(skip: number, range: number, relTypeUids?: number[]): Promise<{ facts: any[] }> {
+    try {
+      const params = { skip, range };
+      let query = getFactsBatch;
+      
+      if (relTypeUids && relTypeUids.length > 0) {
+        query = getFactsBatchOnRelationType;
+        (params as any).relationTypeUIDs = relTypeUids;
+      }
+
+      const result = await this.graphService.execQuery(query, params);
+      
+      // Transform results to match Clojure format
+      const facts = result.map((record) => {
+        const factNode = record.toObject().r;
+        return this.serializeRecord(factNode.properties);
+      });
+
+      return { facts };
+    } catch (error) {
+      this.logger.error('Error getting batch facts:', error);
+      return { facts: [] };
+    }
+  }
+
+  async getFactsCount(): Promise<number> {
+    try {
+      const result = await this.graphService.execQuery(getFactsCount, {});
+      return result.length > 0 ? result[0].toObject().count : 0;
+    } catch (error) {
+      this.logger.error('Error getting facts count:', error);
+      return 0;
+    }
+  }
+
+  // Helper method to serialize records (similar to Clojure serialize-record)
+  private serializeRecord(record: any): any {
+    const serialized = {};
+    for (const [key, value] of Object.entries(record)) {
+      if (value instanceof Date) {
+        serialized[key] = value.toISOString();
+      } else {
+        serialized[key] = value;
+      }
+    }
+    return serialized;
+  }
 }

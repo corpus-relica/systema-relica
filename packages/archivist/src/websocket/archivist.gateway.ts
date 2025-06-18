@@ -20,6 +20,7 @@ import { KindHandlers } from './handlers/kind.handlers';
 import { SubmissionHandlers } from './handlers/submission.handlers';
 import { TransactionHandlers } from './handlers/transaction.handlers';
 import { UIDHandlers } from './handlers/uid.handlers';
+import { LineageHandlers } from './handlers/lineage.handlers';
 
 @WebSocketGateway({
   cors: {
@@ -48,6 +49,7 @@ export class ArchivistGateway
     private readonly submissionHandlers: SubmissionHandlers,
     private readonly transactionHandlers: TransactionHandlers,
     private readonly uidHandlers: UIDHandlers,
+    private readonly lineageHandlers: LineageHandlers,
   ) {}
 
   afterInit(server: Server) {
@@ -68,6 +70,7 @@ export class ArchivistGateway
     this.submissionHandlers.init(this);
     this.transactionHandlers.init(this);
     this.uidHandlers.init(this);
+    this.lineageHandlers.init(this);
     
     this.logger.log(`Registered ${this.handlers.size} WebSocket handlers`);
   }

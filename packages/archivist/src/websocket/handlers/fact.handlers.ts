@@ -22,6 +22,8 @@ export class FactHandlers {
     gateway.registerHandler('fact:getSupertypes', this.handleFactGetSupertypes.bind(this));
     gateway.registerHandler('fact:getClassified', this.handleFactGetClassified.bind(this));
     gateway.registerHandler('fact:validate', this.handleFactValidate.bind(this));
+    gateway.registerHandler('fact:batch-get', this.handleFactBatchGet.bind(this));
+    gateway.registerHandler('fact:count', this.handleFactCount.bind(this));
   }
 
   async handleFactCreate(data: FactCreateMessage, client: Socket): Promise<WsResponse> {
@@ -139,6 +141,39 @@ export class FactHandlers {
       return {
         event: 'fact:validated',
         data: result
+      };
+    } catch (error) {
+      return {
+        event: 'fact:error',
+        data: { message: error.message }
+      };
+    }
+  }
+
+  // Batch operations for cache building (ported from Clojure :archivist.fact/batch-get)
+  async handleFactBatchGet(data: any, client: Socket): Promise<WsResponse> {
+    try {
+      const { skip, range, relTypeUids } = data;
+      const result = await this.factService.getBatchFacts(skip, range, relTypeUids);
+      return {
+        event: 'fact:batch-retrieved',
+        data: result.facts // Return facts directly to match Clojure (respond-success (:facts result))
+      };
+    } catch (error) {
+      return {
+        event: 'fact:error',
+        data: { message: error.message }
+      };
+    }
+  }
+
+  // Count operation for cache building (ported from Clojure :archivist.fact/count)
+  async handleFactCount(data: any, client: Socket): Promise<WsResponse> {
+    try {
+      const count = await this.factService.getFactsCount();
+      return {
+        event: 'fact:count-retrieved',
+        data: { count } // Match Clojure (respond-success {:count result})
       };
     } catch (error) {
       return {

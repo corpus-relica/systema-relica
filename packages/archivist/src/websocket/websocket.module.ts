@@ -11,6 +11,7 @@ import { KindHandlers } from './handlers/kind.handlers';
 import { SubmissionHandlers } from './handlers/submission.handlers';
 import { TransactionHandlers } from './handlers/transaction.handlers';
 import { UIDHandlers } from './handlers/uid.handlers';
+import { LineageHandlers } from './handlers/lineage.handlers';
 
 // Import all the services that handlers depend on
 import { FactService } from '../fact/fact.service';
@@ -51,6 +52,7 @@ import { TransactionService } from '../transaction/transaction.service';
     SubmissionHandlers,
     TransactionHandlers,
     UIDHandlers,
+    LineageHandlers,
     // Core services
     FactService,
     GeneralSearchService,
