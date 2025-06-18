@@ -58,8 +58,6 @@ RETURN path`;
 
   /** that is, *without* using cache */
   async calculateLineage(uid: number) {
-    console.log('CALCULATE LINEAGE', uid);
-
     const result = await this.calculateSpecializationHierarchy(uid);
 
     if (result.length === 0) {
@@ -68,7 +66,6 @@ RETURN path`;
 
     const factsSet = new Set();
     const facts: any[] = [];
-    console.log('RESULT', result.length);
     // console.log(result);
     result.forEach((path) => {
       // @ts-ignore

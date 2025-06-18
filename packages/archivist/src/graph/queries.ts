@@ -278,6 +278,29 @@ MATCH (n:Entity {uid: $uid})
 DETACH DELETE n
 `;
 
+// Batch queries for cache building (ported from Clojure)
+export const getFactsBatch = `
+MATCH (r:Fact)
+RETURN r
+ORDER BY r.fact_uid ASC
+SKIP $skip
+LIMIT $range
+`;
+
+export const getFactsBatchOnRelationType = `
+MATCH (r:Fact)
+WHERE r.rel_type_uid IN $relationTypeUIDs
+RETURN r
+ORDER BY r.fact_uid ASC
+SKIP $skip
+LIMIT $range
+`;
+
+export const getFactsCount = `
+MATCH (n:Fact) 
+RETURN count(n) as count
+`;
+
 export const updateFactDefinitionQuery = `
 MATCH (r:Fact {fact_uid: $fact_uid})
 SET r.full_definition = $full_definition

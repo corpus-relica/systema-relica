@@ -733,6 +733,161 @@ export declare const FactValidateResponseSchema: z.ZodObject<{
     error?: string | undefined;
 }>;
 export type FactValidateResponse = z.infer<typeof FactValidateResponseSchema>;
+/**
+ * Fact batch get data structure
+ */
+export declare const FactBatchGetMessageSchema: z.ZodObject<{
+    skip: z.ZodNumber;
+    range: z.ZodNumber;
+    relTypeUids: z.ZodOptional<z.ZodArray<z.ZodNumber, "many">>;
+}, "strip", z.ZodTypeAny, {
+    skip: number;
+    range: number;
+    relTypeUids?: number[] | undefined;
+}, {
+    skip: number;
+    range: number;
+    relTypeUids?: number[] | undefined;
+}>;
+export type FactBatchGetMessage = z.infer<typeof FactBatchGetMessageSchema>;
+export declare const FactBatchGetRequestSchema: z.ZodObject<{
+    id: z.ZodString;
+    timestamp: z.ZodOptional<z.ZodNumber>;
+    correlationId: z.ZodOptional<z.ZodString>;
+    type: z.ZodLiteral<"request">;
+} & {
+    service: z.ZodLiteral<"archivist">;
+    action: z.ZodLiteral<"fact:batch-get">;
+    payload: z.ZodObject<{
+        skip: z.ZodNumber;
+        range: z.ZodNumber;
+        relTypeUids: z.ZodOptional<z.ZodArray<z.ZodNumber, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        skip: number;
+        range: number;
+        relTypeUids?: number[] | undefined;
+    }, {
+        skip: number;
+        range: number;
+        relTypeUids?: number[] | undefined;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    type: "request";
+    service: "archivist";
+    action: "fact:batch-get";
+    payload: {
+        skip: number;
+        range: number;
+        relTypeUids?: number[] | undefined;
+    };
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+}, {
+    id: string;
+    type: "request";
+    service: "archivist";
+    action: "fact:batch-get";
+    payload: {
+        skip: number;
+        range: number;
+        relTypeUids?: number[] | undefined;
+    };
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+}>;
+export type FactBatchGetRequest = z.infer<typeof FactBatchGetRequestSchema>;
+export declare const FactBatchGetResponseSchema: z.ZodObject<{
+    id: z.ZodString;
+    timestamp: z.ZodOptional<z.ZodNumber>;
+    correlationId: z.ZodOptional<z.ZodString>;
+    type: z.ZodLiteral<"response">;
+    success: z.ZodBoolean;
+    error: z.ZodOptional<z.ZodString>;
+} & {
+    data: z.ZodArray<z.ZodAny, "many">;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    type: "response";
+    success: boolean;
+    data: any[];
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+    error?: string | undefined;
+}, {
+    id: string;
+    type: "response";
+    success: boolean;
+    data: any[];
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+    error?: string | undefined;
+}>;
+export type FactBatchGetResponse = z.infer<typeof FactBatchGetResponseSchema>;
+export declare const FactCountRequestSchema: z.ZodObject<{
+    id: z.ZodString;
+    timestamp: z.ZodOptional<z.ZodNumber>;
+    correlationId: z.ZodOptional<z.ZodString>;
+    type: z.ZodLiteral<"request">;
+} & {
+    service: z.ZodLiteral<"archivist">;
+    action: z.ZodLiteral<"fact:count">;
+    payload: z.ZodObject<{}, "strip", z.ZodTypeAny, {}, {}>;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    type: "request";
+    service: "archivist";
+    action: "fact:count";
+    payload: {};
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+}, {
+    id: string;
+    type: "request";
+    service: "archivist";
+    action: "fact:count";
+    payload: {};
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+}>;
+export type FactCountRequest = z.infer<typeof FactCountRequestSchema>;
+export declare const FactCountResponseSchema: z.ZodObject<{
+    id: z.ZodString;
+    timestamp: z.ZodOptional<z.ZodNumber>;
+    correlationId: z.ZodOptional<z.ZodString>;
+    type: z.ZodLiteral<"response">;
+    success: z.ZodBoolean;
+    error: z.ZodOptional<z.ZodString>;
+} & {
+    data: z.ZodObject<{
+        count: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        count: number;
+    }, {
+        count: number;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    type: "response";
+    success: boolean;
+    data: {
+        count: number;
+    };
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+    error?: string | undefined;
+}, {
+    id: string;
+    type: "response";
+    success: boolean;
+    data: {
+        count: number;
+    };
+    timestamp?: number | undefined;
+    correlationId?: string | undefined;
+    error?: string | undefined;
+}>;
+export type FactCountResponse = z.infer<typeof FactCountResponseSchema>;
 export declare const FactActions: {
     readonly CREATE: "fact:create";
     readonly UPDATE: "fact:update";
@@ -742,6 +897,8 @@ export declare const FactActions: {
     readonly GET_SUPERTYPES: "fact:getSupertypes";
     readonly GET_CLASSIFIED: "fact:getClassified";
     readonly VALIDATE: "fact:validate";
+    readonly BATCH_GET: "fact:batch-get";
+    readonly COUNT: "fact:count";
 };
 export type FactActionType = typeof FactActions[keyof typeof FactActions];
 export declare const FactEvents: {
@@ -753,6 +910,8 @@ export declare const FactEvents: {
     readonly SUPERTYPES: "fact:supertypes";
     readonly CLASSIFIED: "fact:classified";
     readonly VALIDATED: "fact:validated";
+    readonly BATCH_RETRIEVED: "fact:batch-retrieved";
+    readonly COUNT_RETRIEVED: "fact:count-retrieved";
     readonly ERROR: "fact:error";
 };
 export type FactEventType = typeof FactEvents[keyof typeof FactEvents];

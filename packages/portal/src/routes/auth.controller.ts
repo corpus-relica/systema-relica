@@ -22,6 +22,7 @@ export class AuthController {
         credentials.username,
         credentials.password
       );
+      console.log('Login result:', result);
       return {
         success: true,
         ...result,

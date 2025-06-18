@@ -12,6 +12,7 @@ import {
   SubmissionActions,
   TransactionActions,
   ValidationActions,
+  LineageActions,
   // Request schemas
   FactCreateRequestSchema,
   FactUpdateRequestSchema,
@@ -21,6 +22,8 @@ import {
   FactGetSupertypesRequestSchema,
   FactGetClassifiedRequestSchema,
   FactValidateRequestSchema,
+  FactBatchGetRequestSchema,
+  FactCountRequestSchema,
   SearchGeneralRequestSchema,
   SearchIndividualRequestSchema,
   SearchKindRequestSchema,
@@ -52,6 +55,7 @@ import {
   TransactionGetRequestSchema,
   ValidationValidateRequestSchema,
   ValidationCollectionRequestSchema,
+  LineageGetRequestSchema,
   // Response schemas
   FactCreateResponseSchema,
   FactUpdateResponseSchema,
@@ -61,6 +65,8 @@ import {
   FactGetSupertypesResponseSchema,
   FactGetClassifiedResponseSchema,
   FactValidateResponseSchema,
+  FactBatchGetResponseSchema,
+  FactCountResponseSchema,
   SearchGeneralResponseSchema,
   SearchIndividualResponseSchema,
   SearchKindResponseSchema,
@@ -92,6 +98,7 @@ import {
   TransactionGetResponseSchema,
   ValidationValidateResponseSchema,
   ValidationCollectionResponseSchema,
+  LineageGetResponseSchema,
 } from './services/archivist';
 import {
   ApertureActions,
@@ -297,6 +304,22 @@ export const MESSAGE_REGISTRY = {
     requestSchema: FactValidateRequestSchema,
     responseSchema: FactValidateResponseSchema,
     description: 'Validate a fact before creation',
+  },
+
+  [FactActions.BATCH_GET]: {
+    action: FactActions.BATCH_GET,
+    service: 'archivist',
+    requestSchema: FactBatchGetRequestSchema,
+    responseSchema: FactBatchGetResponseSchema,
+    description: 'Batch retrieval of facts for cache building operations',
+  },
+
+  [FactActions.COUNT]: {
+    action: FactActions.COUNT,
+    service: 'archivist',
+    requestSchema: FactCountRequestSchema,
+    responseSchema: FactCountResponseSchema,
+    description: 'Get total count of facts for progress tracking',
   },
 
   // Search contracts
@@ -555,6 +578,15 @@ export const MESSAGE_REGISTRY = {
     requestSchema: ValidationCollectionRequestSchema,
     responseSchema: ValidationCollectionResponseSchema,
     description: 'Validate a collection of facts',
+  },
+
+  // Lineage contracts
+  [LineageActions.GET]: {
+    action: LineageActions.GET,
+    service: 'archivist',
+    requestSchema: LineageGetRequestSchema,
+    responseSchema: LineageGetResponseSchema,
+    description: 'Calculate entity lineage using C3 linearization algorithm',
   },
 
   // =====================================================

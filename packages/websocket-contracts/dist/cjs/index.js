@@ -39,7 +39,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ApertureActions = exports.ValidationEvents = exports.ValidationActions = exports.TransactionEvents = exports.TransactionActions = exports.SubmissionEvents = exports.SubmissionActions = exports.DefinitionEvents = exports.DefinitionActions = exports.CompletionEvents = exports.CompletionActions = exports.UIDEvents = exports.UIDActions = exports.KindEvents = exports.KindActions = exports.QueryEvents = exports.QueryActions = exports.ConceptEvents = exports.ConceptActions = exports.SearchEvents = exports.SearchActions = exports.FactEvents = exports.FactActions = exports.SetupStatusBroadcastEventSchema = exports.PrismEvents = exports.PrismActions = exports.ContractValidator = exports.devValidator = exports.validator = exports.ContractUtils = void 0;
+exports.ApertureActions = exports.LineageEvents = exports.LineageActions = exports.ValidationEvents = exports.ValidationActions = exports.TransactionEvents = exports.TransactionActions = exports.SubmissionEvents = exports.SubmissionActions = exports.DefinitionEvents = exports.DefinitionActions = exports.CompletionEvents = exports.CompletionActions = exports.UIDEvents = exports.UIDActions = exports.KindEvents = exports.KindActions = exports.QueryEvents = exports.QueryActions = exports.ConceptEvents = exports.ConceptActions = exports.SearchEvents = exports.SearchActions = exports.FactEvents = exports.FactActions = exports.SetupStatusBroadcastEventSchema = exports.PrismEvents = exports.PrismActions = exports.ContractValidator = exports.devValidator = exports.validator = exports.ContractUtils = void 0;
 // Base message types
 __exportStar(require("./base"), exports);
 // Service-specific contracts
@@ -94,6 +94,9 @@ Object.defineProperty(exports, "TransactionEvents", { enumerable: true, get: fun
 // Validation operations
 Object.defineProperty(exports, "ValidationActions", { enumerable: true, get: function () { return archivist_1.ValidationActions; } });
 Object.defineProperty(exports, "ValidationEvents", { enumerable: true, get: function () { return archivist_1.ValidationEvents; } });
+// Lineage operations
+Object.defineProperty(exports, "LineageActions", { enumerable: true, get: function () { return archivist_1.LineageActions; } });
+Object.defineProperty(exports, "LineageEvents", { enumerable: true, get: function () { return archivist_1.LineageEvents; } });
 var aperture_1 = require("./services/aperture");
 // Aperture operations
 Object.defineProperty(exports, "ApertureActions", { enumerable: true, get: function () { return aperture_1.ApertureActions; } });

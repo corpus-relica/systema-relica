@@ -16,9 +16,18 @@ export {
   FactEvents,
   FactCreateRequestSchema,
   FactCreateResponseSchema,
+  FactBatchGetRequestSchema,
+  FactBatchGetResponseSchema,
+  FactCountRequestSchema,
+  FactCountResponseSchema,
   type FactCreateRequest,
   type FactCreateResponse,
   type FactCreateMessage,
+  type FactBatchGetRequest,
+  type FactBatchGetResponse,
+  type FactBatchGetMessage,
+  type FactCountRequest,
+  type FactCountResponse,
 
   // Search operations
   SearchActions,
@@ -64,5 +73,14 @@ export {
   type UIDGenerateRequest,
   type UIDGenerateResponse,
   type UIDMessage,
+
+  // Lineage operations
+  LineageActions,
+  LineageEvents,
+  LineageGetRequestSchema,
+  LineageGetResponseSchema,
+  type LineageGetRequest,
+  type LineageGetResponse,
+  type LineageQueryMessage,
 
 } from './archivist/index';

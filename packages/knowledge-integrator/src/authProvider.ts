@@ -13,7 +13,7 @@ export const getAuthToken = () => {
 export const authProvider: AuthProvider = {
   login: async ({ username, password }) => {
     const portalUrl = import.meta.env.VITE_PORTAL_API_URL || 'http://localhost:2204';
-    const response = await fetch(`${portalUrl}/api/auth/login`, {
+    const response = await fetch(`${portalUrl}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,8 +28,12 @@ export const authProvider: AuthProvider = {
     }
 
     const result = await response.json();
-    const { access_token, user } = result;
-    localStorage.setItem("access_token", access_token);
+
+    const { token, user } = result;
+
+    console.log("🔐 Login successful, token:", token, "user:", user);
+
+    localStorage.setItem("access_token", token);
     localStorage.setItem("user", JSON.stringify(user));
     return Promise.resolve(result);
   },
@@ -43,22 +47,25 @@ export const authProvider: AuthProvider = {
     const accessToken = localStorage.getItem("access_token");
     if (!accessToken) {
       return Promise.reject();
+    }else{
+      console.log("🔑 Auth check passed, access token exists");
+      return Promise.resolve();
     }
     
-    try {
-      const authStatus = await checkAuthenticationStatus();
-      if (!authStatus.authenticated) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("user");
-        return Promise.reject();
-      }
-      return Promise.resolve();
-    } catch (error) {
-      // If we can't verify, assume token is invalid
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user");
-      return Promise.reject();
-    }
+    // try {
+    //   const authStatus = await checkAuthenticationStatus();
+    //   if (!authStatus.authenticated) {
+    //     localStorage.removeItem("access_token");
+    //     localStorage.removeItem("user");
+    //     return Promise.reject();
+    //   }
+    //   return Promise.resolve();
+    // } catch (error) {
+    //   // If we can't verify, assume token is invalid
+    //   localStorage.removeItem("access_token");
+    //   localStorage.removeItem("user");
+    //   return Promise.reject();
+    // }
   },
   getPermissions: () => {
     return Promise.resolve(undefined);

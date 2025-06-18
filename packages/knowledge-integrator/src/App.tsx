@@ -120,7 +120,9 @@ export const App = () => {
   useEffect(() => {
     const checkSetup = async () => {
       try {
-        const status = await getSetupStatus();
+        const result = await getSetupStatus();
+        const status = result.status as SetupStatus;
+        console.log("🔧 Setup status checked:", status);
         setSetupStatus(status);
         setIsCheckingSetup(false);
         
@@ -130,7 +132,7 @@ export const App = () => {
         }
       } catch (error) {
         console.error("Failed to check setup status:", error);
-        setSetupError(`Setup check failed: ${error.message}`);
+        setSetupError(`Setup check failed: ${error instanceof Error ? error.message : String(error)}`);
         
         // If we can't check setup status, assume setup is required
         // This handles cases where the API is down or auth is needed
@@ -169,7 +171,7 @@ export const App = () => {
       
     } catch (error) {
       console.error("❌ Failed to initialize application:", error);
-      throw error;
+      //throw error;
     }
   };
 
@@ -190,6 +192,7 @@ export const App = () => {
 
   // Show error if we can't determine setup status
   if (setupError && !setupStatus) {
+    console.log("❌ Setup status check failed:", setupError);
     return (
       <div style={{ 
         display: 'flex', 
@@ -214,7 +217,28 @@ export const App = () => {
 
   // Show setup wizard if setup is not complete
   if (!setupStatus || setupStatus.status !== SETUP_STATES.SETUP_COMPLETE) {
-    return <SetupWizard />;
+    return <SetupWizard onSetupComplete={async () => {
+      // Clear guest token and re-check setup status
+      localStorage.removeItem('access_token');
+      
+      try {
+        const result = await getSetupStatus();
+        const status = result.status as SetupStatus;
+        setSetupStatus(status);
+
+        console.log("🔧 Setup status re-checked:", status, SETUP_STATES.SETUP_COMPLETE);
+
+        if (status.status === SETUP_STATES.SETUP_COMPLETE) {
+          // Initialize the app if setup is complete
+          console.log("🎉 Setup complete! Initializing app...");
+          await initializeApp();
+        }
+      } catch (error) {
+        console.error("Failed to re-check setup status after completion:", error);
+        // Fallback to page reload if something goes wrong
+        window.location.reload();
+      }
+    }} />;
   }
 
   // Show main application

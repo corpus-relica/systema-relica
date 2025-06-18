@@ -51,7 +51,7 @@ export class PrismController {
     }
   }
 
-  @Post('create-user')
+  @Post('create-admin-user')
   @ApiOperation({ summary: 'Create user during Prism setup' })
   @ApiBearerAuth()
   @ApiBody({
@@ -60,27 +60,28 @@ export class PrismController {
       type: 'object',
       properties: {
         username: { type: 'string', description: 'Username for the new user' },
+        email: { type: 'string', format: 'email', description: 'Email for the new user' },
         password: { type: 'string', description: 'Password for the new user' },
-        confirmPassword: { type: 'string', description: 'Password confirmation' },
+        // confirmPassword: { type: 'string', description: 'Password confirmation' },
       },
-      required: ['username', 'password', 'confirmPassword'],
+      required: ['username', 'email', 'password'],
     },
   })
   @ApiResponse({ status: 200, description: 'User created successfully' })
   async createUser(
     @User() user: any,
-    @Body() body: { username: string; password: string; confirmPassword: string },
+    @Body() body: { username: string; email:string; password: string },
   ) {
     try {
       
-      if (!body.username || !body.password || !body.confirmPassword) {
-        throw new BadRequestException('Username, password, and confirmPassword are required');
+      if (!body.username || !body.email || !body.password) {
+        throw new BadRequestException('Username, email, and password are required');
       }
       
-      if (body.password !== body.confirmPassword) {
-        throw new BadRequestException('Password and confirmation do not match');
-      }
-      
+      // if (body.password !== body.confirmPassword) {
+      //   throw new BadRequestException('Password and confirmation do not match');
+      // }
+
       const result = await this.prismClient.createUser(body);
       
       return {

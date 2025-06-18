@@ -3,6 +3,7 @@ import { createSetupActor, SetupEvent, SetupContext } from './setup.machine';
 import { Neo4jService } from '../database/neo4j.service';
 import { BatchService } from '../batch/batch.service';
 import { CacheService } from '../cache/cache.service';
+import { UsersService } from '../database/users/users.service';
 import { Actor } from 'xstate';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class SetupService implements OnModuleInit {
     private neo4jService: Neo4jService,
     @Inject(forwardRef(() => BatchService)) private batchService: BatchService,
     @Inject(forwardRef(() => CacheService)) private cacheService: CacheService,
+    private usersService: UsersService,
   ) {}
 
   onModuleInit() {
@@ -21,7 +23,7 @@ export class SetupService implements OnModuleInit {
     
     // Subscribe to state changes and broadcast updates
     this.actor.subscribe((state) => {
-      console.log('Setup state changed:', state.value, state.context);
+      console.log('Setup state changed:', JSON.stringify(state.value), state.context);
       this.broadcastStateUpdate(state.context, state.value);
       
       // Handle activities based on current state
@@ -44,8 +46,27 @@ export class SetupService implements OnModuleInit {
   }
 
   private formatStateForClient(context: SetupContext, state: any) {
-    const stateId = typeof state === 'string' ? state : state[0] || 'unknown';
-    const substate = Array.isArray(state) ? state[1] : null;
+    let stateId: string;
+    let substate: string | null = null;
+    
+    // Handle different state formats from XState
+    if (typeof state === 'string') {
+      stateId = state;
+    } else if (Array.isArray(state)) {
+      stateId = state[0] || 'unknown';
+      substate = state[1] || null;
+    } else if (typeof state === 'object' && state !== null) {
+      // Handle compound state objects like { building_caches: 'building_facts_cache' }
+      const keys = Object.keys(state);
+      if (keys.length > 0) {
+        stateId = keys[0];
+        substate = state[keys[0]];
+      } else {
+        stateId = 'unknown';
+      }
+    } else {
+      stateId = 'unknown';
+    }
     
     // Use canonical contract format
     return {
@@ -83,7 +104,26 @@ export class SetupService implements OnModuleInit {
   }
 
   private calculateProgress(state: any): number {
-    const stateStr = typeof state === 'string' ? state : state[0];
+    let stateStr: string;
+    let substate: string | null = null;
+    
+    // Extract state info based on format
+    if (typeof state === 'string') {
+      stateStr = state;
+    } else if (Array.isArray(state)) {
+      stateStr = state[0];
+      substate = state[1] || null;
+    } else if (typeof state === 'object' && state !== null) {
+      const keys = Object.keys(state);
+      if (keys.length > 0) {
+        stateStr = keys[0];
+        substate = state[keys[0]];
+      } else {
+        stateStr = 'unknown';
+      }
+    } else {
+      stateStr = 'unknown';
+    }
     
     switch (stateStr) {
       case 'idle': return 0;
@@ -92,8 +132,8 @@ export class SetupService implements OnModuleInit {
       case 'creating_admin_user': return 20;
       case 'seeding_db': return 30;
       case 'building_caches': {
-        if (Array.isArray(state) && state[1]) {
-          switch (state[1]) {
+        if (substate) {
+          switch (substate) {
             case 'building_facts_cache': return 40;
             case 'building_lineage_cache': return 60;
             case 'building_subtypes_cache': return 80;
@@ -109,7 +149,28 @@ export class SetupService implements OnModuleInit {
   }
 
   private async processState(state: any, context: SetupContext) {
-    const stateStr = typeof state === 'string' ? state : state[0];
+    let stateStr: string;
+    let substate: string | null = null;
+    
+    // Extract state info based on format
+    if (typeof state === 'string') {
+      stateStr = state;
+    } else if (Array.isArray(state)) {
+      stateStr = state[0];
+      substate = state[1] || null;
+    } else if (typeof state === 'object' && state !== null) {
+      const keys = Object.keys(state);
+      if (keys.length > 0) {
+        stateStr = keys[0];
+        substate = state[keys[0]];
+      } else {
+        stateStr = 'unknown';
+      }
+    } else {
+      stateStr = 'unknown';
+    }
+    
+    console.log(`Processing state: ${stateStr}, substate: ${substate}`);
     
     try {
       switch (stateStr) {
@@ -120,10 +181,26 @@ export class SetupService implements OnModuleInit {
           await this.seedDatabaseActivity();
           break;
         case 'building_caches':
-          if (Array.isArray(state) && state[1]) {
-            await this.handleCacheBuildingActivity(state[1]);
+          if (substate) {
+            await this.handleCacheBuildingActivity(substate);
           }
           break;
+        case 'awaiting_user_credentials':
+          // This state is handled by the client submitting credentials
+          break;
+        case 'creating_admin_user':
+          // This state is handled by the client submitting user creation data
+          console.log('Awaiting user credentials submission...');
+          console.log(context)
+          console.log('_________________________________________________________');
+          
+          // Create admin user if credentials are available
+          if (context.userCredentials) {
+            this.createAdminUserActivity(context.userCredentials);
+          }
+          break;
+
+        default:
       }
     } catch (error) {
       console.error('Error in setup activity:', error);
@@ -144,6 +221,59 @@ export class SetupService implements OnModuleInit {
       console.error('Error checking database state:', error);
       this.sendEvent({ type: 'ERROR', errorMessage: `Database check failed: ${error.message}` });
     }
+  }
+
+  private async createAdminUserActivity(userCredentials: { username: string; email: string; password: string }) {
+    console.log('[Activity] Creating admin user:', userCredentials.username);
+    try {
+      // Validate credentials
+      const validation = this.validateCredentials(userCredentials);
+      if (!validation.valid) {
+        this.sendEvent({ type: 'ERROR', errorMessage: validation.message });
+        return;
+      }
+
+      // Create the admin user
+      const user = await this.usersService.create({
+        email: userCredentials.email,
+        username: userCredentials.username,
+        password: userCredentials.password,
+        first_name: 'Admin',
+        last_name: 'User',
+      });
+
+      console.log('Created admin user in PostgreSQL:', { id: user.id, username: user.username, email: user.email });
+      this.sendEvent({ type: 'USER_CREATION_SUCCESS' });
+    } catch (error) {
+      console.error('Error creating admin user:', error);
+      this.sendEvent({ type: 'ERROR', errorMessage: `Failed to create admin user: ${error.message}` });
+    }
+  }
+
+  private validateCredentials(credentials: { username: string; email: string; password: string }) {
+    const { username, password, email } = credentials;
+    
+    if (!username || username.trim().length === 0) {
+      return { valid: false, message: 'Username cannot be blank' };
+    }
+
+    if (username.length < 4) {
+      return { valid: false, message: 'Username must be at least 4 characters' };
+    }
+
+    if (!email || email.trim().length === 0) {
+      return { valid: false, message: 'Email cannot be blank' };
+    }
+
+    if (!password || password.trim().length === 0) {
+      return { valid: false, message: 'Password cannot be blank' };
+    }
+
+    if (password.length < 8) {
+      return { valid: false, message: 'Password must be at least 8 characters' };
+    }
+
+    return { valid: true };
   }
 
   private async seedDatabaseActivity() {
@@ -237,13 +367,8 @@ export class SetupService implements OnModuleInit {
     this.sendEvent({ type: 'START_SETUP' });
   }
 
-  public submitCredentials(username: string, password: string) {
-    this.sendEvent({ type: 'SUBMIT_CREDENTIALS', data: { username, password } });
-    
-    // Simulate user creation for now - this should integrate with Shutter service
-    setTimeout(() => {
-      this.sendEvent({ type: 'USER_CREATION_SUCCESS' });
-    }, 1000);
+  public submitCredentials(username: string, email:string, password: string) {
+    this.sendEvent({ type: 'SUBMIT_CREDENTIALS', data: { username, email, password } });
   }
 
   public async resetSystem(): Promise<{ success: boolean; message?: string; errors?: string[] }> {
@@ -278,9 +403,16 @@ export class SetupService implements OnModuleInit {
         errors.push(`Redis: ${redisResult.error}`);
       }
 
-      // Step 4: TODO - Clear PostgreSQL databases
-      // This would need to call Clarity and Aperture services to clear their databases
-      console.log('⚠️ PostgreSQL reset not implemented (requires Clarity/Aperture integration)');
+      // Step 4: Clear PostgreSQL users managed by Prism
+      console.log('Clearing PostgreSQL users...');
+      try {
+        await this.usersService.clearAllUsers();
+        console.log('✅ PostgreSQL users cleared successfully');
+      } catch (pgError) {
+        errors.push(`PostgreSQL users: ${pgError.message}`);
+      }
+
+      // Note: Other PostgreSQL databases (Clarity/Aperture) would need separate service calls
 
       const success = errors.length === 0;
       const message = success 

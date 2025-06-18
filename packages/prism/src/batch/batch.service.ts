@@ -60,12 +60,54 @@ export class BatchService {
       }
     }
     
+    // Handle string date formats
+    if (typeof value === 'string' && value.trim()) {
+      try {
+        // Try to parse common date string formats
+        const trimmedValue = value.trim();
+        
+        // Handle formats like "21-Mar-01", "21-Mar-2001", "01-Jan-99"
+        const shortDateMatch = trimmedValue.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+        if (shortDateMatch) {
+          const [, day, monthAbbr, year] = shortDateMatch;
+          
+          // Month abbreviation mapping
+          const monthMap: Record<string, string> = {
+            'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+            'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+            'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+          };
+          
+          const monthNum = monthMap[monthAbbr] || monthMap[monthAbbr.toLowerCase()] || monthMap[monthAbbr.toUpperCase()];
+          if (monthNum) {
+            // Handle 2-digit years (assume 1900s for years 00-99)
+            let fullYear = year;
+            if (year.length === 2) {
+              const yearNum = parseInt(year, 10);
+              fullYear = yearNum < 50 ? `20${year}` : `19${year}`;
+            }
+            
+            const paddedDay = day.padStart(2, '0');
+            return `${fullYear}-${monthNum}-${paddedDay}`;
+          }
+        }
+        
+        // Try standard JavaScript Date parsing as fallback
+        const parsedDate = new Date(trimmedValue);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate.toISOString().split('T')[0];
+        }
+      } catch (error) {
+        // If parsing fails, return original string
+        console.warn(`Failed to parse date string: ${value}`, error);
+      }
+    }
+    
     return String(value);
   }
 
   private normalizeValue(colIdx: number, value: any): string {
-    // Date normalization for columns 9 and 10 (indices 8 and 9)
-    if (colIdx === 8 || colIdx === 9) {
+    if ( colIdx === 21 || colIdx === 22) {
       return this.formatDate(value);
     }
 
@@ -240,7 +282,10 @@ export class BatchService {
       const csvContent = [
         columnIds, // Header row with column IDs
         ...processedRows
-      ].map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+      ].map(row => row.map(cell => {
+        const cellStr = String(cell || ''); // Ensure cell is a string, handle null/undefined
+        return `"${cellStr.replace(/"/g, '""')}"`;
+      }).join(',')).join('\n');
 
       fs.writeFileSync(csvOutputPath, csvContent, 'utf8');
 

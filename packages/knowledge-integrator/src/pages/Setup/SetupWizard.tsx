@@ -41,7 +41,11 @@ const WelcomePaper = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
 }));
 
-const SetupWizard: React.FC = () => {
+interface SetupWizardProps {
+  onSetupComplete?: () => Promise<void>;
+}
+
+const SetupWizard: React.FC<SetupWizardProps> = ({ onSetupComplete }) => {
   const [setupStatus, setSetupStatus] = useState<SetupStatus>({
     setupRequired: true,
     state: { id: SETUP_STATES.IDLE, full_path: [SETUP_STATES.IDLE] },
@@ -60,7 +64,6 @@ const SetupWizard: React.FC = () => {
 
   // Setup simple Socket.IO listener for status updates
   useEffect(() => {
-    console.log("FOOOBABADFDJKLFDJKLSJKLDFSJKLSDFJKLDSFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLSDFJKLDSF")
     const handleSetupStatusUpdate = (broadcastEvent: SetupStatusBroadcastEvent) => {
       console.log('📊 Received setup status update:', broadcastEvent);
       
@@ -105,9 +108,9 @@ const SetupWizard: React.FC = () => {
     // Only poll if WebSocket is not connected and setup is in progress
     console.log('🔧 Setup status updated:', setupStatus);
     if (!portalSocket.isConnected() &&
-        setupStatus.state.id !== SETUP_STATES.IDLE && 
-        setupStatus.state.id !== SETUP_STATES.AWAITING_USER_CREDENTIALS && 
-        setupStatus.state.id !== SETUP_STATES.SETUP_COMPLETE) {
+        setupStatus.status !== SETUP_STATES.IDLE &&
+        setupStatus.status !== SETUP_STATES.AWAITING_USER_CREDENTIALS &&
+        setupStatus.status !== SETUP_STATES.SETUP_COMPLETE) {
       console.log('📡 WebSocket not connected, falling back to polling');
       intervalId = setInterval(() => {
         checkSetupStatus(false); // Don't show errors during polling
@@ -222,10 +225,21 @@ const SetupWizard: React.FC = () => {
     }
   };
 
-  const handleSetupComplete = () => {
-    // Clear guest token and trigger app re-initialization
-    localStorage.removeItem('access_token');
-    window.location.reload();
+  const handleSetupComplete = async () => {
+    if (onSetupComplete) {
+      try {
+        await onSetupComplete();
+      } catch (error) {
+        console.error("Setup completion callback failed:", error);
+        // Fallback to page reload if callback fails
+        localStorage.removeItem('access_token');
+        window.location.reload();
+      }
+    } else {
+      // Fallback behavior if no callback provided
+      localStorage.removeItem('access_token');
+      window.location.reload();
+    }
   };
 
   if (loading) {
@@ -280,7 +294,7 @@ const SetupWizard: React.FC = () => {
       <WizardContainer maxWidth="md">
         <UserSetupForm
           onSubmit={handleCreateAdminUser}
-          loading={setupStatus.state.id === SETUP_STATES.CREATING_ADMIN_USER}
+          loading={setupStatus.status === SETUP_STATES.CREATING_ADMIN_USER}
           error={error}
         />
       </WizardContainer>

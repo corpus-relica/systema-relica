@@ -5,5 +5,17 @@
   "main": "index.js",
   "license": "GNU",
   "private": true,
-  "workspaces": ["packages/*"]
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "test": "yarn workspaces run test",
+    "test:watch": "yarn workspaces run test:watch",
+    "test:cov": "yarn workspaces run test:cov",
+    "test:setup": "yarn workspace @relica/prism test",
+    "test:setup:watch": "yarn workspace @relica/prism test:watch",
+    "test:setup:cov": "yarn workspace @relica/prism test:cov",
+    "test:setup:unit": "yarn workspace @relica/prism test -- --testPathPattern='.*\\.spec\\.ts$'",
+    "test:setup:integration": "yarn workspace @relica/prism test -- --testPathPattern='integration'",
+    "test:all-packages": "yarn workspaces run test",
+    "test:all-coverage": "yarn workspaces run test:cov"
+  }
 }
