@@ -5,6 +5,7 @@ import {
   FactActions, 
   SearchActions, 
   QueryActions,
+  LineageActions,
   ContractUtils
 } from '@relica/websocket-contracts';
 import { Fact } from '@relica/types';
@@ -218,7 +219,7 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
    */
   async getFactsBatch(config: { skip: number; range: number; relTypeUids?: number[] }): Promise<{ facts: any[] }> {
     try {
-      const response = await this.sendMessage(':archivist.fact/batch-get', config);
+      const response = await this.sendMessage(FactActions.BATCH_GET, config);
       return response || { facts: [] };
     } catch (error) {
       this.logger.error('Error fetching facts batch:', error);
@@ -231,7 +232,7 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
    */
   async getFactsCount(): Promise<number> {
     try {
-      const response = await this.sendMessage(':archivist.fact/count', {});
+      const response = await this.sendMessage(FactActions.COUNT, {});
       return response?.count || 0;
     } catch (error) {
       this.logger.error('Error fetching facts count:', error);
@@ -244,7 +245,7 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
    */
   async getEntityLineageViaEndpoint(entityUid: number): Promise<number[]> {
     try {
-      const response = await this.sendMessage(':archivist.lineage/get', {
+      const response = await this.sendMessage(LineageActions.GET, {
         uid: entityUid
       });
 

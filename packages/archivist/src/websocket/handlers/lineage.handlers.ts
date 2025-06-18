@@ -2,13 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { LinearizationService } from '../../linearization/linearization.service';
 import { WsResponse } from '../types/websocket.types';
+import { LineageActions, LineageEvents } from '@relica/websocket-contracts';
 
 @Injectable()
 export class LineageHandlers {
   constructor(private readonly linearizationService: LinearizationService) {}
 
   init(gateway: any) {
-    gateway.registerHandler('lineage:get', this.handleLineageGet.bind(this));
+    gateway.registerHandler(LineageActions.GET, this.handleLineageGet.bind(this));
   }
 
   // Lineage operation for cache building (ported from Clojure :archivist.lineage/get)
@@ -18,7 +19,7 @@ export class LineageHandlers {
       
       if (!uid) {
         return {
-          event: 'lineage:error',
+          event: LineageEvents.ERROR,
           data: { message: 'UID is required' }
         };
       }
@@ -27,7 +28,7 @@ export class LineageHandlers {
       const lineage = await this.linearizationService.calculateLineage(uid);
       
       return {
-        event: 'lineage:retrieved',
+        event: LineageEvents.RETRIEVED,
         data: { data: lineage } // Match Clojure (respond-success {:data lineage})
       };
     } catch (error) {
