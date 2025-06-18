@@ -918,6 +918,150 @@ export declare const MESSAGE_REGISTRY: {
         }>;
         readonly description: "Validate a fact before creation";
     };
+    readonly "fact:batch-get": {
+        readonly action: "fact:batch-get";
+        readonly service: "archivist";
+        readonly requestSchema: z.ZodObject<{
+            id: z.ZodString;
+            timestamp: z.ZodOptional<z.ZodNumber>;
+            correlationId: z.ZodOptional<z.ZodString>;
+            type: z.ZodLiteral<"request">;
+        } & {
+            service: z.ZodLiteral<"archivist">;
+            action: z.ZodLiteral<"fact:batch-get">;
+            payload: z.ZodObject<{
+                skip: z.ZodNumber;
+                range: z.ZodNumber;
+                relTypeUids: z.ZodOptional<z.ZodArray<z.ZodNumber, "many">>;
+            }, "strip", z.ZodTypeAny, {
+                skip: number;
+                range: number;
+                relTypeUids?: number[] | undefined;
+            }, {
+                skip: number;
+                range: number;
+                relTypeUids?: number[] | undefined;
+            }>;
+        }, "strip", z.ZodTypeAny, {
+            id: string;
+            type: "request";
+            service: "archivist";
+            action: "fact:batch-get";
+            payload: {
+                skip: number;
+                range: number;
+                relTypeUids?: number[] | undefined;
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+        }, {
+            id: string;
+            type: "request";
+            service: "archivist";
+            action: "fact:batch-get";
+            payload: {
+                skip: number;
+                range: number;
+                relTypeUids?: number[] | undefined;
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+        }>;
+        readonly responseSchema: z.ZodObject<{
+            id: z.ZodString;
+            timestamp: z.ZodOptional<z.ZodNumber>;
+            correlationId: z.ZodOptional<z.ZodString>;
+            type: z.ZodLiteral<"response">;
+            success: z.ZodBoolean;
+            error: z.ZodOptional<z.ZodString>;
+        } & {
+            data: z.ZodArray<z.ZodAny, "many">;
+        }, "strip", z.ZodTypeAny, {
+            id: string;
+            type: "response";
+            success: boolean;
+            data: any[];
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+            error?: string | undefined;
+        }, {
+            id: string;
+            type: "response";
+            success: boolean;
+            data: any[];
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+            error?: string | undefined;
+        }>;
+        readonly description: "Batch retrieval of facts for cache building operations";
+    };
+    readonly "fact:count": {
+        readonly action: "fact:count";
+        readonly service: "archivist";
+        readonly requestSchema: z.ZodObject<{
+            id: z.ZodString;
+            timestamp: z.ZodOptional<z.ZodNumber>;
+            correlationId: z.ZodOptional<z.ZodString>;
+            type: z.ZodLiteral<"request">;
+        } & {
+            service: z.ZodLiteral<"archivist">;
+            action: z.ZodLiteral<"fact:count">;
+            payload: z.ZodObject<{}, "strip", z.ZodTypeAny, {}, {}>;
+        }, "strip", z.ZodTypeAny, {
+            id: string;
+            type: "request";
+            service: "archivist";
+            action: "fact:count";
+            payload: {};
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+        }, {
+            id: string;
+            type: "request";
+            service: "archivist";
+            action: "fact:count";
+            payload: {};
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+        }>;
+        readonly responseSchema: z.ZodObject<{
+            id: z.ZodString;
+            timestamp: z.ZodOptional<z.ZodNumber>;
+            correlationId: z.ZodOptional<z.ZodString>;
+            type: z.ZodLiteral<"response">;
+            success: z.ZodBoolean;
+            error: z.ZodOptional<z.ZodString>;
+        } & {
+            data: z.ZodObject<{
+                count: z.ZodNumber;
+            }, "strip", z.ZodTypeAny, {
+                count: number;
+            }, {
+                count: number;
+            }>;
+        }, "strip", z.ZodTypeAny, {
+            id: string;
+            type: "response";
+            success: boolean;
+            data: {
+                count: number;
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+            error?: string | undefined;
+        }, {
+            id: string;
+            type: "response";
+            success: boolean;
+            data: {
+                count: number;
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+            error?: string | undefined;
+        }>;
+        readonly description: "Get total count of facts for progress tracking";
+    };
     readonly "search:general": {
         readonly action: "search:general";
         readonly service: "archivist";
@@ -3424,6 +3568,83 @@ export declare const MESSAGE_REGISTRY: {
             error?: string | undefined;
         }>;
         readonly description: "Validate a collection of facts";
+    };
+    readonly "lineage:get": {
+        readonly action: "lineage:get";
+        readonly service: "archivist";
+        readonly requestSchema: z.ZodObject<{
+            id: z.ZodString;
+            timestamp: z.ZodOptional<z.ZodNumber>;
+            correlationId: z.ZodOptional<z.ZodString>;
+            type: z.ZodLiteral<"request">;
+        } & {
+            service: z.ZodLiteral<"archivist">;
+            action: z.ZodLiteral<"lineage:get">;
+            payload: z.ZodObject<{
+                uid: z.ZodNumber;
+            }, "strip", z.ZodTypeAny, {
+                uid: number;
+            }, {
+                uid: number;
+            }>;
+        }, "strip", z.ZodTypeAny, {
+            id: string;
+            type: "request";
+            service: "archivist";
+            action: "lineage:get";
+            payload: {
+                uid: number;
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+        }, {
+            id: string;
+            type: "request";
+            service: "archivist";
+            action: "lineage:get";
+            payload: {
+                uid: number;
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+        }>;
+        readonly responseSchema: z.ZodObject<{
+            id: z.ZodString;
+            timestamp: z.ZodOptional<z.ZodNumber>;
+            correlationId: z.ZodOptional<z.ZodString>;
+            type: z.ZodLiteral<"response">;
+            success: z.ZodBoolean;
+            error: z.ZodOptional<z.ZodString>;
+        } & {
+            data: z.ZodObject<{
+                data: z.ZodArray<z.ZodNumber, "many">;
+            }, "strip", z.ZodTypeAny, {
+                data: number[];
+            }, {
+                data: number[];
+            }>;
+        }, "strip", z.ZodTypeAny, {
+            id: string;
+            type: "response";
+            success: boolean;
+            data: {
+                data: number[];
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+            error?: string | undefined;
+        }, {
+            id: string;
+            type: "response";
+            success: boolean;
+            data: {
+                data: number[];
+            };
+            timestamp?: number | undefined;
+            correlationId?: string | undefined;
+            error?: string | undefined;
+        }>;
+        readonly description: "Calculate entity lineage using C3 linearization algorithm";
     };
     readonly "aperture.environment/get": {
         readonly action: "aperture.environment/get";

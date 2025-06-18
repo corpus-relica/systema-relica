@@ -197,6 +197,55 @@ export const FactValidateResponseSchema = BaseResponseSchema.extend({
 export type FactValidateResponse = z.infer<typeof FactValidateResponseSchema>;
 
 // =====================================================
+// FACT BATCH GET CONTRACT (for cache building)
+// =====================================================
+
+/**
+ * Fact batch get data structure
+ */
+export const FactBatchGetMessageSchema = z.object({
+  skip: z.number(),
+  range: z.number(),
+  relTypeUids: z.array(z.number()).optional(),
+});
+
+export type FactBatchGetMessage = z.infer<typeof FactBatchGetMessageSchema>;
+
+export const FactBatchGetRequestSchema = BaseRequestSchema.extend({
+  service: z.literal('archivist'),
+  action: z.literal('fact:batch-get'),
+  payload: FactBatchGetMessageSchema,
+});
+
+export type FactBatchGetRequest = z.infer<typeof FactBatchGetRequestSchema>;
+
+export const FactBatchGetResponseSchema = BaseResponseSchema.extend({
+  data: z.array(z.any()), // Array of fact objects
+});
+
+export type FactBatchGetResponse = z.infer<typeof FactBatchGetResponseSchema>;
+
+// =====================================================
+// FACT COUNT CONTRACT (for cache building)
+// =====================================================
+
+export const FactCountRequestSchema = BaseRequestSchema.extend({
+  service: z.literal('archivist'),
+  action: z.literal('fact:count'),
+  payload: z.object({}), // Empty payload
+});
+
+export type FactCountRequest = z.infer<typeof FactCountRequestSchema>;
+
+export const FactCountResponseSchema = BaseResponseSchema.extend({
+  data: z.object({
+    count: z.number(),
+  }),
+});
+
+export type FactCountResponse = z.infer<typeof FactCountResponseSchema>;
+
+// =====================================================
 // FACT SERVICE ACTIONS
 // =====================================================
 
@@ -209,6 +258,8 @@ export const FactActions = {
   GET_SUPERTYPES: 'fact:getSupertypes',
   GET_CLASSIFIED: 'fact:getClassified',
   VALIDATE: 'fact:validate',
+  BATCH_GET: 'fact:batch-get',
+  COUNT: 'fact:count',
 } as const;
 
 export type FactActionType = typeof FactActions[keyof typeof FactActions];
@@ -226,6 +277,8 @@ export const FactEvents = {
   SUPERTYPES: 'fact:supertypes',
   CLASSIFIED: 'fact:classified',
   VALIDATED: 'fact:validated',
+  BATCH_RETRIEVED: 'fact:batch-retrieved',
+  COUNT_RETRIEVED: 'fact:count-retrieved',
   ERROR: 'fact:error',
 } as const;
 

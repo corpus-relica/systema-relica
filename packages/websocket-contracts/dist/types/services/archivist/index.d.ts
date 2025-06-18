@@ -15,6 +15,7 @@ export * from './definition';
 export * from './submission';
 export * from './transaction';
 export * from './validation';
+export * from './lineage';
 import { FactActions, FactEvents, type FactActionType, type FactEventType } from './facts';
 import { SearchActions, SearchEvents, type SearchActionType, type SearchEventType } from './search';
 import { ConceptActions, ConceptEvents, type ConceptActionType, type ConceptEventType } from './concepts';
@@ -26,6 +27,7 @@ import { DefinitionActions, DefinitionEvents, type DefinitionActionType, type De
 import { SubmissionActions, SubmissionEvents, type SubmissionActionType, type SubmissionEventType } from './submission';
 import { TransactionActions, TransactionEvents, type TransactionActionType, type TransactionEventType } from './transaction';
 import { ValidationActions, ValidationEvents, type ValidationActionType, type ValidationEventType } from './validation';
+import { LineageActions, LineageEvents, type LineageActionType, type LineageEventType } from './lineage';
 export { FactActions, FactEvents, type FactActionType, type FactEventType, };
 export { SearchActions, SearchEvents, type SearchActionType, type SearchEventType, };
 export { ConceptActions, ConceptEvents, type ConceptActionType, type ConceptEventType, };
@@ -37,13 +39,14 @@ export { DefinitionActions, DefinitionEvents, type DefinitionActionType, type De
 export { SubmissionActions, SubmissionEvents, type SubmissionActionType, type SubmissionEventType, };
 export { TransactionActions, TransactionEvents, type TransactionActionType, type TransactionEventType, };
 export { ValidationActions, ValidationEvents, type ValidationActionType, type ValidationEventType, };
+export { LineageActions, LineageEvents, type LineageActionType, type LineageEventType, };
 export declare const ArchivistActions: {
+    readonly GET: "lineage:get";
     readonly VALIDATE: "validation:validate";
     readonly COLLECTION: "validation:collection";
     readonly START: "transaction:start";
     readonly COMMIT: "transaction:commit";
     readonly ROLLBACK: "transaction:rollback";
-    readonly GET: "transaction:get";
     readonly SUBMIT: "submission:submit";
     readonly BATCH: "submission:batch";
     readonly UPDATE: "definition:update";
@@ -65,5 +68,7 @@ export declare const ArchivistActions: {
     readonly GET_SUBTYPES: "fact:getSubtypes";
     readonly GET_SUPERTYPES: "fact:getSupertypes";
     readonly GET_CLASSIFIED: "fact:getClassified";
+    readonly BATCH_GET: "fact:batch-get";
+    readonly COUNT: "fact:count";
 };
 //# sourceMappingURL=index.d.ts.map

@@ -38,6 +38,9 @@ export * from './transaction';
 // Validation operations
 export * from './validation';
 
+// Lineage operations
+export * from './lineage';
+
 // Import actions to create combined object
 import {
   FactActions,
@@ -115,6 +118,13 @@ import {
   type ValidationActionType,
   type ValidationEventType,
 } from './validation';
+
+import {
+  LineageActions,
+  LineageEvents,
+  type LineageActionType,
+  type LineageEventType,
+} from './lineage';
 
 // Re-export commonly used action constants
 export {
@@ -194,6 +204,13 @@ export {
   type ValidationEventType,
 };
 
+export {
+  LineageActions,
+  LineageEvents,
+  type LineageActionType,
+  type LineageEventType,
+};
+
 // All Archivist actions combined
 export const ArchivistActions = {
   // Facts
@@ -218,4 +235,6 @@ export const ArchivistActions = {
   ...TransactionActions,
   // Validation
   ...ValidationActions,
+  // Lineage
+  ...LineageActions,
 } as const;

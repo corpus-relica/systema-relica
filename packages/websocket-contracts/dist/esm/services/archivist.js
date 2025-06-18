@@ -10,7 +10,7 @@ export * from './archivist/index';
 // Convenient re-exports for the most commonly used items
 export { 
 // Fact operations
-FactActions, FactEvents, FactCreateRequestSchema, FactCreateResponseSchema, 
+FactActions, FactEvents, FactCreateRequestSchema, FactCreateResponseSchema, FactBatchGetRequestSchema, FactBatchGetResponseSchema, FactCountRequestSchema, FactCountResponseSchema, 
 // Search operations
 SearchActions, SearchEvents, SearchGeneralRequestSchema, SearchGeneralResponseSchema, 
 // Concept operations
@@ -20,5 +20,7 @@ QueryActions, QueryEvents, QueryExecuteRequestSchema, QueryExecuteResponseSchema
 // Kind operations
 KindActions, KindEvents, KindGetRequestSchema, KindGetResponseSchema, 
 // UID operations
-UIDActions, UIDEvents, UIDGenerateRequestSchema, UIDGenerateResponseSchema, } from './archivist/index';
+UIDActions, UIDEvents, UIDGenerateRequestSchema, UIDGenerateResponseSchema, 
+// Lineage operations
+LineageActions, LineageEvents, LineageGetRequestSchema, LineageGetResponseSchema, } from './archivist/index';
 //# sourceMappingURL=archivist.js.map

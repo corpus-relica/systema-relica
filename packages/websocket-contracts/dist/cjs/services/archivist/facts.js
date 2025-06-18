@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FactEvents = exports.FactActions = exports.FactValidateResponseSchema = exports.FactValidateRequestSchema = exports.FactGetClassifiedResponseSchema = exports.FactGetClassifiedRequestSchema = exports.FactGetSupertypesResponseSchema = exports.FactGetSupertypesRequestSchema = exports.FactGetSubtypesResponseSchema = exports.FactGetSubtypesRequestSchema = exports.FactGetResponseSchema = exports.FactGetRequestSchema = exports.FactDeleteResponseSchema = exports.FactDeleteRequestSchema = exports.FactUpdateResponseSchema = exports.FactUpdateRequestSchema = exports.FactCreateResponseSchema = exports.FactCreateRequestSchema = exports.FactQueryMessageSchema = exports.FactDeleteMessageSchema = exports.FactUpdateMessageSchema = exports.FactCreateMessageSchema = void 0;
+exports.FactEvents = exports.FactActions = exports.FactCountResponseSchema = exports.FactCountRequestSchema = exports.FactBatchGetResponseSchema = exports.FactBatchGetRequestSchema = exports.FactBatchGetMessageSchema = exports.FactValidateResponseSchema = exports.FactValidateRequestSchema = exports.FactGetClassifiedResponseSchema = exports.FactGetClassifiedRequestSchema = exports.FactGetSupertypesResponseSchema = exports.FactGetSupertypesRequestSchema = exports.FactGetSubtypesResponseSchema = exports.FactGetSubtypesRequestSchema = exports.FactGetResponseSchema = exports.FactGetRequestSchema = exports.FactDeleteResponseSchema = exports.FactDeleteRequestSchema = exports.FactUpdateResponseSchema = exports.FactUpdateRequestSchema = exports.FactCreateResponseSchema = exports.FactCreateRequestSchema = exports.FactQueryMessageSchema = exports.FactDeleteMessageSchema = exports.FactUpdateMessageSchema = exports.FactCreateMessageSchema = void 0;
 const zod_1 = require("zod");
 const base_1 = require("../../base");
 // =====================================================
@@ -130,6 +130,38 @@ exports.FactValidateResponseSchema = base_1.BaseResponseSchema.extend({
     }).optional(),
 });
 // =====================================================
+// FACT BATCH GET CONTRACT (for cache building)
+// =====================================================
+/**
+ * Fact batch get data structure
+ */
+exports.FactBatchGetMessageSchema = zod_1.z.object({
+    skip: zod_1.z.number(),
+    range: zod_1.z.number(),
+    relTypeUids: zod_1.z.array(zod_1.z.number()).optional(),
+});
+exports.FactBatchGetRequestSchema = base_1.BaseRequestSchema.extend({
+    service: zod_1.z.literal('archivist'),
+    action: zod_1.z.literal('fact:batch-get'),
+    payload: exports.FactBatchGetMessageSchema,
+});
+exports.FactBatchGetResponseSchema = base_1.BaseResponseSchema.extend({
+    data: zod_1.z.array(zod_1.z.any()), // Array of fact objects
+});
+// =====================================================
+// FACT COUNT CONTRACT (for cache building)
+// =====================================================
+exports.FactCountRequestSchema = base_1.BaseRequestSchema.extend({
+    service: zod_1.z.literal('archivist'),
+    action: zod_1.z.literal('fact:count'),
+    payload: zod_1.z.object({}), // Empty payload
+});
+exports.FactCountResponseSchema = base_1.BaseResponseSchema.extend({
+    data: zod_1.z.object({
+        count: zod_1.z.number(),
+    }),
+});
+// =====================================================
 // FACT SERVICE ACTIONS
 // =====================================================
 exports.FactActions = {
@@ -141,6 +173,8 @@ exports.FactActions = {
     GET_SUPERTYPES: 'fact:getSupertypes',
     GET_CLASSIFIED: 'fact:getClassified',
     VALIDATE: 'fact:validate',
+    BATCH_GET: 'fact:batch-get',
+    COUNT: 'fact:count',
 };
 // =====================================================
 // FACT EVENTS
@@ -154,6 +188,8 @@ exports.FactEvents = {
     SUPERTYPES: 'fact:supertypes',
     CLASSIFIED: 'fact:classified',
     VALIDATED: 'fact:validated',
+    BATCH_RETRIEVED: 'fact:batch-retrieved',
+    COUNT_RETRIEVED: 'fact:count-retrieved',
     ERROR: 'fact:error',
 };
 //# sourceMappingURL=facts.js.map
