@@ -23,7 +23,7 @@ export class SetupService implements OnModuleInit {
     
     // Subscribe to state changes and broadcast updates
     this.actor.subscribe((state) => {
-      console.log('Setup state changed:', state.value, state.context);
+      console.log('Setup state changed:', JSON.stringify(state.value), state.context);
       this.broadcastStateUpdate(state.context, state.value);
       
       // Handle activities based on current state
@@ -46,8 +46,27 @@ export class SetupService implements OnModuleInit {
   }
 
   private formatStateForClient(context: SetupContext, state: any) {
-    const stateId = typeof state === 'string' ? state : state[0] || 'unknown';
-    const substate = Array.isArray(state) ? state[1] : null;
+    let stateId: string;
+    let substate: string | null = null;
+    
+    // Handle different state formats from XState
+    if (typeof state === 'string') {
+      stateId = state;
+    } else if (Array.isArray(state)) {
+      stateId = state[0] || 'unknown';
+      substate = state[1] || null;
+    } else if (typeof state === 'object' && state !== null) {
+      // Handle compound state objects like { building_caches: 'building_facts_cache' }
+      const keys = Object.keys(state);
+      if (keys.length > 0) {
+        stateId = keys[0];
+        substate = state[keys[0]];
+      } else {
+        stateId = 'unknown';
+      }
+    } else {
+      stateId = 'unknown';
+    }
     
     // Use canonical contract format
     return {
@@ -85,7 +104,26 @@ export class SetupService implements OnModuleInit {
   }
 
   private calculateProgress(state: any): number {
-    const stateStr = typeof state === 'string' ? state : state[0];
+    let stateStr: string;
+    let substate: string | null = null;
+    
+    // Extract state info based on format
+    if (typeof state === 'string') {
+      stateStr = state;
+    } else if (Array.isArray(state)) {
+      stateStr = state[0];
+      substate = state[1] || null;
+    } else if (typeof state === 'object' && state !== null) {
+      const keys = Object.keys(state);
+      if (keys.length > 0) {
+        stateStr = keys[0];
+        substate = state[keys[0]];
+      } else {
+        stateStr = 'unknown';
+      }
+    } else {
+      stateStr = 'unknown';
+    }
     
     switch (stateStr) {
       case 'idle': return 0;
@@ -94,8 +132,8 @@ export class SetupService implements OnModuleInit {
       case 'creating_admin_user': return 20;
       case 'seeding_db': return 30;
       case 'building_caches': {
-        if (Array.isArray(state) && state[1]) {
-          switch (state[1]) {
+        if (substate) {
+          switch (substate) {
             case 'building_facts_cache': return 40;
             case 'building_lineage_cache': return 60;
             case 'building_subtypes_cache': return 80;
@@ -111,7 +149,28 @@ export class SetupService implements OnModuleInit {
   }
 
   private async processState(state: any, context: SetupContext) {
-    const stateStr = typeof state === 'string' ? state : state[0];
+    let stateStr: string;
+    let substate: string | null = null;
+    
+    // Extract state info based on format
+    if (typeof state === 'string') {
+      stateStr = state;
+    } else if (Array.isArray(state)) {
+      stateStr = state[0];
+      substate = state[1] || null;
+    } else if (typeof state === 'object' && state !== null) {
+      const keys = Object.keys(state);
+      if (keys.length > 0) {
+        stateStr = keys[0];
+        substate = state[keys[0]];
+      } else {
+        stateStr = 'unknown';
+      }
+    } else {
+      stateStr = 'unknown';
+    }
+    
+    console.log(`Processing state: ${stateStr}, substate: ${substate}`);
     
     try {
       switch (stateStr) {
@@ -122,8 +181,8 @@ export class SetupService implements OnModuleInit {
           await this.seedDatabaseActivity();
           break;
         case 'building_caches':
-          if (Array.isArray(state) && state[1]) {
-            await this.handleCacheBuildingActivity(state[1]);
+          if (substate) {
+            await this.handleCacheBuildingActivity(substate);
           }
           break;
         case 'awaiting_user_credentials':
