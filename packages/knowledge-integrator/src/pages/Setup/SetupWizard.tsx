@@ -41,7 +41,11 @@ const WelcomePaper = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
 }));
 
-const SetupWizard: React.FC = () => {
+interface SetupWizardProps {
+  onSetupComplete?: () => Promise<void>;
+}
+
+const SetupWizard: React.FC<SetupWizardProps> = ({ onSetupComplete }) => {
   const [setupStatus, setSetupStatus] = useState<SetupStatus>({
     setupRequired: true,
     state: { id: SETUP_STATES.IDLE, full_path: [SETUP_STATES.IDLE] },
@@ -221,10 +225,21 @@ const SetupWizard: React.FC = () => {
     }
   };
 
-  const handleSetupComplete = () => {
-    // Clear guest token and trigger app re-initialization
-    localStorage.removeItem('access_token');
-    window.location.reload();
+  const handleSetupComplete = async () => {
+    if (onSetupComplete) {
+      try {
+        await onSetupComplete();
+      } catch (error) {
+        console.error("Setup completion callback failed:", error);
+        // Fallback to page reload if callback fails
+        localStorage.removeItem('access_token');
+        window.location.reload();
+      }
+    } else {
+      // Fallback behavior if no callback provided
+      localStorage.removeItem('access_token');
+      window.location.reload();
+    }
   };
 
   if (loading) {
