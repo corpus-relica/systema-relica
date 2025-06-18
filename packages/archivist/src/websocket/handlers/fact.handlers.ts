@@ -152,14 +152,16 @@ export class FactHandlers {
   }
 
   // Batch operations for cache building (ported from Clojure :archivist.fact/batch-get)
-  async handleFactBatchGet(data: any, client: Socket): Promise<WsResponse> {
+  async handleFactBatchGet(data: any, client: Socket): Promise<any> {
     try {
       const { skip, range, relTypeUids } = data;
       const result = await this.factService.getBatchFacts(skip, range, relTypeUids);
-      return {
-        event: FactEvents.BATCH_RETRIEVED,
-        data: result.facts // Return facts directly to match Clojure (respond-success (:facts result))
-      };
+
+      return result.facts
+      // return {
+      //   event: FactEvents.BATCH_RETRIEVED,
+      //   data: result.facts // Return facts directly to match Clojure (respond-success (:facts result))
+      // };
     } catch (error) {
       return {
         event: FactEvents.ERROR,

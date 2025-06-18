@@ -72,7 +72,7 @@ export class CacheService {
           range: BATCH_SIZE
         });
         
-        const facts = batchResult.facts || [];
+        const facts = batchResult || [];
         
         if (facts.length === 0) {
           hasMore = false;
@@ -127,7 +127,7 @@ export class CacheService {
           relTypeUids: [1146, 1726] // Specialization relation types
         });
         
-        const facts = batchResult.facts || [];
+        const facts = batchResult || [];
         
         if (facts.length === 0) {
           hasMore = false;
@@ -187,7 +187,7 @@ export class CacheService {
           relTypeUids: [1146, 1726] // Specialization relation types
         });
         
-        const facts = batchResult.facts || [];
+        const facts = batchResult || [];
         
         if (facts.length === 0) {
           hasMore = false;
@@ -299,7 +299,7 @@ export class CacheService {
    */
   private async addToEntityFactsCache(entityUid: number, factUid: number): Promise<void> {
     try {
-      const key = `entity:facts:${entityUid}`;
+      const key = `rlc:entity:${entityUid}:facts`;
       await this.redisClient.sAdd(key, [factUid.toString()]);
     } catch (error) {
       this.logger.error(`Error adding fact ${factUid} to entity ${entityUid} facts cache:`, error);
@@ -311,7 +311,7 @@ export class CacheService {
    */
   private async setEntityLineageCache(entityUid: number, lineage: number[]): Promise<void> {
     try {
-      const key = `entity:lineage:${entityUid}`;
+      const key = `rlc:entity:${entityUid}:lineage`;
       if (lineage.length > 0) {
         await this.redisClient.del(key); // Clear existing
         const lineageStrings = lineage.map(uid => uid.toString());
@@ -327,7 +327,7 @@ export class CacheService {
    */
   private async addToSubtypesCache(ancestorUid: number, descendantUid: number): Promise<void> {
     try {
-      const key = `entity:subtypes:${ancestorUid}`;
+      const key = `rlc:entity:${ancestorUid}:subtypes`;
       await this.redisClient.sAdd(key, [descendantUid.toString()]);
     } catch (error) {
       this.logger.error(`Error adding descendant ${descendantUid} to ancestor ${ancestorUid} subtypes cache:`, error);

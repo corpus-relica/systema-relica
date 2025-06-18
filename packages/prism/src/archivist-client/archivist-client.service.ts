@@ -21,6 +21,14 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     await this.connect();
+    // const foo = await this.getFactsBatch({
+    //   skip: 0,
+    //   range: 1000,
+    //   relTypeUids: []
+    // })
+    // console.log('getFactsBatch response:', foo);
+    // const foo = await this.getEntityLineageViaEndpoint(1146)
+    // console.log('getEntityLineageViaEndpoint response:', foo);
   }
 
   async onModuleDestroy() {
@@ -81,6 +89,8 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
         payload,
       };
 
+      console.log('Sending message to Archivist:', action, payload, message);
+
       // Validate contract in development mode
       if (process.env.NODE_ENV === 'development') {
         const validation = ContractUtils.dev.validate.request(action, message);
@@ -93,13 +103,14 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
         reject(new Error(`Timeout waiting for response to ${action}`));
       }, 30000);
 
-      this.socket.emit(action, message, (response: any) => {
+      console.log('Sending message to Archivist:', action);
+      this.socket.emit(action, payload, (response: any) => {
         clearTimeout(timeout);
-        
+
         if (response?.success === false) {
           reject(new Error(response?.error?.message || `Request failed for ${action}`));
         } else {
-          resolve(response);
+          resolve(response.payload);
         }
       });
     });
@@ -114,6 +125,8 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
     let pageNumber = 0;
     let batchNumber = 0;
     let hasMore = true;
+
+    console.log('getALL FACTS BATCH')
 
     while (hasMore) {
       try {
@@ -217,13 +230,14 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
    * Get facts in batches for cache building
    * Matches the Clojure implementation's get-batch function
    */
-  async getFactsBatch(config: { skip: number; range: number; relTypeUids?: number[] }): Promise<{ facts: any[] }> {
+  async getFactsBatch(config: { skip: number; range: number; relTypeUids?: number[] }): Promise<any[]> {
     try {
+      console.log('SENDING MESSAGE', FactActions.BATCH_GET)
       const response = await this.sendMessage(FactActions.BATCH_GET, config);
       return response || { facts: [] };
     } catch (error) {
       this.logger.error('Error fetching facts batch:', error);
-      return { facts: [] };
+      return [];
     }
   }
 
@@ -250,7 +264,7 @@ export class ArchivistClientService implements OnModuleInit, OnModuleDestroy {
       });
 
       // Extract UIDs from the lineage response
-      const lineage = response?.data || response || [];
+      const lineage = response;//JSON.parse(response) || [];
       if (Array.isArray(lineage)) {
         return lineage.map((item: any) => 
           typeof item === 'object' ? item.uid || item.lh_object_uid : item
