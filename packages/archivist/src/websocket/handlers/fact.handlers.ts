@@ -8,34 +8,35 @@ import {
   FactQueryMessage,
   WsResponse 
 } from '../types/websocket.types';
+import { FactActions, FactEvents } from '@relica/websocket-contracts';
 
 @Injectable()
 export class FactHandlers {
   constructor(private readonly factService: FactService) {}
 
   init(gateway: any) {
-    gateway.registerHandler('fact:create', this.handleFactCreate.bind(this));
-    gateway.registerHandler('fact:update', this.handleFactUpdate.bind(this));
-    gateway.registerHandler('fact:delete', this.handleFactDelete.bind(this));
-    gateway.registerHandler('fact:get', this.handleFactGet.bind(this));
-    gateway.registerHandler('fact:getSubtypes', this.handleFactGetSubtypes.bind(this));
-    gateway.registerHandler('fact:getSupertypes', this.handleFactGetSupertypes.bind(this));
-    gateway.registerHandler('fact:getClassified', this.handleFactGetClassified.bind(this));
-    gateway.registerHandler('fact:validate', this.handleFactValidate.bind(this));
-    gateway.registerHandler('fact:batch-get', this.handleFactBatchGet.bind(this));
-    gateway.registerHandler('fact:count', this.handleFactCount.bind(this));
+    gateway.registerHandler(FactActions.CREATE, this.handleFactCreate.bind(this));
+    gateway.registerHandler(FactActions.UPDATE, this.handleFactUpdate.bind(this));
+    gateway.registerHandler(FactActions.DELETE, this.handleFactDelete.bind(this));
+    gateway.registerHandler(FactActions.GET, this.handleFactGet.bind(this));
+    gateway.registerHandler(FactActions.GET_SUBTYPES, this.handleFactGetSubtypes.bind(this));
+    gateway.registerHandler(FactActions.GET_SUPERTYPES, this.handleFactGetSupertypes.bind(this));
+    gateway.registerHandler(FactActions.GET_CLASSIFIED, this.handleFactGetClassified.bind(this));
+    gateway.registerHandler(FactActions.VALIDATE, this.handleFactValidate.bind(this));
+    gateway.registerHandler(FactActions.BATCH_GET, this.handleFactBatchGet.bind(this));
+    gateway.registerHandler(FactActions.COUNT, this.handleFactCount.bind(this));
   }
 
   async handleFactCreate(data: FactCreateMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.factService.submitBinaryFact(data);
       return {
-        event: 'fact:created',
+        event: FactEvents.CREATED,
         data: result
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -47,12 +48,12 @@ export class FactHandlers {
       await this.factService.deleteFact(data.fact_uid);
       const result = await this.factService.submitBinaryFact(data.updates);
       return {
-        event: 'fact:updated',
+        event: FactEvents.UPDATED,
         data: result
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -62,12 +63,12 @@ export class FactHandlers {
     try {
       const result = await this.factService.deleteFact(data.fact_uid);
       return {
-        event: 'fact:deleted',
+        event: FactEvents.DELETED,
         data: { fact_uid: data.fact_uid, success: true }
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -77,12 +78,12 @@ export class FactHandlers {
     try {
       const result = await this.factService.getFactsAboutKind(data.uid);
       return {
-        event: 'fact:retrieved',
+        event: FactEvents.RETRIEVED,
         data: result
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -92,12 +93,12 @@ export class FactHandlers {
     try {
       const result = await this.factService.getSubtypes(data.uid);
       return {
-        event: 'fact:subtypes',
+        event: FactEvents.SUBTYPES,
         data: result
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -108,12 +109,12 @@ export class FactHandlers {
       // getSupertypesOf method doesn't exist - returning empty result
       const result = [];
       return {
-        event: 'fact:supertypes',
+        event: FactEvents.SUPERTYPES,
         data: result
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -123,12 +124,12 @@ export class FactHandlers {
     try {
       const result = await this.factService.getClassified(data.uid);
       return {
-        event: 'fact:classified',
+        event: FactEvents.CLASSIFIED,
         data: result
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -139,12 +140,12 @@ export class FactHandlers {
       // validateFact method doesn't exist on FactService - returning success
       const result = { valid: true, message: 'Validation not implemented' };
       return {
-        event: 'fact:validated',
+        event: FactEvents.VALIDATED,
         data: result
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -156,12 +157,12 @@ export class FactHandlers {
       const { skip, range, relTypeUids } = data;
       const result = await this.factService.getBatchFacts(skip, range, relTypeUids);
       return {
-        event: 'fact:batch-retrieved',
+        event: FactEvents.BATCH_RETRIEVED,
         data: result.facts // Return facts directly to match Clojure (respond-success (:facts result))
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
@@ -172,12 +173,12 @@ export class FactHandlers {
     try {
       const count = await this.factService.getFactsCount();
       return {
-        event: 'fact:count-retrieved',
+        event: FactEvents.COUNT_RETRIEVED,
         data: { count } // Match Clojure (respond-success {:count result})
       };
     } catch (error) {
       return {
-        event: 'fact:error',
+        event: FactEvents.ERROR,
         data: { message: error.message }
       };
     }
