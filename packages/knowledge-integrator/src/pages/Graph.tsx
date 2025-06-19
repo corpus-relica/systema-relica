@@ -7,6 +7,7 @@ import { observer } from "mobx-react";
 import { useStore } from "react-admin";
 
 import { portalSocket } from "../PortalSocket";
+import { PortalUserActions } from "@relica/websocket-contracts";
 
 import Box from "@mui/material/Box";
 
@@ -23,7 +24,6 @@ import { Fact } from "../types";
 import authProvider, { getAuthToken } from "../authProvider";
 
 const USER = "user";
-const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 
 const Graph = observer(() => {
   const { factDataStore, colorPaletteStore, authStore } = useStores();
@@ -37,7 +37,7 @@ const Graph = observer(() => {
   const [filter, setFilter] = useState<number>(0);
 
   const selectNode = (id: number) => {
-    portalSocket.emit("user", "selectEntity", { uid: id });
+    portalSocket.emit(USER, "selectEntity", { uid: id });
   };
 
   const token = getAuthToken();
@@ -101,7 +101,7 @@ const Graph = observer(() => {
     const identityx = await authProvider.getIdentity();
     console.log("authprovider userId:", identityx);
     const { lh_object_uid } = res;
-    portalSocket.emit(USER, LOAD_SPECIALIZATION_HIERARCHY, {
+    portalSocket.emit(USER, "loadSpecializationHierarchy", {
       uid: lh_object_uid,
       userId: authStore.userId || identityx?.id || "unknown",
     });

@@ -21,6 +21,30 @@ import {
   ClientResponse,
   ClientEvent
 } from '../types/websocket-messages';
+import { 
+  PortalUserActions,
+  PortalSystemEvents,
+  SelectEntityRequestSchema,
+  SelectFactRequestSchema,
+  SelectNoneRequestSchema,
+  LoadSpecializationHierarchyRequestSchema,
+  LoadEntityRequestSchema,
+  ClearEntitiesRequestSchema,
+  LoadAllRelatedFactsRequestSchema,
+  LoadSubtypesConeRequestSchema,
+  UnloadEntityRequestSchema,
+  UnloadSubtypesConeRequestSchema,
+  DeleteEntityRequestSchema,
+  DeleteFactRequestSchema,
+  LoadEntitiesRequestSchema,
+  UnloadEntitiesRequestSchema,
+  GetSpecializationHierarchyRequestSchema,
+  type SelectEntityRequest,
+  type SelectFactRequest,
+  type SelectNoneRequest,
+  type LoadSpecializationHierarchyRequest,
+  type StandardResponse,
+} from '@relica/websocket-contracts';
 import customParser from 'socket.io-msgpack-parser';
 
 interface ConnectedClient {
@@ -215,12 +239,22 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  @SubscribeMessage('user:selectEntity')
+  @SubscribeMessage(PortalUserActions.SELECT_ENTITY)
   async handleSelectEntity(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { uid: string; userId: string }
+    @MessageBody() payload: SelectEntityRequest
   ): Promise<any> {
     try {
+      // Validate payload
+      const validation = SelectEntityRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        return this.createResponse(client.id, false, { 
+          type: 'validation-error', 
+          message: 'Invalid payload format',
+          details: validation.error.issues 
+        });
+      }
+
       const clientData = this.connectedClients.get(client.id);
       if (!clientData) {
         return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
@@ -288,50 +322,220 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // Placeholder handlers for other message types
-  @SubscribeMessage('user:loadSpecializationHierarchy')
+  @SubscribeMessage(PortalUserActions.LOAD_SPECIALIZATION_HIERARCHY)
   async handleLoadSpecializationHierarchy(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { uid: string; userId: string }
+    @MessageBody() payload: LoadSpecializationHierarchyRequest
   ): Promise<any> {
+    try {
+      // Validate payload
+      const validation = LoadSpecializationHierarchyRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        return this.createResponse(client.id, false, { 
+          type: 'validation-error', 
+          message: 'Invalid payload format',
+          details: validation.error.issues 
+        });
+      }
 
-    const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid, payload.userId);
+      const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid.toString(), payload.userId);
 
-    if (!result ) {
-      return {
-        success: false,
-        error: {
-          type: 'internal-error',
-          message: 'Failed to load specialization hierarchy',
-          details: result ? result.error : 'Unknown error',
-        },
-      };
+      if (!result ) {
+        return {
+          success: false,
+          error: {
+            type: 'internal-error',
+            message: 'Failed to load specialization hierarchy',
+            details: result ? result.error : 'Unknown error',
+          },
+        };
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error('Load specialization hierarchy error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load specialization hierarchy' });
     }
-
-    return result
   }
 
-  @SubscribeMessage('clearEnvironmentEntities')
-  async handleClearEnvironmentEntities(
+  @SubscribeMessage(PortalUserActions.LOAD_ENTITY)
+  async handleLoadEntity(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { userId: string }
+    @MessageBody() payload: any
   ): Promise<any> {
-    // TODO: Implement Aperture service call
-    return this.createResponse(client.id, true, {
-      message: 'Environment entities cleared',
-    });
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Entity loaded',
+      });
+    } catch (error) {
+      this.logger.error('Load entity error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load entity' });
+    }
   }
 
-  @SubscribeMessage('loadAllRelatedFacts')
+  @SubscribeMessage(PortalUserActions.CLEAR_ENTITIES)
+  async handleClearEntities(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Entities cleared',
+      });
+    } catch (error) {
+      this.logger.error('Clear entities error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to clear entities' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.LOAD_ALL_RELATED_FACTS)
   async handleLoadAllRelatedFacts(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { uid: string; userId: string }
+    @MessageBody() payload: any
   ): Promise<any> {
-    // TODO: Implement Aperture service call
-    return this.createResponse(client.id, true, {
-      message: 'All related facts loaded',
-      facts: [],
-    });
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'All related facts loaded',
+        facts: [],
+      });
+    } catch (error) {
+      this.logger.error('Load all related facts error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load all related facts' });
+    }
   }
+
+  @SubscribeMessage(PortalUserActions.LOAD_SUBTYPES_CONE)
+  async handleLoadSubtypesCone(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Subtypes cone loaded',
+      });
+    } catch (error) {
+      this.logger.error('Load subtypes cone error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load subtypes cone' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.UNLOAD_ENTITY)
+  async handleUnloadEntity(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Entity unloaded',
+      });
+    } catch (error) {
+      this.logger.error('Unload entity error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to unload entity' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.UNLOAD_SUBTYPES_CONE)
+  async handleUnloadSubtypesCone(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Subtypes cone unloaded',
+      });
+    } catch (error) {
+      this.logger.error('Unload subtypes cone error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to unload subtypes cone' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.DELETE_ENTITY)
+  async handleDeleteEntity(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Entity deleted',
+      });
+    } catch (error) {
+      this.logger.error('Delete entity error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to delete entity' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.DELETE_FACT)
+  async handleDeleteFact(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Fact deleted',
+      });
+    } catch (error) {
+      this.logger.error('Delete fact error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to delete fact' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.LOAD_ENTITIES)
+  async handleLoadEntities(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Entities loaded',
+      });
+    } catch (error) {
+      this.logger.error('Load entities error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load entities' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.UNLOAD_ENTITIES)
+  async handleUnloadEntities(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Entities unloaded',
+      });
+    } catch (error) {
+      this.logger.error('Unload entities error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to unload entities' });
+    }
+  }
+
+  @SubscribeMessage(PortalUserActions.GET_SPECIALIZATION_HIERARCHY)
+  async handleGetSpecializationHierarchy(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ): Promise<any> {
+    try {
+      // TODO: Implement Aperture service call
+      return this.createResponse(client.id, true, {
+        message: 'Specialization hierarchy retrieved',
+        hierarchy: [],
+      });
+    } catch (error) {
+      this.logger.error('Get specialization hierarchy error:', error);
+      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to get specialization hierarchy' });
+    }
+  }
+
 
   @SubscribeMessage('chatUserInput')
   async handleChatUserInput(

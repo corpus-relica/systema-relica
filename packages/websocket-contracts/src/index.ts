@@ -31,6 +31,7 @@ export * from './base';
 export * from './services/prism';
 export * from './services/archivist';
 export * from './services/aperture';
+export * from './services/portal';
 
 // Message registry and utilities
 export * from './registry';
@@ -204,3 +205,41 @@ export {
   type Fact,
   type Environment,
 } from './services/aperture';
+
+export {
+  // Portal user actions (knowledge-integrator → portal)
+  PortalUserActions,
+  PortalSystemEvents,
+  PortalActions,
+  type PortalUserActionType,
+  type PortalSystemEventType,
+  type PortalCommunicationType,
+  type SelectEntityRequest,
+  type SelectFactRequest,
+  type SelectNoneRequest,
+  type LoadSpecializationHierarchyRequest,
+  type LoadEntityRequest,
+  type ClearEntitiesRequest,
+  type LoadAllRelatedFactsRequest,
+  type LoadSubtypesConeRequest,
+  type UnloadEntityRequest,
+  type UnloadSubtypesConeRequest,
+  type DeleteEntityRequest,
+  type DeleteFactRequest,
+  type LoadEntitiesRequest,
+  type UnloadEntitiesRequest,
+  type GetSpecializationHierarchyRequest,
+  type StandardResponse,
+  // Portal system events (portal → knowledge-integrator)
+  type LoadedFactsEvent,
+  type UnloadedFactsEvent,
+  type SelectedEntityEvent,
+  type SelectedFactEvent,
+  type SelectedNoneEvent,
+  type EntitiesClearedEvent,
+  type StateInitializedEvent,
+  type StateChangedEvent,
+  type LoadedModelsEvent,
+  type UnloadedModelsEvent,
+  type UpdateCategoryDescendantsCacheEvent,
+} from './services/portal';
