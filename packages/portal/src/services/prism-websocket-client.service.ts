@@ -12,7 +12,6 @@ export class PrismWebSocketClientService extends BaseWebSocketClient {
     super(configService, 'prism', 3004);
   }
 
-  // Method to set the portal gateway reference (called from gateway)
   setPortalGateway(gateway: any) {
     this.portalGateway = gateway;
     this.setupBroadcastListener();

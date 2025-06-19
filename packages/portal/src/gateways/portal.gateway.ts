@@ -57,6 +57,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     // Set up the broadcast forwarding after initialization
     this.prismClient.setPortalGateway(this);
+    this.apertureClient.setPortalGateway(this);
   }
 
   // Error codes aligned with Clojure implementation
@@ -293,12 +294,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: { uid: string; userId: string }
   ): Promise<any> {
 
-    console.log("Loading specialization hierarchy for UID:", payload.uid, "by user:", payload.userId);
     const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid, payload.userId);
 
-    console.log("Specialization hierarchy result:", result);
-
-    if (!result || !result.success) {
+    if (!result ) {
       return {
         success: false,
         error: {
@@ -308,10 +306,8 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         },
       };
     }
-    return {
-      success: true,
-      payload: result.data,
-    };
+
+    return result
   }
 
   @SubscribeMessage('clearEnvironmentEntities')

@@ -23,7 +23,7 @@ export interface WebSocketServiceClient {
 
 @Injectable()
 export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit, OnModuleDestroy {
-  protected socket: Socket | null = null;
+  public socket: Socket | null = null;
   protected readonly logger = new Logger(this.constructor.name);
 
   constructor(

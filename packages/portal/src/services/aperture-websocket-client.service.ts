@@ -3,12 +3,46 @@ import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { ApertureMessage, ServiceResponse } from '../types/websocket-messages';
 import { ApertureActions } from '@relica/websocket-contracts';
+// import { PortalGateway } from '../gateways/portal.gateway';
 
 @Injectable()
 export class ApertureWebSocketClientService extends BaseWebSocketClient {
+  private portalGateway: any; // Will be injected after initialization to avoid circular dependency
+
   constructor(configService: ConfigService) {
     super(configService, 'aperture', 3003);
   }
+
+  async onModuleInit() {
+    await super.onModuleInit();
+
+    this.socket.on('aperture.facts/loaded', (payload) => {
+      this.logger.debug(`Received aperture.facts/loaded event`);
+      if (!this.portalGateway) {
+        this.logger.warn('PortalGateway not set, cannot forward event');
+        return;
+      }
+      // Forward the event to the Portal Gateway
+      this.portalGateway.server.emit('system:loadedFacts', payload);
+    });
+  }
+
+  setPortalGateway(gateway: any) {
+    this.portalGateway = gateway;
+    // this.setupBroadcastListener();
+  }
+
+  // private setupBroadcastListener() {
+  //   if (!this.socket || !this.portalGateway) return;
+
+  //   // Listen for setup status broadcasts from Prism
+  //   this.socket.on(PrismEvents.SETUP_STATUS_UPDATE, (broadcastEvent: SetupStatusBroadcastEvent) => {
+  //     this.logger.log('📡 Received setup status broadcast from Prism, forwarding to frontend clients');
+
+  //     // Forward the broadcast to all connected frontend clients via Portal Gateway
+  //     this.portalGateway.server.emit(PrismEvents.SETUP_STATUS_UPDATE, broadcastEvent);
+  //   });
+  // }
 
   async getEnvironment(userId: number, environmentId: number = undefined): Promise<any> {
     const message: ApertureMessage = {

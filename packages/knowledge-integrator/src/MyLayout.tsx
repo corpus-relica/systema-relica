@@ -11,7 +11,8 @@ import { loadUserEnvironment, resolveUIDs } from "./PortalClient";
 
 const replHeight = "40vh"; // Adjust as needed
 
-// import { ccSocket } from "./socket";
+// import { portalWs, initializeWebSocket } from "./socket.js";
+import { portalSocket } from "./PortalSocket";
 
 // const memStore = localStorageStore();
 
@@ -115,10 +116,12 @@ export const MyLayout = (props) => {
 
     const onConnect = () => {
       setIsConnected(true);
+      // console.log("🔌Connected to portal socket");
     };
 
     const onDisconnect = () => {
       setIsConnected(false);
+      // console.log("🔌 Disconnected from portal socket");
     };
 
     const onSelectEntity = (d) => {
@@ -136,6 +139,7 @@ export const MyLayout = (props) => {
     };
 
     const onAddFacts = (d) => {
+      console.log("Adding facts:", d.facts);
       factDataStore.addFacts(d.facts);
     };
 
@@ -214,13 +218,13 @@ export const MyLayout = (props) => {
 
     initializeEnvironment();
 
-    // ccSocket.on("connect", onConnect);
-    // ccSocket.on("disconnect", onDisconnect);
+    portalSocket.on("connect", onConnect);
+    portalSocket.on("disconnect", onDisconnect);
 
     // ccSocket.on("system:selectedEntity", onSelectEntity);
     // ccSocket.on("system:selectedFact", onSelectFact);
     // ccSocket.on("system:selectedNone", onNoneSelected);
-    // ccSocket.on("system:loadedFacts", onAddFacts);
+    portalSocket.on("system:loadedFacts", onAddFacts);
     // ccSocket.on("system:unloadedFacts", onRemFacts);
     // ccSocket.on("system:loadedModels", onAddModels);
     // ccSocket.on("system:unloadedModels", onRemModels);

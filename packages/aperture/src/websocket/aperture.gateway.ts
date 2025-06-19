@@ -480,7 +480,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {
     try {
       const { 'user-id': userId, 'environment-id': envId, uid } = payload;
-      
+
       // Get specialization hierarchy from Archivist
       const result = await this.archivistClient.getSpecializationHierarchy(userId, uid);
 

@@ -20,7 +20,7 @@ import Modal from "@mui/material/Modal";
 import GraphAndSelectionLayout from "./GraphToo";
 import { Fact } from "../types";
 
-import { getAuthToken } from "../authProvider";
+import authProvider, { getAuthToken } from "../authProvider";
 
 const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
@@ -91,15 +91,19 @@ const Graph = observer(() => {
     portalSocket.emit(USER, "selectNone", {});
   };
 
-  const handleSearchUIClose = (res: any) => {
+  const handleSearchUIClose = async (res: any) => {
     setSearchUIOpen(false);
 
     if (!res) return;
 
+    console.log("Search UI closed with result:", authStore.userId, res);
+
+    const identityx = await authProvider.getIdentity();
+    console.log("authprovider userId:", identityx);
     const { lh_object_uid } = res;
     portalSocket.emit(USER, LOAD_SPECIALIZATION_HIERARCHY, {
       uid: lh_object_uid,
-      userId: authStore.userId,
+      userId: authStore.userId || identityx?.id || "unknown",
     });
     selectNode(lh_object_uid);
   };

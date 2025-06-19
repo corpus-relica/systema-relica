@@ -39,7 +39,7 @@ export class SpecializationGateway {
     @MessageBody() data: any,
   ) {
     this.logger.debug(`Handling ${SpecializationActions.SPECIALIZATION_HIERARCHY_GET} from ${client.id}:`, data);
-    const result = await this.specializationHandlers.handleSpecializationHierarchyGet(data, client);
+    const result = await this.specializationHandlers.handleSpecializationHierarchyGet(data.payload, client);
     return result;
   }
 }
