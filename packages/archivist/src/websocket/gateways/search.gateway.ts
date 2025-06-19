@@ -30,7 +30,8 @@ export class SearchGateway {
   ) {
     this.logger.debug(`Handling ${SearchActions.GENERAL} from ${client.id}:`, data);
     const result = await this.searchHandlers.handleGeneralSearch(data, client);
-    return result;
+    this.logger.debug(`Found ${result.payload.facts.length} search results for ${SearchActions.GENERAL}`);
+    return result.payload;
   }
 
   @SubscribeMessage(SearchActions.INDIVIDUAL)

@@ -30,7 +30,6 @@ export class SearchController {
     @Query('filter') searchFilter?: string,
   ) {
     try {
-      console.log('SearchController.searchText called with:', { searchTerm, collectionUID, page, pageSize, searchFilter });
 
       if (!searchTerm) {
         throw new BadRequestException('query parameter is required');
@@ -39,17 +38,9 @@ export class SearchController {
       const limitNum = pageSize ? pageSize : 10; // Default to 10 if not provided
       const offsetNum = page ? page : 0; // Default to 0 if not provided
 
-      console.log('Parsed limit:', limitNum, 'offset:', offsetNum);
-
       const results = await this.archivistClient.searchText(searchTerm, collectionUID, limitNum, offsetNum, searchFilter);
+      return results;
 
-      console.log('Search results:', results);
-
-      return {
-        success: true,
-        results,
-        total: results.length,
-      };
     } catch (error) {
       return {
         success: false,

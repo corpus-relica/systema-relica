@@ -16,19 +16,19 @@ export class SearchHandlers {
     private readonly executeSearchQueryService: ExecuteSearchQueryService
   ) {}
 
-  async handleGeneralSearch(data: SearchMessage, client: Socket): Promise<WsResponse> {
+  async handleGeneralSearch(data: SearchMessage, client: Socket): Promise<any> {
     try {
       const result = await this.generalSearchService.getTextSearch(
-        data.searchTerm, 
+        data.searchTerm,
         data.collectionUID || null,
-        data.page || 1, 
+        data.page || 1,
         data.pageSize || 20,
         data.filter || null,
         false // exactMatch
       );
       return {
-        event: 'search:general:results',
-        data: result
+        success: true,
+        payload: result
       };
     } catch (error) {
       return {

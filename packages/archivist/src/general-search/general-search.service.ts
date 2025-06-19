@@ -23,12 +23,14 @@ export class GeneralSearchService {
     filter = null,
     exactMatch = false,
   ) {
+
     let descendants = [];
     if (filter) {
       descendants = await this.cacheService.allDescendantsOf(
         parseInt(filter.uid),
       );
     }
+    
     const res = await this.executeSearchQueryService.executeSearchQuery(
       textSearchQuery,
       countTextSearchQuery,
@@ -40,7 +42,7 @@ export class GeneralSearchService {
       pageSize,
       exactMatch,
     );
-    console.log('TEXT SEARCH: ', res);
+
     return res;
   }
 
