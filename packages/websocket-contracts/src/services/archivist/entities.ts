@@ -104,6 +104,31 @@ export const EntityTypeGetResponseSchema = BaseResponseSchema.extend({
 export type EntityTypeGetResponse = z.infer<typeof EntityTypeGetResponseSchema>;
 
 // =====================================================
+// ENTITY COLLECTIONS GET CONTRACT
+// =====================================================
+
+export const EntityCollectionsGetMessageSchema = z.object({});
+
+export type EntityCollectionsGetMessage = z.infer<typeof EntityCollectionsGetMessageSchema>;
+
+export const EntityCollectionsGetRequestSchema = BaseRequestSchema.extend({
+  service: z.literal('archivist'),
+  action: z.literal('entity:collections-get'),
+  payload: EntityCollectionsGetMessageSchema,
+});
+
+export type EntityCollectionsGetRequest = z.infer<typeof EntityCollectionsGetRequestSchema>;
+
+export const EntityCollectionsGetResponseSchema = BaseResponseSchema.extend({
+  data: z.array(z.object({
+    name: z.string(),
+    uid: z.number(),
+  })).optional(),
+});
+
+export type EntityCollectionsGetResponse = z.infer<typeof EntityCollectionsGetResponseSchema>;
+
+// =====================================================
 // ACTION CONSTANTS
 // =====================================================
 
@@ -111,6 +136,7 @@ export const EntityActions = {
   BATCH_RESOLVE: 'entity:batch-resolve',
   CATEGORY_GET: 'entity:category-get',
   TYPE_GET: 'entity:type-get',
+  COLLECTIONS_GET: 'entity:collections-get',
 } as const;
 
 export type EntityActionType = typeof EntityActions[keyof typeof EntityActions];

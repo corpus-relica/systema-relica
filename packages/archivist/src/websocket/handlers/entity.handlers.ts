@@ -3,6 +3,7 @@ import { Logger, Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { EntityActions, EntityBatchResolveMessage } from '@relica/websocket-contracts';
 import { GellishBaseService } from '../../gellish-base/gellish-base.service';
+import { EntityRetrievalService } from '../../entity-retrieval/entity-retrieval.service';
 
 
 @Injectable()
@@ -10,7 +11,8 @@ export class EntityHandlers {
   private readonly logger = new Logger(EntityHandlers.name);
 
   constructor(
-    private readonly gellishBaseService: GellishBaseService
+    private readonly gellishBaseService: GellishBaseService,
+    private readonly entityRetrievalService: EntityRetrievalService
   ) {
     this.logger.log('EntityHandlers initialized');
   }
@@ -126,6 +128,33 @@ export class EntityHandlers {
       return {
         success: false,
         error: 'Failed to get entity type',
+        code: 'internal-error'
+      };
+    }
+  }
+
+  @SubscribeMessage(EntityActions.COLLECTIONS_GET)
+  async handleEntityCollectionsGet(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ): Promise<any> {
+    try {
+      this.logger.log('🔍 Getting entity collections');
+
+      const collections = await this.entityRetrievalService.getCollections();
+
+      this.logger.log(`✅ Successfully retrieved ${collections.length} collections`);
+
+      return {
+        success: true,
+        data: collections
+      };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to get entity collections: ${error.message}`, error.stack);
+      return {
+        success: false,
+        error: 'Failed to get entity collections',
         code: 'internal-error'
       };
     }

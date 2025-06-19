@@ -176,4 +176,20 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     return response.data;
   }
 
+  async getEntityCollections(): Promise<any> {
+    const message: ArchivistMessage = {
+      id: this.generateMessageId(),
+      type: 'request',
+      service: 'archivist',
+      action: EntityActions.COLLECTIONS_GET, // 'entity:collections-get'
+      payload: {},
+    };
+
+    const response = await this.sendMessage(message);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to get entity collections');
+    }
+    return response.data;
+  }
+
 }

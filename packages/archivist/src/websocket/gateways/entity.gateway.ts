@@ -52,4 +52,14 @@ export class EntityGateway {
     const result = await this.entityHandlers.handleEntityTypeGet(data, client);
     return result;
   }
+
+  @SubscribeMessage(EntityActions.COLLECTIONS_GET)
+  async handleEntityCollectionsGet(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: any,
+  ) {
+    // this.logger.debug(`Handling ${EntityActions.COLLECTIONS_GET} from ${client.id}:`, data);
+    const result = await this.entityHandlers.handleEntityCollectionsGet(data, client);
+    return result;
+  }
 }

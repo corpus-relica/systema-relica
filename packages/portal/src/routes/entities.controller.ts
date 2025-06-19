@@ -115,4 +115,22 @@ export class EntitiesController {
       };
     }
   }
+
+  @Get("/retrieveEntity/collections")
+  @ApiOperation({ summary: 'Retrieve entity collections, the collections defined in the semantic model' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Entity collections retrieved successfully' })
+  async retrieveEntityCollections() {
+    try {
+
+      const collections = await this.archivistClient.getEntityCollections();
+      console.log("RETRIEVE ENTITY COLLECTIONS", collections);
+      return collections
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to retrieve entity collections',
+      };
+    }
+  }
 }
