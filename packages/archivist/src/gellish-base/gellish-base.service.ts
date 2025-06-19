@@ -97,7 +97,6 @@ export class GellishBaseService {
   };
 
   getEntities = async (uids: number[]) => {
-    console.log('UIDS', uids);
     const result = await this.graphService.execQuery(entities, { uids });
     if (result.length === 0) {
       return null;
@@ -110,6 +109,7 @@ export class GellishBaseService {
         const descendants = await this.cacheService.allDescendantsOf(
           entity.properties.uid,
         );
+
         // Combine the entity properties and the descendants
         return Object.assign({}, entity.properties, { descendants });
       }),
@@ -118,9 +118,7 @@ export class GellishBaseService {
 
   getSpecializationFact = async (uid) => {
     const result = await this.graphService.execQuery(specializationFact, {
-      uid,
-    });
-    if (result.length === 0) {
+      uid,}); if (result.length === 0) {
       return [];
     }
 

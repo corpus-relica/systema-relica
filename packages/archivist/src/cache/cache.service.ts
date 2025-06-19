@@ -43,12 +43,12 @@ export class CacheService {
   }
 
   async removeFromFactsInvolvingEntity(uid, factUID) {
-    const factsKey = `rlc:db:YYYY:entity:${uid}:facts`;
+    const factsKey = `rlc:entity:${uid}:facts`;
     await this.redisClient.srem(factsKey, factUID + '');
   }
 
   async allFactsInvolvingEntity(uid) {
-    const factsKey = `rlc:db:YYYY:entity:${uid}:facts`;
+    const factsKey = `rlc:entity:${uid}:facts`;
     let facts: any[] = await this.redisClient.smembers(factsKey);
     facts = facts.map((fact) => parseInt(fact, 10));
     if (facts && facts.length > 0) {
@@ -65,7 +65,7 @@ export class CacheService {
         const newDescendants = Array.from(descendantsSet).map((uid) =>
           (uid as number).toString(),
         );
-        const ns = 'rlc:db:YYYY:entity:' + nodeUid + ':descendants';
+        const ns = 'rlc:entity:' + nodeUid + ':subtypes';
         // client.SADD(ns, newDescendants);
         for (const descendant of newDescendants) {
           const isMember = await this.redisClient.sismember(ns, descendant);
@@ -85,7 +85,7 @@ export class CacheService {
   }
 
   async allDescendantsOf(uid: number): Promise<number[]> {
-    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    const descendantsKey = `rlc:entity:${uid}:subtypes`;
     let descendants: any[] = await this.redisClient.smembers(descendantsKey);
     // Convert each member of the set from a string to an integer
     descendants = descendants.map((descendant: string) =>
@@ -101,7 +101,7 @@ export class CacheService {
   }
 
   async updateDescendantsCache(uid) {
-    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    const descendantsKey = `rlc:entity:${uid}:subtypes`;
     let descendants: any[] = await this.redisClient.smembers(descendantsKey);
     descendants = descendants.map((descendant) => parseInt(descendant, 10));
     this.descendantsCache[uid] = descendants;
@@ -109,7 +109,7 @@ export class CacheService {
   }
 
   // async setDescendantsOf(uid, descendants) {
-  //   const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+  //   const descendantsKey = `rlc:entity:${uid}:subtypes`;
   //   await this.redisClient.SADD(descendantsKey, descendants);
   //   this.descendantsCache[uid] = descendants;
   //   return descendants;
@@ -120,7 +120,7 @@ export class CacheService {
   }
 
   async addDescendantTo(uid, descendant) {
-    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    const descendantsKey = `rlc:entity:${uid}:subtypes`;
     await this.redisClient.sadd(descendantsKey, descendant + '');
     // console.log(uid, descendant, Object.keys(this.descendantsCache));//.includes(parseInt(uid)));
     if (this.descendantsCache[uid + '']) {
@@ -133,7 +133,7 @@ export class CacheService {
   }
 
   async addDescendantsTo(uid, descendants: number[]) {
-    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    const descendantsKey = `rlc:entity:${uid}:subtypes`;
     await this.redisClient.sadd(
       descendantsKey,
       ...descendants.map((d) => d + ''),
@@ -148,7 +148,7 @@ export class CacheService {
   }
 
   async removeDescendantFrom(uid, descendant) {
-    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    const descendantsKey = `rlc:entity:${uid}:subtypes`;
     await this.redisClient.srem(descendantsKey, descendant + '');
     if (this.descendantsCache[uid + '']) {
       console.log('Removing descendant from cache');
@@ -159,7 +159,7 @@ export class CacheService {
   }
 
   async removeDescendantsFrom(uid, descendants: number[]) {
-    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    const descendantsKey = `rlc:entity:${uid}:subtypes`;
     await this.redisClient.srem(
       descendantsKey,
       ...descendants.map((d) => d + ''),
@@ -176,7 +176,7 @@ export class CacheService {
 
   async lineageOf(uid: number) {
     try {
-      const lineageKey = `rlc:db:YYYY:entity:${uid}:lineage`;
+      const lineageKey = `rlc:entity:${uid}:lineage`;
       let lineage: any[] = await this.redisClient.lrange(lineageKey, 0, -1);
       lineage = lineage.map((uid) => parseInt(uid, 10));
       return lineage;
@@ -191,7 +191,7 @@ export class CacheService {
     //   if (this.entityPromptCache[uid]) {
     //     return this.entityPromptCache[uid];
     //   }
-    //   const promptKey = `rlc:db:YYYY:entity:${uid}:prompts:info`;
+    //   const promptKey = `rlc:entity:${uid}:prompts:info`;
     //   let prompt /*string*/ = await this.redisClient.GET(promptKey);
     //   if (prompt) {
     //     this.entityPromptCache[uid] = prompt;
@@ -201,14 +201,14 @@ export class CacheService {
   }
 
   async setPromptOf(uid, prompt) {
-    //   const promptKey = `rlc:db:YYYY:${uid}:prompts:info`;
+    //   const promptKey = `rlc:${uid}:prompts:info`;
     //   await this.redisClient.set(promptKey, prompt);
     //   this.entityPromptCache[uid] = prompt;
     //   return prompt;
   }
 
   async clearEntityLineageCache(uid) {
-    const lineageKey = `rlc:db:YYYY:entity:${uid}:lineage`;
+    const lineageKey = `rlc:entity:${uid}:lineage`;
     await this.redisClient.del(lineageKey);
   }
 
@@ -222,7 +222,7 @@ export class CacheService {
         const reply = await this.redisClient.scan(
           cursor,
           'MATCH',
-          'rlc:db:YYYY:entity:*:lineage',
+          'rlc:entity:*:lineage',
           'COUNT',
           '100',
         );
@@ -246,7 +246,7 @@ export class CacheService {
   async addToEntityLineageCache(entityUid: number, lineage: number[]) {
     // console.log('addToEntityLineageCache', entityUid, lineage);
     try {
-      const ns = 'rlc:db:YYYY:entity:' + entityUid + ':lineage';
+      const ns = 'rlc:entity:' + entityUid + ':lineage';
       const lineageStrArray = lineage.map((uid) => uid.toString());
       console.log('lineageStrArray', lineageStrArray);
       if (lineageStrArray.length === 0) {
@@ -270,7 +270,7 @@ export class CacheService {
   //--------------------------------------------------------------------- ENTITY
 
   async getMinFreeEntityUID() {
-    const minFreeEntityUIDKey = `rlc:db:YYYY:minFreeEntityUID`;
+    const minFreeEntityUIDKey = `rlc:minFreeEntityUID`;
     const minFreeEntityUID = await this.redisClient.get(minFreeEntityUIDKey);
     if (minFreeEntityUID) {
       return +minFreeEntityUID;
@@ -279,12 +279,12 @@ export class CacheService {
   }
 
   async setMinFreeEntityUID(uid: number) {
-    const minFreeEntityUIDKey = `rlc:db:YYYY:minFreeEntityUID`;
+    const minFreeEntityUIDKey = `rlc:minFreeEntityUID`;
     await this.redisClient.set(minFreeEntityUIDKey, '' + uid);
   }
 
   async getMinFreeFactUID() {
-    const minFreeFactUIDKey = `rlc:db:YYYY:minFreeFactUID`;
+    const minFreeFactUIDKey = `rlc:minFreeFactUID`;
     const minFreeFactUID = await this.redisClient.get(minFreeFactUIDKey);
     if (minFreeFactUID) {
       return +minFreeFactUID;
@@ -293,7 +293,7 @@ export class CacheService {
   }
 
   async setMinFreeFactUID(uid: number) {
-    const minFreeFactUIDKey = `rlc:db:YYYY:minFreeFactUID`;
+    const minFreeFactUIDKey = `rlc:minFreeFactUID`;
     await this.redisClient.set(minFreeFactUIDKey, '' + uid);
   }
 
@@ -307,7 +307,7 @@ export class CacheService {
       const reply = await this.redisClient.scan(
         cursor,
         'MATCH',
-        'rlc:db:YYYY:entity:*:facts',
+        'rlc:entity:*:facts',
         'COUNT',
         '100',
       );
@@ -324,7 +324,7 @@ export class CacheService {
 
   addToEntityFactsCache = async (entityUid: number, factUid: number) => {
     try {
-      const ns = 'rlc:db:YYYY:entity:' + entityUid + ':facts';
+      const ns = 'rlc:entity:' + entityUid + ':facts';
       const factUidStr = factUid + '';
       const isMember = await this.redisClient.sismember(ns, factUidStr);
       if (isMember === 0) {
@@ -394,19 +394,19 @@ export class CacheService {
     this.removeEntityFromLineageDescendants(uid, supertype);
 
     // remove from descendants cache
-    const descendantsKey = `rlc:db:YYYY:entity:${uid}:descendants`;
+    const descendantsKey = `rlc:entity:${uid}:subtypes`;
     await this.redisClient.del(descendantsKey);
 
     // remove from lineage cache
-    const lineageKey = `rlc:db:YYYY:entity:${uid}:lineage`;
+    const lineageKey = `rlc:entity:${uid}:lineage`;
     await this.redisClient.del(lineageKey);
 
     // remove from facts cache
-    const factsKey = `rlc:db:YYYY:entity:${uid}:facts`;
+    const factsKey = `rlc:entity:${uid}:facts`;
     await this.redisClient.del(factsKey);
 
     // remove from prompt cache
-    const promptKey = `rlc:db:YYYY:${uid}:prompts:info`;
+    const promptKey = `rlc:${uid}:prompts:info`;
     await this.redisClient.del(promptKey);
   };
 }

@@ -2,10 +2,18 @@ import { SubscribeMessage, MessageBody, ConnectedSocket } from '@nestjs/websocke
 import { Logger, Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { EntityActions, EntityBatchResolveMessage } from '@relica/websocket-contracts';
+import { GellishBaseService } from '../../gellish-base/gellish-base.service';
+
 
 @Injectable()
 export class EntityHandlers {
   private readonly logger = new Logger(EntityHandlers.name);
+
+  constructor(
+    private readonly gellishBaseService: GellishBaseService
+  ) {
+    this.logger.log('EntityHandlers initialized');
+  }
 
   @SubscribeMessage(EntityActions.BATCH_RESOLVE)
   async handleEntityBatchResolve(
@@ -32,21 +40,13 @@ export class EntityHandlers {
         };
       }
 
-      // TODO: Replace this with actual entity resolution service call
-      // For now, return mock data that matches the expected schema
-      const mockResolvedEntities = data.uids.map(uid => ({
-        uid,
-        name: `Entity ${uid}`,
-        descendants: [],
-        definition: `Definition for entity ${uid}`,
-        category: 'Unknown'
-      }));
+      const result = await this.gellishBaseService.getEntities(data.uids);
 
-      this.logger.log(`✅ Successfully resolved ${mockResolvedEntities.length} entities`);
+      this.logger.log(`✅ Successfully resolved ${result.length} entities`);
 
       return {
         success: true,
-        data: mockResolvedEntities
+        payload: result
       };
 
     } catch (error) {

@@ -5,6 +5,7 @@ import { LineageGateway } from './gateways/lineage.gateway';
 import { SearchGateway } from './gateways/search.gateway';
 import { QueryGateway } from './gateways/query.gateway';
 import { KindGateway } from './gateways/kind.gateway';
+import { EntityGateway } from './gateways/entity.gateway';
 import { FactHandlers } from './handlers/fact.handlers';
 import { SearchHandlers } from './handlers/search.handlers';
 import { QueryHandlers } from './handlers/query.handlers';
@@ -53,6 +54,7 @@ import { TransactionService } from '../transaction/transaction.service';
     SearchGateway,
     QueryGateway,
     KindGateway,
+    EntityGateway,
     // Handler classes
     FactHandlers,
     SearchHandlers,
@@ -97,6 +99,7 @@ import { TransactionService } from '../transaction/transaction.service';
     LineageGateway,
     SearchGateway,
     QueryGateway,
+    EntityGateway,
   ],
 })
 export class WebSocketModule {}
