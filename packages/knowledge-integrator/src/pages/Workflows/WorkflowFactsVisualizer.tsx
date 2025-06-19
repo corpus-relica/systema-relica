@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import { ThemeProvider, createTheme } from "@mui/system";
 import { styled } from "@mui/system";
 import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 import { Fact } from "../../types";
 
 // Import the font file directly
