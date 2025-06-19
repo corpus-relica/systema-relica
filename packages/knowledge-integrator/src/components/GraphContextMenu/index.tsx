@@ -7,7 +7,7 @@ import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
 import DeleteFactDialogue from "./DeleteFactDialogue";
-import { sockSendCC } from "../../socket";
+import { portalSocket }from "../../PortalSocket";
 
 interface GraphContextMenuProps {
   open: boolean;
@@ -130,7 +130,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={() => {
             setWarnIsOpen(false);
-            sockSendCC("user", "deleteEntity", { uid: uidToDelete });
+            portalSocket.emit("user", "deleteEntity", { uid: uidToDelete });
           }}
         />
       )}
@@ -143,7 +143,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={() => {
             setFactWarnIsOpen(false);
-            sockSendCC("user", "deleteFact", { uid: factUidToDelete });
+            portalSocket.emit("user", "deleteFact", { uid: factUidToDelete });
           }}
         />
       )}
@@ -158,8 +158,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setSubtypesDialogueIsOpen(false);
-            sockSendCC("user", "loadEntities", { uids: selected });
-            sockSendCC("user", "unloadEntities", { uids: notSelected });
+            portalSocket.emit("user", "loadEntities", { uids: selected });
+            portalSocket.emit("user", "unloadEntities", { uids: notSelected });
           }}
         />
       )}
@@ -174,8 +174,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setClassifiedDialogueIsOpen(false);
-            sockSendCC("user", "loadEntities", { uids: selected });
-            sockSendCC("user", "unloadEntities", { uids: notSelected });
+            portalSocket.emit("user", "loadEntities", { uids: selected });
+            portalSocket.emit("user", "unloadEntities", { uids: notSelected });
           }}
         />
       )}

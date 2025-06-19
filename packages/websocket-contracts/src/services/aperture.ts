@@ -241,3 +241,5 @@ export type EntityDeselectedEvent = z.infer<typeof EntityDeselectedEventSchema>;
 
 export type Fact = z.infer<typeof FactSchema>;
 export type Environment = z.infer<typeof EnvironmentSchema>;
+
+export type ApertureActionType = typeof ApertureActions[keyof typeof ApertureActions];

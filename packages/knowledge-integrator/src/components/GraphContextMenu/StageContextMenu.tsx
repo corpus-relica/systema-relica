@@ -13,7 +13,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import SearchIcon from "@mui/icons-material/Search";
 
-import { sockSendCC } from "../../socket";
+import { portalSocket } from "../../PortalSocket";
 
 const CLEAR_ALL = "Clear all";
 const SEARCH = "Search";
@@ -44,7 +44,7 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     const value = e.currentTarget.getAttribute("value");
     switch (value) {
       case CLEAR_ALL:
-        sockSendCC("user", "clearEntities", {});
+        portalSocket.emit("user", "clearEntities", {});
         handleClose();
         break;
       case SEARCH:

@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Environment } from './entities/environment.entity';
+import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
 
 @Injectable()
 export class EnvironmentService {
   constructor(
     @InjectRepository(Environment)
     private environmentRepository: Repository<Environment>,
+    private readonly archivistClient: ArchivistWebSocketClientService,
   ) {}
 
   async create(data: { name: string; userId: string }): Promise<Environment> {
@@ -104,5 +106,44 @@ export class EnvironmentService {
 
   async clearFacts(id: string, userId: string): Promise<Environment> {
     return this.update(id, userId, { facts: [] });
+  }
+
+  async loadSpecializationHierarchy(
+    userId: number,
+    uid: number,
+    environmentId?: number
+  ): Promise<{ success: boolean; facts?: any[]; environment?: Environment; error?: string }> {
+    try {
+      // Get or create the environment
+      let environment: Environment;
+      if (environmentId) {
+        environment = await this.findOne(environmentId.toString(), userId.toString());
+      } else {
+        environment = await this.findDefaultForUser(userId.toString());
+      }
+
+      // Call Archivist to get specialization hierarchy facts
+      // This would typically call a method like getSubtypesCone or similar
+      // For now, we'll use a placeholder that matches the expected pattern
+      const facts = await this.archivistClient.getSubtypesCone(uid);
+
+      // Add the facts to the environment
+      const updatedEnvironment = await this.addFacts(
+        environment.id,
+        userId.toString(),
+        Array.isArray(facts) ? facts : []
+      );
+
+      return {
+        success: true,
+        facts: Array.isArray(facts) ? facts : [],
+        environment: updatedEnvironment,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to load specialization hierarchy',
+      };
+    }
   }
 }

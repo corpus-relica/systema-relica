@@ -7,11 +7,6 @@ console.log(
   import.meta.env.VITE_RELICA_CC_SOCKET_URL
 );
 
-export const ccSocket = io(import.meta.env.VITE_RELICA_CC_SOCKET_URL, {
-  query: {
-    clientName: "INTEGRATOR",
-  },
-});
 
 // export const nousSocket = io(import.meta.env.VITE_RELICA_NOUS_SOCKET_URL);
 
@@ -21,12 +16,6 @@ export const ccSocket = io(import.meta.env.VITE_RELICA_CC_SOCKET_URL, {
 //   emit: (x, y) => {},
 // };
 
-export const sockSendCC = (role, type, payload) => {
-  if (ccSocket) {
-    //ts-ignore next line
-    ccSocket.emit(`${role}:${type}`, payload);
-  }
-};
 
 export const sockSendNous = (role, content) => {
   if (nousSocket) {

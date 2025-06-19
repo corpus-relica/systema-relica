@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { ApertureMessage, ServiceResponse } from '../types/websocket-messages';
+import { ApertureActions } from '@relica/websocket-contracts';
 
 @Injectable()
 export class ApertureWebSocketClientService extends BaseWebSocketClient {
@@ -95,8 +96,12 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'aperture',
-      action: 'load-specialization-hierarchy',
-      payload: { uid, userId },
+      action: ApertureActions.SPECIALIZATION_LOAD, // 'aperture.specialization/load'
+      payload: { 
+        uid: Number(uid), 
+        'user-id': Number(userId), 
+        'environment-id': undefined // optional per Clojure implementation
+      },
     };
 
     const response = await this.sendMessage(message);

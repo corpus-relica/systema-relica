@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
-import { ccSocket } from "./socket";
+// import { ccSocket } from "./socket";
 
 const highlightSyntax = (code: any) => {
   const keywords = ["def!", "defun", "lambda", "if", "cond", "let"];
@@ -93,16 +93,16 @@ const LispREPL = () => {
       terminal.current.writeln(`Evaluating: ${inputBuffer.current}`);
       commandHistory.current.push(inputBuffer.current);
       historyIndex.current = commandHistory.current.length;
-      ccSocket.emit(
-        "repl:eval",
-        {
-          command: inputBuffer.current,
-        },
-        (res: string) => {
-          terminal.current.writeln(highlightSyntax(res));
-          terminal.current.write("lisp> ");
-        }
-      );
+      // ccSocket.emit(
+      //   "repl:eval",
+      //   {
+      //     command: inputBuffer.current,
+      //   },
+      //   (res: string) => {
+      //     terminal.current.writeln(highlightSyntax(res));
+      //     terminal.current.write("lisp> ");
+      //   }
+      // );
       inputBuffer.current = "";
     } else {
       // Continue input on a new line

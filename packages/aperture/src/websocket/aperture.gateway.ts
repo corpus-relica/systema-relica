@@ -100,6 +100,46 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
+  @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD)
+  async loadSpecializationHierarchy(
+    @MessageBody() payload: { uid: number; 'user-id': number; 'environment-id'?: number }
+  ) {
+    try {
+      this.logger.log(`Loading specialization hierarchy for UID: ${payload.uid}, User: ${payload['user-id']}`);
+      
+      const result = await this.environmentService.loadSpecializationHierarchy(
+        payload['user-id'],
+        payload.uid,
+        payload['environment-id']
+      );
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || 'Failed to load specialization hierarchy',
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          facts: result.facts,
+          environment: result.environment,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to load specialization hierarchy', error);
+      return {
+        success: false,
+        error: {
+          code: 'specialization-load-failed',
+          type: 'database-error',
+          message: error.message,
+        },
+      };
+    }
+  }
+
   @SubscribeMessage('aperture.environment/create')
   async createEnvironment(
     @MessageBody() payload: { userId: string; name: string },

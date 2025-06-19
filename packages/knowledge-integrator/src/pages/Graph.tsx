@@ -6,7 +6,7 @@ import { observer } from "mobx-react";
 
 import { useStore } from "react-admin";
 
-import { sockSendCC } from "../socket";
+import { portalSocket } from "../PortalSocket";
 
 import Box from "@mui/material/Box";
 
@@ -26,7 +26,7 @@ const USER = "user";
 const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 
 const Graph = observer(() => {
-  const { factDataStore, colorPaletteStore } = useStores();
+  const { factDataStore, colorPaletteStore, authStore } = useStores();
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
 
@@ -37,7 +37,7 @@ const Graph = observer(() => {
   const [filter, setFilter] = useState<number>(0);
 
   const selectNode = (id: number) => {
-    sockSendCC("user", "selectEntity", { uid: id });
+    portalSocket.emit("user", "selectEntity", { uid: id });
   };
 
   const token = getAuthToken();
@@ -83,12 +83,12 @@ const Graph = observer(() => {
   }, []);
 
   const handleEdgeClick = (uid: any) => {
-    sockSendCC(USER, "selectFact", { uid });
+    portalSocket.emit(USER, "selectFact", { uid });
   };
 
   const onStageClick = () => {
     setOpen(false);
-    sockSendCC(USER, "selectNone", {});
+    portalSocket.emit(USER, "selectNone", {});
   };
 
   const handleSearchUIClose = (res: any) => {
@@ -97,8 +97,9 @@ const Graph = observer(() => {
     if (!res) return;
 
     const { lh_object_uid } = res;
-    sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
+    portalSocket.emit(USER, LOAD_SPECIALIZATION_HIERARCHY, {
       uid: lh_object_uid,
+      userId: authStore.userId,
     });
     selectNode(lh_object_uid);
   };

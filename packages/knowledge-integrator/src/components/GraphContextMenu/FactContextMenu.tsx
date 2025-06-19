@@ -9,7 +9,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
-import { sockSendCC } from "../../socket";
+import { portalSocket } from "../../PortalSocket";
 
 const CLEAR_ALL = "Clear all";
 const REM_THIS = "rem this";
@@ -38,14 +38,12 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     setWarnIsOpen,
     relType,
   } = props;
-  console.log("MUTHERFUCING FACT CONTEXT MENU SUCKER -- ", uid);
 
   const handleItemClick = (e) => {
     const value = e.currentTarget.getAttribute("value");
     switch (value) {
       case CLEAR_ALL:
-        console.log("CLEAR ALL");
-        sockSendCC("user", "clearEntities", {});
+        portalSocket.emit("user", "clearEntities", {});
         handleClose();
         break;
       case DELETE_THIS:
@@ -54,12 +52,11 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
         handleClose();
         break;
       case REIFY:
-        sockSendCC("user", "loadSpecializationHierarchy", { uid: relType });
-        sockSendCC("user", "selectEntity", { uid: relType });
+        portalSocket.emit("user", "loadSpecializationHierarchy", { uid: relType });
+        portalSocket.emit("user", "selectEntity", { uid: relType });
         handleClose();
         break;
       default:
-        console.log("DEFAULT");
         break;
     }
   };

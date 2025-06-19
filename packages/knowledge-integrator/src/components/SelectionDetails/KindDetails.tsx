@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useStore } from "react-admin";
 import { useQuery } from "@tanstack/react-query";
 import { retrieveKindModel } from "../../CCClient";
-import { sockSendCC } from "../../socket";
+import { portalSocket } from "../../PortalSocket";
 
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
@@ -53,7 +53,7 @@ const KindDetails: React.FC = () => {
 
   const loadAllPossRoles = (uid) => {
     possRoles.forEach((possRole) => {
-      sockSendCC("user", "loadEntity", { uid: possRole });
+      portalSocket.emit("user", "loadEntity", { uid: possRole });
     });
   };
 

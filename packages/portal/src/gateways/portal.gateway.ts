@@ -11,6 +11,7 @@ import {
 import { Logger, Injectable, Inject } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { ShutterRestClientService } from '../services/shutter-rest-client.service';
+import { ApertureWebSocketClientService } from '../services/aperture-websocket-client.service';
 import { NousWebSocketClientService } from '../services/nous-websocket-client.service';
 import { PrismWebSocketClientService } from '../services/prism-websocket-client.service';
 import { 
@@ -49,6 +50,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private socketTokens = new Map<string, { userId: string; createdAt: number; isGuest?: boolean }>();
 
   constructor(
+    private readonly apertureClient: ApertureWebSocketClientService,
     private readonly shutterClient: ShutterRestClientService,
     private readonly nousClient: NousWebSocketClientService,
     private readonly prismClient: PrismWebSocketClientService,
@@ -166,7 +168,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return this.createResponse(client.id, true, {
         token: socketToken,
-        user_id: authResult.userId,
+        userId: authResult.userId,
         user: authResult.user,
       });
     } catch (error) {
@@ -196,7 +198,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return this.createResponse(client.id, true, {
         token: socketToken,
-        user_id: guestId,
+        userId: guestId,
       });
     } catch (error) {
       this.logger.error('Guest auth error:', error);
@@ -212,10 +214,10 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  @SubscribeMessage('selectEntity')
+  @SubscribeMessage('user:selectEntity')
   async handleSelectEntity(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { uid: string; user_id: string }
+    @MessageBody() payload: { uid: string; userId: string }
   ): Promise<any> {
     try {
       const clientData = this.connectedClients.get(client.id);
@@ -228,16 +230,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const environmentId = clientData.environmentId || '1';
       
       // Broadcast entity selected event to environment
-      this.broadcastToEnvironment(environmentId, {
-        id: 'system',
-        type: 'portal:entitySelected',
-        payload: {
-          type: 'aperture.entity/selected',
-          entity_uid: payload.uid,
-          user_id: payload.user_id,
-          environment_id: environmentId,
-        },
-      });
+      // this.broadcastToEnvironment(environmentId, {
+      //   id: 'system',
+      //   type: 'portal:entitySelected',
+      //   payload: {
+      //     type: 'aperture.entity/selected',
+      //     entity_uid: payload.uid,
+      //     userId: payload.userId,
+      //     environment_id: environmentId,
+      //   },
+      // });
+
+      console.log("Entity selected:", payload.uid, "by user:", payload.userId);
 
       return this.createResponse(client.id, true, {
         message: 'Entity selected',
@@ -251,7 +255,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('selectNone')
   async handleSelectNone(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { user_id: string }
+    @MessageBody() payload: { userId: string }
   ): Promise<any> {
     try {
       const clientData = this.connectedClients.get(client.id);
@@ -268,7 +272,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         type: 'portal:entitySelectedNone',
         payload: {
           type: 'aperture.entity/deselected',
-          user_id: payload.user_id,
+          userId: payload.userId,
           environment_id: environmentId,
         },
       });
@@ -283,22 +287,37 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // Placeholder handlers for other message types
-  @SubscribeMessage('loadSpecializationHierarchy')
+  @SubscribeMessage('user:loadSpecializationHierarchy')
   async handleLoadSpecializationHierarchy(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { uid: string; user_id: string }
+    @MessageBody() payload: { uid: string; userId: string }
   ): Promise<any> {
     // TODO: Implement Aperture service call
-    return this.createResponse(client.id, true, {
-      message: 'Specialization hierarchy loaded',
-      environment: {},
-    });
+    console.log("Loading specialization hierarchy for UID:", payload.uid, "by user:", payload.userId);
+    const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid, payload.userId);
+
+    console.log("Specialization hierarchy result:", result);
+
+    if (!result || !result.success) {
+      return {
+        success: false,
+        error: {
+          type: 'internal-error',
+          message: 'Failed to load specialization hierarchy',
+          details: result ? result.error : 'Unknown error',
+        },
+      };
+    }
+    return {
+      success: true,
+      payload: result.data,
+    };
   }
 
   @SubscribeMessage('clearEnvironmentEntities')
   async handleClearEnvironmentEntities(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { user_id: string }
+    @MessageBody() payload: { userId: string }
   ): Promise<any> {
     // TODO: Implement Aperture service call
     return this.createResponse(client.id, true, {
@@ -309,7 +328,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('loadAllRelatedFacts')
   async handleLoadAllRelatedFacts(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { uid: string; user_id: string }
+    @MessageBody() payload: { uid: string; userId: string }
   ): Promise<any> {
     // TODO: Implement Aperture service call
     return this.createResponse(client.id, true, {
@@ -321,7 +340,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('chatUserInput')
   async handleChatUserInput(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { message: string; user_id: string }
+    @MessageBody() payload: { message: string; userId: string }
   ): Promise<any> {
     try {
       const clientData = this.connectedClients.get(client.id);
@@ -335,7 +354,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Process chat input through NOUS
       const result = await this.nousClient.processChatInput(
         payload.message,
-        payload.user_id || clientData.userId,
+        payload.userId || clientData.userId,
         {
           environmentId,
           timestamp: Date.now(),
@@ -349,7 +368,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         payload: {
           type: 'nous.chat/response',
           message: result.response,
-          user_id: payload.user_id || clientData.userId,
+          userId: payload.userId || clientData.userId,
           environment_id: environmentId,
           metadata: result.metadata,
         },
@@ -400,7 +419,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('clearChatHistory')
   async handleClearChatHistory(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { user_id?: string }
+    @MessageBody() payload: { userId?: string }
   ): Promise<any> {
     try {
       const clientData = this.connectedClients.get(client.id);

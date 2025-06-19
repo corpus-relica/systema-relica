@@ -11,7 +11,7 @@ import { loadUserEnvironment, resolveUIDs } from "./PortalClient";
 
 const replHeight = "40vh"; // Adjust as needed
 
-import { ccSocket } from "./socket";
+// import { ccSocket } from "./socket";
 
 // const memStore = localStorageStore();
 
@@ -199,7 +199,7 @@ export const MyLayout = (props) => {
         // Then proceed with environment setup
         await establishCats();
         const foo = await authProvider.getIdentity();
-        console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo);
+        console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo, authStore.userId);
         console.log("vvvv - USER ID vvvv:", );
 
         const env = await loadUserEnvironment(authStore.userId);
@@ -214,38 +214,38 @@ export const MyLayout = (props) => {
 
     initializeEnvironment();
 
-    ccSocket.on("connect", onConnect);
-    ccSocket.on("disconnect", onDisconnect);
+    // ccSocket.on("connect", onConnect);
+    // ccSocket.on("disconnect", onDisconnect);
 
-    ccSocket.on("system:selectedEntity", onSelectEntity);
-    ccSocket.on("system:selectedFact", onSelectFact);
-    ccSocket.on("system:selectedNone", onNoneSelected);
-    ccSocket.on("system:loadedFacts", onAddFacts);
-    ccSocket.on("system:unloadedFacts", onRemFacts);
-    ccSocket.on("system:loadedModels", onAddModels);
-    ccSocket.on("system:unloadedModels", onRemModels);
+    // ccSocket.on("system:selectedEntity", onSelectEntity);
+    // ccSocket.on("system:selectedFact", onSelectFact);
+    // ccSocket.on("system:selectedNone", onNoneSelected);
+    // ccSocket.on("system:loadedFacts", onAddFacts);
+    // ccSocket.on("system:unloadedFacts", onRemFacts);
+    // ccSocket.on("system:loadedModels", onAddModels);
+    // ccSocket.on("system:unloadedModels", onRemModels);
     // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);
-    ccSocket.on("system:entitiesCleared", onEntitiesCleared);
+    // ccSocket.on("system:entitiesCleared", onEntitiesCleared);
 
-    ccSocket.on("system:stateInitialized", onStateInitialized);
-    ccSocket.on("system:stateChanged", onStateChange);
+    // ccSocket.on("system:stateInitialized", onStateInitialized);
+    // ccSocket.on("system:stateChanged", onStateChange);
 
     return () => {
-      ccSocket.off("connect", onConnect);
-      ccSocket.off("disconnect", onDisconnect);
+      // ccSocket.off("connect", onConnect);
+      // ccSocket.off("disconnect", onDisconnect);
 
-      ccSocket.off("system:selectedEntity", onSelectEntity);
-      ccSocket.off("system:selectedFact", onSelectFact);
-      ccSocket.off("system:selectedNone", onNoneSelected);
-      ccSocket.off("system:loadedFacts", onAddFacts);
-      ccSocket.off("system:unloadedFacts", onRemFacts);
-      // ccSocket.off("system:updateCategoryDescendantsCache", establishCats);
-      ccSocket.off("system:entitiesCleared", onEntitiesCleared);
-      ccSocket.off("system:loadedModels", onAddModels);
-      ccSocket.off("system:unloadedModels", onRemModels);
+      // ccSocket.off("system:selectedEntity", onSelectEntity);
+      // ccSocket.off("system:selectedFact", onSelectFact);
+      // ccSocket.off("system:selectedNone", onNoneSelected);
+      // ccSocket.off("system:loadedFacts", onAddFacts);
+      // ccSocket.off("system:unloadedFacts", onRemFacts);
+      // // ccSocket.off("system:updateCategoryDescendantsCache", establishCats);
+      // ccSocket.off("system:entitiesCleared", onEntitiesCleared);
+      // ccSocket.off("system:loadedModels", onAddModels);
+      // ccSocket.off("system:unloadedModels", onRemModels);
 
-      ccSocket.off("system:stateInitialized", onStateInitialized);
-      ccSocket.off("system:stateChanged", onStateChange);
+      // ccSocket.off("system:stateInitialized", onStateInitialized);
+      // ccSocket.off("system:stateChanged", onStateChange);
     };
   }, []);
 

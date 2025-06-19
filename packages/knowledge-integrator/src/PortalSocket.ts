@@ -88,9 +88,9 @@ class PortalWebSocketClient {
     return this.socket?.connected || false;
   }
 
-  public emit(event: string, data: any) {
+  public emit(role:string, type: string, payload: any) {
     if (this.socket?.connected) {
-      this.socket.emit(event, data);
+      this.socket.emit(`${role}:${type}`, payload);
     } else {
       console.warn('⚠️ Socket not connected, cannot emit:', event);
     }
