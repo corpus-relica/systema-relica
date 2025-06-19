@@ -41,7 +41,7 @@ const testTheme: Theme = {
     bgBubbleSelected: "#FFFFFF",
 
     headerIconSize: 20,
-    markerFontStyle: "13px",
+    markerFontStyle: "9px",
 
     bgSearchResult: "#fff9e3",
 
@@ -55,8 +55,8 @@ const testTheme: Theme = {
     cellVerticalPadding: 3,
 
     headerFontStyle: "600 13px",
-    baseFontStyle: "13px",
-    editorFontSize: "13px",
+    baseFontStyle: "9px",
+    editorFontSize: "9px",
     lineHeight: 1.4,
     fontFamily:
         "Inter, Roboto, -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Ubuntu, noto, arial, sans-serif",
@@ -76,24 +76,67 @@ export const KindsList: React.FC<KindsListProps> = ({ height = 600 }) => {
 
   const columns: GridColumn[] = useMemo(() => [
     {
-      title: "UID",
+      title: "fact_uid",
+      id: "fact_uid",
+      width: 80,
+      kind: GridCellKind.Number,
+      group: 'core'
+    },
+    {
+      title: "lh_object_uid",
       id: "lh_object_uid",
       width: 80,
       kind: GridCellKind.Number,
-      group: 'suckit'
+      group: 'core'
     },
     {
-      title: "Name",
+      title: "lh_object_name",
       id: "lh_object_name", 
+      // width: 250,
+      kind: GridCellKind.Text,
+      group: 'core'
+    },
+    {
+      title: "rel_type_uid",
+      id: "rel_type_uid",
+      width: 80,
+      kind: GridCellKind.Number,
+      group: 'core'
+    },
+    {
+      title: "rel_type_name",
+      id: "rel_type_name",
       width: 250,
       kind: GridCellKind.Text,
-      group: 'suckit'
+      group: 'core'
     },
     {
-      title: "Definition",
+      title: "rh_object_uid",
+      id: "rh_object_uid",
+      width: 80,
+      kind: GridCellKind.Number,
+      group: 'core'
+    },
+    {
+      title: "rh_object_name",
+      id: "rh_object_name",
+      // width: 250,
+      kind: GridCellKind.Text,
+      group: 'core'
+    },
+    {
+      title: "Partial Definition",
+      id: "partial_definition",
+      grow: 1, // Allow this column to grow and fill available space
+      kind: GridCellKind.Text,
+      group: 'core',
+    },
+    {
+      title: "Full Definition",
       id: "full_definition",
       grow: 1, // Allow this column to grow and fill available space
       kind: GridCellKind.Text,
+      group: 'core',
     }
   ], []);
 
@@ -142,6 +185,8 @@ export const KindsList: React.FC<KindsListProps> = ({ height = 600 }) => {
     const column = columns[col];
     const value = item[column.id] || '';
 
+    console.log("COL:", col)
+
     switch (column.kind) {
       case GridCellKind.Number:
         return {
@@ -157,6 +202,8 @@ export const KindsList: React.FC<KindsListProps> = ({ height = 600 }) => {
           data: String(value),
           displayData: String(value),
           allowOverlay: true,
+          // allowWrapping: col === 7 || col === 8, // Allow wrapping for definition columns
+          allowWrapping: true
         };
     }
   }, [data, columns]);
@@ -250,47 +297,44 @@ export const KindsList: React.FC<KindsListProps> = ({ height = 600 }) => {
       </div>
       
       <DataEditor
+        {...collapseArgs}
         getCellContent={getCellContent}
-        columns={columns}
+        // columns={columns}
         rows={data.length}
         width="100%"
         height={height - 110} // Account for header and pagination height
         onHeaderClicked={onHeaderClicked}
-        onGroupHeaderClicked={(group, event) => {
-          // Handle group header clicks if needed
-          console.log('Group header clicked:', group);
-        }}
         smoothScrollX={true}
         smoothScrollY={true}
         isDraggable={false}
         rowHeight={50}
         headerHeight={36}
-        theme={{
-          accentColor: "#1976d2",
-          accentLight: "#e3f2fd",
-          textDark: "#313139",
-          textMedium: "#737383",
-          textLight: "#b2b2c0",
-          textBubble: "#313139",
-          bgIconHeader: "#737383",
-          fgIconHeader: "#ffffff",
-          textHeader: "#313139",
-          textHeaderSelected: "#000000",
-          bgCell: "#ffffff",
-          bgCellMedium: "#fafafb",
-          bgHeader: "#f7f7f8",
-          bgHeaderHasFocus: "#e9e9ea",
-          bgHeaderHovered: "#efeff1",
-          bgBubble: "#212121",
-          bgBubbleSelected: "#000000",
-          bgSearchResult: "#fff9c4",
-          borderColor: "rgba(115, 116, 131, 0.16)",
-          drilldownBorder: "rgba(0, 0, 0, 0)",
-          linkColor: "#1976d2",
-          headerFontStyle: "600 13px",
-          baseFontStyle: "13px",
-          fontFamily: "Inter, Roboto, -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, noto, arial, sans-serif",
-        }}
+        // theme={{
+        //   accentColor: "#1976d2",
+        //   accentLight: "#e3f2fd",
+        //   textDark: "#313139",
+        //   textMedium: "#737383",
+        //   textLight: "#b2b2c0",
+        //   textBubble: "#313139",
+        //   bgIconHeader: "#737383",
+        //   fgIconHeader: "#ffffff",
+        //   textHeader: "#313139",
+        //   textHeaderSelected: "#000000",
+        //   bgCell: "#ffffff",
+        //   bgCellMedium: "#fafafb",
+        //   bgHeader: "#f7f7f8",
+        //   bgHeaderHasFocus: "#e9e9ea",
+        //   bgHeaderHovered: "#efeff1",
+        //   bgBubble: "#212121",
+        //   bgBubbleSelected: "#000000",
+        //   bgSearchResult: "#fff9c4",
+        //   borderColor: "rgba(115, 116, 131, 0.16)",
+        //   drilldownBorder: "rgba(0, 0, 0, 0)",
+        //   linkColor: "#1976d2",
+        //   headerFontStyle: "600 13px",
+        //   baseFontStyle: "13px",
+        //   fontFamily: "Inter, Roboto, -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, noto, arial, sans-serif",
+        // }}
       />
       
       {/* Pagination */}
