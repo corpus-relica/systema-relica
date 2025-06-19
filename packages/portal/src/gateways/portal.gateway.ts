@@ -292,7 +292,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { uid: string; userId: string }
   ): Promise<any> {
-    // TODO: Implement Aperture service call
+
     console.log("Loading specialization hierarchy for UID:", payload.uid, "by user:", payload.userId);
     const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid, payload.userId);
 

@@ -6,6 +6,7 @@ import { SearchGateway } from './gateways/search.gateway';
 import { QueryGateway } from './gateways/query.gateway';
 import { KindGateway } from './gateways/kind.gateway';
 import { EntityGateway } from './gateways/entity.gateway';
+import { SpecializationGateway } from './gateways/specialization.gateway';
 import { FactHandlers } from './handlers/fact.handlers';
 import { SearchHandlers } from './handlers/search.handlers';
 import { QueryHandlers } from './handlers/query.handlers';
@@ -19,6 +20,7 @@ import { TransactionHandlers } from './handlers/transaction.handlers';
 import { UIDHandlers } from './handlers/uid.handlers';
 import { LineageHandlers } from './handlers/lineage.handlers';
 import { EntityHandlers } from './handlers/entity.handlers';
+import { SpecializationHandlers } from './handlers/specialization.handlers';
 
 // Import all the services that handlers depend on
 import { FactService } from '../fact/fact.service';
@@ -55,6 +57,7 @@ import { TransactionService } from '../transaction/transaction.service';
     QueryGateway,
     KindGateway,
     EntityGateway,
+    SpecializationGateway,
     // Handler classes
     FactHandlers,
     SearchHandlers,
@@ -69,6 +72,7 @@ import { TransactionService } from '../transaction/transaction.service';
     UIDHandlers,
     LineageHandlers,
     EntityHandlers,
+    SpecializationHandlers,
     // Core services
     FactService,
     GeneralSearchService,
@@ -100,6 +104,7 @@ import { TransactionService } from '../transaction/transaction.service';
     SearchGateway,
     QueryGateway,
     EntityGateway,
+    SpecializationGateway,
   ],
 })
 export class WebSocketModule {}

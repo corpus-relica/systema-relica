@@ -44,6 +44,9 @@ export * from './lineage';
 // Entity operations
 export * from './entities';
 
+// Specialization operations
+export * from './specialization';
+
 // Import actions to create combined object
 import {
   FactActions,
@@ -135,6 +138,14 @@ import {
   type EntityActionType,
   type EntityEventType,
 } from './entities';
+
+import {
+  SpecializationActions,
+  type SpecializationFactGetRequest,
+  type SpecializationFactGetResponse,
+  type SpecializationHierarchyGetRequest,
+  type SpecializationHierarchyGetResponse,
+} from './specialization';
 
 // Re-export commonly used action constants
 export {
@@ -228,6 +239,14 @@ export {
   type EntityEventType,
 };
 
+export {
+  SpecializationActions,
+  type SpecializationFactGetRequest,
+  type SpecializationFactGetResponse,
+  type SpecializationHierarchyGetRequest,
+  type SpecializationHierarchyGetResponse,
+};
+
 // All Archivist actions combined
 export const ArchivistActions = {
   // Facts
@@ -256,4 +275,6 @@ export const ArchivistActions = {
   ...LineageActions,
   // Entity
   ...EntityActions,
+  // Specialization
+  ...SpecializationActions,
 } as const;

@@ -13,6 +13,7 @@ import {
   SubmissionActions,
   TransactionActions,
   ValidationActions,
+  SpecializationActions,
   ContractUtils
 } from '@relica/websocket-contracts';
 
@@ -144,12 +145,12 @@ export class ArchivistWebSocketClientService implements OnModuleInit, OnModuleDe
   // Specialized Operations (based on Clojure implementation)
   async getSpecializationFact(userId: number, uid: number): Promise<any> {
     this.logger.log(`Getting specialization fact for uid: ${uid}`);
-    return this.sendMessage(FactActions.GET, { uid });
+    return this.sendMessage(SpecializationActions.SPECIALIZATION_FACT_GET, { uid, 'user-id': userId });
   }
 
   async getSpecializationHierarchy(userId: number, uid: number): Promise<any> {
     this.logger.log(`Getting specialization hierarchy for uid: ${uid}`);
-    return this.sendMessage(FactActions.GET_SUBTYPES, { uid });
+    return this.sendMessage(SpecializationActions.SPECIALIZATION_HIERARCHY_GET, { uid, 'user-id': userId });
   }
 
   async getAllRelated(entityUid: number): Promise<any> {
