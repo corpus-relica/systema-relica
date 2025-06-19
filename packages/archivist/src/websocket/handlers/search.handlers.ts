@@ -4,7 +4,8 @@ import { GeneralSearchService } from '../../general-search/general-search.servic
 import { IndividualSearchService } from '../../individual-search/individual-search.service';
 import { KindSearchService } from '../../kind-search/kind-search.service';
 import { ExecuteSearchQueryService } from '../../execute-search-query/execute-search-query.service';
-import { SearchMessage, WsResponse } from '../types/websocket.types';
+import { SearchMessage } from '@relica/websocket-contracts';
+import { WsResponse } from '../types/websocket.types';
 
 @Injectable()
 export class SearchHandlers {
@@ -18,11 +19,11 @@ export class SearchHandlers {
   async handleGeneralSearch(data: SearchMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.generalSearchService.getTextSearch(
-        data.query, 
-        null, // collectionUID
+        data.searchTerm, 
+        data.collectionUID || null,
         data.page || 1, 
-        data.limit || 20,
-        null, // filter
+        data.pageSize || 20,
+        data.filter || null,
         false // exactMatch
       );
       return {
@@ -56,10 +57,10 @@ export class SearchHandlers {
   async handleKindSearch(data: SearchMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.kindSearchService.getTextSearchKind(
-        data.query, 
-        null, // collectionUID
+        data.searchTerm, 
+        data.collectionUID || null,
         data.page || 1, 
-        data.limit || 20
+        data.pageSize || 20
       );
       return {
         event: 'search:kind:results',
@@ -77,14 +78,14 @@ export class SearchHandlers {
     try {
       // executeSearchQuery requires specific parameters - providing defaults
       const result = await this.executeSearchQueryService.executeSearchQuery(
-        data.query,
-        data.query, // using same for countQuery
-        data.query || '',
+        data.searchTerm,
+        data.searchTerm, // using same for countQuery
+        data.searchTerm || '',
         [], // relTypeUIDs
         [], // filterUIDs
-        null, // collectionUID
+        data.collectionUID || null,
         data.page || 1,
-        data.limit || 20,
+        data.pageSize || 20,
         false // exactMatch
       );
       return {

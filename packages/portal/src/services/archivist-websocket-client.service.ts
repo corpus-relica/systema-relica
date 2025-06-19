@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { ArchivistMessage, ServiceResponse } from '../types/websocket-messages';
-import { KindActions, EntityActions } from '@relica/websocket-contracts';
+import { KindActions, EntityActions, SearchActions } from '@relica/websocket-contracts';
 
 @Injectable()
 export class ArchivistWebSocketClientService extends BaseWebSocketClient {
@@ -48,13 +48,22 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     return response.data;
   }
 
-  async searchText(query: string, limit?: number, offset?: number): Promise<any> {
+  async searchText(query: string, collectionUID:number, limit?: number, offset?: number, searchFilter?: string): Promise<any> {
+    // Convert offset to page number (1-based)
+    const page = offset ? Math.floor(offset / (limit || 20)) + 1 : 1;
+    
     const message: ArchivistMessage = {
       id: this.generateMessageId(),
       type: 'request',
       service: 'archivist',
-      action: 'search-text',
-      payload: { query, limit, offset },
+      action: SearchActions.GENERAL, // 'search:general'
+      payload: { 
+        searchTerm: query, 
+        collectionUID, 
+        page, 
+        pageSize: limit || 20, 
+        filter: searchFilter 
+      },
     };
 
     const response = await this.sendMessage(message);

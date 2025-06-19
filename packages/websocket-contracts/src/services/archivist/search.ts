@@ -9,10 +9,11 @@ import { BaseRequestSchema, BaseResponseSchema } from '../../base';
  * Search message data structure
  */
 export const SearchMessageSchema = z.object({
-  query: z.string(),
+  searchTerm: z.string(),
+  collectionUID: z.number().optional(),
   page: z.number().optional(),
-  limit: z.number().optional(),
-  filters: z.any().optional(),
+  pageSize: z.number().optional(),
+  filter: z.any().optional(),
 });
 
 export type SearchMessage = z.infer<typeof SearchMessageSchema>;

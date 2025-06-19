@@ -1,6 +1,6 @@
 // Ruthless alignment with shared contracts - use as single source of truth
 import { BaseRequest, BaseResponse, BaseEvent } from '@relica/websocket-contracts';
-import { PrismActionType, EntityActionType, KindActionType } from '@relica/websocket-contracts';
+import { PrismActionType, EntityActionType, KindActionType, SearchActionType } from '@relica/websocket-contracts';
 
 // All service messages now use shared contract structure
 export type ServiceMessage = BaseRequest;
@@ -40,7 +40,7 @@ export interface ArchivistMessage extends BaseRequest {
   action: 
     | EntityActionType
     | KindActionType
-    | 'search-text'
+    | SearchActionType
     | 'search-uid'
     | 'resolve-uids'
     | 'get-classified'
