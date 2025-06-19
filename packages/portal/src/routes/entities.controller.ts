@@ -9,24 +9,24 @@ export class EntitiesController {
   constructor(private readonly archivistClient: ArchivistWebSocketClientService) {}
 
 
-  @Get('kinds')
-  @ApiOperation({ summary: 'Get all available kinds' })
-  @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'List of kinds retrieved successfully' })
-  async getKinds(@User() user: any) {
-    try {
-      const kinds = await this.archivistClient.getKinds();
-      return {
-        success: true,
-        kinds,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message || 'Failed to retrieve kinds',
-      };
-    }
-  }
+  // @Get('kinds')
+  // @ApiOperation({ summary: 'Get all available kinds' })
+  // @ApiBearerAuth()
+  // @ApiResponse({ status: 200, description: 'List of kinds retrieved successfully' })
+  // async getKinds(@User() user: any) {
+  //   try {
+  //     const kinds = await this.archivistClient.getKinds();
+  //     return {
+  //       success: true,
+  //       kinds,
+  //     };
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       error: error.message || 'Failed to retrieve kinds',
+  //     };
+  //   }
+  // }
 
   @Get('concept/entities')
   @ApiOperation({ summary: 'Resolve UIDs to entity information (GET)' })

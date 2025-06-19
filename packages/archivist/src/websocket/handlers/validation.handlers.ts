@@ -7,11 +7,6 @@ import { ValidationMessage, WsResponse } from '../types/websocket.types';
 export class ValidationHandlers {
   constructor(private readonly validationService: ValidationService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('validation:validate', this.handleValidation.bind(this));
-    gateway.registerHandler('validation:collection', this.handleCollectionValidation.bind(this));
-  }
-
   async handleValidation(data: ValidationMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.validationService.simpleValidateBinaryFact(data.fact);

@@ -15,14 +15,6 @@ export class SearchHandlers {
     private readonly executeSearchQueryService: ExecuteSearchQueryService
   ) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('search:general', this.handleGeneralSearch.bind(this));
-    gateway.registerHandler('search:individual', this.handleIndividualSearch.bind(this));
-    gateway.registerHandler('search:kind', this.handleKindSearch.bind(this));
-    gateway.registerHandler('search:execute', this.handleExecuteSearch.bind(this));
-    gateway.registerHandler('search:uid', this.handleUidSearch.bind(this));
-  }
-
   async handleGeneralSearch(data: SearchMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.generalSearchService.getTextSearch(

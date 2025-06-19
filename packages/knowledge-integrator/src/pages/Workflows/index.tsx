@@ -25,7 +25,7 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import WorkflowTreeVisualizer from "./WorkflowTreeVisualizer";
 import WorkflowStackVisualizer from "./WorkflowStackVisualizer";

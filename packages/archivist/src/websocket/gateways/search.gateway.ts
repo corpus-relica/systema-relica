@@ -8,6 +8,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { SearchHandlers } from '../handlers/search.handlers';
 import { SearchActions } from '@relica/websocket-contracts';
+import customParser from 'socket.io-msgpack-parser';
 
 @Injectable()
 @WebSocketGateway({
@@ -15,6 +16,7 @@ import { SearchActions } from '@relica/websocket-contracts';
     origin: '*',
   },
   transports: ['websocket'],
+  parser: customParser
 })
 export class SearchGateway {
   private readonly logger = new Logger(SearchGateway.name);

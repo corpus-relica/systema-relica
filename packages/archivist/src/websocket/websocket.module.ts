@@ -4,6 +4,7 @@ import { FactGateway } from './gateways/fact.gateway';
 import { LineageGateway } from './gateways/lineage.gateway';
 import { SearchGateway } from './gateways/search.gateway';
 import { QueryGateway } from './gateways/query.gateway';
+import { KindGateway } from './gateways/kind.gateway';
 import { FactHandlers } from './handlers/fact.handlers';
 import { SearchHandlers } from './handlers/search.handlers';
 import { QueryHandlers } from './handlers/query.handlers';
@@ -50,6 +51,7 @@ import { TransactionService } from '../transaction/transaction.service';
     LineageGateway,
     SearchGateway,
     QueryGateway,
+    KindGateway,
     // Handler classes
     FactHandlers,
     SearchHandlers,

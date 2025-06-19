@@ -42,6 +42,7 @@ import Settings from "./pages/Settings";
 import Modelling from "./pages/Modelling/";
 import Workflows from "./pages/Workflows";
 import Dashboard from "./Dashboard";
+import KindsListPage from "./components/KindsListPage";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -251,7 +252,7 @@ export const App = () => {
         authProvider={authProvider}
         store={memStore}
       >
-        <Resource name="db/kinds" list={ListGuesser} />
+        <Resource name="db/kinds" list={KindsListPage} />
         <CustomRoutes>
           <Route path="env/graph" element={<Graph />} />
           <Route path="/modelling" element={<Modelling />} />
@@ -261,7 +262,7 @@ export const App = () => {
       </Admin>
       
       {/* Debug panel - only show in development */}
-      {import.meta.env.DEV && <DebugPanel />}
+      {/*import.meta.env.DEV && <DebugPanel />*/}
     </QueryClientProvider>
   );
 };

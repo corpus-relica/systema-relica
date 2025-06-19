@@ -10,6 +10,7 @@ import {
   ApertureMessage, 
   PrismMessage 
 } from '../types/websocket-messages';
+import customParser from 'socket.io-msgpack-parser';
 
 export interface WebSocketServiceClient {
   connect(): Promise<void>;
@@ -58,6 +59,7 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      parser: customParser, // Use msgpack parser for better performance
     });
 
     this.setupEventHandlers();

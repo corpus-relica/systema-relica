@@ -8,6 +8,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { FactHandlers } from '../handlers/fact.handlers';
 import { FactActions } from '@relica/websocket-contracts';
+import customParser from 'socket.io-msgpack-parser';
 
 @Injectable()
 @WebSocketGateway({
@@ -15,6 +16,7 @@ import { FactActions } from '@relica/websocket-contracts';
     origin: '*',
   },
   transports: ['websocket'],
+  parser: customParser
 })
 export class FactGateway {
   private readonly logger = new Logger(FactGateway.name);

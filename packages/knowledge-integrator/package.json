@@ -14,13 +14,15 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@fontsource/roboto": "^5.0.14",
-    "@mui/material": "^5.15.15",
+    "@glideapps/glide-data-grid": "^6.0.3",
     "@mui/icons-material": "^5.15.15",
     "@mui/joy": "^5.0.0-beta.48",
+    "@mui/material": "^5.15.15",
     "@relica/3d-graph-ui": "0.0.0",
     "@relica/constants": "0.0.0",
     "@relica/fact-search-ui": "^0.0.1",
     "@relica/hsm-manager": "^0.0.0",
+    "@relica/websocket-contracts": "*",
     "@tanstack/react-query": "^5.36.2",
     "@types/d3": "^7.4.3",
     "ag-grid-react": "^31.3.2",
@@ -34,9 +36,9 @@
     "react-admin": "^5.0.2",
     "react-dom": "^18.2.0",
     "socket.io-client": "^4.8.1",
+    "socket.io-msgpack-parser": "^3.0.2",
     "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0",
-    "@relica/websocket-contracts": "*"
+    "xterm-addon-fit": "^0.8.0"
   },
   "devDependencies": {
     "@types/node": "^18.16.1",
