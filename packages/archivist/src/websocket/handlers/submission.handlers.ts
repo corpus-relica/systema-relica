@@ -7,11 +7,6 @@ import { SubmissionMessage, WsResponse } from '../types/websocket.types';
 export class SubmissionHandlers {
   constructor(private readonly submissionService: SubmissionService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('submission:submit', this.handleSubmissionSubmit.bind(this));
-    gateway.registerHandler('submission:batch', this.handleSubmissionBatch.bind(this));
-  }
-
   async handleSubmissionSubmit(data: SubmissionMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.submissionService.submitBinaryFacts(data.facts);

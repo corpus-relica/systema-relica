@@ -7,13 +7,6 @@ import { ConceptMessage, WsResponse } from '../types/websocket.types';
 export class ConceptHandlers {
   constructor(private readonly conceptService: ConceptService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('concept:get', this.handleConceptGet.bind(this));
-    gateway.registerHandler('concept:create', this.handleConceptCreate.bind(this));
-    gateway.registerHandler('concept:update', this.handleConceptUpdate.bind(this));
-    gateway.registerHandler('concept:delete', this.handleConceptDelete.bind(this));
-  }
-
   async handleConceptGet(data: ConceptMessage, client: Socket): Promise<WsResponse> {
     try {
       // getConcept method doesn't exist - returning empty result

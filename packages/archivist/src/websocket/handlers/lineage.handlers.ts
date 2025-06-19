@@ -8,10 +8,6 @@ import { LineageActions, LineageEvents } from '@relica/websocket-contracts';
 export class LineageHandlers {
   constructor(private readonly linearizationService: LinearizationService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler(LineageActions.GET, this.handleLineageGet.bind(this));
-  }
-
   // Lineage operation for cache building (ported from Clojure :archivist.lineage/get)
   // async handleLineageGet(data: any, client: Socket): Promise<WsResponse> {
   async handleLineageGet(data: any, client: Socket): Promise<any> {

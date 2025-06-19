@@ -14,19 +14,6 @@ import { FactActions, FactEvents } from '@relica/websocket-contracts';
 export class FactHandlers {
   constructor(private readonly factService: FactService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler(FactActions.CREATE, this.handleFactCreate.bind(this));
-    gateway.registerHandler(FactActions.UPDATE, this.handleFactUpdate.bind(this));
-    gateway.registerHandler(FactActions.DELETE, this.handleFactDelete.bind(this));
-    gateway.registerHandler(FactActions.GET, this.handleFactGet.bind(this));
-    gateway.registerHandler(FactActions.GET_SUBTYPES, this.handleFactGetSubtypes.bind(this));
-    gateway.registerHandler(FactActions.GET_SUPERTYPES, this.handleFactGetSupertypes.bind(this));
-    gateway.registerHandler(FactActions.GET_CLASSIFIED, this.handleFactGetClassified.bind(this));
-    gateway.registerHandler(FactActions.VALIDATE, this.handleFactValidate.bind(this));
-    gateway.registerHandler(FactActions.BATCH_GET, this.handleFactBatchGet.bind(this));
-    gateway.registerHandler(FactActions.COUNT, this.handleFactCount.bind(this));
-  }
-
   async handleFactCreate(data: FactCreateMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.factService.submitBinaryFact(data);

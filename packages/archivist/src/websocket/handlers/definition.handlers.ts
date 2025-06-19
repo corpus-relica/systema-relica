@@ -7,11 +7,6 @@ import { DefinitionMessage, WsResponse } from '../types/websocket.types';
 export class DefinitionHandlers {
   constructor(private readonly definitionService: DefinitionService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('definition:get', this.handleDefinitionGet.bind(this));
-    gateway.registerHandler('definition:update', this.handleDefinitionUpdate.bind(this));
-  }
-
   async handleDefinitionGet(data: DefinitionMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.definitionService.getDefinition(data.uid);

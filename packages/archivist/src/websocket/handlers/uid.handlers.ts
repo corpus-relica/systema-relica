@@ -7,12 +7,6 @@ import { UIDMessage, WsResponse } from '../types/websocket.types';
 export class UIDHandlers {
   constructor(private readonly uidService: UIDService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('uid:generate', this.handleUIDGenerate.bind(this));
-    gateway.registerHandler('uid:batch', this.handleUIDBatch.bind(this));
-    gateway.registerHandler('uid:reserve', this.handleUIDReserve.bind(this));
-  }
-
   async handleUIDGenerate(data: UIDMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = this.uidService.reserveUID(1);

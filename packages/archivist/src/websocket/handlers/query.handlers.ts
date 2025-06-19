@@ -7,12 +7,6 @@ import { QueryMessage, WsResponse } from '../types/websocket.types';
 export class QueryHandlers {
   constructor(private readonly queryService: QueryService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('query:execute', this.handleQueryExecute.bind(this));
-    gateway.registerHandler('query:validate', this.handleQueryValidate.bind(this));
-    gateway.registerHandler('query:parse', this.handleQueryParse.bind(this));
-  }
-
   async handleQueryExecute(data: QueryMessage, client: Socket): Promise<WsResponse> {
     try {
       const result = await this.queryService.interpretTable(data.query as any, 1, 20);

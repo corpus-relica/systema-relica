@@ -6,8 +6,8 @@ const { fetchJson } = fetchUtils;
 // Add a function to get the token from localStorage
 
 
-console.log('Creating ArchivistDataProvider axios instance...');
-const apiUrl = import.meta.env.VITE_RELICA_ARCHIVIST_API_URL || 'http://localhost:3000';
+console.log('Creating ArchivistDataProvider with Portal routing...');
+const portalApiUrl = import.meta.env.VITE_PORTAL_API_URL || 'http://localhost:2204';
 
 const httpClient = (url: string, options: any = {}) => {
   if (!options.headers) {
@@ -23,29 +23,60 @@ const httpClient = (url: string, options: any = {}) => {
 const dataProvider = {
   // get a list of records based on sort, filter, and pagination
   getList: (resource: string, params: any): Promise<any> => {
-    console.log("ARCHIVIST::GETTING LIST", resource, params);
+    console.log("ARCHIVIST::GETTING LIST via Portal", resource, params);
 
     switch (resource) {
       case "concept/entities":
-        return httpClient(`${apiUrl}/concept/entities?uids=[${params.uids.join(",")}]`)
-          .then(({ json }) => ({
-            data: json.map((e: any) => ({ ...e, id: e.uid })),
-            total: json.length,
-          }));
+        // Use Portal's concept/entities endpoint
+        const uidsParam = params.uids ? params.uids.join(",") : "";
+        return httpClient(`${portalApiUrl}/concept/entities?uids=${uidsParam}`)
+          .then(({ json }) => {
+            if (json.success && json.entities) {
+              return {
+                data: json.entities.map((e: any) => ({ ...e, id: e.uid })),
+                total: json.entities.length,
+              };
+            }
+            throw new Error(json.error || 'Failed to fetch entities');
+          });
       case "kinds":
-        const sort = params.sort
-          ? `["${params.sort.field}","${params.sort.order}"]`
-          : '["id", "ASC"]';
-        const rangeMin =
-          params.pagination.page * params.pagination.perPage -
-          params.pagination.perPage;
-        const rangeMax = params.pagination.page * params.pagination.perPage;
-        const range = `[${rangeMin}, ${rangeMax}]`;
-        return httpClient(`${apiUrl}/kinds?sort=${sort}&range=${range}&filter={}`)
-          .then(({ json }) => ({
-            data: json.data.map((e: any) => ({ ...e, id: e.uid })),
-            total: json.total,
-          }))
+        // Use Portal's new kinds endpoint with proper pagination
+        const { page = 1, perPage = 10 } = params.pagination || {};
+        const { field = 'lh_object_name', order = 'ASC' } = params.sort || {};
+        
+        // Transform React Admin format to Portal API format
+        const sortParam = JSON.stringify([field, order]);
+        const rangeParam = JSON.stringify([(page - 1) * perPage, perPage]);
+        const filterParam = JSON.stringify(params.filter || {});
+        
+        const queryParams = new URLSearchParams({
+          sort: sortParam,
+          range: rangeParam,
+          filter: filterParam
+        });
+
+        return httpClient(`${portalApiUrl}/kinds?${queryParams.toString()}`)
+          .then(({ json }) => {
+            console.log("Portal kinds response:", json);
+            if (json.success && json.kinds) {
+              const kindsData = json.kinds.data || [];
+              const total = json.kinds.total || 0;
+              
+              return {
+                data: kindsData.map((e: any) => ({ 
+                  ...e, 
+                  id: e.uid || e.id || Math.random().toString(36) 
+                })),
+                total: total,
+              };
+            }
+            throw new Error(json.error || 'Failed to fetch kinds');
+          })
+          .catch(error => {
+            console.error("Error fetching kinds:", error);
+            // Return empty data set on error for MVP
+            return { data: [], total: 0 };
+          })
       default:
         //return rejected promise
         return Promise.reject("Unknown resource");

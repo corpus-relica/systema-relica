@@ -7,6 +7,7 @@ import { SystemController } from './system.controller';
 import { ModelController } from './model.controller';
 import { EnvironmentController } from './environment.controller';
 import { PrismController } from './prism.controller';
+import { KindsController } from './kinds.controller';
 import { WebSocketClientsModule } from '../services/websocket-clients.module';
 import { RestClientsModule } from '../services/rest-clients.module';
 
@@ -21,6 +22,7 @@ import { RestClientsModule } from '../services/rest-clients.module';
     ModelController,
     EnvironmentController,
     PrismController,
+    KindsController,
   ],
 })
 export class RoutesModule {}

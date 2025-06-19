@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { ArchivistMessage, ServiceResponse } from '../types/websocket-messages';
+import { KindActions } from '@relica/websocket-contracts';
 
 @Injectable()
 export class ArchivistWebSocketClientService extends BaseWebSocketClient {
@@ -21,6 +22,35 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     const response = await this.sendMessage(message);
     if (!response.success) {
       throw new Error(response.error || 'Failed to get kinds');
+    }
+    return response.data;
+  }
+
+  async getKindsList(sortField: string = 'lh_object_name', sortOrder: string = 'ASC', skip: number = 0, pageSize: number = 10, filters: any = {}): Promise<any> {
+    console.log("ArchivistWebSocketClientService: searchText called");
+    console.log(sortField)
+    console.log(sortOrder)
+    console.log(skip)
+    console.log(pageSize)
+    console.log(filters)
+    const message = {
+      id: this.generateMessageId(),
+      type: 'request' as const,
+      service: 'archivist' as const,
+      action: KindActions.LIST, // 'kinds:list'
+      payload: {
+        filters: {
+          sort: [sortField, sortOrder],
+          range: [skip, pageSize],
+          filter: filters
+        }
+      },
+    };
+
+    const response = await this.sendMessage(message);
+    console.log("ArchivistWebSocketClientService: searchUid called");
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to get kinds list');
     }
     return response.data;
   }

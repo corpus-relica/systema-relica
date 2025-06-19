@@ -7,12 +7,6 @@ import { CompletionMessage, WsResponse } from '../types/websocket.types';
 export class CompletionHandlers {
   constructor(private readonly completionService: CompletionService) {}
 
-  init(gateway: any) {
-    gateway.registerHandler('completion:request', this.handleCompletion.bind(this));
-    gateway.registerHandler('completion:entities', this.handleEntityCompletion.bind(this));
-    gateway.registerHandler('completion:relations', this.handleRelationCompletion.bind(this));
-  }
-
   async handleCompletion(data: CompletionMessage, client: Socket): Promise<WsResponse> {
     try {
       // getCompletions method doesn't exist - returning empty results

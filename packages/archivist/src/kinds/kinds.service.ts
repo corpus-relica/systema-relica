@@ -33,9 +33,6 @@ export class KindsService {
       return t;
     });
 
-    //convert neo4j integer to js number
-    console.log();
-
     return {
       data: transformedResult,
       total: total[0].get('total').toInt(),
