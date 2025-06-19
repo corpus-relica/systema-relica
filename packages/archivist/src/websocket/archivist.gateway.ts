@@ -9,12 +9,14 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import customParser from 'socket.io-msgpack-parser';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
   transports: ['websocket'],
+  parser: customParser
 })
 export class ArchivistGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect

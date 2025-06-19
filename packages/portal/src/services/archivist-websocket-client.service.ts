@@ -27,12 +27,6 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
   }
 
   async getKindsList(sortField: string = 'lh_object_name', sortOrder: string = 'ASC', skip: number = 0, pageSize: number = 10, filters: any = {}): Promise<any> {
-    console.log("ArchivistWebSocketClientService: searchText called");
-    console.log(sortField)
-    console.log(sortOrder)
-    console.log(skip)
-    console.log(pageSize)
-    console.log(filters)
     const message = {
       id: this.generateMessageId(),
       type: 'request' as const,
@@ -48,7 +42,6 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     };
 
     const response = await this.sendMessage(message);
-    console.log("ArchivistWebSocketClientService: searchUid called");
     if (!response.success) {
       throw new Error(response.error || 'Failed to get kinds list');
     }

@@ -8,6 +8,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { KindHandlers } from '../handlers/kind.handlers';
 import { KindActions } from '@relica/websocket-contracts';
+import customParser from 'socket.io-msgpack-parser';
 
 @Injectable()
 @WebSocketGateway({
@@ -15,6 +16,7 @@ import { KindActions } from '@relica/websocket-contracts';
     origin: '*',
   },
   transports: ['websocket'],
+  parser: customParser
 })
 export class KindGateway {
   private readonly logger = new Logger(KindGateway.name);
