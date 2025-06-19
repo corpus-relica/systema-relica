@@ -39,7 +39,7 @@ export class EnvironmentService {
 
   async findDefaultForUser(userId: string): Promise<Environment> {
     const environments = await this.findAll(userId);
-    
+
     if (environments.length === 0) {
       return this.create({
         name: 'Default Environment',

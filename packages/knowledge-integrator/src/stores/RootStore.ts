@@ -5,6 +5,7 @@ import ColorPaletteStore from "./ColorPaletteStore";
 // import SemanticModelStore from "./SemanticModelStore";
 import SetupStore from "./SetupStore";
 import AuthStore from "./AuthStore";
+import NOUSDataStore from "./NOUSDataStore";
 
 export class RootStore {
   factDataStore: FactDataStore;

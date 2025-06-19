@@ -6,6 +6,8 @@ import { MyMenu } from "./MyMenu";
 import { MyAppBar } from "./MyAppBar";
 import LispREPL from "./LispREPL";
 import { useStores } from "./context/RootStoreContext";
+import { authProvider } from "./authProvider";
+import { loadUserEnvironment, resolveUIDs } from "./PortalClient";
 
 const replHeight = "40vh"; // Adjust as needed
 
@@ -13,13 +15,23 @@ import { ccSocket } from "./socket";
 
 // const memStore = localStorageStore();
 
+const cats = {
+  730044: "Physical Object",
+  193671: "Occurrence",
+  160170: "Role",
+  790229: "Aspect",
+  //970002: "Information",
+  2850: "Relation",
+};
+
 export const MyLayout = (props) => {
+
   const redirect = useRedirect();
   const rootStore: any = useStores();
 
   console.log("vvvv - ROOT STORE vvvv:");
   console.log(rootStore);
-  const { factDataStore } = rootStore;
+  const { factDataStore, authStore } = rootStore;
 
   const [replOpen, setReplOpen] = useState(false);
 
@@ -33,20 +45,83 @@ export const MyLayout = (props) => {
     setReplOpen(!replOpen);
   };
 
+  // const establishCats = async () => {
+  //   if (categories.length > 0) return;
+
+  //   console.log("vvvv - VULNERABLE II - vvvv");
+  //   const result = await portalClient.resolveUIDs(
+  //     Object.keys(cats).map((x) => parseInt(x))
+  //   );
+  //   console.log("vvvv - CONCEPTS vvvv:");
+  //   console.log(result.data);
+  //   const newCats = [];
+  //   for (const [key, name] of Object.entries(cats)) {
+  //     const concept = result.data.find((c: any) => c.uid === parseInt(key));
+  //     const { uid, descendants } = concept;
+  //     newCats.push({ uid, name, descendants });
+  //   }
+  //   console.log("vvvv - CATEGORIES vvvv:");
+  //   console.log(newCats);
+  //   setCategories(newCats);
+  // };
+
+  const establishCats = async () => {
+    // getting the list of uids for the subtypes of the major categories
+    // mostly for node coloring in the graph later on
+    const concepts = await resolveUIDs(
+      Object.keys(cats).map((x) => parseInt(x))
+    );
+    const newCats = [];
+    for (const [key, name] of Object.entries(cats)) {
+      const concept = concepts.find((c: any) => c.uid === parseInt(key));
+      const { uid, descendants } = concept;
+      newCats.push({ uid, name, descendants });
+    }
+    setCategories(newCats);
+  };
+
+  // const initializeSocketConnection = async () => {
+  //   return new Promise((resolve, reject) => {
+  //     const onPortalConnect = () => {
+  //       console.log("\\\\ CONNECTED SOCKET> PORTAL");
+  //     };
+
+  //     const onClientRegistered = (d) => {
+  //       if (d.clientID) {
+  //         portalWs.clientId = d.clientID;
+  //         // Clean up the one-time listener
+  //         portalWs.off("system:clientRegistered", onClientRegistered);
+  //         resolve(d.clientID);
+  //       } else {
+  //         reject(new Error("Failed to register client"));
+  //       }
+  //     };
+
+  //     portalWs.on("connect", onPortalConnect);
+  //     portalWs.on("system:clientRegistered", onClientRegistered);
+
+  //     const token = localStorage.getItem("access_token");
+  //     if (token) {
+  //       initializeWebSocket(token);
+  //     } else {
+  //       reject(new Error("No access token available"));
+  //     }
+  //   });
+  // };
+
   useEffect(() => {
+
+    console.log("vvvv - MY LAYOUT vvvv:");
+
     const onConnect = () => {
       setIsConnected(true);
-      console.log("//// CONNECTED SOCKET> CC");
     };
 
     const onDisconnect = () => {
       setIsConnected(false);
-      console.log("//// DISCONNECTED SOCKET> CC");
     };
 
     const onSelectEntity = (d) => {
-      console.log("SELECT ENTITY");
-      console.log(d.uid);
       setSelectedNode(d.uid);
       setSelectedEdge(null);
       // memStore.setItem("selectedNode", d.uid); //
@@ -54,8 +129,6 @@ export const MyLayout = (props) => {
     };
 
     const onSelectFact = (d) => {
-      console.log("SELECT FACT");
-      console.log(d.uid);
       setSelectedNode(null);
       setSelectedEdge(d.uid);
       // memStore.setItem("selectedNode", null);
@@ -73,7 +146,6 @@ export const MyLayout = (props) => {
     const onAddModels = (d) => {
       d.models.forEach((model: any) => {
         const key = "model:" + model.uid;
-        console.log("WHAT THE FUCK IS HAPPENING HERE!!", key);
         // memStore.removeItem(key);
         // memStore.setItem(key, model);
       });
@@ -82,7 +154,6 @@ export const MyLayout = (props) => {
     const onRemModels = (d) => {
       d.model_uids.forEach((uid: number) => {
         const key = "model:" + uid;
-        console.log("AND HERE!!", key);
         // memStore.removeItem(key);
       });
     };
@@ -95,7 +166,6 @@ export const MyLayout = (props) => {
     };
 
     const onNoneSelected = () => {
-      console.log("SELECT NONE");
       setSelectedNode(null);
       setSelectedEdge(null);
       // memStore.setItem("selectedNode", null);
@@ -103,28 +173,46 @@ export const MyLayout = (props) => {
     };
 
     const onStateInitialized = (state: any) => {
-      console.log("STATE INITIALIZED");
-      console.log(state);
       if (state.mainstate === "REVIEW") {
-        console.log("REVIEW MODE");
         redirect("/env/graph");
       } else if (state.mainstate === "MODELLING") {
-        console.log("MODELLING MODE");
         redirect("/modelling");
       }
     };
 
     const onStateChange = (state: any) => {
-      console.log("STATE CHANGED");
-      console.log(state);
       if (state.mainstate === "REVIEW") {
-        console.log("REVIEW MODE");
         redirect("/env/graph");
       } else if (state.mainstate === "MODELLING") {
-        console.log("MODELLING MODE");
         redirect("/modelling");
       }
     };
+
+    const initializeEnvironment = async () => {
+      try {
+        // First ensure socket connection and client registration
+        // if (!socketInitialized.current) {
+        //   await initializeSocketConnection();
+        //   socketInitialized.current = true;
+        // }
+
+        // Then proceed with environment setup
+        await establishCats();
+        const foo = await authProvider.getIdentity();
+        console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo);
+        console.log("vvvv - USER ID vvvv:", );
+
+        const env = await loadUserEnvironment(authStore.userId);
+        console.log("vvvv - ENVIRONMENT foo vvvv:", env);
+        factDataStore.addFacts(env.facts);
+
+        console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
+      } catch (error) {
+        console.error("Failed to initialize environment:", error);
+      }
+    };
+
+    initializeEnvironment();
 
     ccSocket.on("connect", onConnect);
     ccSocket.on("disconnect", onDisconnect);

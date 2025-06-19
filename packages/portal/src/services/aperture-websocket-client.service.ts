@@ -9,16 +9,17 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     super(configService, 'aperture', 3003);
   }
 
-  async getEnvironment(environmentId: string): Promise<any> {
+  async getEnvironment(userId: number, environmentId: number = undefined): Promise<any> {
     const message: ApertureMessage = {
       id: this.generateMessageId(),
       type: 'request',
       service: 'aperture',
       action: 'get-environment',
-      payload: { environmentId },
+      payload: { userId, environmentId },
     };
 
     const response = await this.sendMessage(message);
+
     if (!response.success) {
       throw new Error(response.error || 'Failed to get environment');
     }

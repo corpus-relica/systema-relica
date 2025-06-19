@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { ArchivistMessage, ServiceResponse } from '../types/websocket-messages';
-import { KindActions } from '@relica/websocket-contracts';
+import { KindActions, EntityActions } from '@relica/websocket-contracts';
 
 @Injectable()
 export class ArchivistWebSocketClientService extends BaseWebSocketClient {
@@ -15,7 +15,7 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'archivist',
-      action: 'get-kinds',
+      action: KindActions.LIST, // 'kinds:list'
       payload: {},
     };
 
@@ -80,12 +80,12 @@ export class ArchivistWebSocketClientService extends BaseWebSocketClient {
     return response.data;
   }
 
-  async resolveUids(uids: string[]): Promise<any> {
+  async resolveUIDs(uids: number[]): Promise<any> {
     const message: ArchivistMessage = {
       id: this.generateMessageId(),
       type: 'request',
       service: 'archivist',
-      action: 'resolve-uids',
+      action: EntityActions.BATCH_RESOLVE, // 'entity:batch-resolve'
       payload: { uids },
     };
 

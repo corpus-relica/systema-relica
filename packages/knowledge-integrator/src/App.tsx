@@ -70,14 +70,6 @@ const dataProvider = new Proxy(defaultDataProvider, {
   },
 });
 
-const cats = {
-  730044: "Physical Object",
-  193671: "Occurrence",
-  160170: "Role",
-  790229: "Aspect",
-  //970002: "Information",
-  2850: "Relation",
-};
 
 const memStore = localStorageStore();
 
@@ -85,37 +77,15 @@ console.log("vvvv - MEMSTORE vvvv:");
 console.log(memStore);
 
 export const App = () => {
+  const rootStore: any = useStores();
+  const { factDataStore } = rootStore;
+  const { setCategories } = factDataStore;
+
+  // State for setup status
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+
   const [isCheckingSetup, setIsCheckingSetup] = useState(true);
   const [setupError, setSetupError] = useState<string>('');
-  const rootStore: any = useStores();
-
-  console.log("vvvv - ROOT STORE vvvv:");
-  console.log(rootStore);
-  const { factDataStore } = rootStore;
-
-  const { setCategories } = factDataStore;
-  // const [isConnected, setIsConnected] = useState(false);
-
-  // const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
-  // const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
-
-  const establishCats = async () => {
-    const concepts = await resolveUIDs(
-      Object.keys(cats).map((x) => parseInt(x))
-    );
-    console.log("vvvv - CONCEPTS vvvv:");
-    console.log(concepts);
-    const newCats = [];
-    for (const [key, name] of Object.entries(cats)) {
-      const concept = concepts.find((c: any) => c.uid === parseInt(key));
-      const { uid, descendants } = concept;
-      newCats.push({ uid, name, descendants });
-    }
-    console.log("vvvv - CATEGORIES vvvv:");
-    console.log(newCats);
-    setCategories(newCats);
-  };
 
   // Check setup status on app startup
   useEffect(() => {
@@ -123,13 +93,13 @@ export const App = () => {
       try {
         const result = await getSetupStatus();
         const status = result.status as SetupStatus;
-        console.log("🔧 Setup status checked:", status);
+        console.log("!!!!! 🔧 Setup status checked:", status);
         setSetupStatus(status);
         setIsCheckingSetup(false);
         
         if (status.status === SETUP_STATES.SETUP_COMPLETE) {
           // If setup is complete, initialize the app
-          await initializeApp();
+          // await initializeApp();
         }
       } catch (error) {
         console.error("Failed to check setup status:", error);
@@ -152,29 +122,29 @@ export const App = () => {
     checkSetup();
   }, []);
 
-  const initializeApp = async () => {
-    try {
-      console.log("🚀 Initializing application...");
-      
-      // Load user environment from Portal
-      const userEnv = await loadUserEnvironment();
-      console.log("📦 User environment loaded:", userEnv);
-      
-      // Add facts to store
-      if (userEnv.facts) {
-        factDataStore.addFacts(userEnv.facts);
-      }
-      
-      // Establish categories
-      await establishCats();
-      
-      console.log("✅ Application ready!");
-      
-    } catch (error) {
-      console.error("❌ Failed to initialize application:", error);
-      //throw error;
-    }
-  };
+  // const initializeApp = async () => {
+  //   try {
+  //     console.log("🚀 Initializing application...");
+
+  //     // Load user environment from Portal
+  //     const userEnv = await loadUserEnvironment();
+  //     console.log("📦 User environment loaded:", userEnv);
+
+  //     // Add facts to store
+  //     if (userEnv.facts) {
+  //       factDataStore.addFacts(userEnv.facts);
+  //     }
+
+  //     // Establish categories
+  //     await establishCats();
+
+  //     console.log("✅ Application ready!");
+
+  //   } catch (error) {
+  //     console.error("❌ Failed to initialize application:", error);
+  //     //throw error;
+  //   }
+  // };
 
   // Show loading screen while checking setup
   if (isCheckingSetup) {
@@ -216,6 +186,8 @@ export const App = () => {
     );
   }
 
+  console.log("🔧 Setup status:", setupStatus);
+
   // Show setup wizard if setup is not complete
   if (!setupStatus || setupStatus.status !== SETUP_STATES.SETUP_COMPLETE) {
     return <SetupWizard onSetupComplete={async () => {
@@ -232,7 +204,7 @@ export const App = () => {
         if (status.status === SETUP_STATES.SETUP_COMPLETE) {
           // Initialize the app if setup is complete
           console.log("🎉 Setup complete! Initializing app...");
-          await initializeApp();
+          // await initializeApp();
         }
       } catch (error) {
         console.error("Failed to re-check setup status after completion:", error);

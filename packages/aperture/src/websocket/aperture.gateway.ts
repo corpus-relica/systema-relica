@@ -11,11 +11,14 @@ import { Server, Socket } from 'socket.io';
 import { EnvironmentService } from '../environment/environment.service';
 import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
 import { ApertureActions } from '@relica/websocket-contracts';
+import customParser from 'socket.io-msgpack-parser';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
+  transports: ['websocket'],
+  // parser: customParser,
 })
 export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ApertureGateway.name);
@@ -41,24 +44,26 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   // Environment Operations
-  @SubscribeMessage('aperture.environment/get')
+  @SubscribeMessage('get-environment')
   async getEnvironment(
     @MessageBody() payload: { userId: string; environmentId?: string },
   ) {
     try {
       const { userId, environmentId } = payload;
       let environment;
-      
+
       if (environmentId) {
         environment = await this.environmentService.findOne(environmentId, userId);
       } else {
         environment = await this.environmentService.findDefaultForUser(userId);
       }
 
-      return {
-        success: true,
-        data: environment,
-      };
+      // return {
+      //   success: true,
+      //   payload: environment,
+      // };
+      return environment
+
     } catch (error) {
       this.logger.error('Failed to get environment', error);
       return {

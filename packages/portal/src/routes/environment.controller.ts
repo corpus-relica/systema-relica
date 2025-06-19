@@ -1,12 +1,12 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ClarityWebSocketClientService } from '../services/clarity-websocket-client.service';
+import { ApertureWebSocketClientService } from '../services/aperture-websocket-client.service';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Environment')
 @Controller('environment')
 export class EnvironmentController {
-  constructor(private readonly clarityClient: ClarityWebSocketClientService) {}
+  constructor(private readonly apertureClient: ApertureWebSocketClientService) {}
 
 
   @Get('retrieve')
@@ -16,19 +16,20 @@ export class EnvironmentController {
   @ApiResponse({ status: 200, description: 'Environment retrieved successfully' })
   async retrieveEnvironment(
     @User() user: any,
-    @Query('uid') uid: string,
+    @Query('userId') userId: number,
   ) {
     try {
-      if (!uid) {
+      if (!userId) {
         throw new BadRequestException('uid parameter is required');
       }
-      
-      const environment = await this.clarityClient.getEnvironment(uid);
-      
-      return {
-        success: true,
-        environment,
-      };
+
+      const environment = await this.apertureClient.getEnvironment(userId);
+
+      if (!environment) {
+        throw new BadRequestException('Environment not found');
+      }
+
+      return environment;
     } catch (error) {
       return {
         success: false,

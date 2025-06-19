@@ -32,4 +32,5 @@ temp.*
 /packages/prism/dist/
 /packages/shutter/dist/
 /packages/portal/dist/
+/packages/websocket-contracts/dist/
 /reference/

@@ -3,6 +3,7 @@ import { checkAuthenticationStatus } from "./PortalClient";
 
 export const getAuthToken = () => {
   const token = localStorage.getItem('access_token');
+  console.log(token)
   console.log('getAuthToken called, token:', token ? 'exists' : 'missing');
   return token;
 };

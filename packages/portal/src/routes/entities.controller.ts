@@ -38,17 +38,35 @@ export class EntitiesController {
     @Query('uids') uids: string,
   ) {
     try {
+
       if (!uids) {
         throw new BadRequestException('uids query parameter is required');
       }
+
+
+      // Parse the UIDs parameter (expecting format "[1,2,3]" or "1,2,3")
+      let uidArray: number[];
       
-      const uidArray = uids.split(',').map(uid => uid.trim());
-      const entities = await this.archivistClient.resolveUids(uidArray);
-      
-      return {
-        success: true,
-        entities,
-      };
+      if (uids.startsWith('[') && uids.endsWith(']')) {
+        // Remove brackets and parse as JSON
+        uidArray = JSON.parse(uids);
+      } else {
+        // Split by comma and parse each number
+        uidArray = uids.split(',').map(uid => parseInt(uid.trim(), 10));
+      }
+
+      // Validate that all UIDs are valid numbers
+      if (uidArray.some(uid => isNaN(uid))) {
+        throw new BadRequestException('Invalid UID format. All UIDs must be valid numbers.');
+      }
+
+      const result = await this.archivistClient.resolveUIDs(uidArray);
+      if(result.success === false) {
+        throw new Error(`Failed to resolve entities: ${result.payload || 'Unknown error'}`);
+      }
+
+      return result.payload;
+
     } catch (error) {
       return {
         success: false,
@@ -64,7 +82,7 @@ export class EntitiesController {
     schema: {
       type: 'object',
       properties: {
-        uids: { type: 'array', items: { type: 'string' } }
+        uids: { type: 'array', items: { type: 'number' } }
       },
       required: ['uids']
     }
@@ -72,14 +90,19 @@ export class EntitiesController {
   @ApiResponse({ status: 200, description: 'Entities resolved successfully' })
   async resolveEntitiesPost(
     @User() user: any,
-    @Body() body: { uids: string[] },
+    @Body() body: { uids: number[] },
   ) {
     try {
       if (!body.uids || !Array.isArray(body.uids)) {
         throw new BadRequestException('uids array is required in request body');
       }
+
+      // Validate that all UIDs are valid numbers
+      if (body.uids.some(uid => typeof uid !== 'number' || isNaN(uid))) {
+        throw new BadRequestException('All UIDs must be valid numbers');
+      }
       
-      const entities = await this.archivistClient.resolveUids(body.uids);
+      const entities = await this.archivistClient.resolveUIDs(body.uids);
       
       return {
         success: true,

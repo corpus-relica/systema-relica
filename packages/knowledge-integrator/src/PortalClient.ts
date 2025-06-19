@@ -36,7 +36,6 @@ export const getSetupStatus = async (retries = 3): Promise<SetupStatus> => {
       // If 401/403 and no token, try to get guest token first
       if ((error.response?.status === 401 || error.response?.status === 403) && !getAuthToken()) {
         try {
-          console.log('🔑 Getting guest token for setup status check...');
           const { token } = await getGuestToken();
           localStorage.setItem('access_token', token);
           // Retry the request with the guest token
@@ -126,10 +125,23 @@ export const checkAuthenticationStatus = async (): Promise<{ authenticated: bool
   }
 };
 
-export const loadUserEnvironment = async (): Promise<any> => {
-  const response = await PortalAxiosInstance.get("/api/environment/user");
+export const loadUserEnvironment = async (userId:number): Promise<any> => {
+  const response = await PortalAxiosInstance.get("/environment/retrieve?userId=" + userId);
   return response.data;
 };
+
+export const resolveUIDs = async (uids: number[]): Promise <any> => {
+  try {
+    const response = await PortalAxiosInstance.get("/concept/entities", {
+      params: { uids: "[" + uids.join(",") + "]" },
+    });
+
+    return response.data;
+  }catch (error) {
+    console.error('Failed to resolve UIDs:', error);
+    throw new Error(`Failed to resolve UIDs: ${error.message}`);
+  }
+}
 
 // DEBUG: Reset entire system (databases, setup state, etc.) via Prism
 export const resetSystemState = async (): Promise<{ success: boolean; message?: string }> => {

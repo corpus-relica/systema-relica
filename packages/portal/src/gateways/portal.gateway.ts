@@ -20,6 +20,7 @@ import {
   ClientResponse,
   ClientEvent
 } from '../types/websocket-messages';
+import customParser from 'socket.io-msgpack-parser';
 
 interface ConnectedClient {
   userId: string;
@@ -36,6 +37,7 @@ interface ConnectedClient {
     credentials: true,
   },
   transports: ['websocket'],
+  parser: customParser,
 })
 
 export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
