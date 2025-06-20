@@ -36,7 +36,7 @@ export const SelectNoneRequestSchema = z.object({
 
 export const LoadSpecializationHierarchyRequestSchema = z.object({
   uid: z.union([z.string(), z.number()]),
-  userId: z.string(),
+  userId: z.union([z.string(), z.number()]),
 });
 
 export const LoadEntityRequestSchema = z.object({

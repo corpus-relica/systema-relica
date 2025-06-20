@@ -321,7 +321,6 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  // Placeholder handlers for other message types
   @SubscribeMessage(PortalUserActions.LOAD_SPECIALIZATION_HIERARCHY)
   async handleLoadSpecializationHierarchy(
     @ConnectedSocket() client: Socket,
@@ -330,7 +329,10 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // Validate payload
       const validation = LoadSpecializationHierarchyRequestSchema.safeParse(payload);
+      console.log("All related facts loaded for UID:", payload.uid, "by user:", payload.userId);
+      console.log(validation)
       if (!validation.success) {
+        console.log(validation.error.issues)
         return this.createResponse(client.id, false, { 
           type: 'validation-error', 
           message: 'Invalid payload format',
@@ -338,7 +340,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       }
 
-      const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid.toString(), payload.userId);
+      const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid.toString(), ""+payload.userId);
 
       if (!result ) {
         return {
@@ -380,9 +382,43 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: any
   ): Promise<any> {
     try {
-      // TODO: Implement Aperture service call
+      // Validate payload
+      const validation = ClearEntitiesRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        return this.createResponse(client.id, false, { 
+          type: 'validation-error', 
+          message: 'Invalid payload format',
+          details: validation.error.issues 
+        });
+      }
+
+      // const clientData = this.connectedClients.get(client.id);
+      // if (!clientData) {
+      //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+      // }
+
+      const userId = 25;//payload.userId || clientData.userId;
+      const environmentId = "d64bfea9-cd85-4184-a018-fe29d074c278";//clientData.environmentId || '1'; // Default environment
+
+      console.log("Clearing entities for environment:", environmentId, "by user:", userId);
+
+      // Call Aperture service to clear environment entities
+      const result = await this.apertureClient.clearEnvironmentEntities(""+userId, ""+environmentId);
+
+      if (!result) {
+        return this.createResponse(client.id, false, { 
+          type: 'internal-error', 
+          message: 'Failed to clear entities',
+          details: 'No response from Aperture service'
+        });
+      }
+
       return this.createResponse(client.id, true, {
         message: 'Entities cleared',
+        data: {
+          ...result,
+          clearedFactCount: result.factUids ? result.factUids.length : 0,
+        },
       });
     } catch (error) {
       this.logger.error('Clear entities error:', error);

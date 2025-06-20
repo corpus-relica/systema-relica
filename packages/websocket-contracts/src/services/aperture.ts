@@ -176,10 +176,10 @@ export const FactsLoadedEventSchema = z.object({
 
 export const FactsUnloadedEventSchema = z.object({
   type: z.literal('aperture.facts/unloaded'),
-  'fact-uids': z.array(z.number()),
-  'model-uids': z.array(z.number()).optional(),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  factUids: z.array(z.number()),
+  modelUids: z.array(z.number()).optional(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 export const EntitySelectedEventSchema = z.object({

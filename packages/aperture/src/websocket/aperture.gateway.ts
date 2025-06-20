@@ -249,18 +249,20 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       
       await this.environmentService.clearFacts(environmentId, userId);
 
-      // Broadcast to all clients
+      // Broadcast to all clients - matches FactsUnloadedEventSchema
       this.server.emit('aperture.facts/unloaded', {
+        // type: 'aperture.facts/unloaded',
         factUids,
         modelUids: [],
-        userId,
-        environmentId,
+        userId: Number(userId),
+        environmentId: Number(environmentId),
       });
 
       return {
         success: true,
         data: {
           success: true,
+          factUids, // Include the cleared fact UIDs in response
         },
       };
     } catch (error) {

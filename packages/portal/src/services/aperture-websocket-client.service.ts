@@ -25,6 +25,16 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
       // Forward the event to the Portal Gateway
       this.portalGateway.server.emit('system:loadedFacts', payload);
     });
+
+    this.socket.on('aperture.facts/unloaded', (payload) => {
+      this.logger.debug(`Received aperture.facts/unloaded event`);
+      if (!this.portalGateway) {
+        this.logger.warn('PortalGateway not set, cannot forward event');
+        return;
+      }
+      // Forward the event to the Portal Gateway
+      this.portalGateway.server.emit('system:unloadedFacts', payload);
+    });
   }
 
   setPortalGateway(gateway: any) {
@@ -150,7 +160,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'aperture',
-      action: 'clear-environment-entities',
+      action: ApertureActions.ENVIRONMENT_CLEAR, // 'aperture.environment/clear'
       payload: { userId, environmentId },
     };
 
