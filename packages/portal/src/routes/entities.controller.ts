@@ -2,6 +2,8 @@ import { Controller, Get, Post, Query, Body, BadRequestException } from '@nestjs
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
+import { ENTITY_TYPE_ENDPOINT,
+         COLLECTIONS_ENDPOINT } from '@relica/constants'
 
 @ApiTags('Entities')
 @Controller()
@@ -116,7 +118,28 @@ export class EntitiesController {
     }
   }
 
-  @Get("retrieveEntity/collections")
+  // RETRIEVE ENTITY_TYPE
+  @Get(ENTITY_TYPE_ENDPOINT)
+  @ApiOperation({ summary: 'Retrieve entity type' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Entity type retrieved successfully' })
+  async retrieveEntityType(
+    @User() user: any,
+    @Query('uid') uid: number, // Optional query parameter to filter by kind
+  ) {
+    try {
+
+      const entityType = await this.archivistClient.getEntityType(+uid);
+      return entityType;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to retrieve entity collections',
+      };
+    }
+  }
+
+  @Get(COLLECTIONS_ENDPOINT)
   @ApiOperation({ summary: 'Retrieve entity collections, the collections defined in the semantic model' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Entity collections retrieved successfully' })
@@ -124,7 +147,6 @@ export class EntitiesController {
     try {
 
       const collections = await this.archivistClient.getEntityCollections();
-      console.log("RETRIEVE ENTITY COLLECTIONS", collections);
       return collections
     } catch (error) {
       return {

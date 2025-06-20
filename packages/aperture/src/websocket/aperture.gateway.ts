@@ -212,8 +212,9 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {
     try {
       const { userId, environmentId } = payload;
+      console.log("Deselecting entity for user:", userId, "in environment:", environmentId);
       await this.environmentService.deselectEntity(environmentId, userId);
-
+      console.log("Entity deselected successfully");
       // Broadcast to all clients
       this.server.emit(ApertureEvents.ENTITY_DESELECTED, {
         userId,

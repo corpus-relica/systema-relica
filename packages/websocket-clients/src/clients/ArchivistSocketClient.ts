@@ -282,7 +282,7 @@ export class ArchivistSocketClient implements OnModuleInit, OnModuleDestroy {
 
   async getEntityType(uid: number): Promise<any> {
     const payload = { uid };
-    return this.sendMessage(ConceptActions.GET, payload);
+    return this.sendMessage(EntityActions.TYPE_GET, payload);
   }
 
   async deleteEntity(uid: number): Promise<any> {

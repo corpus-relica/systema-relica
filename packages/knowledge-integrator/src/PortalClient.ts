@@ -1,8 +1,6 @@
 import axios from "axios";
 import { getAuthToken } from "./authProvider";
 
-console.log("CONNECTING PORTAL CLIENT", import.meta.env.VITE_PORTAL_API_URL || 'http://localhost:2204');
-
 const PortalAxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_PORTAL_API_URL || 'http://localhost:2204',
 });

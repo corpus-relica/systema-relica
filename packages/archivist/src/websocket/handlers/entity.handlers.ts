@@ -103,7 +103,7 @@ export class EntityHandlers {
     @ConnectedSocket() client: Socket,
   ): Promise<any> {
     try {
-      this.logger.log(`🔍 Getting type for entity UID: ${data.uid}`);
+      // this.logger.log(`🔍 Getting type for entity UID: ${data.uid}`);
 
       if (!data.uid || typeof data.uid !== 'number') {
         return {
@@ -113,13 +113,12 @@ export class EntityHandlers {
         };
       }
 
-      // TODO: Replace with actual entity type service call
-      const mockType = 'Kind';
+      const type = await this.entityRetrievalService.getEntityType(data.uid);
 
       return {
         success: true,
         data: {
-          type: mockType
+          type
         }
       };
 

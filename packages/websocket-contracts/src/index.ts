@@ -31,6 +31,7 @@ export * from './base';
 export * from './services/prism';
 export * from './services/archivist';
 export * from './services/aperture';
+export * from './services/clarity';
 export * from './services/portal';
 
 // Message registry and utilities
@@ -243,3 +244,23 @@ export {
   type UnloadedModelsEvent,
   type UpdateCategoryDescendantsCacheEvent,
 } from './services/portal';
+
+export {
+  // Clarity operations
+  ClarityActions,
+  type ClarityActionType,
+  type ModelGetRequest,
+  type ModelBatchRequest,
+  type ModelCreateRequest,
+  type ModelUpdateRequest,
+  type KindGetRequest,
+  type IndividualGetRequest,
+  type ClarityEnvironmentGetRequest,
+  type ModelResponse,
+  type ModelBatchResponse,
+  type KindResponse,
+  type IndividualResponse,
+  type ClarityEnvironmentResponse,
+  type ClarityModelEvent,
+  type ClarityIndividualEvent,
+} from './services/clarity';

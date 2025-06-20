@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PrismActions } from './services/prism';
+import { ClarityActions } from './services/clarity';
 import { 
   FactActions,
   SearchActions,
@@ -800,6 +801,183 @@ export const MESSAGE_REGISTRY = {
     requestSchema: RelationRolePlayersLoadRequestSchema,
     responseSchema: ApertureResponseSchema,
     description: 'Load role players for a relation type',
+  },
+
+  // =====================================================
+  // CLARITY SERVICE CONTRACTS
+  // =====================================================
+
+  [ClarityActions.MODEL_GET]: {
+    action: ClarityActions.MODEL_GET,
+    service: 'clarity',
+    requestSchema: z.object({
+      service: z.literal('clarity'),
+      action: z.literal(ClarityActions.MODEL_GET),
+      payload: z.object({
+        uid: z.string().optional(),
+      }).optional(),
+    }),
+    responseSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        model: z.any(),
+      }).optional(),
+      error: z.object({
+        code: z.string(),
+        message: z.string(),
+        details: z.any().optional(),
+      }).optional(),
+    }),
+    description: 'Get a semantic model by ID',
+  },
+
+  [ClarityActions.MODEL_GET_BATCH]: {
+    action: ClarityActions.MODEL_GET_BATCH,
+    service: 'clarity',
+    requestSchema: z.object({
+      service: z.literal('clarity'),
+      action: z.literal(ClarityActions.MODEL_GET_BATCH),
+      payload: z.object({
+        uids: z.array(z.string()),
+      }),
+    }),
+    responseSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        models: z.array(z.any()),
+      }).optional(),
+      error: z.object({
+        code: z.string(),
+        message: z.string(),
+        details: z.any().optional(),
+      }).optional(),
+    }),
+    description: 'Get multiple semantic models',
+  },
+
+  [ClarityActions.MODEL_CREATE]: {
+    action: ClarityActions.MODEL_CREATE,
+    service: 'clarity',
+    requestSchema: z.object({
+      service: z.literal('clarity'),
+      action: z.literal(ClarityActions.MODEL_CREATE),
+      payload: z.object({
+        name: z.string(),
+        type: z.string(),
+        data: z.any(),
+      }),
+    }),
+    responseSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        model: z.any(),
+      }).optional(),
+      error: z.object({
+        code: z.string(),
+        message: z.string(),
+        details: z.any().optional(),
+      }).optional(),
+    }),
+    description: 'Create a new semantic model',
+  },
+
+  [ClarityActions.MODEL_UPDATE]: {
+    action: ClarityActions.MODEL_UPDATE,
+    service: 'clarity',
+    requestSchema: z.object({
+      service: z.literal('clarity'),
+      action: z.literal(ClarityActions.MODEL_UPDATE),
+      payload: z.object({
+        modelId: z.string(),
+        name: z.string().optional(),
+        type: z.string().optional(),
+        data: z.any().optional(),
+      }),
+    }),
+    responseSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        model: z.any(),
+      }).optional(),
+      error: z.object({
+        code: z.string(),
+        message: z.string(),
+        details: z.any().optional(),
+      }).optional(),
+    }),
+    description: 'Update an existing semantic model',
+  },
+
+  [ClarityActions.KIND_GET]: {
+    action: ClarityActions.KIND_GET,
+    service: 'clarity',
+    requestSchema: z.object({
+      service: z.literal('clarity'),
+      action: z.literal(ClarityActions.KIND_GET),
+      payload: z.object({
+        uid: z.string(),
+      }),
+    }),
+    responseSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        model: z.any(),
+      }).optional(),
+      error: z.object({
+        code: z.string(),
+        message: z.string(),
+        details: z.any().optional(),
+      }).optional(),
+    }),
+    description: 'Get a kind model by ID',
+  },
+
+  [ClarityActions.INDIVIDUAL_GET]: {
+    action: ClarityActions.INDIVIDUAL_GET,
+    service: 'clarity',
+    requestSchema: z.object({
+      service: z.literal('clarity'),
+      action: z.literal(ClarityActions.INDIVIDUAL_GET),
+      payload: z.object({
+        uid: z.string(),
+      }),
+    }),
+    responseSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        model: z.any(),
+      }).optional(),
+      error: z.object({
+        code: z.string(),
+        message: z.string(),
+        details: z.any().optional(),
+      }).optional(),
+    }),
+    description: 'Get an individual model by ID',
+  },
+
+  [ClarityActions.ENVIRONMENT_GET]: {
+    action: ClarityActions.ENVIRONMENT_GET,
+    service: 'clarity',
+    requestSchema: z.object({
+      service: z.literal('clarity'),
+      action: z.literal(ClarityActions.ENVIRONMENT_GET),
+      payload: z.object({
+        environmentId: z.string(),
+      }),
+    }),
+    responseSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        environment: z.any(),
+      }).optional(),
+      error: z.object({
+        code: z.string(),
+        message: z.string(),
+        details: z.any().optional(),
+      }).optional(),
+    }),
+    description: 'Get environment information from Clarity',
   },
   
 } as const satisfies Record<string, MessageContract>;

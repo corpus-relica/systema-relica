@@ -18,16 +18,21 @@ import {
 import { Fact } from "./types";
 import { getAuthToken } from "./authProvider";
 
-console.log('Creating ArchivistDataProvider axios instance...');
-const apiUrl = import.meta.env.VITE_RELICA_DB_API_URL || 'http://localhost:3000';
-
-console.log(
-  "connections RLC BASE CLIENT ", apiUrl
-);
+const apiUrl = import.meta.env.VITE_RELICA_API_URL || 'http://localhost:2204';
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_RELICA_DB_API_URL,
+  baseURL: import.meta.env.VITE_RELICA_API_URL,
 });
+
+// Add request interceptor to include auth token
+axiosInstance.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 
 export const getSpecializationHierarchy = async (uid: number) => {
   const response = await axiosInstance.get(SPECIALIZATION_HIERARCHY_ENDPOINT, {

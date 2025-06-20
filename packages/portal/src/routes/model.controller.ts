@@ -1,12 +1,12 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ClarityWebSocketClientService } from '../services/clarity-websocket-client.service';
+import { ClaritySocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Model')
 @Controller('model')
 export class ModelController {
-  constructor(private readonly clarityClient: ClarityWebSocketClientService) {}
+  constructor(private readonly clarityClient: ClaritySocketClient) {}
 
 
   @Get()

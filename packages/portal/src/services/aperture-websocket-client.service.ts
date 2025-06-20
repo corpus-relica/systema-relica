@@ -141,6 +141,22 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     return response.data;
   }
 
+  async selectNone(userId: number, environmentId: string ='1'): Promise<any> {
+    const message: ApertureMessage = {
+      id: this.generateMessageId(),
+      type: 'request',
+      service: 'aperture',
+      action: ApertureActions.ENTITY_DESELECT, // 'aperture.entity/select-none'
+      payload: { userId, environmentId },
+    };
+
+    const response = await this.sendMessage(message);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to deselect entitites');
+    }
+    return response.data;
+  }
+
   async loadEntities(environmentId: string, filters?: any): Promise<any> {
     const message: ApertureMessage = {
       id: this.generateMessageId(),

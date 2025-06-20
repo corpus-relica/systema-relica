@@ -256,14 +256,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       }
 
-      console.log("Entity selected by user:", payload.userId, "with UID:", payload.uid);
       // const clientData = this.connectedClients.get(client.id);
       // if (!clientData) {
       //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
       // }
 
-      // TODO: Forward to Aperture service via WebSocket
-      // For now, return success and broadcast event
       const environmentId = payload.environmentId || '1';
 
       const result = await this.apertureClient.selectEntity(payload.userId, environmentId, payload.uid);
@@ -279,8 +276,6 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   },
       // });
 
-      console.log("Entity selected:", payload.uid, "by user:", payload.userId);
-
       return this.createResponse(client.id, true, {
         message: 'Entity selected',
       });
@@ -290,34 +285,35 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('selectNone')
+  @SubscribeMessage(PortalUserActions.SELECT_NONE)
   async handleSelectNone(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { userId: string }
+    @MessageBody() payload: { userId: number, environmentId?: number }
   ): Promise<any> {
     try {
-      const clientData = this.connectedClients.get(client.id);
-      if (!clientData) {
-        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
-      }
+      // const clientData = this.connectedClients.get(client.id);
+      // if (!clientData) {
+      //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+      // }
 
-      // TODO: Forward to Aperture service via WebSocket
-      const environmentId = clientData.environmentId || '1';
-      
+      const environmentId = payload.environmentId || '1';
+
+      const result = await this.apertureClient.selectNone(payload.userId, ""+environmentId);
       // Broadcast entity deselected event to environment
-      this.broadcastToEnvironment(environmentId, {
-        id: 'system',
-        type: 'portal:entitySelectedNone',
-        payload: {
-          type: 'aperture.entity/deselected',
-          userId: payload.userId,
-          environment_id: environmentId,
-        },
-      });
+      // this.broadcastToEnvironment(environmentId, {
+      //   id: 'system',
+      //   type: 'portal:entitySelectedNone',
+      //   payload: {
+      //     type: 'aperture.entity/deselected',
+      //     userId: payload.userId,
+      //     environment_id: environmentId,
+      //   },
+      // });
 
-      return this.createResponse(client.id, true, {
-        message: 'Entity deselected',
-      });
+      // return this.createResponse(client.id, true, {
+      //   message: 'Entity deselected',
+      // });
+      return {success: true}
     } catch (error) {
       this.logger.error('Select none error:', error);
       return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to deselect entity' });
@@ -332,8 +328,6 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // Validate payload
       const validation = LoadSpecializationHierarchyRequestSchema.safeParse(payload);
-      console.log("All related facts loaded for UID:", payload.uid, "by user:", payload.userId);
-      console.log(validation)
       if (!validation.success) {
         console.log(validation.error.issues)
         return this.createResponse(client.id, false, { 

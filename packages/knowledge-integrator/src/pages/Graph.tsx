@@ -91,7 +91,9 @@ const Graph = observer(() => {
 
   const onStageClick = () => {
     setOpen(false);
-    portalSocket.emit(USER, "selectNone", {});
+    const userId = authStore.userId;
+    const environmentId = rootStore.environmentId;
+    portalSocket.emit(USER, "selectNone", {userId, environmentId});
   };
 
   const handleSearchUIClose = async (res: any) => {
