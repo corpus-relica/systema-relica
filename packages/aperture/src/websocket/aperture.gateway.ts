@@ -9,7 +9,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { EnvironmentService } from '../environment/environment.service';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { ApertureActions } from '@relica/websocket-contracts';
 import customParser from 'socket.io-msgpack-parser';
 
@@ -28,7 +28,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   constructor(
     private readonly environmentService: EnvironmentService,
-    private readonly archivistClient: ArchivistWebSocketClientService,
+    private readonly archivistClient: ArchivistSocketClient,
   ) {}
 
   handleConnection(client: Socket) {
@@ -260,8 +260,8 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       return {
         success: true,
-        data: {
-          success: true,
+        payload: {
+          // success: true,
           factUids, // Include the cleared fact UIDs in response
         },
       };

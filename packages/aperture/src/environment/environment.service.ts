@@ -2,14 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Environment } from './entities/environment.entity';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 
 @Injectable()
 export class EnvironmentService {
   constructor(
     @InjectRepository(Environment)
     private environmentRepository: Repository<Environment>,
-    private readonly archivistClient: ArchivistWebSocketClientService,
+    private readonly archivistClient: ArchivistSocketClient,
   ) {}
 
   async create(data: { name: string; userId: string }): Promise<Environment> {
