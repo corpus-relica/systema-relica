@@ -26,7 +26,8 @@ import authProvider, { getAuthToken } from "../authProvider";
 const USER = "user";
 
 const Graph = observer(() => {
-  const { factDataStore, colorPaletteStore, authStore } = useStores();
+  const rootStore = useStores()
+  const { factDataStore, colorPaletteStore, authStore } = rootStore;
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
 
@@ -37,7 +38,9 @@ const Graph = observer(() => {
   const [filter, setFilter] = useState<number>(0);
 
   const selectNode = (id: number) => {
-    portalSocket.emit(USER, "selectEntity", { uid: id });
+    const userId = authStore.userId;
+    const environmentId = rootStore.environmentId;
+    portalSocket.emit(USER, "selectEntity", {  userId, environmentId, uid: id });
   };
 
   const token = getAuthToken();

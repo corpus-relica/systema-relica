@@ -21,7 +21,7 @@ export const ApertureActions = {
   ENTITY_UNLOAD: 'aperture.entity/unload',
   ENTITY_LOAD_MULTIPLE: 'aperture.entity/load-multiple',
   ENTITY_UNLOAD_MULTIPLE: 'aperture.entity/unload-multiple',
-  ENTITY_SELECT: 'aperture.entity/select',
+  SELECT_ENTITY: 'aperture.entity/select',
   ENTITY_DESELECT: 'aperture.entity/deselect',
 
   // Subtype Operations
@@ -48,6 +48,21 @@ export const ApertureActions = {
   // Fact-related Events
   FACTS_LOADED: 'aperture.facts/loaded',
   FACTS_UNLOADED: 'aperture.facts/unloaded',
+} as const;
+
+export const ApertureEvents = {
+  LOADED_FACTS: 'aperture.facts/loaded',
+  UNLOADED_FACTS: 'aperture.facts/unloaded',
+  ENTITY_SELECTED: 'aperture.entity/selected',
+  ENTITY_DESELECTED: 'aperture.entity/deselected',
+  // SELECTED_FACT: 'system:selectedFact',
+  // SELECTED_NONE: 'system:selectedNone',
+  // ENTITIES_CLEARED: 'system:entitiesCleared',
+  // STATE_INITIALIZED: 'system:stateInitialized',
+  // STATE_CHANGED: 'system:stateChanged',
+  // LOADED_MODELS: 'system:loadedModels',
+  // UNLOADED_MODELS: 'system:unloadedModels',
+  // UPDATE_CATEGORY_DESCENDANTS_CACHE: 'system:updateCategoryDescendantsCache',
 } as const;
 
 // Base schemas

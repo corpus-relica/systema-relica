@@ -248,22 +248,25 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Validate payload
       const validation = SelectEntityRequestSchema.safeParse(payload);
       if (!validation.success) {
-        return this.createResponse(client.id, false, { 
+        console.log("Validation failed:", validation.error.issues);
+        return this.createResponse(client.id, false, {
           type: 'validation-error', 
           message: 'Invalid payload format',
           details: validation.error.issues 
         });
       }
 
-      const clientData = this.connectedClients.get(client.id);
-      if (!clientData) {
-        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
-      }
+      console.log("Entity selected by user:", payload.userId, "with UID:", payload.uid);
+      // const clientData = this.connectedClients.get(client.id);
+      // if (!clientData) {
+      //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+      // }
 
       // TODO: Forward to Aperture service via WebSocket
       // For now, return success and broadcast event
-      const environmentId = clientData.environmentId || '1';
-      
+      const environmentId = payload.environmentId || '1';
+
+      const result = await this.apertureClient.selectEntity(payload.userId, environmentId, payload.uid);
       // Broadcast entity selected event to environment
       // this.broadcastToEnvironment(environmentId, {
       //   id: 'system',

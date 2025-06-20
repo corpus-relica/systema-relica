@@ -21,8 +21,9 @@ export const PortalUserActions = {
 
 // Request schemas for user actions
 export const SelectEntityRequestSchema = z.object({
-  uid: z.union([z.string(), z.number()]),
-  userId: z.string().optional(),
+  userId: z.number(),
+  environmentId: z.string().optional(), // Optional for environments
+  uid: z.number(),
 });
 
 export const SelectFactRequestSchema = z.object({

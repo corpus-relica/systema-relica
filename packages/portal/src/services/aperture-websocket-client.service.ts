@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseWebSocketClient } from './websocket-client.service';
 import { ApertureMessage, ServiceResponse } from '../types/websocket-messages';
-import { ApertureActions } from '@relica/websocket-contracts';
+import { ApertureActions, ApertureEvents, PortalSystemEvents} from '@relica/websocket-contracts';
 // import { PortalGateway } from '../gateways/portal.gateway';
 
 @Injectable()
@@ -16,24 +16,44 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
   async onModuleInit() {
     await super.onModuleInit();
 
-    this.socket.on('aperture.facts/loaded', (payload) => {
+    this.socket.on(ApertureEvents.LOADED_FACTS, (payload) => {
       this.logger.debug(`Received aperture.facts/loaded event`);
       if (!this.portalGateway) {
         this.logger.warn('PortalGateway not set, cannot forward event');
         return;
       }
       // Forward the event to the Portal Gateway
-      this.portalGateway.server.emit('system:loadedFacts', payload);
+      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, payload);
     });
 
-    this.socket.on('aperture.facts/unloaded', (payload) => {
+    this.socket.on(ApertureEvents.UNLOADED_FACTS, (payload) => {
       this.logger.debug(`Received aperture.facts/unloaded event`);
       if (!this.portalGateway) {
         this.logger.warn('PortalGateway not set, cannot forward event');
         return;
       }
       // Forward the event to the Portal Gateway
-      this.portalGateway.server.emit('system:unloadedFacts', payload);
+      this.portalGateway.server.emit(PortalSystemEvents.UNLOADED_FACTS, payload);
+    });
+
+    this.socket.on(ApertureEvents.ENTITY_SELECTED, (payload) => {
+      this.logger.debug(`Received entity selected event`, payload);
+      if (!this.portalGateway) {
+        this.logger.warn('PortalGateway not set, cannot forward event');
+        return;
+      }
+      // // Forward the event to the Portal Gateway
+      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_ENTITY, payload);
+    });
+
+    this.socket.on(ApertureEvents.ENTITY_DESELECTED, (payload) => {
+      this.logger.debug(`Received entity deselected event`);
+      if (!this.portalGateway) {
+        this.logger.warn('PortalGateway not set, cannot forward event');
+        return;
+      }
+      // // Forward the event to the Portal Gateway
+      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE, payload);
     });
   }
 
@@ -59,7 +79,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'aperture',
-      action: 'get-environment',
+      action: ApertureActions.ENVIRONMENT_GET,
       payload: { userId, environmentId },
     };
 
@@ -76,7 +96,7 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
       id: this.generateMessageId(),
       type: 'request',
       service: 'aperture',
-      action: 'create-environment',
+      action: ApertureActions.ENVIRONMENT_CREATE,
       payload: environmentData,
     };
 
@@ -103,19 +123,21 @@ export class ApertureWebSocketClientService extends BaseWebSocketClient {
     return response.data;
   }
 
-  async selectEntity(uid: string, userId: string, environmentId?: string): Promise<any> {
+  async selectEntity(userId: number, environmentId: string = '1', uid: number): Promise<any> {
     const message: ApertureMessage = {
       id: this.generateMessageId(),
       type: 'request',
       service: 'aperture',
-      action: 'select-entity',
+      action: ApertureActions.SELECT_ENTITY,
       payload: { uid, userId, environmentId },
     };
 
+    console.log('MUTHERFUCKING MESSAGE', message)
     const response = await this.sendMessage(message);
     if (!response.success) {
       throw new Error(response.error || 'Failed to select entity');
     }
+    console.log('APERTURE SELECT ENTITY RESPONSE', response)
     return response.data;
   }
 

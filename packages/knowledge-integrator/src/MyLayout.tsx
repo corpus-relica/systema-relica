@@ -8,6 +8,7 @@ import LispREPL from "./LispREPL";
 import { useStores } from "./context/RootStoreContext";
 import { authProvider } from "./authProvider";
 import { loadUserEnvironment, resolveUIDs } from "./PortalClient";
+import { PortalSystemEvents } from "@relica/websocket-contracts";
 
 const replHeight = "40vh"; // Adjust as needed
 
@@ -223,11 +224,11 @@ export const MyLayout = (props) => {
     portalSocket.on("connect", onConnect);
     portalSocket.on("disconnect", onDisconnect);
 
-    // ccSocket.on("system:selectedEntity", onSelectEntity);
+    portalSocket.on(PortalSystemEvents.SELECTED_ENTITY, onSelectEntity);
     // ccSocket.on("system:selectedFact", onSelectFact);
-    // ccSocket.on("system:selectedNone", onNoneSelected);
-    portalSocket.on("system:loadedFacts", onAddFacts);
-    portalSocket.on("system:unloadedFacts", onRemFacts);
+    portalSocket.on(PortalSystemEvents.SELECTED_NONE, onNoneSelected);
+    portalSocket.on(PortalSystemEvents.LOADED_FACTS, onAddFacts);
+    portalSocket.on(PortalSystemEvents.UNLOADED_FACTS, onRemFacts);
     // ccSocket.on("system:loadedModels", onAddModels);
     // ccSocket.on("system:unloadedModels", onRemModels);
     // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);

@@ -10,7 +10,7 @@ import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { EnvironmentService } from '../environment/environment.service';
 import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { ApertureActions } from '@relica/websocket-contracts';
+import { ApertureActions, ApertureEvents } from '@relica/websocket-contracts';
 import customParser from 'socket.io-msgpack-parser';
 
 @WebSocketGateway({
@@ -44,7 +44,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   // Environment Operations
-  @SubscribeMessage('get-environment')
+  @SubscribeMessage(ApertureActions.ENVIRONMENT_GET)
   async getEnvironment(
     @MessageBody() payload: { userId: string; environmentId?: string },
   ) {
@@ -77,7 +77,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
-  @SubscribeMessage('aperture.environment/list')
+  @SubscribeMessage(ApertureActions.ENVIRONMENT_LIST)
   async listEnvironments(@MessageBody() payload: { userId: string }) {
     try {
       const { userId } = payload;
@@ -140,7 +140,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   //   }
   // }
 
-  @SubscribeMessage('aperture.environment/create')
+  @SubscribeMessage(ApertureActions.ENVIRONMENT_CREATE)
   async createEnvironment(
     @MessageBody() payload: { userId: string; name: string },
   ) {
@@ -166,21 +166,22 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   // Entity Operations
-  @SubscribeMessage('aperture.entity/select')
+  // @SubscribeMessage('aperture.entity/select')
+  @SubscribeMessage(ApertureActions.SELECT_ENTITY)
   async selectEntity(
-    @MessageBody() payload: { userId: string; environmentId: string; entityUid: string },
+    @MessageBody() payload: { userId: string; environmentId: string; uid: string },
   ) {
     try {
-      const { userId, environmentId, entityUid } = payload;
+      const { userId, environmentId, uid } = payload;
       const environment = await this.environmentService.selectEntity(
         environmentId,
         userId,
-        entityUid,
+        uid,
       );
 
       // Broadcast to all clients
-      this.server.emit('aperture.entity/selected', {
-        entityUid,
+      this.server.emit(ApertureEvents.ENTITY_SELECTED, {
+        uid,
         userId,
         environmentId,
       });
@@ -189,7 +190,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         success: true,
         data: {
           success: true,
-          selectedEntity: entityUid,
+          selectedEntity: uid,
         },
       };
     } catch (error) {
@@ -205,7 +206,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
-  @SubscribeMessage('aperture.entity/deselect')
+  @SubscribeMessage(ApertureActions.ENTITY_DESELECT)
   async deselectEntity(
     @MessageBody() payload: { userId: string; environmentId: string },
   ) {
@@ -214,16 +215,14 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       await this.environmentService.deselectEntity(environmentId, userId);
 
       // Broadcast to all clients
-      this.server.emit('aperture.entity/deselected', {
+      this.server.emit(ApertureEvents.ENTITY_DESELECTED, {
         userId,
         environmentId,
       });
 
       return {
         success: true,
-        data: {
-          success: true,
-        },
+        data: {},
       };
     } catch (error) {
       this.logger.error('Failed to deselect entity', error);
@@ -238,7 +237,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
-  @SubscribeMessage('aperture.environment/clear')
+  @SubscribeMessage(ApertureActions.ENVIRONMENT_CLEAR)
   async clearEnvironment(
     @MessageBody() payload: { userId: string; environmentId: string },
   ) {
@@ -295,7 +294,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
     userId: string,
     environmentId: string,
   ) {
-    this.server.emit('aperture.facts/loaded', {
+    this.server.emit(ApertureEvents.LOADED_FACTS, {
       facts,
       userId,
       environmentId,
@@ -309,7 +308,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
     userId: string,
     environmentId: string,
   ) {
-    this.server.emit('aperture.facts/unloaded', {
+    this.server.emit(ApertureEvents.UNLOADED_FACTS, {
       factUids,
       modelUids,
       userId,

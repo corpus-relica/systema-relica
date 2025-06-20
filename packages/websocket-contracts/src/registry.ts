@@ -677,8 +677,8 @@ export const MESSAGE_REGISTRY = {
     description: 'Unload an entity and its facts from environment',
   },
 
-  [ApertureActions.ENTITY_SELECT]: {
-    action: ApertureActions.ENTITY_SELECT,
+  [ApertureActions.SELECT_ENTITY]: {
+    action: ApertureActions.SELECT_ENTITY,
     service: 'aperture',
     requestSchema: EntitySelectRequestSchema,
     responseSchema: ApertureResponseSchema,
