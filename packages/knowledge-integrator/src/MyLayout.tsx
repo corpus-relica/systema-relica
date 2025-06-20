@@ -72,6 +72,7 @@ export const MyLayout = (props) => {
     const concepts = await resolveUIDs(
       Object.keys(cats).map((x) => parseInt(x))
     );
+
     const newCats = [];
     for (const [key, name] of Object.entries(cats)) {
       const concept = concepts.find((c: any) => c.uid === parseInt(key));
@@ -144,7 +145,7 @@ export const MyLayout = (props) => {
     };
 
     const onRemFacts = (d) => {
-      factDataStore.removeFacts(d.fact_uids);
+      factDataStore.removeFacts(d.factUids);
     };
 
     const onAddModels = (d) => {
@@ -206,9 +207,10 @@ export const MyLayout = (props) => {
         console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo, authStore.userId);
         console.log("vvvv - USER ID vvvv:", );
 
-        const env = await loadUserEnvironment(authStore.userId);
+        const env = await loadUserEnvironment(foo.id as number);
         console.log("vvvv - ENVIRONMENT foo vvvv:", env);
         factDataStore.addFacts(env.facts);
+        rootStore.environmentId = env.id;
 
         console.log("NOW WE'RE READY!!!!!!!!!!!!!!!!");
       } catch (error) {
@@ -225,7 +227,7 @@ export const MyLayout = (props) => {
     // ccSocket.on("system:selectedFact", onSelectFact);
     // ccSocket.on("system:selectedNone", onNoneSelected);
     portalSocket.on("system:loadedFacts", onAddFacts);
-    // ccSocket.on("system:unloadedFacts", onRemFacts);
+    portalSocket.on("system:unloadedFacts", onRemFacts);
     // ccSocket.on("system:loadedModels", onAddModels);
     // ccSocket.on("system:unloadedModels", onRemModels);
     // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);

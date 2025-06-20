@@ -28,6 +28,7 @@ temp.*
 /CLAUDE.local.md
 /packages/archivist/dist/
 /packages/clarity/dist/
+/packages/clarity-core/dist/
 /packages/aperture/dist/
 /packages/prism/dist/
 /packages/shutter/dist/

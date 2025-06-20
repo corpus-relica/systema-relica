@@ -1,20 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 
 @Injectable()
 export class ArchivistService {
   private readonly logger = new Logger(ArchivistService.name);
 
-  constructor(private webSocketClient: ArchivistWebSocketClientService) {}
+  constructor(private webSocketClient: ArchivistSocketClient) {}
 
   async getSpecializationHierarchy(uid: number) {
     this.logger.log(`Getting specialization hierarchy for uid: ${uid}`);
     return this.webSocketClient.getSpecializationHierarchy(uid);
   }
 
-  async getSpecializationFact(uid: number) {
+  async getSpecializationFact(uid: number, userId: number = 1) {
     this.logger.log(`Getting specialization fact for uid: ${uid}`);
-    return this.webSocketClient.getSpecializationFact(uid);
+    return this.webSocketClient.getSpecializationFact(userId, uid);
   }
 
   async getSubtypes(uid: number) {

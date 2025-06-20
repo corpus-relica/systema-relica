@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, RedisClientType } from 'redis';
 import { Fact } from '@relica/types';
-import { ArchivistClientService } from '../archivist-client/archivist-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 
 export interface CacheRebuildStatus {
   status: 'idle' | 'rebuilding' | 'complete' | 'error';
@@ -23,7 +23,7 @@ export class CacheService {
 
   constructor(
     private configService: ConfigService,
-    private archivistClient: ArchivistClientService,
+    private archivistClient: ArchivistSocketClient,
   ) {
     this.initRedisConnection();
   }
@@ -56,7 +56,7 @@ export class CacheService {
   async buildEntityFactsCache(): Promise<boolean> {
     this.logger.log('[Cache] Building entity facts cache...');
     try {
-      if (!this.archivistClient.isServiceConnected()) {
+      if (!this.archivistClient.isConnected()) {
         throw new Error('Archivist service is not connected');
       }
 
@@ -71,8 +71,8 @@ export class CacheService {
           skip: offset,
           range: BATCH_SIZE
         });
-        
-        const facts = batchResult || [];
+
+        const facts = batchResult.payload || [];
         
         if (facts.length === 0) {
           hasMore = false;
@@ -110,7 +110,7 @@ export class CacheService {
   async buildEntityLineageCache(): Promise<boolean> {
     this.logger.log('[Cache] Building entity lineage cache...');
     try {
-      if (!this.archivistClient.isServiceConnected()) {
+      if (!this.archivistClient.isConnected()) {
         throw new Error('Archivist service is not connected');
       }
 
@@ -127,7 +127,7 @@ export class CacheService {
           relTypeUids: [1146, 1726] // Specialization relation types
         });
         
-        const facts = batchResult || [];
+        const facts = batchResult.payload || [];
         
         if (facts.length === 0) {
           hasMore = false;
@@ -140,7 +140,8 @@ export class CacheService {
           
           if (lh_object_uid) {
             // Get lineage for the entity using the dedicated lineage endpoint
-            const lineage = await this.archivistClient.getEntityLineageViaEndpoint(lh_object_uid);
+            const result = await this.archivistClient.getEntityLineageViaEndpoint(lh_object_uid);
+            const lineage = result.payload || [];
             
             if (lineage.length > 0) {
               // Store lineage in Redis cache
@@ -170,7 +171,7 @@ export class CacheService {
   async buildSubtypesCache(): Promise<boolean> {
     this.logger.log('[Cache] Building entity subtypes cache...');
     try {
-      if (!this.archivistClient.isServiceConnected()) {
+      if (!this.archivistClient.isConnected()) {
         throw new Error('Archivist service is not connected');
       }
 
@@ -187,7 +188,7 @@ export class CacheService {
           relTypeUids: [1146, 1726] // Specialization relation types
         });
         
-        const facts = batchResult || [];
+        const facts = batchResult.payload || [];
         
         if (facts.length === 0) {
           hasMore = false;
@@ -200,7 +201,8 @@ export class CacheService {
           
           if (lh_object_uid) {
             // Get lineage for the entity
-            const lineage = await this.archivistClient.getEntityLineageViaEndpoint(lh_object_uid);
+            const result = await this.archivistClient.getEntityLineageViaEndpoint(lh_object_uid);
+            const lineage = result.payload || [];
             
             if (lineage.length > 0) {
               // Add this entity as a descendant to all its ancestors

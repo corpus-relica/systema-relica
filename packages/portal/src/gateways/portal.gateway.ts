@@ -382,9 +382,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: any
   ): Promise<any> {
     try {
+
       // Validate payload
       const validation = ClearEntitiesRequestSchema.safeParse(payload);
       if (!validation.success) {
+        console.log("Validation failed:", validation.error.issues);
         return this.createResponse(client.id, false, { 
           type: 'validation-error', 
           message: 'Invalid payload format',
@@ -397,10 +399,8 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
       // }
 
-      const userId = 25;//payload.userId || clientData.userId;
-      const environmentId = "d64bfea9-cd85-4184-a018-fe29d074c278";//clientData.environmentId || '1'; // Default environment
-
-      console.log("Clearing entities for environment:", environmentId, "by user:", userId);
+      const userId = payload.userId;// || clientData.userId;
+      const environmentId = payload.environmentId || '1'; // Default to environment 1 if not provided
 
       // Call Aperture service to clear environment entities
       const result = await this.apertureClient.clearEnvironmentEntities(""+userId, ""+environmentId);
@@ -694,12 +694,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // Generic message handler for unrecognized message types
-  @SubscribeMessage('*')
-  handleUnknownMessage(@ConnectedSocket() client: Socket, @MessageBody() data: any): any {
-    this.logger.warn(`Unknown message type received from ${client.id}:`, data);
-    return this.createResponse(client.id, false, {
-      type: 'unknown-message-type',
-      message: `Unknown message type`,
-    });
-  }
+  // @SubscribeMessage('*')
+  // handleUnknownMessage(@ConnectedSocket() client: Socket, @MessageBody() data: any): any {
+  //   this.logger.warn(`Unknown message type received from ${client.id}:`, data);
+  //   return this.createResponse(client.id, false, {
+  //     type: 'unknown-message-type',
+  //     message: `Unknown message type`,
+  //   });
+  // }
 }

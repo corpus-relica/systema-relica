@@ -16,6 +16,8 @@ export class RootStore {
   setupStore: SetupStore;
   authStore: AuthStore;
 
+  private _environmentId: string | null;
+
   constructor() {
     console.log("RootStore constructor");
     this.factDataStore = new FactDataStore();
@@ -25,6 +27,18 @@ export class RootStore {
     this.colorPaletteStore = new ColorPaletteStore(this.factDataStore);
     this.setupStore = new SetupStore();
     this.authStore = new AuthStore();
+
+    this._environmentId = null;
+  }
+
+  get environmentId() {
+    return this._environmentId;
+  }
+
+  set environmentId(id: string) {
+    console.log("Setting environmentId:", id);
+    this._environmentId = id;
+    // You can add any additional logic here if needed when the environmentId changes
   }
 }
 

@@ -26,9 +26,10 @@ export class ContractValidator {
     try {
       const schema = z.union([BaseRequestSchema, BaseResponseSchema, BaseEventSchema]);
       const result = schema.parse(message);
-      
+
+
       if (this.isDevelopment) {
-        console.log('✅ Base message validation passed:', result);
+        // console.log('✅ Base message validation passed:', result);
       }
       
       return { success: true, data: result };
@@ -69,7 +70,7 @@ export class ContractValidator {
     
     if (this.isDevelopment) {
       if (contractValidation.success) {
-        console.log(`✅ Contract validation passed for action: ${action}`);
+        // console.log(`✅ Contract validation passed for action: ${action}`);
       } else {
         console.error(`❌ Contract validation failed for action: ${action}`, contractValidation.error);
       }

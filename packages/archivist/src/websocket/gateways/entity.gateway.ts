@@ -5,23 +5,28 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Injectable, Logger } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { EntityHandlers } from '../handlers/entity.handlers';
 import { EntityActions } from '@relica/websocket-contracts';
 import customParser from 'socket.io-msgpack-parser';
 
 @Injectable()
-@WebSocketGateway({
-  cors: {
-    origin: '*',
-  },
-  transports: ['websocket'],
-  parser: customParser
-})
+@WebSocketGateway()
+// @WebSocketGateway({
+//   cors: {
+//     origin: '*',
+//   },
+//   transports: ['websocket'],
+//   parser: customParser
+// })
 export class EntityGateway {
   private readonly logger = new Logger(EntityGateway.name);
 
   constructor(private readonly entityHandlers: EntityHandlers) {}
+
+  afterInit(server: Server) {
+    this.logger.log('entity gateway initialized');
+  }
 
   @SubscribeMessage(EntityActions.BATCH_RESOLVE)
   async handleEntityBatchResolve(
@@ -29,7 +34,7 @@ export class EntityGateway {
     @MessageBody() data: any,
   ) {
     // this.logger.debug(`Handling ${EntityActions.BATCH_RESOLVE} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityBatchResolve(data, client);
+    const result = await this.entityHandlers.handleEntityBatchResolve(data.payload, client);
     return result;
   }
 
@@ -39,7 +44,7 @@ export class EntityGateway {
     @MessageBody() data: any,
   ) {
     // this.logger.debug(`Handling ${EntityActions.CATEGORY_GET} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityCategoryGet(data, client);
+    const result = await this.entityHandlers.handleEntityCategoryGet(data.payload, client);
     return result;
   }
 
@@ -49,7 +54,7 @@ export class EntityGateway {
     @MessageBody() data: any,
   ) {
     // this.logger.debug(`Handling ${EntityActions.TYPE_GET} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityTypeGet(data, client);
+    const result = await this.entityHandlers.handleEntityTypeGet(data.payload, client);
     return result;
   }
 
@@ -59,7 +64,7 @@ export class EntityGateway {
     @MessageBody() data: any,
   ) {
     // this.logger.debug(`Handling ${EntityActions.COLLECTIONS_GET} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityCollectionsGet(data, client);
+    const result = await this.entityHandlers.handleEntityCollectionsGet(data.payload, client);
     return result;
   }
 }

@@ -45,7 +45,8 @@ export const LoadEntityRequestSchema = z.object({
 });
 
 export const ClearEntitiesRequestSchema = z.object({
-  userId: z.string().optional(),
+  userId: z.number(),
+  environmentId: z.string().optional(), // Optional for environments
 });
 
 export const LoadAllRelatedFactsRequestSchema = z.object({

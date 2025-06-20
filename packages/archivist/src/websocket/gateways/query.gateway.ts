@@ -5,24 +5,28 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Injectable, Logger } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { QueryHandlers } from '../handlers/query.handlers';
 import { QueryActions } from '@relica/websocket-contracts';
 import customParser from 'socket.io-msgpack-parser';
 
 @Injectable()
-@WebSocketGateway({
-  cors: {
-    origin: '*',
-  },
-  transports: ['websocket'],
-  parser: customParser
-})
+// @WebSocketGateway({
+//   cors: {
+//     origin: '*',
+//   },
+//   transports: ['websocket'],
+//   parser: customParser
+// })
+@WebSocketGateway()
 export class QueryGateway {
   private readonly logger = new Logger(QueryGateway.name);
 
   constructor(private readonly queryHandlers: QueryHandlers) {}
 
+  afterInit(server: Server) {
+    this.logger.log('query gateway initialized');
+  }
   @SubscribeMessage(QueryActions.EXECUTE)
   async handleQueryExecute(
     @ConnectedSocket() client: Socket,

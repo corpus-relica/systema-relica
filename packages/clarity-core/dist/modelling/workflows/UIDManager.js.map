@@ -1,1 +1,0 @@
-{"version":3,"file":"UIDManager.js","sourceRoot":"","sources":["../../../src/modelling/workflows/UIDManager.ts"],"names":[],"mappings":";;AAAA,MAAM,cAAc;IAGlB,MAAM,CAAC,UAAU;QACf,IAAI,CAAC,SAAS,IAAI,CAAC,CAAC;QACpB,OAAO,IAAI,CAAC,SAAS,CAAC;IACxB,CAAC;IAED,MAAM,CAAC,KAAK;QACV,IAAI,CAAC,SAAS,GAAG,CAAC,CAAC;IACrB,CAAC;;AATc,wBAAS,GAAW,CAAC,CAAC;AAgBvC,kBAAe,cAAc,CAAC"}

@@ -1,0 +1,70 @@
+import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+export declare class ArchivistSocketClient implements OnModuleInit, OnModuleDestroy {
+    private readonly configService;
+    private socket;
+    private readonly logger;
+    private readonly pendingRequests;
+    private messageCounter;
+    constructor(configService: ConfigService);
+    onModuleInit(): Promise<void>;
+    onModuleDestroy(): Promise<void>;
+    private connect;
+    private disconnect;
+    private setupEventHandlers;
+    private generateMessageId;
+    private sendMessage;
+    getFact(uid: number): Promise<any>;
+    getFacts(factUIDs: number[]): Promise<any>;
+    createFact(fact: any): Promise<any>;
+    deleteFact(factUid: number): Promise<any>;
+    getSubtypes(uid: number): Promise<any>;
+    getSubtypesCone(uid: number): Promise<any>;
+    getSupertypes(uid: number): Promise<any>;
+    getSpecializationHierarchy(uidOrUserId: number, uid?: number): Promise<any>;
+    getSpecializationFact(userId: number, uid: number): Promise<any>;
+    getClassified(uid: number): Promise<any>;
+    getClassificationFact(uid: number): Promise<any>;
+    retrieveAllFacts(uid: number): Promise<any>;
+    getDefinitiveFacts(uid: number): Promise<any>;
+    getFactsRelatingEntities(uid1: number, uid2: number): Promise<any>;
+    createKind(parentUID: number, parentName: string, name: string, definition: string): Promise<any>;
+    createIndividual(kindUID: number, kindName: string, name: string, definition: string): Promise<any>;
+    getEntity(uid: number): Promise<any>;
+    getCategory(uid: number): Promise<any>;
+    getEntityType(uid: number): Promise<any>;
+    deleteEntity(uid: number): Promise<any>;
+    resolveUIDs(uids: number[]): Promise<any>;
+    getEntityCollections(): Promise<any>;
+    getKinds(): Promise<any>;
+    getKindsList(sortField?: string, sortOrder?: string, skip?: number, pageSize?: number, filters?: any): Promise<any>;
+    searchText(query: string, collectionUID?: number, limit?: number, offset?: number, searchFilter?: string): Promise<any>;
+    textSearch(params: {
+        searchTerm: string;
+        exactMatch?: boolean;
+    }): Promise<any>;
+    textSearchExact(searchTerm: string): Promise<any>;
+    searchUid(uid: string): Promise<any>;
+    uidSearch(params: {
+        searchUID: number;
+    }): Promise<any>;
+    submitFact(factData: any): Promise<any>;
+    submitDefinition(fact_uid: number, partial_definition: string, full_definition: string): Promise<any>;
+    submitCollection(fact_uid: number, collection_uid: number, collection_name: string): Promise<any>;
+    submitName(fact_uid: number, name: string): Promise<any>;
+    getAllRelated(entityUid: number): Promise<any>;
+    getRecursiveRelations(entityUid: number, relTypeUid: number): Promise<any>;
+    getRecursiveRelationsTo(entityUid: number, relTypeUid: number): Promise<any>;
+    getRequiredRoles(relTypeUid: number): Promise<any>;
+    getRolePlayers(relTypeUid: number): Promise<any>;
+    getRelatedOnUIDSubtypeCone(lh_object_uid: number, rel_type_uid: number): Promise<any>;
+    isConnected(): boolean;
+    ensureConnected(): Promise<void>;
+    getFactsBatch(config: {
+        skip: number;
+        range: number;
+        relTypeUids?: number[];
+    }): Promise<any>;
+    getEntityLineageViaEndpoint(entityUid: number): Promise<any>;
+}
+//# sourceMappingURL=ArchivistSocketClient.d.ts.map

@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Query, Body, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiBody } from '@nestjs/swagger';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Entities')
 @Controller()
 export class EntitiesController {
-  constructor(private readonly archivistClient: ArchivistWebSocketClientService) {}
+  constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
 
   // @Get('kinds')

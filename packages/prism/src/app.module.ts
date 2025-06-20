@@ -12,7 +12,7 @@ import { WebSocketModule } from './websocket/websocket.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['../../.env', '../../.env.local'],
     }),
     DatabaseModule,
     SetupModule,

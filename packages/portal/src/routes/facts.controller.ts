@@ -1,12 +1,12 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Facts')
 @Controller('fact')
 export class FactsController {
-  constructor(private readonly archivistClient: ArchivistWebSocketClientService) {}
+  constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
 
   @Get('classified')
@@ -23,7 +23,12 @@ export class FactsController {
         throw new BadRequestException('uid parameter is required');
       }
       
-      const facts = await this.archivistClient.getClassified(uid);
+      const uidNumber = parseInt(uid, 10);
+      if (isNaN(uidNumber)) {
+        throw new BadRequestException('uid must be a valid number');
+      }
+      
+      const facts = await this.archivistClient.getClassified(uidNumber);
       
       return {
         success: true,
@@ -51,7 +56,12 @@ export class FactsController {
         throw new BadRequestException('uid parameter is required');
       }
       
-      const subtypes = await this.archivistClient.getSubtypes(uid);
+      const uidNumber = parseInt(uid, 10);
+      if (isNaN(uidNumber)) {
+        throw new BadRequestException('uid must be a valid number');
+      }
+      
+      const subtypes = await this.archivistClient.getSubtypes(uidNumber);
       
       return {
         success: true,
@@ -79,7 +89,12 @@ export class FactsController {
         throw new BadRequestException('uid parameter is required');
       }
       
-      const cone = await this.archivistClient.getSubtypesCone(uid);
+      const uidNumber = parseInt(uid, 10);
+      if (isNaN(uidNumber)) {
+        throw new BadRequestException('uid must be a valid number');
+      }
+      
+      const cone = await this.archivistClient.getSubtypesCone(uidNumber);
       
       return {
         success: true,

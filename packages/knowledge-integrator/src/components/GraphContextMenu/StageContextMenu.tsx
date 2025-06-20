@@ -14,6 +14,7 @@ import ListItemText from "@mui/material/ListItemText";
 import SearchIcon from "@mui/icons-material/Search";
 
 import { portalSocket } from "../../PortalSocket";
+import { useStores } from "../../context/RootStoreContext";
 
 const CLEAR_ALL = "Clear all";
 const SEARCH = "Search";
@@ -30,6 +31,10 @@ interface IndividualContextMenuProps {
 }
 
 const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
+
+  const rootStore: any = useStores();
+  const {  authStore } = rootStore;
+
   const {
     // uid,
     open,
@@ -44,7 +49,9 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     const value = e.currentTarget.getAttribute("value");
     switch (value) {
       case CLEAR_ALL:
-        portalSocket.emit("user", "clearEntities", {});
+        const userId = authStore.userId;
+        const environmentId = rootStore.environmentId;
+        portalSocket.emit("user", "clearEntities", {userId, environmentId});
         handleClose();
         break;
       case SEARCH:

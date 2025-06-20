@@ -1,12 +1,12 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Kinds')
 @Controller()
 export class KindsController {
-  constructor(private readonly archivistClient: ArchivistWebSocketClientService) {}
+  constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
   @Get('kinds')
   @ApiOperation({ summary: 'Get paginated list of kinds with sorting and filtering' })
@@ -30,6 +30,14 @@ export class KindsController {
 
       const [sortField, sortOrder] = sortParams;
       const [skip, pageSize] = rangeParams;
+
+      console.log('Parsed parameters:', {
+        sortField,
+        sortOrder,
+        skip,
+        pageSize,
+        filterParams,
+      });
 
       // Validate parameters
       if (!['ASC', 'DESC'].includes(sortOrder.toUpperCase())) {

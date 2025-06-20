@@ -34,6 +34,7 @@
     "@relica/constants": "*",
     "@relica/types": "*",
     "@relica/websocket-contracts": "*",
+    "@relica/websocket-clients": "*",
     "add": "^2.0.6",
     "axios": "^1.7.2",
     "lodash": "^4.17.21",
