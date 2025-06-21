@@ -57,7 +57,8 @@ interface KindContextMenuProps {
 }
 
 const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
-  const { factDataStore } = useStores();
+  const rootStore = useStores();
+  const { factDataStore, authStore } = rootStore;
   const {
     uid,
     category,
@@ -78,6 +79,8 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   const handleItemClick = useCallback(
     async (e: any) => {
       const value = e.currentTarget.getAttribute("value");
+      const userId = authStore.userId;
+      const environmentId = rootStore.environmentId;
       switch (value) {
         case LOAD_SH:
           portalSocket.emit("user", "loadSpecializationHierarchy", { uid });
@@ -102,7 +105,11 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_ALL_RELATED:
-          portalSocket.emit("user", "loadAllRelatedFacts", { uid });
+          portalSocket.emit("user", "loadAllRelatedFacts", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case LOAD_SUBTYPES:

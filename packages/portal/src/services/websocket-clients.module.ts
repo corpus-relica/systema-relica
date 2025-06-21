@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ArchivistSocketClient, ClaritySocketClient } from '@relica/websocket-clients';
+import { ArchivistSocketClient, ClaritySocketClient, ApertureSocketClient } from '@relica/websocket-clients';
 import { ApertureWebSocketClientService } from './aperture-websocket-client.service';
 import { PrismWebSocketClientService } from './prism-websocket-client.service';
 import { NousWebSocketClientService } from './nous-websocket-client.service';
@@ -10,6 +10,7 @@ import { NousWebSocketClientService } from './nous-websocket-client.service';
   providers: [
     ArchivistSocketClient,
     ClaritySocketClient,
+    ApertureSocketClient,
     ApertureWebSocketClientService,
     PrismWebSocketClientService,
     NousWebSocketClientService,
@@ -17,6 +18,7 @@ import { NousWebSocketClientService } from './nous-websocket-client.service';
   exports: [
     ArchivistSocketClient,
     ClaritySocketClient,
+    ApertureSocketClient,
     ApertureWebSocketClientService,
     PrismWebSocketClientService,
     NousWebSocketClientService,

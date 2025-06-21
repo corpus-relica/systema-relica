@@ -48,6 +48,9 @@ export const ApertureActions = {
   // Fact-related Events
   FACTS_LOADED: 'aperture.facts/loaded',
   FACTS_UNLOADED: 'aperture.facts/unloaded',
+
+  //
+  LOAD_ALL_RELATED_FACTS: 'aperture.facts/load-all-related',
 } as const;
 
 export const ApertureEvents = {

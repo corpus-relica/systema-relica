@@ -1,5 +1,6 @@
 export { ArchivistSocketClient } from './clients/ArchivistSocketClient';
 export { ClaritySocketClient } from './clients/ClaritySocketClient';
+export { ApertureSocketClient } from './clients/ApertureSocketClient';
 
 // Re-export commonly used types for convenience
 export type {
@@ -17,4 +18,6 @@ export type {
   ValidationActions,
   SpecializationActions,
   ClarityActions,
+  ApertureActions,
+  ApertureEvents,
 } from '@relica/websocket-contracts';

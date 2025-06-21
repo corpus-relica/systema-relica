@@ -5,22 +5,24 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
-import { Server, Socket } from 'socket.io';
-import { EnvironmentService } from '../environment/environment.service';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { ApertureActions, ApertureEvents } from '@relica/websocket-contracts';
-import customParser from 'socket.io-msgpack-parser';
+} from "@nestjs/websockets";
+import { Logger } from "@nestjs/common";
+import { Server, Socket } from "socket.io";
+import { EnvironmentService } from "../environment/environment.service";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
+import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
+import customParser from "socket.io-msgpack-parser";
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: "*",
   },
-  transports: ['websocket'],
+  transports: ["websocket"],
   // parser: customParser,
 })
-export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ApertureGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly logger = new Logger(ApertureGateway.name);
 
   @WebSocketServer()
@@ -28,13 +30,13 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   constructor(
     private readonly environmentService: EnvironmentService,
-    private readonly archivistClient: ArchivistSocketClient,
+    private readonly archivistClient: ArchivistSocketClient
   ) {}
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
-    client.emit('aperture.connection/established', {
-      message: 'Connected to Aperture service',
+    client.emit("aperture.connection/established", {
+      message: "Connected to Aperture service",
       timestamp: new Date().toISOString(),
     });
   }
@@ -46,14 +48,17 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Environment Operations
   @SubscribeMessage(ApertureActions.ENVIRONMENT_GET)
   async getEnvironment(
-    @MessageBody() payload: { userId: string; environmentId?: string },
+    @MessageBody() payload: { userId: string; environmentId?: string }
   ) {
     try {
       const { userId, environmentId } = payload;
       let environment;
 
       if (environmentId) {
-        environment = await this.environmentService.findOne(environmentId, userId);
+        environment = await this.environmentService.findOne(
+          environmentId,
+          userId
+        );
       } else {
         environment = await this.environmentService.findDefaultForUser(userId);
       }
@@ -62,15 +67,14 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       //   success: true,
       //   payload: environment,
       // };
-      return environment
-
+      return environment;
     } catch (error) {
-      this.logger.error('Failed to get environment', error);
+      this.logger.error("Failed to get environment", error);
       return {
         success: false,
         error: {
-          code: 'environment-get-failed',
-          type: 'database-error',
+          code: "environment-get-failed",
+          type: "database-error",
           message: error.message,
         },
       };
@@ -88,77 +92,40 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         data: environments,
       };
     } catch (error) {
-      this.logger.error('Failed to list environments', error);
+      this.logger.error("Failed to list environments", error);
       return {
         success: false,
         error: {
-          code: 'environment-list-failed',
-          type: 'database-error',
+          code: "environment-list-failed",
+          type: "database-error",
           message: error.message,
         },
       };
     }
   }
 
-  // @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD)
-  // async loadSpecializationHierarchy(
-  //   @MessageBody() payload: { uid: number; 'user-id': number; 'environment-id'?: number }
-  // ) {
-  //   try {
-  //     this.logger.log(`Loading specialization hierarchy for UID: ${payload.uid}, User: ${payload['user-id']}`);
-
-  //     const result = await this.environmentService.loadSpecializationHierarchy(
-  //       payload['user-id'],
-  //       payload.uid,
-  //       payload['environment-id']
-  //     );
-
-  //     if (!result.success) {
-  //       return {
-  //         success: false,
-  //         error: result.error || 'Failed to load specialization hierarchy',
-  //       };
-  //     }
-
-  //     return {
-  //       success: true,
-  //       data: {
-  //         facts: result.facts,
-  //         environment: result.environment,
-  //       },
-  //     };
-  //   } catch (error) {
-  //     this.logger.error('Failed to load specialization hierarchy', error);
-  //     return {
-  //       success: false,
-  //       error: {
-  //         code: 'specialization-load-failed',
-  //         type: 'database-error',
-  //         message: error.message,
-  //       },
-  //     };
-  //   }
-  // }
-
   @SubscribeMessage(ApertureActions.ENVIRONMENT_CREATE)
   async createEnvironment(
-    @MessageBody() payload: { userId: string; name: string },
+    @MessageBody() payload: { userId: string; name: string }
   ) {
     try {
       const { userId, name } = payload;
-      const environment = await this.environmentService.create({ userId, name });
+      const environment = await this.environmentService.create({
+        userId,
+        name,
+      });
 
       return {
         success: true,
         data: environment,
       };
     } catch (error) {
-      this.logger.error('Failed to create environment', error);
+      this.logger.error("Failed to create environment", error);
       return {
         success: false,
         error: {
-          code: 'environment-create-failed',
-          type: 'database-error',
+          code: "environment-create-failed",
+          type: "database-error",
           message: error.message,
         },
       };
@@ -169,14 +136,19 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // @SubscribeMessage('aperture.entity/select')
   @SubscribeMessage(ApertureActions.SELECT_ENTITY)
   async selectEntity(
-    @MessageBody() payload: { userId: string; environmentId: string; uid: string },
+    @MessageBody()
+    payload: {
+      userId: string;
+      environmentId: string;
+      uid: string;
+    }
   ) {
     try {
       const { userId, environmentId, uid } = payload;
       const environment = await this.environmentService.selectEntity(
         environmentId,
         userId,
-        uid,
+        uid
       );
 
       // Broadcast to all clients
@@ -194,12 +166,12 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         },
       };
     } catch (error) {
-      this.logger.error('Failed to select entity', error);
+      this.logger.error("Failed to select entity", error);
       return {
         success: false,
         error: {
-          code: 'entity-select-failed',
-          type: 'database-error',
+          code: "entity-select-failed",
+          type: "database-error",
           message: error.message,
         },
       };
@@ -208,11 +180,16 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @SubscribeMessage(ApertureActions.ENTITY_DESELECT)
   async deselectEntity(
-    @MessageBody() payload: { userId: string; environmentId: string },
+    @MessageBody() payload: { userId: string; environmentId: string }
   ) {
     try {
       const { userId, environmentId } = payload;
-      console.log("Deselecting entity for user:", userId, "in environment:", environmentId);
+      console.log(
+        "Deselecting entity for user:",
+        userId,
+        "in environment:",
+        environmentId
+      );
       await this.environmentService.deselectEntity(environmentId, userId);
       console.log("Entity deselected successfully");
       // Broadcast to all clients
@@ -226,12 +203,12 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         data: {},
       };
     } catch (error) {
-      this.logger.error('Failed to deselect entity', error);
+      this.logger.error("Failed to deselect entity", error);
       return {
         success: false,
         error: {
-          code: 'entity-deselect-failed',
-          type: 'database-error',
+          code: "entity-deselect-failed",
+          type: "database-error",
           message: error.message,
         },
       };
@@ -240,17 +217,22 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @SubscribeMessage(ApertureActions.ENVIRONMENT_CLEAR)
   async clearEnvironment(
-    @MessageBody() payload: { userId: string; environmentId: string },
+    @MessageBody() payload: { userId: string; environmentId: string }
   ) {
     try {
       const { userId, environmentId } = payload;
-      const environment = await this.environmentService.findOne(environmentId, userId);
+      console.log("CLEAR ENVIRONMENT", payload);
+      const environment = await this.environmentService.findOne(
+        environmentId,
+        userId
+      );
+      console.log("CLEAR ENVIRONMENT", environment);
       const factUids = environment.facts.map((fact) => fact.fact_uid);
-      
+
       await this.environmentService.clearFacts(environmentId, userId);
 
       // Broadcast to all clients - matches FactsUnloadedEventSchema
-      this.server.emit('aperture.facts/unloaded', {
+      this.server.emit("aperture.facts/unloaded", {
         // type: 'aperture.facts/unloaded',
         factUids,
         modelUids: [],
@@ -266,12 +248,12 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         },
       };
     } catch (error) {
-      this.logger.error('Failed to clear environment', error);
+      this.logger.error("Failed to clear environment", error);
       return {
         success: false,
         error: {
-          code: 'environment-clear-failed',
-          type: 'database-error',
+          code: "environment-clear-failed",
+          type: "database-error",
           message: error.message,
         },
       };
@@ -279,7 +261,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   // Heartbeat
-  @SubscribeMessage('relica.app/heartbeat')
+  @SubscribeMessage("relica.app/heartbeat")
   async heartbeat(@MessageBody() payload: { timestamp: number }) {
     return {
       success: true,
@@ -290,11 +272,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   // Helper method to broadcast facts loaded
-  broadcastFactsLoaded(
-    facts: any[],
-    userId: string,
-    environmentId: string,
-  ) {
+  broadcastFactsLoaded(facts: any[], userId: string, environmentId: string) {
     this.server.emit(ApertureEvents.LOADED_FACTS, {
       facts,
       userId,
@@ -307,7 +285,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
     factUids: string[],
     modelUids: string[],
     userId: string,
-    environmentId: string,
+    environmentId: string
   ) {
     this.server.emit(ApertureEvents.UNLOADED_FACTS, {
       factUids,
@@ -320,11 +298,11 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Search Operations
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_TEXT)
   async searchLoadText(
-    @MessageBody() payload: { 'user-id': number; term: string },
+    @MessageBody() payload: { "user-id": number; term: string }
   ) {
     try {
-      const { 'user-id': userId, term } = payload;
-      
+      const { "user-id": userId, term } = payload;
+
       // Get text search results from Archivist
       const searchResult = await this.archivistClient.textSearch({
         searchTerm: term,
@@ -334,24 +312,28 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       if (!searchResult.success) {
         return {
           success: false,
-          error: searchResult.error || 'Text search failed',
+          error: searchResult.error || "Text search failed",
         };
       }
 
       // Get or create default environment
-      const environment = await this.environmentService.findDefaultForUser(userId.toString());
-      
+      const environment = await this.environmentService.findDefaultForUser(
+        userId.toString()
+      );
+
       // Filter facts to load (those matching the search term)
       const facts = searchResult.results?.facts || [];
-      const factsToLoad = facts.filter((fact: any) => fact.lh_object_name === term);
-      
+      const factsToLoad = facts.filter(
+        (fact: any) => fact.lh_object_name === term
+      );
+
       // Add facts to environment
       let updatedEnvironment = environment;
       if (factsToLoad.length > 0) {
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          factsToLoad,
+          factsToLoad
         );
       }
 
@@ -364,21 +346,21 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: factsToLoad,
       };
     } catch (error) {
-      this.logger.error('Failed to load text search results', error);
+      this.logger.error("Failed to load text search results", error);
       return {
         success: false,
-        error: 'Failed to load text search results',
+        error: "Failed to load text search results",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_UID)
   async searchLoadUid(
-    @MessageBody() payload: { 'user-id': number; uid: number },
+    @MessageBody() payload: { "user-id": number; uid: number }
   ) {
     try {
-      const { 'user-id': userId, uid } = payload;
-      
+      const { "user-id": userId, uid } = payload;
+
       // Get UID search results from Archivist
       const searchResult = await this.archivistClient.uidSearch({
         searchUID: uid,
@@ -387,24 +369,28 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       if (!searchResult.success) {
         return {
           success: false,
-          error: searchResult.error || 'UID search failed',
+          error: searchResult.error || "UID search failed",
         };
       }
 
       // Get or create default environment
-      const environment = await this.environmentService.findDefaultForUser(userId.toString());
-      
+      const environment = await this.environmentService.findDefaultForUser(
+        userId.toString()
+      );
+
       // Filter facts to load (those matching the UID)
       const facts = searchResult.results?.facts || [];
-      const factsToLoad = facts.filter((fact: any) => fact.lh_object_uid === uid);
-      
+      const factsToLoad = facts.filter(
+        (fact: any) => fact.lh_object_uid === uid
+      );
+
       // Add facts to environment
       let updatedEnvironment = environment;
       if (factsToLoad.length > 0) {
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          factsToLoad,
+          factsToLoad
         );
       }
 
@@ -417,10 +403,10 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: factsToLoad,
       };
     } catch (error) {
-      this.logger.error('Failed to load UID search results', error);
+      this.logger.error("Failed to load UID search results", error);
       return {
         success: false,
-        error: 'Failed to load UID search results',
+        error: "Failed to load UID search results",
       };
     }
   }
@@ -428,26 +414,37 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Specialization Operations
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD_FACT)
   async specializationLoadFact(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; uid: number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      uid: number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, uid } = payload;
-      
+      const { "user-id": userId, "environment-id": envId, uid } = payload;
+
       // Get specialization fact from Archivist
-      const result = await this.archivistClient.getSpecializationFact(userId, uid);
+      const result = await this.archivistClient.getSpecializationFact(
+        userId,
+        uid
+      );
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get specialization fact',
+          error: result.error || "Failed to get specialization fact",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -455,7 +452,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -468,36 +465,47 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load specialization fact', error);
+      this.logger.error("Failed to load specialization fact", error);
       return {
         success: false,
-        error: 'Failed to load specialization fact',
+        error: "Failed to load specialization fact",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD)
   async specializationLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; uid: number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      uid: number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, uid } = payload;
+      const { "user-id": userId, "environment-id": envId, uid } = payload;
 
       // Get specialization hierarchy from Archivist
-      const result = await this.archivistClient.getSpecializationHierarchy(userId, uid);
+      const result = await this.archivistClient.getSpecializationHierarchy(
+        userId,
+        uid
+      );
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get specialization hierarchy',
+          error: result.error || "Failed to get specialization hierarchy",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -505,7 +513,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -518,10 +526,10 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load specialization hierarchy', error);
+      this.logger.error("Failed to load specialization hierarchy", error);
       return {
         success: false,
-        error: 'Failed to load specialization hierarchy',
+        error: "Failed to load specialization hierarchy",
       };
     }
   }
@@ -529,18 +537,31 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Entity Operations
   @SubscribeMessage(ApertureActions.ENTITY_LOAD)
   async entityLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // Get definitive facts for the entity
-      const defResult = await this.archivistClient.getDefinitiveFacts(entityUid);
+      const defResult =
+        await this.archivistClient.getDefinitiveFacts(entityUid);
       const definitiveFacts = defResult.facts || [];
 
       // If there's a selected entity, get facts relating it to our entity
@@ -548,21 +569,21 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       if (environment.selectedEntityId) {
         const relResult = await this.archivistClient.getFactsRelatingEntities(
           entityUid,
-          parseInt(environment.selectedEntityId),
+          parseInt(environment.selectedEntityId)
         );
         relatingFacts = relResult.facts || [];
       }
 
       // Combine all new facts
       const allNewFacts = [...definitiveFacts, ...relatingFacts];
-      
+
       // Add facts to environment
       let updatedEnvironment = environment;
       if (allNewFacts.length > 0) {
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          allNewFacts,
+          allNewFacts
         );
       }
 
@@ -575,29 +596,42 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: allNewFacts,
       };
     } catch (error) {
-      this.logger.error('Failed to load entity', error);
+      this.logger.error("Failed to load entity", error);
       return {
         success: false,
-        error: 'Failed to load entity',
+        error: "Failed to load entity",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD)
   async entityUnload(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // Find facts to remove (those where the entity is on either side)
-      const factsToRemove = environment.facts.filter((fact: any) => 
-        fact.lh_object_uid === entityUid || fact.rh_object_uid === entityUid
+      const factsToRemove = environment.facts.filter(
+        (fact: any) =>
+          fact.lh_object_uid === entityUid || fact.rh_object_uid === entityUid
       );
 
       const factUidsToRemove = factsToRemove.map((fact: any) => fact.fact_uid);
@@ -606,7 +640,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       const updatedEnvironment = await this.environmentService.removeFacts(
         environment.id,
         userId.toString(),
-        factUidsToRemove,
+        factUidsToRemove
       );
 
       // Find candidate model UIDs to remove (entities referenced in removed facts)
@@ -618,56 +652,71 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       // Remove models from candidates if they're still referenced in remaining facts
       const remainingFacts = updatedEnvironment.facts;
-      const finalModelUidsToRemove = Array.from(candidateModelUids).filter(modelUid => {
-        return !remainingFacts.some((fact: any) => 
-          fact.lh_object_uid === modelUid || fact.rh_object_uid === modelUid
-        );
-      });
+      const finalModelUidsToRemove = Array.from(candidateModelUids).filter(
+        (modelUid) => {
+          return !remainingFacts.some(
+            (fact: any) =>
+              fact.lh_object_uid === modelUid || fact.rh_object_uid === modelUid
+          );
+        }
+      );
 
       // Broadcast facts unloaded event
       this.broadcastFactsUnloaded(
         factUidsToRemove.map(String),
         finalModelUidsToRemove.map(String),
-        userId.toString(), 
+        userId.toString(),
         environment.id
       );
 
       return {
         success: true,
         environment: updatedEnvironment,
-        'fact-uids-removed': factUidsToRemove,
-        'model-uids-removed': finalModelUidsToRemove,
+        "fact-uids-removed": factUidsToRemove,
+        "model-uids-removed": finalModelUidsToRemove,
       };
     } catch (error) {
-      this.logger.error('Failed to unload entity', error);
+      this.logger.error("Failed to unload entity", error);
       return {
         success: false,
-        error: 'Failed to unload entity',
+        error: "Failed to unload entity",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.ENTITY_LOAD_MULTIPLE)
   async entityLoadMultiple(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uids': number[] },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uids": number[];
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uids': entityUids } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uids": entityUids,
+      } = payload;
+
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // Load each entity and collect all facts
       const allNewFacts = [];
       for (const entityUid of entityUids) {
         const result = await this.entityLoad({
-          'user-id': userId,
-          'environment-id': envId,
-          'entity-uid': entityUid,
+          "user-id": userId,
+          "environment-id": envId,
+          "entity-uid": entityUid,
         });
-        
+
         if (result.success && result.facts) {
           allNewFacts.push(...result.facts);
         }
@@ -675,7 +724,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       // Deduplicate facts by fact_uid
       const uniqueFacts = Array.from(
-        new Map(allNewFacts.map(fact => [fact.fact_uid, fact])).values()
+        new Map(allNewFacts.map((fact) => [fact.fact_uid, fact])).values()
       );
 
       // Get updated environment
@@ -690,29 +739,43 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: uniqueFacts,
       };
     } catch (error) {
-      this.logger.error('Failed to load entities', error);
+      this.logger.error("Failed to load entities", error);
       return {
         success: false,
-        error: 'Failed to load entities',
+        error: "Failed to load entities",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD_MULTIPLE)
   async entityUnloadMultiple(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uids': number[] },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uids": number[];
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uids': entityUids } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uids": entityUids,
+      } = payload;
+
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // Find all facts to remove (those where any entity is on either side)
-      const factsToRemove = environment.facts.filter((fact: any) =>
-        entityUids.includes(fact.lh_object_uid) || entityUids.includes(fact.rh_object_uid)
+      const factsToRemove = environment.facts.filter(
+        (fact: any) =>
+          entityUids.includes(fact.lh_object_uid) ||
+          entityUids.includes(fact.rh_object_uid)
       );
 
       const factUidsToRemove = factsToRemove.map((fact: any) => fact.fact_uid);
@@ -721,7 +784,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       const updatedEnvironment = await this.environmentService.removeFacts(
         environment.id,
         userId.toString(),
-        factUidsToRemove,
+        factUidsToRemove
       );
 
       // Find candidate model UIDs to remove
@@ -733,31 +796,73 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       // Remove models from candidates if they're still referenced in remaining facts
       const remainingFacts = updatedEnvironment.facts;
-      const finalModelUidsToRemove = Array.from(candidateModelUids).filter(modelUid => {
-        return !remainingFacts.some((fact: any) => 
-          fact.lh_object_uid === modelUid || fact.rh_object_uid === modelUid
-        );
-      });
+      const finalModelUidsToRemove = Array.from(candidateModelUids).filter(
+        (modelUid) => {
+          return !remainingFacts.some(
+            (fact: any) =>
+              fact.lh_object_uid === modelUid || fact.rh_object_uid === modelUid
+          );
+        }
+      );
 
       // Broadcast facts unloaded event
       this.broadcastFactsUnloaded(
         factUidsToRemove.map(String),
         finalModelUidsToRemove.map(String),
-        userId.toString(), 
+        userId.toString(),
         environment.id
       );
 
       return {
         success: true,
         environment: updatedEnvironment,
-        'fact-uids-removed': factUidsToRemove,
-        'model-uids-removed': finalModelUidsToRemove,
+        "fact-uids-removed": factUidsToRemove,
+        "model-uids-removed": finalModelUidsToRemove,
       };
     } catch (error) {
-      this.logger.error('Failed to unload entities', error);
+      this.logger.error("Failed to unload entities", error);
       return {
         success: false,
-        error: 'Failed to unload entities',
+        error: "Failed to unload entities",
+      };
+    }
+  }
+
+  @SubscribeMessage(ApertureActions.LOAD_ALL_RELATED_FACTS)
+  async loadAllRelatedFacts(
+    @MessageBody()
+    message: {
+      payload: {
+        userId: number;
+        environmentId: string;
+        uid: number;
+      };
+    }
+  ) {
+    try {
+      console.log(
+        "ApertureGateway.loadAllRelatedFacts payload",
+        message.payload
+      );
+      const result = await this.environmentService.loadAllRelatedFacts(
+        message.payload.userId,
+        message.payload.environmentId,
+        message.payload.uid
+      );
+
+      // Broadcast facts loaded event
+      this.broadcastFactsLoaded(
+        result.facts,
+        "" + message.payload.userId,
+        message.payload.environmentId
+      );
+
+      return result;
+    } catch (error) {
+      this.logger.error("Failed to load all related facts", error);
+      return {
+        success: false,
+        error: "Failed to load all related facts",
       };
     }
   }
@@ -765,26 +870,38 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Subtype Operations
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD)
   async subtypeLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get subtypes from Archivist
       const result = await this.archivistClient.getSubtypes(entityUid);
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get subtypes',
+          error: result.error || "Failed to get subtypes",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -792,7 +909,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -805,36 +922,48 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load subtypes', error);
+      this.logger.error("Failed to load subtypes", error);
       return {
         success: false,
-        error: 'Failed to load subtypes',
+        error: "Failed to load subtypes",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD_CONE)
   async subtypeLoadCone(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get subtypes cone from Archivist
       const result = await this.archivistClient.getSubtypesCone(entityUid);
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get subtypes cone',
+          error: result.error || "Failed to get subtypes cone",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -842,7 +971,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -855,30 +984,43 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load subtypes cone', error);
+      this.logger.error("Failed to load subtypes cone", error);
       return {
         success: false,
-        error: 'Failed to load subtypes cone',
+        error: "Failed to load subtypes cone",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.SUBTYPE_UNLOAD_CONE)
   async subtypeUnloadCone(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // This is a complex operation that requires recursive removal of subtype hierarchies
       // For now, we'll implement a simplified version that removes facts where the entity is the RH (parent)
-      const factsToRemove = environment.facts.filter((fact: any) => 
-        fact.rh_object_uid === entityUid && fact.rel_type_uid === 1146 // 1146 is subtyping relation
+      const factsToRemove = environment.facts.filter(
+        (fact: any) =>
+          fact.rh_object_uid === entityUid && fact.rel_type_uid === 1146 // 1146 is subtyping relation
       );
 
       const factUidsToRemove = factsToRemove.map((fact: any) => fact.fact_uid);
@@ -887,7 +1029,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
       const updatedEnvironment = await this.environmentService.removeFacts(
         environment.id,
         userId.toString(),
-        factUidsToRemove,
+        factUidsToRemove
       );
 
       // Find candidate model UIDs to remove
@@ -899,31 +1041,34 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       // Remove models from candidates if they're still referenced in remaining facts
       const remainingFacts = updatedEnvironment.facts;
-      const finalModelUidsToRemove = Array.from(candidateModelUids).filter(modelUid => {
-        return !remainingFacts.some((fact: any) => 
-          fact.lh_object_uid === modelUid || fact.rh_object_uid === modelUid
-        );
-      });
+      const finalModelUidsToRemove = Array.from(candidateModelUids).filter(
+        (modelUid) => {
+          return !remainingFacts.some(
+            (fact: any) =>
+              fact.lh_object_uid === modelUid || fact.rh_object_uid === modelUid
+          );
+        }
+      );
 
       // Broadcast facts unloaded event
       this.broadcastFactsUnloaded(
         factUidsToRemove.map(String),
         finalModelUidsToRemove.map(String),
-        userId.toString(), 
+        userId.toString(),
         environment.id
       );
 
       return {
         success: true,
         environment: updatedEnvironment,
-        'fact-uids-removed': factUidsToRemove,
-        'model-uids-removed': finalModelUidsToRemove,
+        "fact-uids-removed": factUidsToRemove,
+        "model-uids-removed": finalModelUidsToRemove,
       };
     } catch (error) {
-      this.logger.error('Failed to unload subtypes cone', error);
+      this.logger.error("Failed to unload subtypes cone", error);
       return {
         success: false,
-        error: 'Failed to unload subtypes cone',
+        error: "Failed to unload subtypes cone",
       };
     }
   }
@@ -931,26 +1076,38 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Classification Operations
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD)
   async classificationLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get classified entities from Archivist
       const result = await this.archivistClient.getClassified(entityUid);
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get classified entities',
+          error: result.error || "Failed to get classified entities",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -958,7 +1115,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -971,36 +1128,49 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load classified entities', error);
+      this.logger.error("Failed to load classified entities", error);
       return {
         success: false,
-        error: 'Failed to load classified entities',
+        error: "Failed to load classified entities",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD_FACT)
   async classificationLoadFact(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get classification fact from Archivist
-      const result = await this.archivistClient.getClassificationFact(entityUid);
+      const result =
+        await this.archivistClient.getClassificationFact(entityUid);
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get classification fact',
+          error: result.error || "Failed to get classification fact",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -1008,7 +1178,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -1021,10 +1191,10 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load classification fact', error);
+      this.logger.error("Failed to load classification fact", error);
       return {
         success: false,
-        error: 'Failed to load classification fact',
+        error: "Failed to load classification fact",
       };
     }
   }
@@ -1032,26 +1202,41 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Composition Operations
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD)
   async compositionLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get composition relationships from Archivist (1190 is composition relation type)
-      const result = await this.archivistClient.getRecursiveRelations(entityUid, 1190);
+      const result = await this.archivistClient.getRecursiveRelations(
+        entityUid,
+        1190
+      );
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get composition relationships',
+          error: result.error || "Failed to get composition relationships",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -1059,7 +1244,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -1072,36 +1257,52 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load composition relationships', error);
+      this.logger.error("Failed to load composition relationships", error);
       return {
         success: false,
-        error: 'Failed to load composition relationships',
+        error: "Failed to load composition relationships",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD_IN)
   async compositionLoadIn(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get incoming composition relationships from Archivist (1190 is composition relation type)
-      const result = await this.archivistClient.getRecursiveRelationsTo(entityUid, 1190);
+      const result = await this.archivistClient.getRecursiveRelationsTo(
+        entityUid,
+        1190
+      );
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get incoming composition relationships',
+          error:
+            result.error || "Failed to get incoming composition relationships",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -1109,7 +1310,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -1122,10 +1323,13 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load incoming composition relationships', error);
+      this.logger.error(
+        "Failed to load incoming composition relationships",
+        error
+      );
       return {
         success: false,
-        error: 'Failed to load incoming composition relationships',
+        error: "Failed to load incoming composition relationships",
       };
     }
   }
@@ -1133,26 +1337,41 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Connection Operations
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD)
   async connectionLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get connection relationships from Archivist (1487 is connection relation type)
-      const result = await this.archivistClient.getRecursiveRelations(entityUid, 1487);
+      const result = await this.archivistClient.getRecursiveRelations(
+        entityUid,
+        1487
+      );
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get connection relationships',
+          error: result.error || "Failed to get connection relationships",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -1160,7 +1379,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -1173,36 +1392,52 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load connection relationships', error);
+      this.logger.error("Failed to load connection relationships", error);
       return {
         success: false,
-        error: 'Failed to load connection relationships',
+        error: "Failed to load connection relationships",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD_IN)
   async connectionLoadIn(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; 'entity-uid': number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      "entity-uid": number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, 'entity-uid': entityUid } = payload;
-      
+      const {
+        "user-id": userId,
+        "environment-id": envId,
+        "entity-uid": entityUid,
+      } = payload;
+
       // Get incoming connection relationships from Archivist (1487 is connection relation type)
-      const result = await this.archivistClient.getRecursiveRelationsTo(entityUid, 1487);
+      const result = await this.archivistClient.getRecursiveRelationsTo(
+        entityUid,
+        1487
+      );
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get incoming connection relationships',
+          error:
+            result.error || "Failed to get incoming connection relationships",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.facts || [];
       let updatedEnvironment = environment;
@@ -1210,7 +1445,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -1223,10 +1458,13 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load incoming connection relationships', error);
+      this.logger.error(
+        "Failed to load incoming connection relationships",
+        error
+      );
       return {
         success: false,
-        error: 'Failed to load incoming connection relationships',
+        error: "Failed to load incoming connection relationships",
       };
     }
   }
@@ -1234,26 +1472,34 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Relation Operations
   @SubscribeMessage(ApertureActions.RELATION_REQUIRED_ROLES_LOAD)
   async relationRequiredRolesLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; uid: number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      uid: number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, uid } = payload;
-      
+      const { "user-id": userId, "environment-id": envId, uid } = payload;
+
       // Get required roles from Archivist
       const result = await this.archivistClient.getRequiredRoles(uid);
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get required roles',
+          error: result.error || "Failed to get required roles",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Add facts to environment
       const facts = result.data || [];
       let updatedEnvironment = environment;
@@ -1261,7 +1507,7 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -1274,52 +1520,60 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load required roles', error);
+      this.logger.error("Failed to load required roles", error);
       return {
         success: false,
-        error: 'Failed to load required roles',
+        error: "Failed to load required roles",
       };
     }
   }
 
   @SubscribeMessage(ApertureActions.RELATION_ROLE_PLAYERS_LOAD)
   async relationRolePlayersLoad(
-    @MessageBody() payload: { 'user-id': number; 'environment-id'?: number; uid: number },
+    @MessageBody()
+    payload: {
+      "user-id": number;
+      "environment-id"?: number;
+      uid: number;
+    }
   ) {
     try {
-      const { 'user-id': userId, 'environment-id': envId, uid } = payload;
-      
+      const { "user-id": userId, "environment-id": envId, uid } = payload;
+
       // Get role players from Archivist
       const result = await this.archivistClient.getRolePlayers(uid);
 
       if (!result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to get role players',
+          error: result.error || "Failed to get role players",
         };
       }
 
       // Get environment
-      const environment = envId 
-        ? await this.environmentService.findOne(envId.toString(), userId.toString())
+      const environment = envId
+        ? await this.environmentService.findOne(
+            envId.toString(),
+            userId.toString()
+          )
         : await this.environmentService.findDefaultForUser(userId.toString());
-      
+
       // Extract facts from the role player data structure (based on Clojure implementation)
       const data = result.data || [];
       const facts = [];
-      
+
       for (const roleData of data) {
         if (roleData.requirement) facts.push(roleData.requirement);
         if (roleData.player) facts.push(roleData.player);
       }
-      
+
       // Add facts to environment
       let updatedEnvironment = environment;
       if (facts.length > 0) {
         updatedEnvironment = await this.environmentService.addFacts(
           environment.id,
           userId.toString(),
-          facts,
+          facts
         );
       }
 
@@ -1332,10 +1586,10 @@ export class ApertureGateway implements OnGatewayConnection, OnGatewayDisconnect
         facts: facts,
       };
     } catch (error) {
-      this.logger.error('Failed to load role players', error);
+      this.logger.error("Failed to load role players", error);
       return {
         success: false,
-        error: 'Failed to load role players',
+        error: "Failed to load role players",
       };
     }
   }

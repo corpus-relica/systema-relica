@@ -1,27 +1,27 @@
-import { 
-  WebSocketGateway, 
-  WebSocketServer, 
-  SubscribeMessage, 
-  MessageBody, 
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  MessageBody,
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  WsException 
-} from '@nestjs/websockets';
-import { Logger, Injectable, Inject } from '@nestjs/common';
-import { Server, Socket } from 'socket.io';
-import { ShutterRestClientService } from '../services/shutter-rest-client.service';
-import { ApertureWebSocketClientService } from '../services/aperture-websocket-client.service';
-import { NousWebSocketClientService } from '../services/nous-websocket-client.service';
-import { PrismWebSocketClientService } from '../services/prism-websocket-client.service';
-import { 
-  ServiceMessage, 
-  ServiceResponse, 
-  ClientMessage, 
+  WsException,
+} from "@nestjs/websockets";
+import { Logger, Injectable, Inject } from "@nestjs/common";
+import { Server, Socket } from "socket.io";
+import { ShutterRestClientService } from "../services/shutter-rest-client.service";
+import { ApertureWebSocketClientService } from "../services/aperture-websocket-client.service";
+import { NousWebSocketClientService } from "../services/nous-websocket-client.service";
+import { PrismWebSocketClientService } from "../services/prism-websocket-client.service";
+import {
+  ServiceMessage,
+  ServiceResponse,
+  ClientMessage,
   ClientResponse,
-  ClientEvent
-} from '../types/websocket-messages';
-import { 
+  ClientEvent,
+} from "../types/websocket-messages";
+import {
   PortalUserActions,
   PortalSystemEvents,
   SelectEntityRequestSchema,
@@ -44,8 +44,8 @@ import {
   type SelectNoneRequest,
   type LoadSpecializationHierarchyRequest,
   type StandardResponse,
-} from '@relica/websocket-contracts';
-import customParser from 'socket.io-msgpack-parser';
+} from "@relica/websocket-contracts";
+import customParser from "socket.io-msgpack-parser";
 
 interface ConnectedClient {
   userId: string;
@@ -61,23 +61,25 @@ interface ConnectedClient {
     origin: true,
     credentials: true,
   },
-  transports: ['websocket'],
+  transports: ["websocket"],
   parser: customParser,
 })
-
 export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(PortalGateway.name);
   private connectedClients = new Map<string, ConnectedClient>();
-  private socketTokens = new Map<string, { userId: string; createdAt: number; isGuest?: boolean }>();
+  private socketTokens = new Map<
+    string,
+    { userId: string; createdAt: number; isGuest?: boolean }
+  >();
 
   constructor(
     private readonly apertureClient: ApertureWebSocketClientService,
     private readonly shutterClient: ShutterRestClientService,
     private readonly nousClient: NousWebSocketClientService,
-    private readonly prismClient: PrismWebSocketClientService,
+    private readonly prismClient: PrismWebSocketClientService
   ) {
     // Set up the broadcast forwarding after initialization
     this.prismClient.setPortalGateway(this);
@@ -86,21 +88,21 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // Error codes aligned with Clojure implementation
   private readonly errorCodes = {
-    'service-unavailable': 1001,
-    'internal-error': 1002,
-    'timeout': 1003,
-    'service-overloaded': 1004,
-    'validation-error': 1101,
-    'missing-required-field': 1102,
-    'invalid-field-format': 1103,
-    'invalid-reference': 1104,
-    'constraint-violation': 1105,
-    'unauthorized': 1301,
-    'forbidden': 1302,
-    'not-found': 1401,
-    'bad-request': 1402,
-    'unknown-message-type': 1403,
-    'invalid-message-format': 1404,
+    "service-unavailable": 1001,
+    "internal-error": 1002,
+    timeout: 1003,
+    "service-overloaded": 1004,
+    "validation-error": 1101,
+    "missing-required-field": 1102,
+    "invalid-field-format": 1103,
+    "invalid-reference": 1104,
+    "constraint-violation": 1105,
+    unauthorized: 1301,
+    forbidden: 1302,
+    "not-found": 1401,
+    "bad-request": 1402,
+    "unknown-message-type": 1403,
+    "invalid-message-format": 1404,
   };
 
   handleConnection(client: Socket) {
@@ -121,19 +123,22 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (success) {
       return {
         id,
-        type: 'response',
+        type: "response",
         success: true,
         data: data,
       };
     } else {
-      const errorType = typeof data === 'object' && data.type ? data.type : 'internal-error';
-      const errorMsg = typeof data === 'object' && data.message ? data.message : String(data);
-      const errorDetails = typeof data === 'object' && data.details ? data.details : null;
+      const errorType =
+        typeof data === "object" && data.type ? data.type : "internal-error";
+      const errorMsg =
+        typeof data === "object" && data.message ? data.message : String(data);
+      const errorDetails =
+        typeof data === "object" && data.details ? data.details : null;
       const errorCode = this.errorCodes[errorType] || 1002;
 
       return {
         id,
-        type: 'response',
+        type: "response",
         success: false,
         error: `${errorType}: ${errorMsg}`,
       };
@@ -144,7 +149,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private async validateJWT(jwt: string): Promise<{ userId: string; user: any } | null> {
+  private async validateJWT(
+    jwt: string
+  ): Promise<{ userId: string; user: any } | null> {
     try {
       const validationResult = await this.shutterClient.validateToken(jwt);
       if (validationResult.valid && validationResult.user) {
@@ -155,7 +162,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
       return null;
     } catch (error) {
-      this.logger.error('JWT validation failed:', error);
+      this.logger.error("JWT validation failed:", error);
       return null;
     }
   }
@@ -163,12 +170,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private broadcastToEnvironment(environmentId: string, message: any) {
     for (const [clientId, clientData] of this.connectedClients) {
       if (clientData.environmentId === environmentId) {
-        clientData.socket.emit('message', message);
+        clientData.socket.emit("message", message);
       }
     }
   }
 
-  @SubscribeMessage('auth')
+  @SubscribeMessage("auth")
   async handleAuth(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { jwt: string }
@@ -176,7 +183,10 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const authResult = await this.validateJWT(payload.jwt);
       if (!authResult) {
-        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Invalid JWT' });
+        return this.createResponse(client.id, false, {
+          type: "unauthorized",
+          message: "Invalid JWT",
+        });
       }
 
       const socketToken = this.generateSocketToken();
@@ -197,16 +207,19 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         user: authResult.user,
       });
     } catch (error) {
-      this.logger.error('Auth error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Authentication failed' });
+      this.logger.error("Auth error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Authentication failed",
+      });
     }
   }
 
-  @SubscribeMessage('guest-auth')
+  @SubscribeMessage("guest-auth")
   async handleGuestAuth(@ConnectedSocket() client: Socket): Promise<any> {
     try {
       const socketToken = this.generateSocketToken();
-      const guestId = 'guest-user';
+      const guestId = "guest-user";
 
       this.socketTokens.set(socketToken, {
         userId: guestId,
@@ -226,15 +239,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId: guestId,
       });
     } catch (error) {
-      this.logger.error('Guest auth error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Guest authentication failed' });
+      this.logger.error("Guest auth error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Guest authentication failed",
+      });
     }
   }
 
-  @SubscribeMessage('ping')
+  @SubscribeMessage("ping")
   async handlePing(@ConnectedSocket() client: Socket): Promise<any> {
     return this.createResponse(client.id, true, {
-      message: 'Pong',
+      message: "Pong",
       timestamp: Date.now(),
     });
   }
@@ -250,9 +266,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!validation.success) {
         console.log("Validation failed:", validation.error.issues);
         return this.createResponse(client.id, false, {
-          type: 'validation-error', 
-          message: 'Invalid payload format',
-          details: validation.error.issues 
+          type: "validation-error",
+          message: "Invalid payload format",
+          details: validation.error.issues,
         });
       }
 
@@ -261,9 +277,13 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
       // }
 
-      const environmentId = payload.environmentId || '1';
+      const environmentId = payload.environmentId || "1";
 
-      const result = await this.apertureClient.selectEntity(payload.userId, environmentId, payload.uid);
+      const result = await this.apertureClient.selectEntity(
+        payload.userId,
+        environmentId,
+        payload.uid
+      );
       // Broadcast entity selected event to environment
       // this.broadcastToEnvironment(environmentId, {
       //   id: 'system',
@@ -277,18 +297,21 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // });
 
       return this.createResponse(client.id, true, {
-        message: 'Entity selected',
+        message: "Entity selected",
       });
     } catch (error) {
-      this.logger.error('Select entity error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to select entity' });
+      this.logger.error("Select entity error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to select entity",
+      });
     }
   }
 
   @SubscribeMessage(PortalUserActions.SELECT_NONE)
   async handleSelectNone(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { userId: number, environmentId?: number }
+    @MessageBody() payload: { userId: number; environmentId?: number }
   ): Promise<any> {
     try {
       // const clientData = this.connectedClients.get(client.id);
@@ -296,9 +319,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
       // }
 
-      const environmentId = payload.environmentId || '1';
+      const environmentId = payload.environmentId || "1";
 
-      const result = await this.apertureClient.selectNone(payload.userId, ""+environmentId);
+      const result = await this.apertureClient.selectNone(
+        payload.userId,
+        "" + environmentId
+      );
       // Broadcast entity deselected event to environment
       // this.broadcastToEnvironment(environmentId, {
       //   id: 'system',
@@ -313,10 +339,13 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // return this.createResponse(client.id, true, {
       //   message: 'Entity deselected',
       // });
-      return {success: true}
+      return { success: true };
     } catch (error) {
-      this.logger.error('Select none error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to deselect entity' });
+      this.logger.error("Select none error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to deselect entity",
+      });
     }
   }
 
@@ -327,33 +356,40 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       // Validate payload
-      const validation = LoadSpecializationHierarchyRequestSchema.safeParse(payload);
+      const validation =
+        LoadSpecializationHierarchyRequestSchema.safeParse(payload);
       if (!validation.success) {
-        console.log(validation.error.issues)
-        return this.createResponse(client.id, false, { 
-          type: 'validation-error', 
-          message: 'Invalid payload format',
-          details: validation.error.issues 
+        console.log(validation.error.issues);
+        return this.createResponse(client.id, false, {
+          type: "validation-error",
+          message: "Invalid payload format",
+          details: validation.error.issues,
         });
       }
 
-      const result = await this.apertureClient.loadSpecializationHierarchy(payload.uid.toString(), ""+payload.userId);
+      const result = await this.apertureClient.loadSpecializationHierarchy(
+        payload.uid.toString(),
+        "" + payload.userId
+      );
 
-      if (!result ) {
+      if (!result) {
         return {
           success: false,
           error: {
-            type: 'internal-error',
-            message: 'Failed to load specialization hierarchy',
-            details: result ? result.error : 'Unknown error',
+            type: "internal-error",
+            message: "Failed to load specialization hierarchy",
+            details: result ? result.error : "Unknown error",
           },
         };
       }
 
       return result;
     } catch (error) {
-      this.logger.error('Load specialization hierarchy error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load specialization hierarchy' });
+      this.logger.error("Load specialization hierarchy error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to load specialization hierarchy",
+      });
     }
   }
 
@@ -365,11 +401,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Entity loaded',
+        message: "Entity loaded",
       });
     } catch (error) {
-      this.logger.error('Load entity error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load entity' });
+      this.logger.error("Load entity error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to load entity",
+      });
     }
   }
 
@@ -379,47 +418,53 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: any
   ): Promise<any> {
     try {
-
       // Validate payload
       const validation = ClearEntitiesRequestSchema.safeParse(payload);
       if (!validation.success) {
         console.log("Validation failed:", validation.error.issues);
-        return this.createResponse(client.id, false, { 
-          type: 'validation-error', 
-          message: 'Invalid payload format',
-          details: validation.error.issues 
+        return this.createResponse(client.id, false, {
+          type: "validation-error",
+          message: "Invalid payload format",
+          details: validation.error.issues,
         });
       }
 
+      console.log("CLEAR ENTITIES", payload);
       // const clientData = this.connectedClients.get(client.id);
       // if (!clientData) {
       //   return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
       // }
 
-      const userId = payload.userId;// || clientData.userId;
-      const environmentId = payload.environmentId || '1'; // Default to environment 1 if not provided
+      const userId = payload.userId; // || clientData.userId;
+      const environmentId = payload.environmentId || "1"; // Default to environment 1 if not provided
 
       // Call Aperture service to clear environment entities
-      const result = await this.apertureClient.clearEnvironmentEntities(""+userId, ""+environmentId);
+      const result = await this.apertureClient.clearEnvironmentEntities(
+        "" + userId,
+        "" + environmentId
+      );
 
       if (!result) {
-        return this.createResponse(client.id, false, { 
-          type: 'internal-error', 
-          message: 'Failed to clear entities',
-          details: 'No response from Aperture service'
+        return this.createResponse(client.id, false, {
+          type: "internal-error",
+          message: "Failed to clear entities",
+          details: "No response from Aperture service",
         });
       }
 
       return this.createResponse(client.id, true, {
-        message: 'Entities cleared',
+        message: "Entities cleared",
         data: {
           ...result,
           clearedFactCount: result.factUids ? result.factUids.length : 0,
         },
       });
     } catch (error) {
-      this.logger.error('Clear entities error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to clear entities' });
+      this.logger.error("Clear entities error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to clear entities",
+      });
     }
   }
 
@@ -429,14 +474,23 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: any
   ): Promise<any> {
     try {
+      const result = await this.apertureClient.loadAllRelatedFacts(
+        payload.userId,
+        payload.environmentId,
+        payload.uid
+      );
       // TODO: Implement Aperture service call
-      return this.createResponse(client.id, true, {
-        message: 'All related facts loaded',
-        facts: [],
-      });
+      // return this.createResponse(client.id, true, {
+      //   message: 'All related facts loaded',
+      //   facts: [],
+      // });
+      return null;
     } catch (error) {
-      this.logger.error('Load all related facts error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load all related facts' });
+      this.logger.error("Load all related facts error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to load all related facts",
+      });
     }
   }
 
@@ -448,11 +502,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Subtypes cone loaded',
+        message: "Subtypes cone loaded",
       });
     } catch (error) {
-      this.logger.error('Load subtypes cone error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load subtypes cone' });
+      this.logger.error("Load subtypes cone error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to load subtypes cone",
+      });
     }
   }
 
@@ -464,11 +521,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Entity unloaded',
+        message: "Entity unloaded",
       });
     } catch (error) {
-      this.logger.error('Unload entity error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to unload entity' });
+      this.logger.error("Unload entity error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to unload entity",
+      });
     }
   }
 
@@ -480,11 +540,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Subtypes cone unloaded',
+        message: "Subtypes cone unloaded",
       });
     } catch (error) {
-      this.logger.error('Unload subtypes cone error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to unload subtypes cone' });
+      this.logger.error("Unload subtypes cone error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to unload subtypes cone",
+      });
     }
   }
 
@@ -496,11 +559,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Entity deleted',
+        message: "Entity deleted",
       });
     } catch (error) {
-      this.logger.error('Delete entity error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to delete entity' });
+      this.logger.error("Delete entity error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to delete entity",
+      });
     }
   }
 
@@ -512,11 +578,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Fact deleted',
+        message: "Fact deleted",
       });
     } catch (error) {
-      this.logger.error('Delete fact error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to delete fact' });
+      this.logger.error("Delete fact error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to delete fact",
+      });
     }
   }
 
@@ -528,11 +597,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Entities loaded',
+        message: "Entities loaded",
       });
     } catch (error) {
-      this.logger.error('Load entities error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to load entities' });
+      this.logger.error("Load entities error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to load entities",
+      });
     }
   }
 
@@ -544,11 +616,14 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Entities unloaded',
+        message: "Entities unloaded",
       });
     } catch (error) {
-      this.logger.error('Unload entities error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to unload entities' });
+      this.logger.error("Unload entities error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to unload entities",
+      });
     }
   }
 
@@ -560,17 +635,19 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Aperture service call
       return this.createResponse(client.id, true, {
-        message: 'Specialization hierarchy retrieved',
+        message: "Specialization hierarchy retrieved",
         hierarchy: [],
       });
     } catch (error) {
-      this.logger.error('Get specialization hierarchy error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to get specialization hierarchy' });
+      this.logger.error("Get specialization hierarchy error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to get specialization hierarchy",
+      });
     }
   }
 
-
-  @SubscribeMessage('chatUserInput')
+  @SubscribeMessage("chatUserInput")
   async handleChatUserInput(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { message: string; userId: string }
@@ -578,12 +655,15 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const clientData = this.connectedClients.get(client.id);
       if (!clientData) {
-        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+        return this.createResponse(client.id, false, {
+          type: "unauthorized",
+          message: "Not authenticated",
+        });
       }
 
       // Get environment context for the user
-      const environmentId = clientData.environmentId || '1';
-      
+      const environmentId = clientData.environmentId || "1";
+
       // Process chat input through NOUS
       const result = await this.nousClient.processChatInput(
         payload.message,
@@ -596,10 +676,10 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Broadcast AI response to environment
       this.broadcastToEnvironment(environmentId, {
-        id: 'system',
-        type: 'portal:aiResponse',
+        id: "system",
+        type: "portal:aiResponse",
         payload: {
-          type: 'nous.chat/response',
+          type: "nous.chat/response",
           message: result.response,
           userId: payload.userId || clientData.userId,
           environment_id: environmentId,
@@ -608,17 +688,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       return this.createResponse(client.id, true, {
-        message: 'Chat input processed',
+        message: "Chat input processed",
         response: result.response,
         metadata: result.metadata,
       });
     } catch (error) {
-      this.logger.error('Chat input error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to process chat input' });
+      this.logger.error("Chat input error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to process chat input",
+      });
     }
   }
 
-  @SubscribeMessage('generateAIResponse')
+  @SubscribeMessage("generateAIResponse")
   async handleGenerateAIResponse(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { prompt: string; context?: any }
@@ -626,30 +709,33 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const clientData = this.connectedClients.get(client.id);
       if (!clientData) {
-        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+        return this.createResponse(client.id, false, {
+          type: "unauthorized",
+          message: "Not authenticated",
+        });
       }
 
       // Generate AI response through NOUS
-      const result = await this.nousClient.generateResponse(
-        payload.prompt,
-        {
-          ...payload.context,
-          userId: clientData.userId,
-          environmentId: clientData.environmentId || '1',
-        }
-      );
+      const result = await this.nousClient.generateResponse(payload.prompt, {
+        ...payload.context,
+        userId: clientData.userId,
+        environmentId: clientData.environmentId || "1",
+      });
 
       return this.createResponse(client.id, true, {
         response: result.response,
         metadata: result.metadata,
       });
     } catch (error) {
-      this.logger.error('Generate AI response error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to generate AI response' });
+      this.logger.error("Generate AI response error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to generate AI response",
+      });
     }
   }
 
-  @SubscribeMessage('clearChatHistory')
+  @SubscribeMessage("clearChatHistory")
   async handleClearChatHistory(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { userId?: string }
@@ -657,21 +743,27 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const clientData = this.connectedClients.get(client.id);
       if (!clientData) {
-        return this.createResponse(client.id, false, { type: 'unauthorized', message: 'Not authenticated' });
+        return this.createResponse(client.id, false, {
+          type: "unauthorized",
+          message: "Not authenticated",
+        });
       }
 
       // TODO: Implement chat history clearing when NOUS supports it
       return this.createResponse(client.id, true, {
-        message: 'Chat history cleared',
+        message: "Chat history cleared",
       });
     } catch (error) {
-      this.logger.error('Clear chat history error:', error);
-      return this.createResponse(client.id, false, { type: 'internal-error', message: 'Failed to clear chat history' });
+      this.logger.error("Clear chat history error:", error);
+      return this.createResponse(client.id, false, {
+        type: "internal-error",
+        message: "Failed to clear chat history",
+      });
     }
   }
 
   // Prism setup handlers
-  @SubscribeMessage('prism/startSetup')
+  @SubscribeMessage("prism/startSetup")
   async handlePrismStartSetup(@ConnectedSocket() client: Socket): Promise<any> {
     // TODO: Implement Prism service call
     return this.createResponse(client.id, true, {
@@ -679,10 +771,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  @SubscribeMessage('prism/createUser')
+  @SubscribeMessage("prism/createUser")
   async handlePrismCreateUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { username: string; password: string; confirmPassword: string }
+    @MessageBody()
+    payload: { username: string; password: string; confirmPassword: string }
   ): Promise<any> {
     // TODO: Implement Prism service call
     return this.createResponse(client.id, true, {
