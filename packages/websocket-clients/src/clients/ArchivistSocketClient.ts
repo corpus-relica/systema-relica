@@ -17,7 +17,6 @@ import {
   ValidationActions,
   SpecializationActions,
   LineageActions,
-  ContractUtils,
 } from '@relica/websocket-contracts';
 
 @Injectable()
@@ -130,14 +129,6 @@ export class ArchivistSocketClient implements OnModuleInit, OnModuleDestroy {
       action,
       payload,
     };
-
-    // Validate message against contract in development mode
-    if (process.env.NODE_ENV === 'development') {
-      const validation = ContractUtils.dev.validate.request(action, message);
-      if (!validation.success) {
-        this.logger.warn(`Contract validation failed for action ${action}:`, 'error' in validation ? validation.error : 'Unknown validation error');
-      }
-    }
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
