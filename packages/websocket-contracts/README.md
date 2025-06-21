@@ -1,15 +1,15 @@
 # @relica/websocket-contracts
 
-Shared WebSocket API contracts and types for Relica services. This package provides type-safe message schemas and runtime validation utilities to ensure alignment between WebSocket producers and consumers.
+Shared WebSocket API contracts and types for Relica services. This package provides type-safe message schemas and optional validation utilities to ensure alignment between WebSocket producers and consumers.
 
 ## 🎯 Purpose
 
 This package solves the critical problem of **WebSocket API alignment** between services by:
 
 - **Centralizing contracts** - Single source of truth for all WebSocket APIs
-- **Type safety** - Compile-time checking of message structures with Zod schemas
-- **Runtime validation** - Development-time contract validation with detailed error reporting
-- **Simplified architecture** - Actions are used directly as WebSocket topics
+- **Type safety** - Compile-time checking of message structures with TypeScript
+- **Optional validation** - Simple validation utilities for development debugging  
+- **Direct action usage** - Actions are used directly as WebSocket topics (no mapping layer)
 
 ## 📋 Standards & Conventions
 
@@ -67,20 +67,24 @@ yarn add @relica/websocket-contracts
 ```typescript
 import { 
   PrismActions, 
-  MessageRegistryUtils, 
-  ContractUtils 
+  ValidationUtils,
+  createDebugValidator 
 } from '@relica/websocket-contracts';
 
 // Use action directly as WebSocket topic
 const topic = PrismActions.GET_SETUP_STATUS; // 'setup/get-status'
 
-// Validate message against contract
-const validation = ContractUtils.validate.request('setup/get-status', message);
+// Optional validation for debugging
+const validation = ValidationUtils.validateBaseMessage(message);
 if (validation.success) {
   // Message is valid
 } else {
   console.error('Validation failed:', validation.error);
 }
+
+// Or use debug validator for specific schemas
+const debugValidator = createDebugValidator(true);
+const result = debugValidator.validateMessage(SomeSchema, message, 'setup/get-status');
 ```
 
 ## 📖 API Reference
@@ -89,7 +93,7 @@ if (validation.success) {
 
 ```typescript
 // Service actions (constants)
-import { PrismActions, PrismEvents } from '@relica/websocket-contracts';
+import { PrismActions, PrismEvents, FactActions, ApertureActions } from '@relica/websocket-contracts';
 
 // Message schemas and types
 import { 
@@ -99,13 +103,11 @@ import {
   type GetSetupStatusRequest 
 } from '@relica/websocket-contracts';
 
-// Registry and validation
+// Simplified validation utilities
 import { 
-  MESSAGE_REGISTRY, 
-  MessageRegistryUtils,
-  ContractUtils, 
-  validator, 
-  devValidator 
+  ValidationUtils,
+  createDebugValidator,
+  type ValidationResult
 } from '@relica/websocket-contracts';
 
 // Base message types
@@ -117,37 +119,24 @@ import {
 } from '@relica/websocket-contracts';
 ```
 
-### MessageRegistryUtils
+### ValidationUtils
 
 ```typescript
-// Get contract definition for an action
-MessageRegistryUtils.getContract(action: string): MessageContract | undefined
+// Validate message against base message schema
+ValidationUtils.validateBaseMessage(message: unknown): ValidationResult
 
-// Validate request message against contract
-MessageRegistryUtils.validateRequest(action: string, message: unknown): ValidationResult
-
-// Validate response message against contract
-MessageRegistryUtils.validateResponse(action: string, message: unknown): ValidationResult
-
-// Get all contracts for a specific service
-MessageRegistryUtils.getServiceContracts(serviceName: string): MessageContract[]
+// Validate message against a specific Zod schema
+ValidationUtils.validateWithSchema<T>(schema: z.ZodSchema<T>, message: unknown): ValidationResult<T>
 ```
 
-### ContractUtils
+### Debug Validator
 
 ```typescript
-// Quick validation methods
-ContractUtils.validate.request(action: string, message: unknown): ValidationResult
-ContractUtils.validate.response(action: string, message: unknown): ValidationResult
-ContractUtils.validate.baseMessage(message: unknown): ValidationResult
+// Create a debug validator with optional console logging
+const debugValidator = createDebugValidator(enabled: boolean);
 
-// Check if action has a contract
-ContractUtils.hasContract(action: string): boolean
-
-// Development mode validation (with console logging)
-ContractUtils.dev.validate.request(action: string, message: unknown): ValidationResult
-ContractUtils.dev.validate.response(action: string, message: unknown): ValidationResult
-ContractUtils.dev.hasContract(action: string): boolean
+// Validate message with optional action name for logging
+debugValidator.validateMessage(schema: z.ZodSchema, message: unknown, actionName?: string): ValidationResult
 ```
 
 ## 🔧 Adding New Service Contracts
@@ -192,41 +181,27 @@ export const QueryDataResponseSchema = BaseResponseSchema.extend({
 export type QueryDataResponse = z.infer<typeof QueryDataResponseSchema>;
 ```
 
-### 3. Add to Registry
+### 3. Export from Service File
 
 ```typescript
-// src/registry.ts
-import { MyServiceActions } from './services/my-service';
-
-export const MESSAGE_REGISTRY = {
-  // ... existing contracts
-  
-  [MyServiceActions.QUERY_DATA]: {
-    action: MyServiceActions.QUERY_DATA,  // 'data/query'
-    service: 'my-service',
-    requestSchema: QueryDataRequestSchema,
-    responseSchema: QueryDataResponseSchema,
-    description: 'Query data with optional filters',
-  },
-  
-} as const satisfies Record<string, MessageContract>;
-```
-
-### 4. Export from Index
-
-```typescript
-// src/index.ts
-export * from './services/my-service';
-
-// Re-export for convenience
+// src/services/my-service.ts (continued)
 export {
   MyServiceActions,
   QueryDataRequestSchema,
   QueryDataResponseSchema,
   type QueryDataRequest,
   type QueryDataResponse,
-} from './services/my-service';
+};
 ```
+
+### 4. Add to Main Index
+
+```typescript
+// src/index.ts
+export * from './services/my-service';
+```
+
+**That's it!** No registry needed - actions are used directly as WebSocket topics.
 
 ## 🧪 Development & Testing
 

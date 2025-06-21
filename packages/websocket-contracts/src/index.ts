@@ -3,19 +3,19 @@
  * 
  * This package provides:
  * - Type-safe WebSocket message schemas
- * - Action → Topic mapping registry 
- * - Runtime validation utilities
- * - Development tools for contract alignment
+ * - Action constants for direct use as WebSocket topics
+ * - Optional validation utilities for development
+ * - Clean service boundaries with TypeScript safety
  * 
  * @example
  * ```typescript
- * import { PrismActions, MessageRegistryUtils, ContractUtils } from '@relica/websocket-contracts';
+ * import { PrismActions, ValidationUtils } from '@relica/websocket-contracts';
  * 
  * // Use action directly as WebSocket topic
  * const topic = PrismActions.GET_SETUP_STATUS; // 'setup/get-status'
  * 
- * // Validate message against contract
- * const validation = ContractUtils.validate.request(PrismActions.GET_SETUP_STATUS, message);
+ * // Optional validation for debugging
+ * const validation = ValidationUtils.validateBaseMessage(message);
  * if (validation.success) {
  *   // Message is valid
  * } else {
@@ -34,19 +34,8 @@ export * from './services/aperture';
 export * from './services/clarity';
 export * from './services/portal';
 
-// Message registry and utilities
-export * from './registry';
-
-// Validation utilities
+// Simplified validation utilities
 export * from './validation';
-
-// Re-export commonly used items for convenience
-export {
-  ContractUtils,
-  validator,
-  devValidator,
-  ContractValidator,
-} from './validation';
 
 export {
   PrismActions,
