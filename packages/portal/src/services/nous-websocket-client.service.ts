@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseWebSocketClient } from './websocket-client.service';
-import { ServiceMessage, ServiceResponse } from '../types/websocket-messages';
+import { BaseWebSocketClient, ServiceMessage, ServiceResponse } from '@relica/websocket-clients';
 
 @Injectable()
 export class NousWebSocketClientService extends BaseWebSocketClient {

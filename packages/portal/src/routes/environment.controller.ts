@@ -1,12 +1,12 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ApertureWebSocketClientService } from '../services/aperture-websocket-client.service';
+import { ApertureSocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Environment')
 @Controller('environment')
 export class EnvironmentController {
-  constructor(private readonly apertureClient: ApertureWebSocketClientService) {}
+  constructor(private readonly apertureClient: ApertureSocketClient) {}
 
 
   @Get('retrieve')
@@ -23,13 +23,13 @@ export class EnvironmentController {
         throw new BadRequestException('uid parameter is required');
       }
 
-      const environment = await this.apertureClient.getEnvironment(userId);
+      const result = await this.apertureClient.getEnvironment(userId.toString());
 
-      if (!environment) {
-        throw new BadRequestException('Environment not found');
+      if (!result.success) {
+        throw new BadRequestException(result.error || 'Environment not found');
       }
 
-      return environment;
+      return result.data || result;
     } catch (error) {
       return {
         success: false,

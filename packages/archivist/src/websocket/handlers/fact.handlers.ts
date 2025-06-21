@@ -134,10 +134,11 @@ export class FactHandlers {
   async handleFactGetSubtypes(
     data: FactQueryMessage,
     client: Socket,
-  ): Promise<WsResponse> {
+  ): Promise<any> {
     try {
       const result = await this.factService.getSubtypes(data.uid);
       return {
+        success: true,
         event: FactEvents.SUBTYPES,
         data: result,
       };

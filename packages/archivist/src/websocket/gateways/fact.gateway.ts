@@ -109,13 +109,12 @@ export class FactGateway {
     @MessageBody() data: any,
   ) {
     this.logger.debug(`Handling ${FactActions.GET_SUBTYPES} from ${client.id}`);
-    console.log('FactGateway.handleFactGetSubtypes fore', data.payload);
     const result = await this.factHandlers.handleFactGetSubtypes(
       data.payload,
       client,
     );
-    console.log('FactGateway.handleFactGetSubtypes after', result);
-    return result;
+    console.log('FactGateway.handleFactGetSubtypes after', result.data);
+    return result.data;
   }
 
   @SubscribeMessage(FactActions.GET_SUPERTYPES)

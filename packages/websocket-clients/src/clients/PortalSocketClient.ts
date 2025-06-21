@@ -1,28 +1,35 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { io, Socket } from 'socket.io-client';
-import { EventEmitter } from 'events';
-import { 
-  ServiceMessage, 
-  ServiceResponse, 
-  ArchivistMessage, 
-  ClarityMessage, 
-  ApertureMessage, 
-  PrismMessage 
-} from '../types/websocket-messages';
 import customParser from 'socket.io-msgpack-parser';
 
 export interface WebSocketServiceClient {
   connect(): Promise<void>;
   disconnect(): void;
-  sendMessage(message: ServiceMessage): Promise<ServiceResponse>;
+  sendMessage(message: any): Promise<any>;
   isConnected(): boolean;
   onBroadcast(callback: (message: any) => void): void;
   offBroadcast(callback: (message: any) => void): void;
 }
 
+export interface ServiceMessage {
+  id?: string;
+  type: 'request';
+  service: string;
+  action: string;
+  payload?: any;
+}
+
+export interface ServiceResponse {
+  id: string;
+  type: 'response';
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
 @Injectable()
-export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit, OnModuleDestroy {
+export class PortalSocketClient implements WebSocketServiceClient, OnModuleInit, OnModuleDestroy {
   public socket: Socket | null = null;
   protected readonly logger = new Logger(this.constructor.name);
 
@@ -33,7 +40,6 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
   ) {}
 
   async onModuleInit() {
-    // Try to connect but don't fail startup if services aren't ready
     this.connect().catch(err => {
       this.logger.warn(`Could not connect to ${this.serviceName} on startup: ${err.message}`);
       this.logger.warn(`Will retry when first request is made`);
@@ -59,7 +65,7 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      parser: customParser, // Use msgpack parser for better performance
+      parser: customParser,
     });
 
     this.setupEventHandlers();
@@ -98,13 +104,12 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
   }
 
   async sendMessage(message: ServiceMessage): Promise<ServiceResponse> {
-    // Attempt to connect if not already connected
     if (!this.socket?.connected) {
       this.logger.log(`Not connected to ${this.serviceName}, attempting to connect...`);
       try {
         await this.connect();
       } catch (error) {
-        throw new Error(`Failed to connect to ${this.serviceName} service: ${error.message}`);
+        throw new Error(`Failed to connect to ${this.serviceName} service: ${(error as Error).message}`);
       }
     }
 
@@ -113,11 +118,9 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
         reject(new Error(`Request timeout for ${this.serviceName} service`));
       }, 30000);
 
-      // Use Socket.IO acknowledgment callback - much simpler!
       this.socket!.emit(message.action, message.payload || {}, (response: any) => {
         clearTimeout(timeout);
         
-        // Wrap response in our standard format
         const serviceResponse: ServiceResponse = {
           id: message.id || this.generateMessageId(),
           type: 'response',
@@ -153,11 +156,20 @@ export class BaseWebSocketClient implements WebSocketServiceClient, OnModuleInit
 
   onBroadcast(callback: (message: any) => void): void {
     // Implementation will be added by subclasses as needed
-    // This is here to satisfy the interface
   }
 
   offBroadcast(callback: (message: any) => void): void {
-    // Implementation will be added by subclasses as needed  
-    // This is here to satisfy the interface
+    // Implementation will be added by subclasses as needed
+  }
+}
+
+// Base class that services can extend - identical to PortalSocketClient
+export class BaseWebSocketClient extends PortalSocketClient {
+  constructor(
+    configService: ConfigService,
+    serviceName: string,
+    defaultPort: number,
+  ) {
+    super(configService, serviceName, defaultPort);
   }
 }
