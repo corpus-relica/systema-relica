@@ -217,16 +217,17 @@ export class ApertureGateway
 
   @SubscribeMessage(ApertureActions.ENVIRONMENT_CLEAR)
   async clearEnvironment(
-    @MessageBody() payload: { userId: string; environmentId: string }
+    @MessageBody()
+    message: {
+      payload: { userId: string; environmentId: string };
+    }
   ) {
     try {
-      const { userId, environmentId } = payload;
-      console.log("CLEAR ENVIRONMENT", payload);
+      const { userId, environmentId } = message.payload;
       const environment = await this.environmentService.findOne(
         environmentId,
         userId
       );
-      console.log("CLEAR ENVIRONMENT", environment);
       const factUids = environment.facts.map((fact) => fact.fact_uid);
 
       await this.environmentService.clearFacts(environmentId, userId);
@@ -476,14 +477,18 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD)
   async specializationLoad(
     @MessageBody()
-    payload: {
-      "user-id": number;
-      "environment-id"?: number;
-      uid: number;
+    message: {
+      payload: {
+        userId: number;
+        environmentId: string;
+        uid: number;
+      };
     }
   ) {
     try {
-      const { "user-id": userId, "environment-id": envId, uid } = payload;
+      const { userId, environmentId, uid } = message.payload;
+
+      console.log("SPECIALIZATION LOAD", message.payload);
 
       // Get specialization hierarchy from Archivist
       const result = await this.archivistClient.getSpecializationHierarchy(
@@ -499,9 +504,9 @@ export class ApertureGateway
       }
 
       // Get environment
-      const environment = envId
+      const environment = environmentId
         ? await this.environmentService.findOne(
-            envId.toString(),
+            environmentId,
             userId.toString()
           )
         : await this.environmentService.findDefaultForUser(userId.toString());

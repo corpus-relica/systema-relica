@@ -309,9 +309,9 @@ export class ApertureSocketClient implements OnModuleInit, OnModuleDestroy {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
+      userId,
       uid,
-      "environment-id": environmentId,
+      environmentId,
     };
     return this.sendMessage(ApertureActions.SPECIALIZATION_LOAD, payload);
   }
