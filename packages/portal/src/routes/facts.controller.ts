@@ -1,35 +1,40 @@
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { User } from '../decorators/user.decorator';
+import { Controller, Get, Query, BadRequestException } from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from "@nestjs/swagger";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
+import { User } from "../decorators/user.decorator";
 
-@ApiTags('Facts')
-@Controller('fact')
+@ApiTags("Facts")
+@Controller("fact")
 export class FactsController {
   constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
-
-  @Get('classified')
-  @ApiOperation({ summary: 'Get classification facts for an entity' })
+  @Get("classified")
+  @ApiOperation({ summary: "Get classification facts for an entity" })
   @ApiBearerAuth()
-  @ApiQuery({ name: 'uid', description: 'UID of the entity', required: true })
-  @ApiResponse({ status: 200, description: 'Classification facts retrieved successfully' })
-  async getClassifiedFacts(
-    @User() user: any,
-    @Query('uid') uid: string,
-  ) {
+  @ApiQuery({ name: "uid", description: "UID of the entity", required: true })
+  @ApiResponse({
+    status: 200,
+    description: "Classification facts retrieved successfully",
+  })
+  async getClassifiedFacts(@User() user: any, @Query("uid") uid: string) {
     try {
       if (!uid) {
-        throw new BadRequestException('uid parameter is required');
+        throw new BadRequestException("uid parameter is required");
       }
-      
+
       const uidNumber = parseInt(uid, 10);
       if (isNaN(uidNumber)) {
-        throw new BadRequestException('uid must be a valid number');
+        throw new BadRequestException("uid must be a valid number");
       }
-      
+
       const facts = await this.archivistClient.getClassified(uidNumber);
-      
+
       return {
         success: true,
         facts,
@@ -37,32 +42,34 @@ export class FactsController {
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Failed to retrieve classification facts',
+        error: error.message || "Failed to retrieve classification facts",
       };
     }
   }
 
-  @Get('subtypes')
-  @ApiOperation({ summary: 'Get subtype relationships for an entity' })
+  @Get("subtypes")
+  @ApiOperation({ summary: "Get subtype relationships for an entity" })
   @ApiBearerAuth()
-  @ApiQuery({ name: 'uid', description: 'UID of the entity', required: true })
-  @ApiResponse({ status: 200, description: 'Subtype relationships retrieved successfully' })
-  async getSubtypes(
-    @User() user: any,
-    @Query('uid') uid: string,
-  ) {
+  @ApiQuery({ name: "uid", description: "UID of the entity", required: true })
+  @ApiResponse({
+    status: 200,
+    description: "Subtype relationships retrieved successfully",
+  })
+  async getSubtypes(@User() user: any, @Query("uid") uid: string) {
     try {
       if (!uid) {
-        throw new BadRequestException('uid parameter is required');
+        throw new BadRequestException("uid parameter is required");
       }
-      
+
       const uidNumber = parseInt(uid, 10);
       if (isNaN(uidNumber)) {
-        throw new BadRequestException('uid must be a valid number');
+        throw new BadRequestException("uid must be a valid number");
       }
-      
+
+      console.log("GET SUBTYPES", uidNumber);
       const subtypes = await this.archivistClient.getSubtypes(uidNumber);
-      
+      console.log("GOT SUBTYPES", subtypes);
+
       return {
         success: true,
         subtypes,
@@ -70,32 +77,32 @@ export class FactsController {
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Failed to retrieve subtype relationships',
+        error: error.message || "Failed to retrieve subtype relationships",
       };
     }
   }
 
-  @Get('subtypes-cone')
-  @ApiOperation({ summary: 'Get subtype cone (hierarchy) for an entity' })
+  @Get("subtypes-cone")
+  @ApiOperation({ summary: "Get subtype cone (hierarchy) for an entity" })
   @ApiBearerAuth()
-  @ApiQuery({ name: 'uid', description: 'UID of the entity', required: true })
-  @ApiResponse({ status: 200, description: 'Subtype cone retrieved successfully' })
-  async getSubtypesCone(
-    @User() user: any,
-    @Query('uid') uid: string,
-  ) {
+  @ApiQuery({ name: "uid", description: "UID of the entity", required: true })
+  @ApiResponse({
+    status: 200,
+    description: "Subtype cone retrieved successfully",
+  })
+  async getSubtypesCone(@User() user: any, @Query("uid") uid: string) {
     try {
       if (!uid) {
-        throw new BadRequestException('uid parameter is required');
+        throw new BadRequestException("uid parameter is required");
       }
-      
+
       const uidNumber = parseInt(uid, 10);
       if (isNaN(uidNumber)) {
-        throw new BadRequestException('uid must be a valid number');
+        throw new BadRequestException("uid must be a valid number");
       }
-      
+
       const cone = await this.archivistClient.getSubtypesCone(uidNumber);
-      
+
       return {
         success: true,
         cone,
@@ -103,7 +110,7 @@ export class FactsController {
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Failed to retrieve subtype cone',
+        error: error.message || "Failed to retrieve subtype cone",
       };
     }
   }

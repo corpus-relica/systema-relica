@@ -1,6 +1,7 @@
 export { ArchivistSocketClient } from './clients/ArchivistSocketClient';
 export { ClaritySocketClient } from './clients/ClaritySocketClient';
 export { ApertureSocketClient } from './clients/ApertureSocketClient';
+export { PrismSocketClient } from './clients/PrismSocketClient';
 
 // Re-export commonly used types for convenience
 export type {
@@ -20,4 +21,6 @@ export type {
   ClarityActions,
   ApertureActions,
   ApertureEvents,
+  PrismActions,
+  PrismEvents,
 } from '@relica/websocket-contracts';
