@@ -8,6 +8,7 @@ import { Server, Socket } from 'socket.io';
 import { ArchivistService } from '../archivist/archivist.service';
 import { ModelService } from '../model/model.service';
 import { Logger } from '@nestjs/common';
+import { ClarityActions } from '@relica/websocket-contracts';
 
 @WebSocketGateway({
   cors: {
@@ -45,11 +46,12 @@ export class EventsGateway {
 
   // SEMANTIC MODEL OPERATIONS //
 
-  @SubscribeMessage('clarity.model/get')
-  async getModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET MODEL:', uid);
+  @SubscribeMessage(ClarityActions.MODEL_GET)
+  async getModel(@MessageBody('payload') payload: any): Promise<any> {
+    this.logger.log('GET MODEL:', payload.uid);
     try {
-      const model = await this.modelService.retrieveModel(uid);
+      const model = await this.modelService.retrieveModel(+payload.uid);
+      console.log('Retrieved model:', model);
       return { success: true, data: model };
     } catch (error) {
       this.logger.error('Error retrieving model:', error);

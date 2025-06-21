@@ -14,6 +14,7 @@ import {
   TransactionActions,
   ValidationActions,
   LineageActions,
+  EntityActions,
   // Request schemas
   FactCreateRequestSchema,
   FactUpdateRequestSchema,
@@ -57,6 +58,10 @@ import {
   ValidationValidateRequestSchema,
   ValidationCollectionRequestSchema,
   LineageGetRequestSchema,
+  EntityBatchResolveRequestSchema,
+  EntityCategoryGetRequestSchema,
+  EntityTypeGetRequestSchema,
+  EntityCollectionsGetRequestSchema,
   // Response schemas
   FactCreateResponseSchema,
   FactUpdateResponseSchema,
@@ -100,6 +105,10 @@ import {
   ValidationValidateResponseSchema,
   ValidationCollectionResponseSchema,
   LineageGetResponseSchema,
+  EntityBatchResolveResponseSchema,
+  EntityCategoryGetResponseSchema,
+  EntityTypeGetResponseSchema,
+  EntityCollectionsGetResponseSchema,
 } from './services/archivist';
 import {
   ApertureActions,
@@ -590,6 +599,39 @@ export const MESSAGE_REGISTRY = {
     description: 'Calculate entity lineage using C3 linearization algorithm',
   },
 
+  // Entity contracts
+  [EntityActions.BATCH_RESOLVE]: {
+    action: EntityActions.BATCH_RESOLVE,
+    service: 'archivist',
+    requestSchema: EntityBatchResolveRequestSchema,
+    responseSchema: EntityBatchResolveResponseSchema,
+    description: 'Batch resolve multiple entity UIDs to their data',
+  },
+
+  [EntityActions.CATEGORY_GET]: {
+    action: EntityActions.CATEGORY_GET,
+    service: 'archivist',
+    requestSchema: EntityCategoryGetRequestSchema,
+    responseSchema: EntityCategoryGetResponseSchema,
+    description: 'Get the category of an entity',
+  },
+
+  [EntityActions.TYPE_GET]: {
+    action: EntityActions.TYPE_GET,
+    service: 'archivist',
+    requestSchema: EntityTypeGetRequestSchema,
+    responseSchema: EntityTypeGetResponseSchema,
+    description: 'Get the type of an entity',
+  },
+
+  [EntityActions.COLLECTIONS_GET]: {
+    action: EntityActions.COLLECTIONS_GET,
+    service: 'archivist',
+    requestSchema: EntityCollectionsGetRequestSchema,
+    responseSchema: EntityCollectionsGetResponseSchema,
+    description: 'Get all available entity collections',
+  },
+
   // =====================================================
   // APERTURE SERVICE CONTRACTS
   // =====================================================
@@ -598,7 +640,11 @@ export const MESSAGE_REGISTRY = {
   [ApertureActions.ENVIRONMENT_GET]: {
     action: ApertureActions.ENVIRONMENT_GET,
     service: 'aperture',
-    requestSchema: EnvironmentGetRequestSchema,
+    requestSchema: z.object({
+      service: z.literal('aperture'),
+      action: z.literal(ApertureActions.ENVIRONMENT_GET),
+      payload: EnvironmentGetRequestSchema.optional(),
+    }),
     responseSchema: ApertureResponseSchema,
     description: 'Get a user environment by ID or default',
   },

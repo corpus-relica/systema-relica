@@ -2,6 +2,7 @@ import axios from "axios";
 //@ts-ignore
 import {
   ENTITY_TYPE_ENDPOINT,
+  ENTITY_CATEGORY_ENDPOINT,
   SPECIALIZATION_HIERARCHY_ENDPOINT,
   GET_DEFINITION_ENDPOINT,
   COLLECTIONS_ENDPOINT,
@@ -83,6 +84,13 @@ export const textSearch = async (
 
 export const getEntityType = async (uid: number) => {
   const type = await axiosInstance.get(ENTITY_TYPE_ENDPOINT, {
+    params: { uid },
+  });
+  return type.data;
+};
+
+export const getEntityCategory = async (uid: number) => {
+  const type = await axiosInstance.get(ENTITY_CATEGORY_ENDPOINT, {
     params: { uid },
   });
   return type.data;

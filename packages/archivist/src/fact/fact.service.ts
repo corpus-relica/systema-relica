@@ -98,21 +98,26 @@ export class FactService {
 
     return { possRolePlayers, requiringRels };
   };
+
   getFactsAboutQuality = async (uid) => {
     return {};
   };
+
   getFactsAboutAspect = async (uid) => {
     return {};
   };
+
   getFactsAboutOccurrence = async (uid) => {
     const role1 = await this.gellishBaseService.getRequiredRole1(uid);
     const role2 = await this.gellishBaseService.getRequiredRole2(uid);
 
     return { reqRoles: [role1, role2] };
   };
+
   getFactsAboutPhysicalObject = async (uid) => {
     return {};
   };
+
   getFactsAboutRelation = async (uid) => {
     const role1 = await this.gellishBaseService.getRequiredRole1(uid);
     const role2 = await this.gellishBaseService.getRequiredRole2(uid);
@@ -130,6 +135,7 @@ export class FactService {
     const inv = await this.gellishBaseService.getInverses(uid);
     const partialDefs = await this.gellishBaseService.getPartialDefs(uid);
     const possRoles = await this.gellishBaseService.getPossibleRoles(uid);
+
 
     const commonComponents = {
       category,

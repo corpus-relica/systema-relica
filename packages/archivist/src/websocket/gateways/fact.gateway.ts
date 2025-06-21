@@ -32,7 +32,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.CREATE} from ${client.id}`);
+    // this.logger.debug(`Handling ${FactActions.CREATE} from ${client.id}`);
     const result = await this.factHandlers.handleFactCreate(data.payload, client);
     return result;
   }
@@ -42,7 +42,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.UPDATE} from ${client.id}`);
+    // this.logger.debug(`Handling ${FactActions.UPDATE} from ${client.id}`);
     const result = await this.factHandlers.handleFactUpdate(data.payload, client);
     return result;
   }
@@ -52,7 +52,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.DELETE} from ${client.id}`);
+    // this.logger.debug(`Handling ${FactActions.DELETE} from ${client.id}`);
     const result = await this.factHandlers.handleFactDelete(data.payload, client);
     return result;
   }
@@ -63,8 +63,22 @@ export class FactGateway {
     @MessageBody() data: any,
   ) {
     this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
+    console.log('FactGateway.handleFactGet fore', data.payload);
     const result = await this.factHandlers.handleFactGet(data.payload, client);
-    return result;
+    console.log('FactGateway.handleFactGet after', result);
+    return result.data;
+  }
+
+  @SubscribeMessage(FactActions.GET_DEFINITIVE)
+  async handleFactGetDefinitive(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: any,
+  ) {
+    this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
+    console.log('FactGateway.handleFactGetDefinitive fore', data.payload);
+    const result = await this.factHandlers.handleFactGetDefinitive(data.payload, client);
+    console.log('FactGateway.handleFactGetDefinitive after', result);
+    return result.data;
   }
 
   @SubscribeMessage(FactActions.GET_SUBTYPES)
@@ -72,7 +86,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.GET_SUBTYPES} from ${client.id}`);
+    // this.logger.debug(`Handling ${FactActions.GET_SUBTYPES} from ${client.id}`);
     const result = await this.factHandlers.handleFactGetSubtypes(data.payload, client);
     return result;
   }
@@ -82,7 +96,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.GET_SUPERTYPES} from ${client.id}`);
+    // this.logger.debug(`Handling ${FactActions.GET_SUPERTYPES} from ${client.id}`);
     const result = await this.factHandlers.handleFactGetSupertypes(data.payload, client);
     return result;
   }
@@ -92,7 +106,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.GET_CLASSIFIED} from ${client.id}`);
+    // this.logger.debug(`Handling ${FactActions.GET_CLASSIFIED} from ${client.id}`);
     const result = await this.factHandlers.handleFactGetClassified(data.payload, client);
     return result;
   }
@@ -102,7 +116,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.VALIDATE} from ${client.id}`);
+    // this.logger.debug(`Handling ${FactActions.VALIDATE} from ${client.id}`);
     const result = await this.factHandlers.handleFactValidate(data.payload, client);
     return result;
   }
@@ -112,7 +126,7 @@ export class FactGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.BATCH_GET} from ${client.id}:`, data);
+    // this.logger.debug(`Handling ${FactActions.BATCH_GET} from ${client.id}:`, data);
     const result = await this.factHandlers.handleFactBatchGet(data.payload, client);
     return {success: true, payload: result};
   }

@@ -145,7 +145,7 @@ export class ClaritySocketClient implements OnModuleInit, OnModuleDestroy {
   // MODEL OPERATIONS
   // =====================================================
 
-  async getModel(uid?: string): Promise<any> {
+  async getModel(uid: number): Promise<any> {
     const payload = uid ? { uid } : {};
     return this.sendMessage(ClarityActions.MODEL_GET, payload);
   }

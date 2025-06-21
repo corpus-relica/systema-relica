@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { FactService } from '../../fact/fact.service';
+import { GellishBaseService } from '../../gellish-base/gellish-base.service';
 import { 
   FactCreateMessage, 
   FactUpdateMessage, 
@@ -12,7 +13,10 @@ import { FactActions, FactEvents } from '@relica/websocket-contracts';
 
 @Injectable()
 export class FactHandlers {
-  constructor(private readonly factService: FactService) {}
+  constructor(
+    private readonly factService: FactService,
+    private readonly gellishBaseService: GellishBaseService
+  ) {}
 
   async handleFactCreate(data: FactCreateMessage, client: Socket): Promise<WsResponse> {
     try {
@@ -63,7 +67,24 @@ export class FactHandlers {
 
   async handleFactGet(data: FactQueryMessage, client: Socket): Promise<WsResponse> {
     try {
+      console.log('FactHandlers.handleFactGet', data);
       const result = await this.factService.getFactsAboutKind(data.uid);
+      return {
+        event: FactEvents.RETRIEVED,
+        data: result
+      };
+    } catch (error) {
+      return {
+        event: FactEvents.ERROR,
+        data: { message: error.message }
+      };
+    }
+  }
+
+  async handleFactGetDefinitive(data: FactQueryMessage, client: Socket): Promise<WsResponse> {
+    try {
+      console.log('FactHandlers.handleFactGetDefinitive', data);
+      const result = await this.gellishBaseService.getDefinitiveFacts(data.uid);
       return {
         event: FactEvents.RETRIEVED,
         data: result

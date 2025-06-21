@@ -1,10 +1,18 @@
 import { fetchUtils } from 'react-admin';
+import { getAuthToken } from '../authProvider';
 
 const { fetchJson } = fetchUtils;
 
-const apiUrl = import.meta.env.VITE_RELICA_CC_API_URL;
+const apiUrl = import.meta.env.VITE_RELICA_API_URL;
 
 const httpClient = (url: string, options: any = {}) => {
+  if (!options.headers) {
+    options.headers = new Headers({ Accept: 'application/json' });
+  }
+  const token = getAuthToken();
+  if (token) {
+    options.headers.set('Authorization', `Bearer ${token}`);
+  }
   return fetchJson(url, options);
 };
 

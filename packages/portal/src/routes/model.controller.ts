@@ -4,6 +4,7 @@ import { ClaritySocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Model')
+// @Controller('model')
 @Controller('model')
 export class ModelController {
   constructor(private readonly clarityClient: ClaritySocketClient) {}
@@ -13,10 +14,14 @@ export class ModelController {
   @ApiOperation({ summary: 'Retrieve model information' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Model information retrieved successfully' })
-  async getModel(@User() user: any) {
+  async getModel(
+    @User() user: any,
+    @Query('uid') uid: number
+  ) {
     try {
-      
-      const model = await this.clarityClient.getModel();
+
+      console.log('Retrieving model information for user:', user, uid);
+      const model = await this.clarityClient.getModel(uid);
       
       return {
         success: true,

@@ -231,15 +231,15 @@ export class ModelService {
     const category = await this.archivistService.getCategory(uid);
     console.log('category', category);
     const facts = await this.archivistService.retrieveAllFacts(uid);
-    // console.log('facts', facts);
+    console.log('facts', facts);
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
-    // console.log('definitiveFacts', definitiveFacts);
+    console.log('definitiveFacts', definitiveFacts);
     const specialization =
       await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1146);
-    // console.log('specialization', specialization);
+    console.log('specialization', specialization);
     const classification =
       await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1225);
-    // console.log("classification", classification);
+    console.log("classification", classification);
     const synonyms = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       1981,
@@ -373,7 +373,8 @@ export class ModelService {
   }
 
   async retrieveModel(uid: number) {
-    const type = await this.archivistService.getEntityType(uid);
+    const res = await this.archivistService.getEntityType(uid);
+    const type = res.type;
 
     console.log('type', type);
 

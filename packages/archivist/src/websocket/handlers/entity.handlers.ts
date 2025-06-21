@@ -67,7 +67,7 @@ export class EntityHandlers {
     @ConnectedSocket() client: Socket,
   ): Promise<any> {
     try {
-      this.logger.log(`🔍 Getting category for entity UID: ${data.uid}`);
+      // this.logger.log(`🔍 Getting category for entity UID: ${data.uid}`);
 
       if (!data.uid || typeof data.uid !== 'number') {
         return {
@@ -77,15 +77,9 @@ export class EntityHandlers {
         };
       }
 
-      // TODO: Replace with actual entity category service call
-      const mockCategory = 'Physical Object';
+      const result = await this.gellishBaseService.getCategory(data.uid);
 
-      return {
-        success: true,
-        data: {
-          category: mockCategory
-        }
-      };
+      return result;
 
     } catch (error) {
       this.logger.error(`❌ Failed to get entity category: ${error.message}`, error.stack);

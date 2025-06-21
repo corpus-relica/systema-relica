@@ -8,6 +8,7 @@ import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
 import DeleteFactDialogue from "./DeleteFactDialogue";
 import { portalSocket }from "../../PortalSocket";
+import {getEntityType, getEntityCategory} from "../../RLCBaseClient";
 
 interface GraphContextMenuProps {
   open: boolean;
@@ -47,15 +48,23 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
     const foo = async () => {
       if (uid) {
         if (type === "entity") {
-          const result = await dataProvider.getOne("env/", {
-            uid: uid,
-          });
-          const model = result.data;
-          if (model.type === "kind") {
+          const kind = (await getEntityType(uid)).type;
+          const category = await getEntityCategory(uid);
+
+          console.log("KIND: ", kind, "CATEGORY: ", category);
+          // this isn't even a bad idea...
+          // the model will have been computed and loaded by clarity
+          // before here...re-implment when clarity is ready.
+          // const result = await dataProvider.getOne("env/", {
+          //   uid: uid,
+          // });
+          // const model = result.data;
+          if (kind === "kind") {
+            // console.log("KIND CONTEXT MENU", model);
             setMenu(
               <KindContextMenu
                 uid={uid}
-                category={model.category}
+                category={category}
                 open={open}
                 handleClose={handleClose}
                 x={x}
@@ -70,7 +79,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 setWarnIsOpen={setWarnIsOpen}
               />
             );
-          } else if (model.type === "individual") {
+          } else if (kind === "individual") {
+            // console.log("KIND INDIVIDUAL MENU", model);
             setMenu(
               <IndividualContextMenu
                 uid={uid}
@@ -83,10 +93,10 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 setWarnIsOpen={setWarnIsOpen}
               />
             );
-          } else if (model.type === "qualification") {
+          } else if (kind === "qualification") {
             // menu = <div>Qualification</div>;
           } else {
-            console.log("unknown model type: ", model.type);
+            console.log("unknown model type: ", kind);
           }
         } else if (type === "fact") {
           setMenu(

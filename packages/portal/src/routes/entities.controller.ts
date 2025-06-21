@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiBody } 
 import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 import { ENTITY_TYPE_ENDPOINT,
+         ENTITY_CATEGORY_ENDPOINT,
          COLLECTIONS_ENDPOINT } from '@relica/constants'
 
 @ApiTags('Entities')
@@ -118,7 +119,7 @@ export class EntitiesController {
     }
   }
 
-  // RETRIEVE ENTITY_TYPE
+  // RETRIEVE ENTITY_
   @Get(ENTITY_TYPE_ENDPOINT)
   @ApiOperation({ summary: 'Retrieve entity type' })
   @ApiBearerAuth()
@@ -135,6 +136,26 @@ export class EntitiesController {
       return {
         success: false,
         error: error.message || 'Failed to retrieve entity collections',
+      };
+    }
+  }
+
+  @Get(ENTITY_CATEGORY_ENDPOINT)
+  @ApiOperation({ summary: 'Retrieve entity category' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Entity category retrieved successfully' })
+  async retrieveEntityCategory(
+    @User() user: any,
+    @Query('uid') uid: number, // Optional query parameter to filter by kind
+  ) {
+    try {
+
+      const entityCat = await this.archivistClient.getEntityCategory(+uid);
+      return entityCat;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to retrieve entity category',
       };
     }
   }

@@ -257,6 +257,7 @@ export const FactActions = {
   GET_SUBTYPES: 'fact:getSubtypes',
   GET_SUPERTYPES: 'fact:getSupertypes',
   GET_CLASSIFIED: 'fact:getClassified',
+  GET_DEFINITIVE: 'fact:getDefinitive',
   VALIDATE: 'fact:validate',
   BATCH_GET: 'fact:batch-get',
   COUNT: 'fact:count',

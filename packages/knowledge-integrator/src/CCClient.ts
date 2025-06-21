@@ -1,8 +1,7 @@
 import axios from "axios";
 
-console.log("CONNECTING CC CLIENT", import.meta.env.VITE_RELICA_CC_API_URL);
 const CCAxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_RELICA_CC_API_URL,
+  baseURL: import.meta.env.VITE_RELICA_API_URL,
 });
 
 export const retrieveEnvironment = async () => {

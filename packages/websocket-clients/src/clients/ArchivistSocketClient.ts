@@ -232,7 +232,7 @@ export class ArchivistSocketClient implements OnModuleInit, OnModuleDestroy {
 
   async getDefinitiveFacts(uid: number): Promise<any> {
     const payload = { uid };
-    return this.sendMessage(FactActions.GET, payload);
+    return this.sendMessage(FactActions.GET_DEFINITIVE, payload);
   }
 
   async getFactsRelatingEntities(uid1: number, uid2: number): Promise<any> {
@@ -277,12 +277,18 @@ export class ArchivistSocketClient implements OnModuleInit, OnModuleDestroy {
 
   async getCategory(uid: number): Promise<any> {
     const payload = { uid };
-    return this.sendMessage(ConceptActions.GET, payload);
+    console.log('Fetching category for entity UID:', EntityActions.CATEGORY_GET, uid);
+    return this.sendMessage(EntityActions.CATEGORY_GET, payload);
   }
 
   async getEntityType(uid: number): Promise<any> {
     const payload = { uid };
     return this.sendMessage(EntityActions.TYPE_GET, payload);
+  }
+
+  async getEntityCategory(uid: number): Promise<any> {
+    const payload = { uid };
+    return this.sendMessage(EntityActions.CATEGORY_GET, payload);
   }
 
   async deleteEntity(uid: number): Promise<any> {
