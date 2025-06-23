@@ -26,6 +26,7 @@ import { SearchHandlers } from './handlers/search.handlers';
 import { SearchActions } from '@relica/websocket-contracts';
 import { SpecializationHandlers } from './handlers/specialization.handlers';
 import { SpecializationActions } from '@relica/websocket-contracts';
+import { toResponse, toErrorResponse } from './utils/response.utils';
 
 @WebSocketGateway({
   cors: {
@@ -98,53 +99,65 @@ export class ArchivistGateway
   @SubscribeMessage(EntityActions.BATCH_RESOLVE)
   async handleEntityBatchResolve(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${EntityActions.BATCH_RESOLVE} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityBatchResolve(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.entityHandlers.handleEntityBatchResolve(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(EntityActions.CATEGORY_GET)
   async handleEntityCategoryGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${EntityActions.CATEGORY_GET} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityCategoryGet(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.entityHandlers.handleEntityCategoryGet(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(EntityActions.TYPE_GET)
   async handleEntityTypeGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${EntityActions.TYPE_GET} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityTypeGet(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.entityHandlers.handleEntityTypeGet(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(EntityActions.COLLECTIONS_GET)
   async handleEntityCollectionsGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${EntityActions.COLLECTIONS_GET} from ${client.id}:`, data);
-    const result = await this.entityHandlers.handleEntityCollectionsGet(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.entityHandlers.handleEntityCollectionsGet(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   // =====================================================
@@ -154,156 +167,193 @@ export class ArchivistGateway
   @SubscribeMessage(FactActions.CREATE)
   async handleFactCreate(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${FactActions.CREATE} from ${client.id}`);
-    const result = await this.factHandlers.handleFactCreate(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.factHandlers.handleFactCreate(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.UPDATE)
   async handleFactUpdate(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${FactActions.UPDATE} from ${client.id}`);
-    const result = await this.factHandlers.handleFactUpdate(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.factHandlers.handleFactUpdate(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.DELETE)
   async handleFactDelete(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${FactActions.DELETE} from ${client.id}`);
-    const result = await this.factHandlers.handleFactDelete(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.factHandlers.handleFactDelete(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.GET)
   async handleFactGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
-    console.log('FactGateway.handleFactGet fore', data.payload);
-    const result = await this.factHandlers.handleFactGet(data.payload, client);
-    console.log('FactGateway.handleFactGet after', result);
-    return result.data;
+    try {
+      this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
+      const result = await this.factHandlers.handleFactGet(message.payload, client);
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.GET_DEFINITIVE)
   async handleFactGetDefinitive(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
-    const result = await this.factHandlers.handleFactGetDefinitive(
-      data.payload,
-      client,
-    );
-    return result.data;
+    try {
+      const result = await this.factHandlers.handleFactGetDefinitive(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.GET_ALL_RELATED)
   async handleFactGetAllRelated(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    const result = await this.factHandlers.handleGetAllRelated(
-      data.payload,
-      client,
-    );
-    return result.data;
+    try {
+      const result = await this.factHandlers.handleGetAllRelated(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.GET_SUBTYPES)
   async handleFactGetSubtypes(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.GET_SUBTYPES} from ${client.id}`);
-    const result = await this.factHandlers.handleFactGetSubtypes(
-      data.payload,
-      client,
-    );
-    console.log('FactGateway.handleFactGetSubtypes after', result.data);
-    return result.data;
+    try {
+      this.logger.debug(`Handling ${FactActions.GET_SUBTYPES} from ${client.id}`);
+      const result = await this.factHandlers.handleFactGetSubtypes(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.GET_SUPERTYPES)
   async handleFactGetSupertypes(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${FactActions.GET_SUPERTYPES} from ${client.id}`);
-    const result = await this.factHandlers.handleFactGetSupertypes(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.factHandlers.handleFactGetSupertypes(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.GET_CLASSIFIED)
   async handleFactGetClassified(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${FactActions.GET_CLASSIFIED} from ${client.id}`);
-    const result = await this.factHandlers.handleFactGetClassified(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.factHandlers.handleFactGetClassified(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.VALIDATE)
   async handleFactValidate(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${FactActions.VALIDATE} from ${client.id}`);
-    const result = await this.factHandlers.handleFactValidate(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      const result = await this.factHandlers.handleFactValidate(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.BATCH_GET)
   async handleFactBatchGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    // this.logger.debug(`Handling ${FactActions.BATCH_GET} from ${client.id}:`, data);
-    const result = await this.factHandlers.handleFactBatchGet(
-      data.payload,
-      client,
-    );
-    return { success: true, payload: result };
+    try {
+      const result = await this.factHandlers.handleFactBatchGet(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(FactActions.COUNT)
   async handleFactCount(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(`Handling ${FactActions.COUNT} from ${client.id}`);
-    const result = await this.factHandlers.handleFactCount(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      this.logger.debug(`Handling ${FactActions.COUNT} from ${client.id}`);
+      const result = await this.factHandlers.handleFactCount(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   // =====================================================
@@ -313,14 +363,18 @@ export class ArchivistGateway
   @SubscribeMessage(KindActions.LIST)
   async handleKindsListGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(`Handling ${KindActions.LIST} from ${client.id}:`, data);
-    const result = await this.kindHandlers.handleKindsList(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      this.logger.debug(`Handling ${KindActions.LIST} from ${client.id}:`, message);
+      const result = await this.kindHandlers.handleKindsList(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   // =====================================================
@@ -330,17 +384,21 @@ export class ArchivistGateway
   @SubscribeMessage(LineageActions.GET)
   async handleLineageGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${LineageActions.GET} from ${client.id}:`,
-      data,
-    );
-    const result = await this.lineageHandlers.handleLineageGet(
-      data.payload,
-      client,
-    );
-    return { success: true, payload: result };
+    try {
+      this.logger.debug(
+        `Handling ${LineageActions.GET} from ${client.id}:`,
+        message,
+      );
+      const result = await this.lineageHandlers.handleLineageGet(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   // =====================================================
@@ -350,43 +408,55 @@ export class ArchivistGateway
   @SubscribeMessage(QueryActions.EXECUTE)
   async handleQueryExecute(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${QueryActions.EXECUTE} from ${client.id}:`,
-      data.payload,
-    );
-    const result = await this.queryHandlers.handleQueryExecute(data, client);
-    return result;
+    try {
+      this.logger.debug(
+        `Handling ${QueryActions.EXECUTE} from ${client.id}:`,
+        message.payload,
+      );
+      const result = await this.queryHandlers.handleQueryExecute(message, client);
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(QueryActions.VALIDATE)
   async handleQueryValidate(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${QueryActions.VALIDATE} from ${client.id}:`,
-      data.payload,
-    );
-    const result = await this.queryHandlers.handleQueryValidate(data, client);
-    return result;
+    try {
+      this.logger.debug(
+        `Handling ${QueryActions.VALIDATE} from ${client.id}:`,
+        message.payload,
+      );
+      const result = await this.queryHandlers.handleQueryValidate(message, client);
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(QueryActions.PARSE)
   async handleQueryParse(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${QueryActions.PARSE} from ${client.id}:`,
-      data.payload,
-    );
-    const result = await this.queryHandlers.handleQueryParse(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      this.logger.debug(
+        `Handling ${QueryActions.PARSE} from ${client.id}:`,
+        message.payload,
+      );
+      const result = await this.queryHandlers.handleQueryParse(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   // =====================================================
@@ -396,78 +466,98 @@ export class ArchivistGateway
   @SubscribeMessage(SearchActions.GENERAL)
   async handleSearchGeneral(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${SearchActions.GENERAL} from ${client.id}:`,
-      data,
-    );
-    const result = await this.searchHandlers.handleGeneralSearch(
-      data.payload,
-      client,
-    );
-    this.logger.debug(
-      `Found ${result.payload.facts.length} search results for ${SearchActions.GENERAL}`,
-    );
-    return result.payload;
+    try {
+      this.logger.debug(
+        `Handling ${SearchActions.GENERAL} from ${client.id}:`,
+        message,
+      );
+      const result = await this.searchHandlers.handleGeneralSearch(
+        message.payload,
+        client,
+      );
+      this.logger.debug(
+        `Found ${result.facts.length} search results for ${SearchActions.GENERAL}`,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(SearchActions.INDIVIDUAL)
   async handleSearchIndividual(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${SearchActions.INDIVIDUAL} from ${client.id}:`,
-      data.payload,
-    );
-    const result = await this.searchHandlers.handleIndividualSearch(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      this.logger.debug(
+        `Handling ${SearchActions.INDIVIDUAL} from ${client.id}:`,
+        message.payload,
+      );
+      const result = await this.searchHandlers.handleIndividualSearch(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(SearchActions.KIND)
   async handleSearchKind(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${SearchActions.KIND} from ${client.id}:`,
-      data.payload,
-    );
-    const result = await this.searchHandlers.handleKindSearch(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      this.logger.debug(
+        `Handling ${SearchActions.KIND} from ${client.id}:`,
+        message.payload,
+      );
+      const result = await this.searchHandlers.handleKindSearch(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(SearchActions.EXECUTE)
   async handleSearchExecute(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${SearchActions.EXECUTE} from ${client.id}:`,
-      data,
-    );
-    const result = await this.searchHandlers.handleExecuteSearch(data, client);
-    return result;
+    try {
+      this.logger.debug(
+        `Handling ${SearchActions.EXECUTE} from ${client.id}:`,
+        message,
+      );
+      const result = await this.searchHandlers.handleExecuteSearch(message, client);
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(SearchActions.UID)
   async handleSearchUid(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(`Handling ${SearchActions.UID} from ${client.id}:`, data);
-    const result = await this.searchHandlers.handleUidSearch(
-      data.payload,
-      client,
-    );
-    return result;
+    try {
+      this.logger.debug(`Handling ${SearchActions.UID} from ${client.id}:`, message);
+      const result = await this.searchHandlers.handleUidSearch(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   // =====================================================
@@ -477,34 +567,42 @@ export class ArchivistGateway
   @SubscribeMessage(SpecializationActions.SPECIALIZATION_FACT_GET)
   async handleSpecializationFactGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${SpecializationActions.SPECIALIZATION_FACT_GET} from ${client.id}:`,
-      data,
-    );
-    const result =
-      await this.specializationHandlers.handleSpecializationFactGet(
-        data.payload,
-        client,
+    try {
+      this.logger.debug(
+        `Handling ${SpecializationActions.SPECIALIZATION_FACT_GET} from ${client.id}:`,
+        message,
       );
-    return result;
+      const result =
+        await this.specializationHandlers.handleSpecializationFactGet(
+          message.payload,
+          client,
+        );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(SpecializationActions.SPECIALIZATION_HIERARCHY_GET)
   async handleSpecializationHierarchyGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
+    @MessageBody() message: any,
   ) {
-    this.logger.debug(
-      `Handling ${SpecializationActions.SPECIALIZATION_HIERARCHY_GET} from ${client.id}:`,
-      data.payloads,
-    );
-    const result =
-      await this.specializationHandlers.handleSpecializationHierarchyGet(
-        data.payload,
-        client,
+    try {
+      this.logger.debug(
+        `Handling ${SpecializationActions.SPECIALIZATION_HIERARCHY_GET} from ${client.id}:`,
+        message.payload,
       );
-    return result;
+      const result =
+        await this.specializationHandlers.handleSpecializationHierarchyGet(
+          message.payload,
+          client,
+        );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
   }
 }

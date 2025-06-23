@@ -21,135 +21,57 @@ export class EntityHandlers {
   async handleEntityBatchResolve(
     @MessageBody() data: EntityBatchResolveMessage,
     @ConnectedSocket() client: Socket,
-  ): Promise<any> {
-    try {
-      this.logger.log(`🔍 Handling entity batch resolve for UIDs: ${data.uids}`);
+  ) {
+    this.logger.log(`🔍 Handling entity batch resolve for UIDs: ${data.uids}`);
 
-      // Validate the request data
-      if (!data.uids || !Array.isArray(data.uids)) {
-        return {
-          success: false,
-          error: 'UIDs array is required',
-          code: 'missing-required-field'
-        };
-      }
-
-      if (data.uids.some(uid => typeof uid !== 'number' || isNaN(uid))) {
-        return {
-          success: false,
-          error: 'All UIDs must be valid numbers',
-          code: 'invalid-field-format'
-        };
-      }
-
-      const result = await this.gellishBaseService.getEntities(data.uids);
-
-      this.logger.log(`✅ Successfully resolved ${result.length} entities`);
-
-      return {
-        success: true,
-        payload: result
-      };
-
-    } catch (error) {
-      this.logger.error(`❌ Failed to resolve entities: ${error.message}`, error.stack);
-      return {
-        success: false,
-        error: 'Failed to resolve entities',
-        code: 'internal-error'
-      };
+    // Validate the request data
+    if (!data.uids || !Array.isArray(data.uids)) {
+      throw new Error('UIDs array is required');
     }
+
+    if (data.uids.some(uid => typeof uid !== 'number' || isNaN(uid))) {
+      throw new Error('All UIDs must be valid numbers');
+    }
+
+    const result = await this.gellishBaseService.getEntities(data.uids);
+    this.logger.log(`✅ Successfully resolved ${result.length} entities`);
+
+    return result;
   }
 
   @SubscribeMessage(EntityActions.CATEGORY_GET)
   async handleEntityCategoryGet(
     @MessageBody() data: { uid: number },
     @ConnectedSocket() client: Socket,
-  ): Promise<any> {
-    try {
-      // this.logger.log(`🔍 Getting category for entity UID: ${data.uid}`);
-
-      if (!data.uid || typeof data.uid !== 'number') {
-        return {
-          success: false,
-          error: 'Valid UID is required',
-          code: 'missing-required-field'
-        };
-      }
-
-      const result = await this.gellishBaseService.getCategory(data.uid);
-
-      return result;
-
-    } catch (error) {
-      this.logger.error(`❌ Failed to get entity category: ${error.message}`, error.stack);
-      return {
-        success: false,
-        error: 'Failed to get entity category',
-        code: 'internal-error'
-      };
+  ) {
+    if (!data.uid || typeof data.uid !== 'number') {
+      throw new Error('Valid UID is required');
     }
+
+    return await this.gellishBaseService.getCategory(data.uid);
   }
 
   @SubscribeMessage(EntityActions.TYPE_GET)
   async handleEntityTypeGet(
     @MessageBody() data: { uid: number },
     @ConnectedSocket() client: Socket,
-  ): Promise<any> {
-    try {
-      // this.logger.log(`🔍 Getting type for entity UID: ${data.uid}`);
-
-      if (!data.uid || typeof data.uid !== 'number') {
-        return {
-          success: false,
-          error: 'Valid UID is required',
-          code: 'missing-required-field'
-        };
-      }
-
-      const type = await this.entityRetrievalService.getEntityType(data.uid);
-
-      return {
-        success: true,
-        data: {
-          type
-        }
-      };
-
-    } catch (error) {
-      this.logger.error(`❌ Failed to get entity type: ${error.message}`, error.stack);
-      return {
-        success: false,
-        error: 'Failed to get entity type',
-        code: 'internal-error'
-      };
+  ) {
+    if (!data.uid || typeof data.uid !== 'number') {
+      throw new Error('Valid UID is required');
     }
+
+    const type = await this.entityRetrievalService.getEntityType(data.uid);
+    return { type };
   }
 
   @SubscribeMessage(EntityActions.COLLECTIONS_GET)
   async handleEntityCollectionsGet(
     @MessageBody() data: any,
     @ConnectedSocket() client: Socket,
-  ): Promise<any> {
-    try {
-      this.logger.log('🔍 Getting entity collections');
-
-      const collections = await this.entityRetrievalService.getCollections();
-
-      this.logger.log(`✅ Successfully retrieved ${collections.length} collections`);
-
-      return {
-        success: true,
-        data: collections
-      };
-
-    } catch (error) {
-      this.logger.error(`❌ Failed to get entity collections: ${error.message}`, error.stack);
-      return {
-        success: false,
-        error: 'Failed to get entity collections',
-        code: 'internal-error'
-      };
-    }
+  ) {
+    this.logger.log('🔍 Getting entity collections');
+    const collections = await this.entityRetrievalService.getCollections();
+    this.logger.log(`✅ Successfully retrieved ${collections.length} collections`);
+    return collections;
   }
 }
