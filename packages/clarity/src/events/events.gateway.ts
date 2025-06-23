@@ -9,11 +9,14 @@ import { ArchivistService } from '../archivist/archivist.service';
 import { ModelService } from '../model/model.service';
 import { Logger } from '@nestjs/common';
 import { ClarityActions } from '@relica/websocket-contracts';
+import customParser from 'socket.io-msgpack-parser';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
+  transports: ['websocket'],
+  parser: customParser,
 })
 export class EventsGateway {
   private logger: Logger = new Logger('EventsGateway');
@@ -97,14 +100,19 @@ export class EventsGateway {
 
   @SubscribeMessage('clarity.model/update-definition')
   async updateDefinition(
-    @MessageBody() data: { uid: number; partial_definition: string; full_definition: string }
+    @MessageBody()
+    data: {
+      uid: number;
+      partial_definition: string;
+      full_definition: string;
+    },
   ): Promise<any> {
     this.logger.log('UPDATE DEFINITION:', data);
     try {
       const result = await this.modelService.updateDefinition(
-        data.uid, 
-        data.partial_definition, 
-        data.full_definition
+        data.uid,
+        data.partial_definition,
+        data.full_definition,
       );
       return { success: true, data: result };
     } catch (error) {
@@ -115,7 +123,7 @@ export class EventsGateway {
 
   @SubscribeMessage('clarity.model/update-name')
   async updateName(
-    @MessageBody() data: { uid: number; name: string }
+    @MessageBody() data: { uid: number; name: string },
   ): Promise<any> {
     this.logger.log('UPDATE NAME:', data);
     try {
@@ -129,14 +137,19 @@ export class EventsGateway {
 
   @SubscribeMessage('clarity.model/update-collection')
   async updateCollection(
-    @MessageBody() data: { fact_uid: number; collection_uid: number; collection_name: string }
+    @MessageBody()
+    data: {
+      fact_uid: number;
+      collection_uid: number;
+      collection_name: string;
+    },
   ): Promise<any> {
     this.logger.log('UPDATE COLLECTION:', data);
     try {
       const result = await this.modelService.updateCollection(
         data.fact_uid,
         data.collection_uid,
-        data.collection_name
+        data.collection_name,
       );
       return { success: true, data: result };
     } catch (error) {

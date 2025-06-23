@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@relica/websocket-contracts": "*",
-    "socket.io-client": "^4.7.2",
+    "socket.io-client": "^4.8.1",
     "socket.io-msgpack-parser": "^3.0.2"
   },
   "devDependencies": {

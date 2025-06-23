@@ -20,32 +20,35 @@ Systema Relica is a distributed knowledge management and AI ecosystem designed f
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Frontend Layer                       │
-│  ┌─────────────────┐  ┌─────────────────┐              │
-│  │ Knowledge       │  │ Specialized     │              │
-│  │ Integrator      │  │ UI Components   │              │
-│  │ (React/Vite)    │  │ (3D, Search)    │              │
-│  └─────────────────┘  └─────────────────┘              │
+│  ┌─────────────────┐  ┌─────────────────┐               │
+│  │ Knowledge       │  │ Specialized     │               │
+│  │ Integrator      │  │ UI Components   │               │
+│  │ (React/Vite)    │  │ (3D, Search)    │               │
+│  └─────────────────┘  └─────────────────┘               │
 └─────────────────┬───────────────────────────────────────┘
                   │ HTTP/WebSocket
-┌─────────────────▼───────────────────────────────────────┐
-│                 Gateway Layer                           │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │              Portal (3001)                          │ │
-│  │        API Gateway + Auth Orchestration             │ │
-│  └─────────────────────────────────────────────────────┘ │
-└─────┬─────────┬─────────┬─────────┬─────────┬───────────┘
-      │         │         │         │         │
-┌─────▼───┐ ┌───▼───┐ ┌───▼───┐ ┌───▼───┐ ┌───▼───┐
-│ Prism   │ │Archiv.│ │Apertu.│ │Clarity│ │Shutter│
-│ (3005)  │ │(3002) │ │(3007) │ │(3003) │ │(3004) │
-│System   │ │Data & │ │Media &│ │AI/ML  │ │Auth & │
-│Health   │ │Graph  │ │Vision │ │Infer. │ │Secur. │
-└─────────┘ └───────┘ └───────┘ └───────┘ └───────┘
-     │         │         │         │         │
-┌────▼─────────▼─────────▼─────────▼─────────▼─────┐
-│              Data Layer                          │
-│  PostgreSQL  │  Neo4j  │  Redis  │  File Storage │
-└──────────────────────────────────────────────────┘
+┌─────────────────▼──────────────────────────────────────────┐
+│                 Gateway Layer                              │
+│  ┌─────────────────────────────────────────────────┐       │
+│  │              Portal (2204)                      │       │
+│  │        API Gateway + Auth Orchestration         │       │
+│  └─────────────────────────────────────────────────┘       │
+└─────┬─────────┬──────────┬──────────┬──────────┬─────────┬─┘
+      │         │          │          │          │         │
+┌─────▼───┐ ┌───▼────┐ ┌───▼────┐ ┌───▼────┐ ┌───▼───┐ ┌───▼───┐
+│ Prism   │ │Archive │ │Aperture│ │Clarity │ │Shutter│ │ NOUS  │
+│ (3005)  │ │(3002)  │ │(3003)  │ │(3001)  │ │(3004) │ │(3006) │
+│ System  │ │ Data & │ │Environ.│ │Semantic│ │Auth & │ │  AI   │
+│ Startup │ │ Graph  │ │Managmt │ │Object  │ │Secur. │ │       │
+│         │ │        │ │        │ │Mapper  │ │       │ │       │
+└─────────┘ └────────┘ └────────┘ └────────┘ └───────┘ └───────┘
+     │         │           │          │          │         │
+┌────▼─────────▼───────────▼──────────▼──────────▼─────────▼─┐
+│                     Data Layer                             │
+│   PostgreSQL   │   Neo4j   │   Redis   │   File Storage    │
+│  users/state   │    main   │  semantic │    seed files     │
+│                │ datastore │   cache   │                   │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ### Language & Technology Zones
@@ -60,11 +63,6 @@ Systema Relica is a distributed knowledge management and AI ecosystem designed f
 - NOUS service (Socket.IO based)
 - Heavy ML/AI workloads
 - Integrates via Socket.IO with TypeScript services
-
-**Clojure Zone** (Future/Experimental):
-- Advanced data processing
-- Complex algorithms
-- Currently minimal usage
 
 ## Development Patterns & Conventions
 
@@ -87,23 +85,9 @@ const message = {
 handleGetStatus() { /* ... */ }
 ```
 
-**Why this matters**: Prevents the "Portal says X, Service expects Y" problem that caused our original timeout issues.
-
 ### 2. Service Responsibility Patterns
 
 Each service has a clear domain and responsibility:
-
-**Portal (The Orchestrator)**:
-- Routes external requests to internal services
-- Handles authentication delegation
-- Never contains business logic
-- Think: "Smart proxy, thin layer"
-
-**Prism (The System Manager)**:
-- System initialization and health
-- Cross-service coordination
-- Setup flows and system state
-- Think: "System nervous system"
 
 **Archivist (The Librarian)**:
 - Data persistence and retrieval
@@ -111,23 +95,55 @@ Each service has a clear domain and responsibility:
 - Long-term storage decisions
 - Think: "Memory of the system"
 
-**Aperture (The Eye)**:
+**Portal (The Orchestrator)**:
+- Routes external requests to internal services
+- Handles authentication delegation
+- Never contains business logic
+- Think: "Smart proxy, thin layer"
+
+**Clarity (The Semantic Layer)**:
+- Object Semantic Mapper
+- provides access to object based knowledge representation
+- derives objects from archivist facts
+- Think: "Interface between clients/agents and raw representation"
+
+
+**Aperture (The Workin Memory)**:
 - Media processing and analysis
 - Computer vision tasks
 - File handling and transformation
 - Think: "Visual processing unit"
 
-**Clarity (The Brain)**:
+**NOUS (The Brain)**:
 - AI/ML inference and reasoning
 - Language processing
 - Intelligent analysis
 - Think: "Cognitive processing unit"
 
+**Prism (The System Initializer)**:
+- System initialization and health
+- Cross-service coordination
+- Setup flows and system state
+- Think: "System nervous system"
+
 **Shutter (The Gatekeeper)**:
 - Authentication and authorization
 - Security policies
 - User management
+- Think: "Security mechanism"
+
+**Portal (The Gateway)**:
+- System/Security boundary
+- Main system API provider
+- realtime socket based interface
 - Think: "Security boundary"
+
+**Knowledge Integrator/Viewfinder (The Interface)**:
+- Administrative User Interface
+- Knowledge Exploration
+- Knowledge mangement workflows
+- system configuration
+- Think: "Admin User Interface"
 
 ### 3. Data Flow Patterns
 
@@ -151,9 +167,13 @@ Client → Portal (check auth) → Shutter (validate) → [Business Service]
 ### 4. State Management Philosophy
 
 **Backend**: Each service owns its domain state
-- Prism: System state, health, setup progress
 - Archivist: Data entities, relationships
-- Clarity: AI model states, inference results
+- Clarity: OSM/custom model configuratio(future)
+- Aperture: User environments (collections of facts/objects)
+- NOUS: AI model states, inference results
+- Prism: System state, health, setup progress
+- Shutter: user status, auth states
+- Portal: no state
 - No shared mutable state between services
 
 **Frontend**: 
@@ -169,8 +189,6 @@ Client → Portal (check auth) → Shutter (validate) → [Business Service]
 {
   success: false,
   error: "Human-readable message",
-  code: "MACHINE_READABLE_CODE",
-  details: { /* context */ }
 }
 ```
 
@@ -200,10 +218,11 @@ packages/[service]/
 
 ### Shared Libraries Structure
 ```
-packages/types/             # Cross-service TypeScript types
-packages/constants/         # Shared constants and enums
+packages/types/                # Cross-service TypeScript types
+packages/constants/            # Shared constants and enums
+packages/websocket-clients/    # Shared websocket clients respective per module
 packages/websocket-contracts/  # API contracts (THE source of truth)
-packages/hsm-manager/       # State machine utilities
+packages/hsm-manager/          # State machine utilities
 ```
 
 ### Frontend Structure
@@ -217,34 +236,6 @@ packages/knowledge-integrator/
 │   ├── types/              # Frontend-specific types
 │   └── utils/              # Helper functions
 ```
-
-## Technology Stack Decisions
-
-### Why NestJS for Backend Services?
-- Decorator-based architecture (familiar to Spring/Angular devs)
-- Built-in dependency injection
-- Excellent TypeScript support
-- WebSocket integration
-- Testing utilities
-- Microservice patterns
-
-### Why Socket.IO for Real-time?
-- Bidirectional communication
-- Automatic fallbacks (WebSocket → polling)
-- Room/namespace organization
-- Cross-language support (Python NOUS integration)
-
-### Why Monorepo?
-- Shared libraries and contracts
-- Coordinated releases
-- Single development environment
-- Type safety across service boundaries
-
-### Why Docker per Service?
-- Independent deployment
-- Language flexibility (TypeScript + Python + future languages)
-- Development environment consistency
-- Production isolation
 
 ## Development Workflow Patterns
 
@@ -303,6 +294,7 @@ packages/knowledge-integrator/
 ## Key Configuration Patterns
 
 ### Environment Variables
+- maintained in central .env file shared between all packages
 - `NODE_ENV`: development/production
 - `[SERVICE]_PORT`: Service-specific ports
 - `DATABASE_URL`: Connection strings
@@ -314,9 +306,9 @@ packages/knowledge-integrator/
 - Port mapping for external access (development)
 
 ### Database Patterns
-- **PostgreSQL**: Structured data, transactions
+- **PostgreSQL**: user data, environment data, modelling sesson management
 - **Neo4j**: Knowledge graph, relationships
-- **Redis**: Caching, session storage, real-time data
+- **Redis**: Caching
 
 ## Testing Philosophy
 
@@ -339,20 +331,6 @@ packages/knowledge-integrator/
 - Full user workflows
 - Cross-service functionality
 - Real browser testing
-
-## Performance Considerations
-
-### Backend Optimization
-- Database connection pooling
-- Redis caching strategies
-- Efficient WebSocket handling
-- AI model loading and inference optimization
-
-### Frontend Optimization
-- Code splitting by route
-- Component lazy loading
-- WebSocket connection management
-- Efficient re-rendering patterns
 
 ## Security Patterns
 

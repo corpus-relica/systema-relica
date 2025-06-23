@@ -1,12 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ArchivistGateway } from './archivist.gateway';
-import { FactGateway } from './gateways/fact.gateway';
-import { LineageGateway } from './gateways/lineage.gateway';
-import { SearchGateway } from './gateways/search.gateway';
-import { QueryGateway } from './gateways/query.gateway';
-import { KindGateway } from './gateways/kind.gateway';
-import { EntityGateway } from './gateways/entity.gateway';
-import { SpecializationGateway } from './gateways/specialization.gateway';
 import { FactHandlers } from './handlers/fact.handlers';
 import { SearchHandlers } from './handlers/search.handlers';
 import { QueryHandlers } from './handlers/query.handlers';
@@ -50,14 +43,6 @@ import { TransactionService } from '../transaction/transaction.service';
   providers: [
     // Main gateway (connection/health only)
     ArchivistGateway,
-    // Domain-specific gateways
-    FactGateway,
-    LineageGateway,
-    SearchGateway,
-    QueryGateway,
-    KindGateway,
-    EntityGateway,
-    SpecializationGateway,
     // Handler classes
     FactHandlers,
     SearchHandlers,
@@ -97,14 +82,6 @@ import { TransactionService } from '../transaction/transaction.service';
     LinearizationService,
     GellishToCypherConverter,
   ],
-  exports: [
-    ArchivistGateway,
-    FactGateway,
-    LineageGateway,
-    SearchGateway,
-    QueryGateway,
-    EntityGateway,
-    SpecializationGateway,
-  ],
+  exports: [ArchivistGateway],
 })
 export class WebSocketModule {}
