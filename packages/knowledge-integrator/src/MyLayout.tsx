@@ -27,7 +27,6 @@ const cats = {
 };
 
 export const MyLayout = (props) => {
-
   const redirect = useRedirect();
   const rootStore: any = useStores();
 
@@ -113,7 +112,6 @@ export const MyLayout = (props) => {
   // };
 
   useEffect(() => {
-
     console.log("vvvv - MY LAYOUT vvvv:");
 
     const onConnect = () => {
@@ -205,8 +203,12 @@ export const MyLayout = (props) => {
         // Then proceed with environment setup
         await establishCats();
         const foo = await authProvider.getIdentity();
-        console.log("vvvv - MUTHERFUCKING IDENTITY vvvv:", foo, authStore.userId);
-        console.log("vvvv - USER ID vvvv:", );
+        console.log(
+          "vvvv - MUTHERFUCKING IDENTITY vvvv:",
+          foo,
+          authStore.userId
+        );
+        console.log("vvvv - USER ID vvvv:");
 
         const env = await loadUserEnvironment(foo.id as number);
         console.log("vvvv - ENVIRONMENT foo vvvv:", env);
@@ -240,7 +242,6 @@ export const MyLayout = (props) => {
     return () => {
       // ccSocket.off("connect", onConnect);
       // ccSocket.off("disconnect", onDisconnect);
-
       // ccSocket.off("system:selectedEntity", onSelectEntity);
       // ccSocket.off("system:selectedFact", onSelectFact);
       // ccSocket.off("system:selectedNone", onNoneSelected);
@@ -250,7 +251,6 @@ export const MyLayout = (props) => {
       // ccSocket.off("system:entitiesCleared", onEntitiesCleared);
       // ccSocket.off("system:loadedModels", onAddModels);
       // ccSocket.off("system:unloadedModels", onRemModels);
-
       // ccSocket.off("system:stateInitialized", onStateInitialized);
       // ccSocket.off("system:stateChanged", onStateChange);
     };

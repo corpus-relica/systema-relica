@@ -26,7 +26,7 @@ import { SearchHandlers } from './handlers/search.handlers';
 import { SearchActions } from '@relica/websocket-contracts';
 import { SpecializationHandlers } from './handlers/specialization.handlers';
 import { SpecializationActions } from '@relica/websocket-contracts';
-import { toResponse, toErrorResponse } from './utils/response.utils';
+import { toResponse, toErrorResponse } from '@relica/websocket-contracts/utils/response.utils';
 
 @WebSocketGateway({
   cors: {

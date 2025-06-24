@@ -264,7 +264,6 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Validate payload
       const validation = SelectEntityRequestSchema.safeParse(payload);
       if (!validation.success) {
-        console.log("Validation failed:", validation.error.issues);
         return this.createResponse(client.id, false, {
           type: "validation-error",
           message: "Invalid payload format",

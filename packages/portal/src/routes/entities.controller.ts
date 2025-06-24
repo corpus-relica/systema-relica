@@ -86,8 +86,6 @@ export class EntitiesController {
         );
       }
 
-      console.log("result", result);
-
       return result;
     } catch (error) {
       // throw error status code 500
