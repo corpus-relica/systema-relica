@@ -158,7 +158,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
     const result = await this.apertureClient.loadEntities(
       filters.userId,
       filters.uids,
-      Number(environmentId)
+      environmentId
     );
     if (!result.success && result.error) {
       throw new Error(result.error.message || "Failed to load entities");
@@ -278,7 +278,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
   async loadMultipleEntities(
     userId: number,
     uids: number[],
-    environmentId?: number
+    environmentId: string
   ): Promise<any> {
     const result = await this.apertureClient.loadMultipleEntities(
       userId,

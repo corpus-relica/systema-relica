@@ -316,11 +316,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD_FACT)
   async specializationLoadFact(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        uid,
-      } = message.payload;
+      const { userId, environmentId: envId, uid } = message.payload;
 
       // Get specialization fact from Archivist
       const result = await this.archivistClient.getSpecializationFact(
@@ -469,11 +465,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD)
   async entityUnload(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get environment
       const environment = envId
@@ -595,11 +587,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD_MULTIPLE)
   async entityUnloadMultiple(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUids,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUids } = message.payload;
 
       // Get environment
       const environment = envId
@@ -692,11 +680,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD)
   async subtypeLoad(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get subtypes from Archivist
       const result = await this.archivistClient.getSubtypes(entityUid);
@@ -739,11 +723,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD_CONE)
   async subtypeLoadCone(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get subtypes cone from Archivist
       const result = await this.archivistClient.getSubtypesCone(entityUid);
@@ -786,11 +766,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_UNLOAD_CONE)
   async subtypeUnloadCone(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get environment
       const environment = envId
@@ -860,11 +836,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD)
   async classificationLoad(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get classified entities from Archivist
       const result = await this.archivistClient.getClassified(entityUid);
@@ -907,11 +879,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD_FACT)
   async classificationLoadFact(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get classification fact from Archivist
       const result =
@@ -956,11 +924,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD)
   async compositionLoad(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get composition relationships from Archivist (1190 is composition relation type)
       const result = await this.archivistClient.getRecursiveRelations(
@@ -1006,11 +970,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD_IN)
   async compositionLoadIn(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get incoming composition relationships from Archivist (1190 is composition relation type)
       const result = await this.archivistClient.getRecursiveRelationsTo(
@@ -1060,11 +1020,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD)
   async connectionLoad(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get connection relationships from Archivist (1487 is connection relation type)
       const result = await this.archivistClient.getRecursiveRelations(
@@ -1110,11 +1066,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD_IN)
   async connectionLoadIn(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        entityUid,
-      } = message.payload;
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get incoming connection relationships from Archivist (1487 is connection relation type)
       const result = await this.archivistClient.getRecursiveRelationsTo(
@@ -1164,11 +1116,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.RELATION_REQUIRED_ROLES_LOAD)
   async relationRequiredRolesLoad(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        uid,
-      } = message.payload;
+      const { userId, environmentId: envId, uid } = message.payload;
 
       // Get required roles from Archivist
       const result = await this.archivistClient.getRequiredRoles(uid);
@@ -1211,11 +1159,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.RELATION_ROLE_PLAYERS_LOAD)
   async relationRolePlayersLoad(@MessageBody() message: any) {
     try {
-      const {
-        userId,
-        environmentId: envId,
-        uid,
-      } = message.payload;
+      const { userId, environmentId: envId, uid } = message.payload;
 
       // Get role players from Archivist
       const result = await this.archivistClient.getRolePlayers(uid);

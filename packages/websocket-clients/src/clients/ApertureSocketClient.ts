@@ -101,11 +101,11 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   async loadMultipleEntities(
     userId: number,
     uids: number[],
-    environmentId?: number
+    environmentId: string
   ): Promise<any> {
     const payload = {
       userId,
-      entityUids: uids,
+      uids,
       environmentId,
     };
     return this.sendRequestMessage(
@@ -388,7 +388,7 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   async loadEntities(
     userId: number,
     uids: number[],
-    environmentId?: number
+    environmentId: string
   ): Promise<any> {
     // Use the existing loadMultipleEntities method which handles the same functionality
     return this.loadMultipleEntities(userId, uids, environmentId);

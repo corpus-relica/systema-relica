@@ -693,7 +693,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Call Aperture service to load multiple entities
       const result = await this.apertureClient.loadMultipleEntities(
         Number(userId),
-        uids.map((uid) => Number(uid)),
+        uids,
         environmentId
       );
 
@@ -743,9 +743,8 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const result = await this.apertureClient.unloadMultipleEntities(
         Number(userId),
         uids.map((uid) => Number(uid)),
-        Number(environmentId)
+        environmentId
       );
-
       if (!result) {
         const error = new Error(
           "Failed to unload entities - no response from Aperture service"
