@@ -1,37 +1,63 @@
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { User } from '../decorators/user.decorator';
+import { Controller, Get, Query, BadRequestException } from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from "@nestjs/swagger";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
+import { User } from "../decorators/user.decorator";
 
-@ApiTags('Kinds')
+@ApiTags("Kinds")
 @Controller()
 export class KindsController {
   constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
-  @Get('kinds')
-  @ApiOperation({ summary: 'Get paginated list of kinds with sorting and filtering' })
+  @Get("kinds")
+  @ApiOperation({
+    summary: "Get paginated list of kinds with sorting and filtering",
+  })
   @ApiBearerAuth()
-  @ApiQuery({ name: 'sort', description: 'Sort parameters as JSON array [field, order]', required: false, example: '["lh_object_name", "ASC"]' })
-  @ApiQuery({ name: 'range', description: 'Pagination range as JSON array [skip, pageSize]', required: false, example: '[0, 10]' })
-  @ApiQuery({ name: 'filter', description: 'Filter parameters as JSON object', required: false, example: '{}' })
-  @ApiResponse({ status: 200, description: 'Paginated kinds list retrieved successfully' })
+  @ApiQuery({
+    name: "sort",
+    description: "Sort parameters as JSON array [field, order]",
+    required: false,
+    example: '["lh_object_name", "ASC"]',
+  })
+  @ApiQuery({
+    name: "range",
+    description: "Pagination range as JSON array [skip, pageSize]",
+    required: false,
+    example: "[0, 10]",
+  })
+  @ApiQuery({
+    name: "filter",
+    description: "Filter parameters as JSON object",
+    required: false,
+    example: "{}",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Paginated kinds list retrieved successfully",
+  })
   async getKindsList(
     @User() user: any,
-    @Query('sort') sort?: string,
-    @Query('range') range?: string,
-    @Query('filter') filter?: string,
+    @Query("sort") sort?: string,
+    @Query("range") range?: string,
+    @Query("filter") filter?: string
   ) {
-    console.log("FOOOEY!!!")
+    console.log("FOOOEY!!!");
     try {
       // Parse parameters with defaults (following Clojure implementation pattern)
-      const sortParams = this.parseJsonParam(sort, ['lh_object_name', 'ASC']);
+      const sortParams = this.parseJsonParam(sort, ["lh_object_name", "ASC"]);
       const rangeParams = this.parseJsonParam(range, [0, 10]);
       const filterParams = this.parseJsonParam(filter, {});
 
       const [sortField, sortOrder] = sortParams;
       const [skip, pageSize] = rangeParams;
 
-      console.log('Parsed parameters:', {
+      console.log("Parsed parameters:", {
         sortField,
         sortOrder,
         skip,
@@ -40,12 +66,12 @@ export class KindsController {
       });
 
       // Validate parameters
-      if (!['ASC', 'DESC'].includes(sortOrder.toUpperCase())) {
-        throw new BadRequestException('Sort order must be ASC or DESC');
+      if (!["ASC", "DESC"].includes(sortOrder.toUpperCase())) {
+        throw new BadRequestException("Sort order must be ASC or DESC");
       }
 
       if (skip < 0 || pageSize <= 0) {
-        throw new BadRequestException('Invalid pagination parameters');
+        throw new BadRequestException("Invalid pagination parameters");
       }
 
       // Call Archivist via WebSocket with contract-compliant message
@@ -57,13 +83,16 @@ export class KindsController {
         filterParams
       );
 
-      if(result.success === false) {
-        throw new BadRequestException(result.payload || 'Failed to retrieve kinds list');
+      if (result.success === false) {
+        throw new BadRequestException(
+          result.payload || "Failed to retrieve kinds list"
+        );
       }
 
-      const {facts, total} = result.payload;
+      console.log("result", result);
+      const { facts, total } = result;
 
-      console.log('Received kinds list from Archivist:', result);
+      console.log("Received kinds list from Archivist:", result);
 
       const response = {
         success: true,
@@ -74,12 +103,11 @@ export class KindsController {
       };
 
       return response;
-
     } catch (error) {
-      console.error('Error in getKindsList:', error);
+      console.error("Error in getKindsList:", error);
       return {
         success: false,
-        error: error.message || 'Failed to retrieve kinds list',
+        error: error.message || "Failed to retrieve kinds list",
       };
     }
   }
@@ -96,7 +124,10 @@ export class KindsController {
     try {
       return JSON.parse(param);
     } catch (error) {
-      console.warn(`Failed to parse JSON parameter: ${param}, using default:`, defaultValue);
+      console.warn(
+        `Failed to parse JSON parameter: ${param}, using default:`,
+        defaultValue
+      );
       return defaultValue;
     }
   }
