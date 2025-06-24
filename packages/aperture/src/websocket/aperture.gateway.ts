@@ -203,9 +203,9 @@ export class ApertureGateway
 
   // Helper method to broadcast facts unloaded
   broadcastFactsUnloaded(
-    factUids: string[],
-    modelUids: string[],
-    userId: string,
+    factUids: number[],
+    modelUids: number[],
+    userId: number,
     environmentId: string
   ) {
     this.server.emit(ApertureEvents.UNLOADED_FACTS, {
@@ -413,16 +413,12 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_LOAD)
   async entityLoad(@MessageBody() message: any) {
     try {
-      const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
-      } = message.payload;
+      const { userId, environmentId, entityUid } = message.payload;
 
       // Get environment
-      const environment = envId
+      const environment = environmentId
         ? await this.environmentService.findOne(
-            envId.toString(),
+            environmentId,
             userId.toString()
           )
         : await this.environmentService.findDefaultForUser(userId.toString());
@@ -430,7 +426,6 @@ export class ApertureGateway
       // Get definitive facts for the entity
       const defResult =
         await this.archivistClient.getDefinitiveFacts(entityUid);
-      const definitiveFacts = defResult.facts || [];
 
       // If there's a selected entity, get facts relating it to our entity
       let relatingFacts = [];
@@ -443,7 +438,7 @@ export class ApertureGateway
       }
 
       // Combine all new facts
-      const allNewFacts = [...definitiveFacts, ...relatingFacts];
+      const allNewFacts = [...defResult, ...relatingFacts];
 
       // Add facts to environment
       let updatedEnvironment = environment;
@@ -523,8 +518,8 @@ export class ApertureGateway
 
       // Broadcast facts unloaded event
       this.broadcastFactsUnloaded(
-        factUidsToRemove.map(String),
-        finalModelUidsToRemove.map(String),
+        factUidsToRemove,
+        finalModelUidsToRemove,
         userId.toString(),
         environment.id
       );
@@ -546,27 +541,26 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_LOAD_MULTIPLE)
   async entityLoadMultiple(@MessageBody() message: any) {
     try {
-      const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uids": entityUids,
-      } = message.payload;
+      const { userId, environmentId, uids } = message.payload;
 
       // Get environment
-      const environment = envId
+      const environment = environmentId
         ? await this.environmentService.findOne(
-            envId.toString(),
+            environmentId,
             userId.toString()
           )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // Load each entity and collect all facts
       const allNewFacts = [];
-      for (const entityUid of entityUids) {
+      for (const entityUid of uids) {
         const result = await this.entityLoad({
-          "user-id": userId,
-          "environment-id": envId,
-          "entity-uid": entityUid,
+          payload: {
+            userId,
+            environmentId,
+            entityUid,
+          },
+          id: message.id,
         });
 
         if (result.success && (result.data as any)?.facts) {
@@ -651,9 +645,9 @@ export class ApertureGateway
 
       // Broadcast facts unloaded event
       this.broadcastFactsUnloaded(
-        factUidsToRemove.map(String),
-        finalModelUidsToRemove.map(String),
-        userId.toString(),
+        factUidsToRemove,
+        finalModelUidsToRemove,
+        userId,
         environment.id
       );
 
@@ -842,8 +836,8 @@ export class ApertureGateway
 
       // Broadcast facts unloaded event
       this.broadcastFactsUnloaded(
-        factUidsToRemove.map(String),
-        finalModelUidsToRemove.map(String),
+        factUidsToRemove,
+        finalModelUidsToRemove,
         userId.toString(),
         environment.id
       );

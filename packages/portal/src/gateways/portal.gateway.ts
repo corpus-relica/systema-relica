@@ -14,6 +14,7 @@ import { ShutterRestClientService } from "../services/shutter-rest-client.servic
 import { ApertureWebSocketClientService } from "../services/aperture-websocket-client.service";
 import { NousWebSocketClientService } from "../services/nous-websocket-client.service";
 import { PrismWebSocketClientService } from "../services/prism-websocket-client.service";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
 import {
   ServiceMessage,
   ServiceResponse,
@@ -81,13 +82,13 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly apertureClient: ApertureWebSocketClientService,
     private readonly shutterClient: ShutterRestClientService,
     private readonly nousClient: NousWebSocketClientService,
-    private readonly prismClient: PrismWebSocketClientService
+    private readonly prismClient: PrismWebSocketClientService,
+    private readonly archivistClient: ArchivistSocketClient
   ) {
     // Set up the broadcast forwarding after initialization
     this.prismClient.setPortalGateway(this);
     this.apertureClient.setPortalGateway(this);
   }
-
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
@@ -97,7 +98,6 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Client disconnected: ${client.id}`);
     this.connectedClients.delete(client.id);
   }
-
 
   private generateSocketToken(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -227,7 +227,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Validate payload
       const validation = SelectEntityRequestSchema.safeParse(payload);
       if (!validation.success) {
-        const error = new Error(`Invalid payload format: ${validation.error.issues.map(i => i.message).join(', ')}`);
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
         this.logger.error("Select entity validation failed", error);
         return toErrorResponse(error, message.id);
       }
@@ -293,7 +295,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   },
       // });
 
-      const data = { message: 'Entity deselected' };
+      const data = { message: "Entity deselected" };
       return toResponse(data, message.id);
     } catch (error) {
       this.logger.error("Select none error:", error);
@@ -312,8 +314,13 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const validation =
         LoadSpecializationHierarchyRequestSchema.safeParse(payload);
       if (!validation.success) {
-        const error = new Error(`Invalid payload format: ${validation.error.issues.map(i => i.message).join(', ')}`);
-        this.logger.error("Load specialization hierarchy validation failed", error);
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error(
+          "Load specialization hierarchy validation failed",
+          error
+        );
         return toErrorResponse(error, message.id);
       }
 
@@ -342,9 +349,36 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Entity loaded" };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation = LoadEntityRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Load entity validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const userId = payload.userId;
+      const environmentId = payload.environmentId || "1";
+      const uid = payload.uid;
+
+      // Call Aperture service to load entity
+      const result = await this.apertureClient.loadEntity(
+        Number(userId),
+        Number(uid),
+        Number(environmentId)
+      );
+
+      if (!result) {
+        const error = new Error(
+          "Failed to load entity - no response from Aperture service"
+        );
+        this.logger.error("Load entity failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Load entity error:", error);
       return toErrorResponse(error, message.id);
@@ -361,7 +395,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Validate payload
       const validation = ClearEntitiesRequestSchema.safeParse(payload);
       if (!validation.success) {
-        const error = new Error(`Invalid payload format: ${validation.error.issues.map(i => i.message).join(', ')}`);
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
         this.logger.error("Clear entities validation failed", error);
         return toErrorResponse(error, message.id);
       }
@@ -382,7 +418,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       if (!result) {
-        const error = new Error("Failed to clear entities - no response from Aperture service");
+        const error = new Error(
+          "Failed to clear entities - no response from Aperture service"
+        );
         this.logger.error("Clear entities failed", error);
         return toErrorResponse(error, message.id);
       }
@@ -428,9 +466,36 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Subtypes cone loaded" };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation = LoadSubtypesConeRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Load subtypes cone validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const userId = payload.userId;
+      const environmentId = payload.environmentId || "1";
+      const uid = payload.uid;
+
+      // Call Aperture service to load subtypes cone
+      const result = await this.apertureClient.loadSubtypesCone(
+        Number(userId),
+        Number(uid),
+        Number(environmentId)
+      );
+
+      if (!result) {
+        const error = new Error(
+          "Failed to load subtypes cone - no response from Aperture service"
+        );
+        this.logger.error("Load subtypes cone failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Load subtypes cone error:", error);
       return toErrorResponse(error, message.id);
@@ -444,9 +509,36 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Entity unloaded" };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation = UnloadEntityRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Unload entity validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const userId = payload.userId;
+      const environmentId = payload.environmentId || "1";
+      const uid = payload.uid;
+
+      // Call Aperture service to unload entity
+      const result = await this.apertureClient.unloadEntity(
+        Number(userId),
+        Number(uid),
+        Number(environmentId)
+      );
+
+      if (!result) {
+        const error = new Error(
+          "Failed to unload entity - no response from Aperture service"
+        );
+        this.logger.error("Unload entity failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Unload entity error:", error);
       return toErrorResponse(error, message.id);
@@ -460,9 +552,36 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Subtypes cone unloaded" };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation = UnloadSubtypesConeRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Unload subtypes cone validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const userId = payload.userId;
+      const environmentId = payload.environmentId || "1";
+      const uid = payload.uid;
+
+      // Call Aperture service to unload subtypes cone
+      const result = await this.apertureClient.unloadSubtypesCone(
+        Number(userId),
+        Number(uid),
+        Number(environmentId)
+      );
+
+      if (!result) {
+        const error = new Error(
+          "Failed to unload subtypes cone - no response from Aperture service"
+        );
+        this.logger.error("Unload subtypes cone failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Unload subtypes cone error:", error);
       return toErrorResponse(error, message.id);
@@ -476,9 +595,30 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Entity deleted" };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation = DeleteEntityRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Delete entity validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const uid = payload.uid;
+
+      // Call Archivist service to delete entity
+      const result = await this.archivistClient.deleteEntity(Number(uid));
+
+      if (!result) {
+        const error = new Error(
+          "Failed to delete entity - no response from Archivist service"
+        );
+        this.logger.error("Delete entity failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Delete entity error:", error);
       return toErrorResponse(error, message.id);
@@ -492,9 +632,30 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Fact deleted" };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation = DeleteFactRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Delete fact validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const factUid = payload.factUid;
+
+      // Call Archivist service to delete fact
+      const result = await this.archivistClient.deleteFact(Number(factUid));
+
+      if (!result) {
+        const error = new Error(
+          "Failed to delete fact - no response from Archivist service"
+        );
+        this.logger.error("Delete fact failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Delete fact error:", error);
       return toErrorResponse(error, message.id);
@@ -508,9 +669,43 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Entities loaded" };
-      return toResponse(data, message.id);
+
+      // Validate payload
+      const validation = LoadEntitiesRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Load entities validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const userId = payload.userId;
+      const environmentId = payload.environmentId || "1";
+      const uids = payload.uids;
+
+      if (!Array.isArray(uids) || uids.length === 0) {
+        const error = new Error("uids must be a non-empty array");
+        this.logger.error("Load entities invalid uids", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      // Call Aperture service to load multiple entities
+      const result = await this.apertureClient.loadMultipleEntities(
+        Number(userId),
+        uids.map((uid) => Number(uid)),
+        environmentId
+      );
+
+      if (!result) {
+        const error = new Error(
+          "Failed to load entities - no response from Aperture service"
+        );
+        this.logger.error("Load entities failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Load entities error:", error);
       return toErrorResponse(error, message.id);
@@ -524,9 +719,42 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = { message: "Entities unloaded" };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation = UnloadEntitiesRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error("Unload entities validation failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      const userId = payload.userId;
+      const environmentId = payload.environmentId || "1";
+      const uids = payload.uids;
+
+      if (!Array.isArray(uids) || uids.length === 0) {
+        const error = new Error("uids must be a non-empty array");
+        this.logger.error("Unload entities invalid uids", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      // Call Aperture service to unload multiple entities
+      const result = await this.apertureClient.unloadMultipleEntities(
+        Number(userId),
+        uids.map((uid) => Number(uid)),
+        Number(environmentId)
+      );
+
+      if (!result) {
+        const error = new Error(
+          "Failed to unload entities - no response from Aperture service"
+        );
+        this.logger.error("Unload entities failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Unload entities error:", error);
       return toErrorResponse(error, message.id);
@@ -540,12 +768,33 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // TODO: Implement Aperture service call
-      const data = {
-        message: "Specialization hierarchy retrieved",
-        hierarchy: [],
-      };
-      return toResponse(data, message.id);
+      // Validate payload
+      const validation =
+        GetSpecializationHierarchyRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        const error = new Error(
+          `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
+        );
+        this.logger.error(
+          "Get specialization hierarchy validation failed",
+          error
+        );
+        return toErrorResponse(error, message.id);
+      }
+
+      // Call Aperture service to get specialization hierarchy
+      const result = await this.apertureClient.loadSpecializationHierarchy(
+        payload.uid.toString(),
+        "" + payload.userId
+      );
+
+      if (!result) {
+        const error = new Error("Failed to get specialization hierarchy");
+        this.logger.error("Get specialization hierarchy failed", error);
+        return toErrorResponse(error, message.id);
+      }
+
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Get specialization hierarchy error:", error);
       return toErrorResponse(error, message.id);

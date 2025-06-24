@@ -118,7 +118,9 @@ export class GellishBaseService {
 
   getSpecializationFact = async (uid) => {
     const result = await this.graphService.execQuery(specializationFact, {
-      uid,}); if (result.length === 0) {
+      uid,
+    });
+    if (result.length === 0) {
       return [];
     }
 

@@ -1,17 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { BaseWebSocketClient } from './PortalSocketClient';
+import { BaseWebSocketClient } from "./PortalSocketClient";
 import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
 
 @Injectable()
 export class ApertureSocketClient extends BaseWebSocketClient {
   constructor(configService: ConfigService) {
-    super(configService, 'aperture', 3003);
+    super(configService, "aperture", 3003);
   }
 
   protected setupServiceSpecificEventHandlers(): void {
     if (!this.socket) return;
-    
+
     // Forward Aperture events to registered handlers
     this.socket.on(ApertureEvents.LOADED_FACTS, (payload) => {
       this.emitToHandlers(ApertureEvents.LOADED_FACTS, payload);
@@ -104,11 +104,14 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uids": uids,
-      "environment-id": environmentId,
+      userId,
+      uids,
+      environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.ENTITY_LOAD_MULTIPLE, payload);
+    return this.sendRequestMessage(
+      ApertureActions.ENTITY_LOAD_MULTIPLE,
+      payload
+    );
   }
 
   async unloadMultipleEntities(
@@ -121,7 +124,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       "entity-uids": uids,
       "environment-id": environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.ENTITY_UNLOAD_MULTIPLE, payload);
+    return this.sendRequestMessage(
+      ApertureActions.ENTITY_UNLOAD_MULTIPLE,
+      payload
+    );
   }
 
   // =====================================================
@@ -152,7 +158,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       uid,
       environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.SPECIALIZATION_LOAD, payload);
+    return this.sendRequestMessage(
+      ApertureActions.SPECIALIZATION_LOAD,
+      payload
+    );
   }
 
   async loadSpecializationFact(
@@ -165,7 +174,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       uid,
       "environment-id": environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.SPECIALIZATION_LOAD_FACT, payload);
+    return this.sendRequestMessage(
+      ApertureActions.SPECIALIZATION_LOAD_FACT,
+      payload
+    );
   }
 
   // =====================================================
@@ -208,7 +220,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       "entity-uid": uid,
       "environment-id": environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.SUBTYPE_UNLOAD_CONE, payload);
+    return this.sendRequestMessage(
+      ApertureActions.SUBTYPE_UNLOAD_CONE,
+      payload
+    );
   }
 
   // =====================================================
@@ -225,7 +240,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       "entity-uid": uid,
       "environment-id": environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.CLASSIFICATION_LOAD, payload);
+    return this.sendRequestMessage(
+      ApertureActions.CLASSIFICATION_LOAD,
+      payload
+    );
   }
 
   async loadClassificationFact(
@@ -238,7 +256,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       "entity-uid": uid,
       "environment-id": environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.CLASSIFICATION_LOAD_FACT, payload);
+    return this.sendRequestMessage(
+      ApertureActions.CLASSIFICATION_LOAD_FACT,
+      payload
+    );
   }
 
   // =====================================================
@@ -268,7 +289,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       "entity-uid": uid,
       "environment-id": environmentId,
     };
-    return this.sendRequestMessage(ApertureActions.COMPOSITION_LOAD_IN, payload);
+    return this.sendRequestMessage(
+      ApertureActions.COMPOSITION_LOAD_IN,
+      payload
+    );
   }
 
   // =====================================================
@@ -351,8 +375,10 @@ export class ApertureSocketClient extends BaseWebSocketClient {
       uid,
       environmentId,
     };
-    console.log("ApertureSocketClient.loadAllRelatedFacts payload", payload);
-    return this.sendRequestMessage(ApertureActions.LOAD_ALL_RELATED_FACTS, payload);
+    return this.sendRequestMessage(
+      ApertureActions.LOAD_ALL_RELATED_FACTS,
+      payload
+    );
   }
 
   // =====================================================

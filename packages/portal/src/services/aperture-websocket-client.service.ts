@@ -210,4 +210,104 @@ export class ApertureWebSocketClientService implements OnModuleInit {
     }
     return result.data || result;
   }
+
+  async loadEntity(
+    userId: number,
+    uid: number,
+    environmentId?: number
+  ): Promise<any> {
+    const result = await this.apertureClient.loadEntity(
+      userId,
+      uid,
+      environmentId
+    );
+    if (!result.success && result.error) {
+      throw new Error(result.error.message || "Failed to load entity");
+    }
+    return result.data || result;
+  }
+
+  async unloadEntity(
+    userId: number,
+    uid: number,
+    environmentId?: number
+  ): Promise<any> {
+    const result = await this.apertureClient.unloadEntity(
+      userId,
+      uid,
+      environmentId
+    );
+    if (!result.success && result.error) {
+      throw new Error(result.error.message || "Failed to unload entity");
+    }
+    return result.data || result;
+  }
+
+  async loadSubtypesCone(
+    userId: number,
+    uid: number,
+    environmentId?: number
+  ): Promise<any> {
+    const result = await this.apertureClient.loadSubtypesCone(
+      userId,
+      uid,
+      environmentId
+    );
+    if (!result.success && result.error) {
+      throw new Error(result.error.message || "Failed to load subtypes cone");
+    }
+    return result.data || result;
+  }
+
+  async unloadSubtypesCone(
+    userId: number,
+    uid: number,
+    environmentId?: number
+  ): Promise<any> {
+    const result = await this.apertureClient.unloadSubtypesCone(
+      userId,
+      uid,
+      environmentId
+    );
+    if (!result.success && result.error) {
+      throw new Error(result.error.message || "Failed to unload subtypes cone");
+    }
+    return result.data || result;
+  }
+
+  async loadMultipleEntities(
+    userId: number,
+    uids: number[],
+    environmentId?: number
+  ): Promise<any> {
+    const result = await this.apertureClient.loadMultipleEntities(
+      userId,
+      uids,
+      environmentId
+    );
+    if (!result.success && result.error) {
+      throw new Error(
+        result.error.message || "Failed to load multiple entities"
+      );
+    }
+    return result.data || result;
+  }
+
+  async unloadMultipleEntities(
+    userId: number,
+    uids: number[],
+    environmentId?: number
+  ): Promise<any> {
+    const result = await this.apertureClient.unloadMultipleEntities(
+      userId,
+      uids,
+      environmentId
+    );
+    if (!result.success && result.error) {
+      throw new Error(
+        result.error.message || "Failed to unload multiple entities"
+      );
+    }
+    return result.data || result;
+  }
 }

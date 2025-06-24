@@ -7,8 +7,9 @@ import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
 import DeleteFactDialogue from "./DeleteFactDialogue";
-import { portalSocket }from "../../PortalSocket";
-import {getEntityType, getEntityCategory} from "../../RLCBaseClient";
+import { portalSocket } from "../../PortalSocket";
+import { getEntityType, getEntityCategory } from "../../RLCBaseClient";
+import { useStores } from "../../context/RootStoreContext";
 
 interface GraphContextMenuProps {
   open: boolean;
@@ -25,6 +26,8 @@ import { useStore, useDataProvider } from "react-admin";
 
 const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const dataProvider = useDataProvider();
+  const rootStore = useStores();
+  const { authStore } = rootStore;
   const { open, handleClose, x, y, uid, type, relType, setSearchUIOpen } =
     props;
   const [menu, setMenu] = useState<JSX.Element | null>(null);
@@ -168,8 +171,18 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setSubtypesDialogueIsOpen(false);
-            portalSocket.emit("user", "loadEntities", { uids: selected });
-            portalSocket.emit("user", "unloadEntities", { uids: notSelected });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "loadEntities", {
+              userId,
+              environmentId,
+              uids: selected,
+            });
+            portalSocket.emit("user", "unloadEntities", {
+              userId,
+              environmentId,
+              uids: notSelected,
+            });
           }}
         />
       )}
@@ -184,8 +197,18 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setClassifiedDialogueIsOpen(false);
-            portalSocket.emit("user", "loadEntities", { uids: selected });
-            portalSocket.emit("user", "unloadEntities", { uids: notSelected });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "loadEntities", {
+              userId,
+              environmentId,
+              uids: selected,
+            });
+            portalSocket.emit("user", "unloadEntities", {
+              userId,
+              environmentId,
+              uids: notSelected,
+            });
           }}
         />
       )}
