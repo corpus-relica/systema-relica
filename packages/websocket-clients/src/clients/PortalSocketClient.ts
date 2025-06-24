@@ -6,7 +6,7 @@ import customParser from 'socket.io-msgpack-parser';
 export interface WebSocketServiceClient {
   connect(): Promise<void>;
   disconnect(): void;
-  sendMessage(message: any): Promise<any>;
+  sendMessage(message: ServiceMessage): Promise<ServiceResponse>;
   isConnected(): boolean;
   onBroadcast(callback: (message: any) => void): void;
   offBroadcast(callback: (message: any) => void): void;
@@ -28,10 +28,13 @@ export interface ServiceResponse {
   error?: string;
 }
 
-@Injectable()
-export class PortalSocketClient implements WebSocketServiceClient, OnModuleInit, OnModuleDestroy {
-  public socket: Socket | null = null;
+// Base class that all WebSocket services can extend
+export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestroy {
+  protected socket: Socket | null = null;
   protected readonly logger = new Logger(this.constructor.name);
+  protected readonly pendingRequests = new Map<string, { resolve: Function; reject: Function }>();
+  protected messageCounter = 0;
+  protected eventHandlers: Map<string, Function[]> = new Map();
 
   constructor(
     protected readonly configService: ConfigService,
@@ -65,7 +68,7 @@ export class PortalSocketClient implements WebSocketServiceClient, OnModuleInit,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      parser: customParser,
+      // parser: customParser, // Use msgpack parser for better performance
     });
 
     this.setupEventHandlers();
@@ -99,42 +102,7 @@ export class PortalSocketClient implements WebSocketServiceClient, OnModuleInit,
     }
   }
 
-  isConnected(): boolean {
-    return this.socket?.connected || false;
-  }
-
-  async sendMessage(message: ServiceMessage): Promise<ServiceResponse> {
-    if (!this.socket?.connected) {
-      this.logger.log(`Not connected to ${this.serviceName}, attempting to connect...`);
-      try {
-        await this.connect();
-      } catch (error) {
-        throw new Error(`Failed to connect to ${this.serviceName} service: ${(error as Error).message}`);
-      }
-    }
-
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error(`Request timeout for ${this.serviceName} service`));
-      }, 30000);
-
-      this.socket!.emit(message.action, message.payload || {}, (response: any) => {
-        clearTimeout(timeout);
-        
-        const serviceResponse: ServiceResponse = {
-          id: message.id || this.generateMessageId(),
-          type: 'response',
-          success: response.success !== undefined ? response.success : true,
-          data: response.data || response,
-          error: response.error
-        };
-        
-        resolve(serviceResponse);
-      });
-    });
-  }
-
-  private setupEventHandlers(): void {
+  protected setupEventHandlers(): void {
     if (!this.socket) return;
 
     this.socket.on('disconnect', () => {
@@ -148,10 +116,120 @@ export class PortalSocketClient implements WebSocketServiceClient, OnModuleInit,
     this.socket.on('error', (error) => {
       this.logger.error(`${this.serviceName} service error:`, error);
     });
+
+    // Allow subclasses to add service-specific event handlers
+    this.setupServiceSpecificEventHandlers();
+  }
+
+  // Hook for subclasses to implement service-specific event handling
+  protected setupServiceSpecificEventHandlers(): void {
+    // Default implementation does nothing
   }
 
   protected generateMessageId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return crypto.randomUUID();
+  }
+
+  protected async sendRequestMessage(action: string, payload: any): Promise<any> {
+    if (!this.socket?.connected) {
+      this.logger.log(`Not connected to ${this.serviceName}, attempting to connect...`);
+      try {
+        await this.connect();
+      } catch (error) {
+        throw new Error(
+          `Failed to connect to ${this.serviceName} service: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+
+    // Create proper request message structure per WebSocket contracts
+    const message = {
+      id: this.generateMessageId(),
+      type: 'request' as const,
+      service: this.serviceName,
+      action,
+      payload,
+    };
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`Request timeout for ${this.serviceName} service`));
+      }, 30000);
+
+      this.socket!.emit(action, message, (response: any) => {
+        clearTimeout(timeout);
+        
+        if (response && response.success === false) {
+          reject(new Error(response.error || 'Request failed'));
+        } else {
+          resolve(response?.data || response);
+        }
+      });
+    });
+  }
+
+  // Event handling methods for services that need them
+  public on(event: string, handler: Function): void {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
+    }
+    this.eventHandlers.get(event)!.push(handler);
+  }
+
+  public off(event: string, handler: Function): void {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      const index = handlers.indexOf(handler);
+      if (index > -1) {
+        handlers.splice(index, 1);
+      }
+    }
+  }
+
+  protected emitToHandlers(event: string, payload: any): void {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      handlers.forEach(handler => {
+        try {
+          handler(payload);
+        } catch (error) {
+          this.logger.error(`Error in event handler for ${event}:`, error);
+        }
+      });
+    }
+  }
+
+  // Connection utilities
+  isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
+
+  async ensureConnected(): Promise<void> {
+    if (!this.isConnected()) {
+      await this.connect();
+    }
+  }
+}
+
+@Injectable()
+export class PortalSocketClient extends BaseWebSocketClient implements WebSocketServiceClient {
+  constructor(
+    configService: ConfigService,
+    serviceName: string = 'portal',
+    defaultPort: number = 2204,
+  ) {
+    super(configService, serviceName, defaultPort);
+  }
+
+  // Portal-specific interface methods
+  async sendMessage(message: ServiceMessage): Promise<ServiceResponse> {
+    const response = await super.sendRequestMessage(message.action, message.payload);
+    return {
+      id: message.id || this.generateMessageId(),
+      type: 'response',
+      success: true,
+      data: response,
+    };
   }
 
   onBroadcast(callback: (message: any) => void): void {
@@ -160,16 +238,5 @@ export class PortalSocketClient implements WebSocketServiceClient, OnModuleInit,
 
   offBroadcast(callback: (message: any) => void): void {
     // Implementation will be added by subclasses as needed
-  }
-}
-
-// Base class that services can extend - identical to PortalSocketClient
-export class BaseWebSocketClient extends PortalSocketClient {
-  constructor(
-    configService: ConfigService,
-    serviceName: string,
-    defaultPort: number,
-  ) {
-    super(configService, serviceName, defaultPort);
   }
 }

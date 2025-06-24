@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseWebSocketClient, ServiceMessage, ServiceResponse } from '@relica/websocket-clients';
+import { PortalSocketClient, ServiceMessage, ServiceResponse } from '@relica/websocket-clients';
 
 @Injectable()
-export class NousWebSocketClientService extends BaseWebSocketClient {
+export class NousWebSocketClientService extends PortalSocketClient {
   constructor(configService: ConfigService) {
     super(configService, 'nous', 3006);
   }
