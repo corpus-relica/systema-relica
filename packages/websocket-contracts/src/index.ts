@@ -37,6 +37,9 @@ export * from './services/portal';
 // Simplified validation utilities
 export * from './validation';
 
+// Response utilities
+export * from './utils/response.utils';
+
 export {
   PrismActions,
   PrismEvents,

@@ -9,6 +9,7 @@ import { ArchivistService } from '../archivist/archivist.service';
 import { ModelService } from '../model/model.service';
 import { Logger } from '@nestjs/common';
 import { ClarityActions } from '@relica/websocket-contracts';
+import { toResponse, toErrorResponse } from '@relica/websocket-contracts';
 import customParser from 'socket.io-msgpack-parser';
 
 @WebSocketGateway({
@@ -50,185 +51,182 @@ export class EventsGateway {
   // SEMANTIC MODEL OPERATIONS //
 
   @SubscribeMessage(ClarityActions.MODEL_GET)
-  async getModel(@MessageBody('payload') payload: any): Promise<any> {
-    this.logger.log('GET MODEL:', payload.uid);
+  async getModel(@MessageBody() message: any) {
     try {
-      const model = await this.modelService.retrieveModel(+payload.uid);
+      const { uid } = message.payload;
+      this.logger.log('GET MODEL:', uid);
+      const model = await this.modelService.retrieveModel(+uid);
       console.log('Retrieved model:', model);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.model/get-batch')
-  async getModels(@MessageBody('uids') uids: number[]): Promise<any> {
-    this.logger.log('GET MODELS:', uids);
+  async getModels(@MessageBody() message: any) {
     try {
+      const { uids } = message.payload;
+      this.logger.log('GET MODELS:', uids);
       const models = await this.modelService.retrieveModels(uids);
-      return { success: true, data: models };
+      return toResponse(models, message.id);
     } catch (error) {
       this.logger.error('Error retrieving models:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.kind/get')
-  async getKindModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET KIND MODEL:', uid);
+  async getKindModel(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET KIND MODEL:', uid);
       const model = await this.modelService.retrieveKindModel(uid);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving kind model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.individual/get')
-  async getIndividualModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET INDIVIDUAL MODEL:', uid);
+  async getIndividualModel(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET INDIVIDUAL MODEL:', uid);
       const model = await this.modelService.retrieveIndividualModel(uid);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving individual model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.model/update-definition')
-  async updateDefinition(
-    @MessageBody()
-    data: {
-      uid: number;
-      partial_definition: string;
-      full_definition: string;
-    },
-  ): Promise<any> {
-    this.logger.log('UPDATE DEFINITION:', data);
+  async updateDefinition(@MessageBody() message: any) {
     try {
+      const { uid, partial_definition, full_definition } = message.payload;
+      this.logger.log('UPDATE DEFINITION:', { uid, partial_definition, full_definition });
       const result = await this.modelService.updateDefinition(
-        data.uid,
-        data.partial_definition,
-        data.full_definition,
+        uid,
+        partial_definition,
+        full_definition,
       );
-      return { success: true, data: result };
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error('Error updating definition:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.model/update-name')
-  async updateName(
-    @MessageBody() data: { uid: number; name: string },
-  ): Promise<any> {
-    this.logger.log('UPDATE NAME:', data);
+  async updateName(@MessageBody() message: any) {
     try {
-      const result = await this.modelService.updateName(data.uid, data.name);
-      return { success: true, data: result };
+      const { uid, name } = message.payload;
+      this.logger.log('UPDATE NAME:', { uid, name });
+      const result = await this.modelService.updateName(uid, name);
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error('Error updating name:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.model/update-collection')
-  async updateCollection(
-    @MessageBody()
-    data: {
-      fact_uid: number;
-      collection_uid: number;
-      collection_name: string;
-    },
-  ): Promise<any> {
-    this.logger.log('UPDATE COLLECTION:', data);
+  async updateCollection(@MessageBody() message: any) {
     try {
+      const { fact_uid, collection_uid, collection_name } = message.payload;
+      this.logger.log('UPDATE COLLECTION:', { fact_uid, collection_uid, collection_name });
       const result = await this.modelService.updateCollection(
-        data.fact_uid,
-        data.collection_uid,
-        data.collection_name,
+        fact_uid,
+        collection_uid,
+        collection_name,
       );
-      return { success: true, data: result };
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error('Error updating collection:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.facts/get-by-entity')
-  async getFactsByEntity(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET FACTS BY ENTITY:', uid);
+  async getFactsByEntity(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET FACTS BY ENTITY:', uid);
       const facts = await this.archivistService.retrieveAllFacts(uid);
-      return { success: true, data: facts };
+      return toResponse(facts, message.id);
     } catch (error) {
       this.logger.error('Error retrieving facts:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   // QUINTESSENTIAL MODEL OPERATIONS //
 
   @SubscribeMessage('clarity.quintessential/get-physical-object')
-  async getPhysicalObjectModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET PHYSICAL OBJECT MODEL:', uid);
+  async getPhysicalObjectModel(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET PHYSICAL OBJECT MODEL:', uid);
       const model = await this.modelService.getPhysicalObjectModel(uid);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving physical object model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.quintessential/get-aspect')
-  async getAspectModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET ASPECT MODEL:', uid);
+  async getAspectModel(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET ASPECT MODEL:', uid);
       const model = await this.modelService.getAspectModel(uid);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving aspect model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.quintessential/get-role')
-  async getRoleModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET ROLE MODEL:', uid);
+  async getRoleModel(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET ROLE MODEL:', uid);
       const model = await this.modelService.getRoleModel(uid);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving role model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.quintessential/get-relation')
-  async getRelationModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET RELATION MODEL:', uid);
+  async getRelationModel(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET RELATION MODEL:', uid);
       const model = await this.modelService.getRelationModel(uid);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving relation model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage('clarity.quintessential/get-occurrence')
-  async getOccurrenceModel(@MessageBody('uid') uid: number): Promise<any> {
-    this.logger.log('GET OCCURRENCE MODEL:', uid);
+  async getOccurrenceModel(@MessageBody() message: any) {
     try {
+      const { uid } = message.payload;
+      this.logger.log('GET OCCURRENCE MODEL:', uid);
       const model = await this.modelService.getOccurrenceModel(uid);
-      return { success: true, data: model };
+      return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving occurrence model:', error);
-      return { success: false, error: error.message };
+      return toErrorResponse(error, message.id);
     }
   }
 }

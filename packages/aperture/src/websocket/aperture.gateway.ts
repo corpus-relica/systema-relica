@@ -12,7 +12,7 @@ import { EnvironmentService } from "../environment/environment.service";
 import { ArchivistSocketClient } from "@relica/websocket-clients";
 import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
 import customParser from "socket.io-msgpack-parser";
-import { toResponse, toErrorResponse } from "./utils/response.utils";
+import { toResponse, toErrorResponse } from "@relica/websocket-contracts";
 
 @WebSocketGateway({
   cors: {
@@ -569,8 +569,8 @@ export class ApertureGateway
           "entity-uid": entityUid,
         });
 
-        if (result.success && result.data?.facts) {
-          allNewFacts.push(...result.data.facts);
+        if (result.success && (result.data as any)?.facts) {
+          allNewFacts.push(...(result.data as any).facts);
         }
       }
 
