@@ -273,6 +273,7 @@ export const FactActions = {
   DELETE: "fact:delete",
   GET: "fact:get",
   GET_SUBTYPES: "fact:getSubtypes",
+  GET_SUBTYPES_CONE: "fact:getSubtypesCone",
   GET_SUPERTYPES: "fact:getSupertypes",
   GET_CLASSIFIED: "fact:getClassified",
   GET_DEFINITIVE: "fact:getDefinitive",

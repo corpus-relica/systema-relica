@@ -219,7 +219,10 @@ export class ArchivistGateway
   ) {
     try {
       this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
-      const result = await this.factHandlers.handleFactGet(message.payload, client);
+      const result = await this.factHandlers.handleFactGet(
+        message.payload,
+        client,
+      );
       return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
@@ -264,8 +267,29 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      this.logger.debug(`Handling ${FactActions.GET_SUBTYPES} from ${client.id}`);
+      this.logger.debug(
+        `Handling ${FactActions.GET_SUBTYPES} from ${client.id}`,
+      );
       const result = await this.factHandlers.handleFactGetSubtypes(
+        message.payload,
+        client,
+      );
+      return toResponse(result, message.id);
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
+  }
+
+  @SubscribeMessage(FactActions.GET_SUBTYPES_CONE)
+  async handleFactGetSubtypesCone(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() message: any,
+  ) {
+    try {
+      this.logger.debug(
+        `Handling ${FactActions.GET_SUBTYPES_CONE} from ${client.id}`,
+      );
+      const result = await this.factHandlers.handleFactGetSubtypesCone(
         message.payload,
         client,
       );
@@ -366,7 +390,10 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      this.logger.debug(`Handling ${KindActions.LIST} from ${client.id}:`, message);
+      this.logger.debug(
+        `Handling ${KindActions.LIST} from ${client.id}:`,
+        message,
+      );
       const result = await this.kindHandlers.handleKindsList(
         message.payload,
         client,
@@ -415,7 +442,10 @@ export class ArchivistGateway
         `Handling ${QueryActions.EXECUTE} from ${client.id}:`,
         message.payload,
       );
-      const result = await this.queryHandlers.handleQueryExecute(message, client);
+      const result = await this.queryHandlers.handleQueryExecute(
+        message,
+        client,
+      );
       return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
@@ -432,7 +462,10 @@ export class ArchivistGateway
         `Handling ${QueryActions.VALIDATE} from ${client.id}:`,
         message.payload,
       );
-      const result = await this.queryHandlers.handleQueryValidate(message, client);
+      const result = await this.queryHandlers.handleQueryValidate(
+        message,
+        client,
+      );
       return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
@@ -536,7 +569,10 @@ export class ArchivistGateway
         `Handling ${SearchActions.EXECUTE} from ${client.id}:`,
         message,
       );
-      const result = await this.searchHandlers.handleExecuteSearch(message, client);
+      const result = await this.searchHandlers.handleExecuteSearch(
+        message,
+        client,
+      );
       return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
@@ -549,7 +585,10 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      this.logger.debug(`Handling ${SearchActions.UID} from ${client.id}:`, message);
+      this.logger.debug(
+        `Handling ${SearchActions.UID} from ${client.id}:`,
+        message,
+      );
       const result = await this.searchHandlers.handleUidSearch(
         message.payload,
         client,

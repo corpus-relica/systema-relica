@@ -725,8 +725,6 @@ export class ApertureGateway
     try {
       const { userId, environmentId, uid } = message.payload;
 
-      console.log("LOAD CONE", message);
-      console.log(userId, environmentId, uid);
       // Get subtypes cone from Archivist
       const result = await this.archivistClient.getSubtypesCone(uid);
 
@@ -768,22 +766,27 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_UNLOAD_CONE)
   async subtypeUnloadCone(@MessageBody() message: any) {
     try {
-      const { userId, environmentId: envId, entityUid } = message.payload;
+      console.log("GLOBBER GLOBBER", message);
+      const { userId, environmentId, uid } = message.payload;
+
+      // Get subtypes cone from Archivist
+      const result = await this.archivistClient.getSubtypesCone(uid);
 
       // Get environment
-      const environment = envId
+      const environment = environmentId
         ? await this.environmentService.findOne(
-            envId.toString(),
+            environmentId.toString(),
             userId.toString()
           )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // This is a complex operation that requires recursive removal of subtype hierarchies
       // For now, we'll implement a simplified version that removes facts where the entity is the RH (parent)
-      const factsToRemove = environment.facts.filter(
-        (fact: any) =>
-          fact.rh_object_uid === entityUid && fact.rel_type_uid === 1146 // 1146 is subtyping relation
-      );
+      const factsToRemove = result;
+      // environment.facts.filter(
+      //   (fact: any) =>
+      //     fact.rh_object_uid === uid && fact.rel_type_uid === 1146 // 1146 is subtyping relation
+      // );
 
       const factUidsToRemove = factsToRemove.map((fact: any) => fact.fact_uid);
 

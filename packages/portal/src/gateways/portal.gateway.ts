@@ -309,6 +309,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() message: any
   ): Promise<any> {
     try {
+      console.log("LOAD SH", message);
       const payload = message.payload;
       // Validate payload
       const validation =
@@ -465,7 +466,6 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() message: any
   ): Promise<any> {
     try {
-      console.log("LOAD CONE", message);
       const payload = message.payload;
       // Validate payload
       const validation = LoadSubtypesConeRequestSchema.safeParse(payload);
@@ -551,6 +551,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() message: any
   ): Promise<any> {
+    console.log("payload", message);
     try {
       const payload = message.payload;
       // Validate payload
@@ -569,9 +570,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Call Aperture service to unload subtypes cone
       const result = await this.apertureClient.unloadSubtypesCone(
-        Number(userId),
-        Number(uid),
-        Number(environmentId)
+        userId,
+        uid,
+        environmentId
       );
 
       if (!result) {

@@ -26,7 +26,7 @@ import authProvider, { getAuthToken } from "../authProvider";
 const USER = "user";
 
 const Graph = observer(() => {
-  const rootStore = useStores()
+  const rootStore = useStores();
   const { factDataStore, colorPaletteStore, authStore } = rootStore;
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
@@ -40,7 +40,7 @@ const Graph = observer(() => {
   const selectNode = (id: number) => {
     const userId = authStore.userId;
     const environmentId = rootStore.environmentId;
-    portalSocket.emit(USER, "selectEntity", {  userId, environmentId, uid: id });
+    portalSocket.emit(USER, "selectEntity", { userId, environmentId, uid: id });
   };
 
   const token = getAuthToken();
@@ -93,7 +93,7 @@ const Graph = observer(() => {
     setOpen(false);
     const userId = authStore.userId;
     const environmentId = rootStore.environmentId;
-    portalSocket.emit(USER, "selectNone", {userId, environmentId});
+    portalSocket.emit(USER, "selectNone", { userId, environmentId });
   };
 
   const handleSearchUIClose = async (res: any) => {
@@ -109,6 +109,7 @@ const Graph = observer(() => {
     portalSocket.emit(USER, "loadSpecializationHierarchy", {
       uid: lh_object_uid,
       userId: authStore.userId || identityx?.id || "unknown",
+      environmentId: rootStore.environmentId,
     });
     selectNode(lh_object_uid);
   };

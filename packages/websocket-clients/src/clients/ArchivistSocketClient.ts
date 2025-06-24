@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { BaseWebSocketClient } from './PortalSocketClient';
+import { BaseWebSocketClient } from "./PortalSocketClient";
 import {
   FactActions,
   SearchActions,
@@ -21,9 +21,8 @@ import {
 @Injectable()
 export class ArchivistSocketClient extends BaseWebSocketClient {
   constructor(configService: ConfigService) {
-    super(configService, 'archivist', 3002);
+    super(configService, "archivist", 3002);
   }
-
 
   // =====================================================
   // FACT OPERATIONS
@@ -56,7 +55,7 @@ export class ArchivistSocketClient extends BaseWebSocketClient {
 
   async getSubtypesCone(uid: number): Promise<any> {
     const payload = { uid, includeSubtypes: true };
-    return this.sendRequestMessage(FactActions.GET_SUBTYPES, payload);
+    return this.sendRequestMessage(FactActions.GET_SUBTYPES_CONE, payload);
   }
 
   async getSupertypes(uid: number): Promise<any> {
@@ -286,7 +285,9 @@ export class ArchivistSocketClient extends BaseWebSocketClient {
   // =====================================================
 
   async submitFact(factData: any): Promise<any> {
-    return this.sendRequestMessage(SubmissionActions.SUBMIT, { facts: [factData] });
+    return this.sendRequestMessage(SubmissionActions.SUBMIT, {
+      facts: [factData],
+    });
   }
 
   async submitDefinition(

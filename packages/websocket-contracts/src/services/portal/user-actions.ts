@@ -36,9 +36,9 @@ export const SelectNoneRequestSchema = z.object({
 });
 
 export const LoadSpecializationHierarchyRequestSchema = z.object({
-  uid: z.union([z.string(), z.number()]),
-  userId: z.union([z.string(), z.number()]),
-  environmentId: z.string(),
+  uid: z.number(),
+  userId: z.number(),
+  environmentId: z.string().optional(),
 });
 
 export const LoadEntityRequestSchema = z.object({
@@ -63,13 +63,15 @@ export const LoadSubtypesConeRequestSchema = z.object({
 });
 
 export const UnloadEntityRequestSchema = z.object({
-  uid: z.union([z.string(), z.number()]),
-  userId: z.string().optional(),
+  uid: z.number(),
+  userId: z.number(),
+  environmentId: z.string().optional(),
 });
 
 export const UnloadSubtypesConeRequestSchema = z.object({
-  uid: z.union([z.string(), z.number()]),
-  userId: z.string().optional(),
+  uid: z.number(),
+  userId: z.number(),
+  environmentId: z.string().optional(),
 });
 
 export const DeleteEntityRequestSchema = z.object({

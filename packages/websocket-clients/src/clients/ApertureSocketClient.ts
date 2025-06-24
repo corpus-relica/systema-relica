@@ -217,7 +217,7 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   ): Promise<any> {
     const payload = {
       userId,
-      entityUid: uid,
+      uid,
       environmentId,
     };
     return this.sendRequestMessage(

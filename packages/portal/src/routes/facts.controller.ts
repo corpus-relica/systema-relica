@@ -90,7 +90,6 @@ export class FactsController {
   })
   async getSubtypesCone(@User() user: any, @Query("uid") uid: string) {
     try {
-      console.log("GOT THIS FAR?");
       if (!uid) {
         throw new BadRequestException("uid parameter is required");
       }
