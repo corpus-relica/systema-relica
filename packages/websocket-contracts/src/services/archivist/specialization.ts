@@ -9,12 +9,12 @@ export const SpecializationActions = {
 // Request schemas
 export const SpecializationFactGetRequestSchema = z.object({
   uid: z.number(),
-  'user-id': z.number().optional(),
+  userId: z.number().optional(),
 });
 
 export const SpecializationHierarchyGetRequestSchema = z.object({
   uid: z.number(),
-  'user-id': z.number().optional(),
+  userId: z.number().optional(),
 });
 
 // Response schemas

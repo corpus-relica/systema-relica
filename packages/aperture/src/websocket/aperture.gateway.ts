@@ -220,7 +220,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_TEXT)
   async searchLoadText(@MessageBody() message: any) {
     try {
-      const { "user-id": userId, term } = message.payload;
+      const { userId, term } = message.payload;
 
       // Get text search results from Archivist
       const searchResult = await this.archivistClient.textSearch({
@@ -268,7 +268,7 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_UID)
   async searchLoadUid(@MessageBody() message: any) {
     try {
-      const { "user-id": userId, uid } = message.payload;
+      const { userId, uid } = message.payload;
 
       // Get UID search results from Archivist
       const searchResult = await this.archivistClient.uidSearch({
@@ -317,8 +317,8 @@ export class ApertureGateway
   async specializationLoadFact(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
+        userId,
+        environmentId: envId,
         uid,
       } = message.payload;
 
@@ -470,9 +470,9 @@ export class ApertureGateway
   async entityUnload(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get environment
@@ -527,8 +527,8 @@ export class ApertureGateway
       return toResponse(
         {
           environment: updatedEnvironment,
-          "fact-uids-removed": factUidsToRemove,
-          "model-uids-removed": finalModelUidsToRemove,
+          factUidsRemoved: factUidsToRemove,
+          modelUidsRemoved: finalModelUidsToRemove,
         },
         message.id
       );
@@ -596,9 +596,9 @@ export class ApertureGateway
   async entityUnloadMultiple(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uids": entityUids,
+        userId,
+        environmentId: envId,
+        entityUids,
       } = message.payload;
 
       // Get environment
@@ -654,8 +654,8 @@ export class ApertureGateway
       return toResponse(
         {
           environment: updatedEnvironment,
-          "fact-uids-removed": factUidsToRemove,
-          "model-uids-removed": finalModelUidsToRemove,
+          factUidsRemoved: factUidsToRemove,
+          modelUidsRemoved: finalModelUidsToRemove,
         },
         message.id
       );
@@ -693,9 +693,9 @@ export class ApertureGateway
   async subtypeLoad(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get subtypes from Archivist
@@ -740,9 +740,9 @@ export class ApertureGateway
   async subtypeLoadCone(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get subtypes cone from Archivist
@@ -787,9 +787,9 @@ export class ApertureGateway
   async subtypeUnloadCone(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get environment
@@ -845,8 +845,8 @@ export class ApertureGateway
       return toResponse(
         {
           environment: updatedEnvironment,
-          "fact-uids-removed": factUidsToRemove,
-          "model-uids-removed": finalModelUidsToRemove,
+          factUidsRemoved: factUidsToRemove,
+          modelUidsRemoved: finalModelUidsToRemove,
         },
         message.id
       );
@@ -861,9 +861,9 @@ export class ApertureGateway
   async classificationLoad(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get classified entities from Archivist
@@ -908,9 +908,9 @@ export class ApertureGateway
   async classificationLoadFact(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get classification fact from Archivist
@@ -957,9 +957,9 @@ export class ApertureGateway
   async compositionLoad(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get composition relationships from Archivist (1190 is composition relation type)
@@ -1007,9 +1007,9 @@ export class ApertureGateway
   async compositionLoadIn(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get incoming composition relationships from Archivist (1190 is composition relation type)
@@ -1061,9 +1061,9 @@ export class ApertureGateway
   async connectionLoad(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get connection relationships from Archivist (1487 is connection relation type)
@@ -1111,9 +1111,9 @@ export class ApertureGateway
   async connectionLoadIn(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
-        "entity-uid": entityUid,
+        userId,
+        environmentId: envId,
+        entityUid,
       } = message.payload;
 
       // Get incoming connection relationships from Archivist (1487 is connection relation type)
@@ -1165,8 +1165,8 @@ export class ApertureGateway
   async relationRequiredRolesLoad(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
+        userId,
+        environmentId: envId,
         uid,
       } = message.payload;
 
@@ -1212,8 +1212,8 @@ export class ApertureGateway
   async relationRolePlayersLoad(@MessageBody() message: any) {
     try {
       const {
-        "user-id": userId,
-        "environment-id": envId,
+        userId,
+        environmentId: envId,
         uid,
       } = message.payload;
 

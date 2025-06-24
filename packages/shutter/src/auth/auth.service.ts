@@ -47,7 +47,7 @@ export class AuthService {
     await this.usersService.updateLastLogin(user.id);
 
     const payload = {
-      'user-id': user.id,
+      userId: user.id,
       email: user.email,
       admin: user.is_admin,
     };
@@ -92,7 +92,7 @@ export class AuthService {
 
   async createGuestToken() {
     const payload = {
-      'user-id': 'guest',
+      userId: 'guest',
       email: 'guest',
       roles: ['setup'],
       guest: true,

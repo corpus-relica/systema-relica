@@ -70,15 +70,15 @@ export const ApertureEvents = {
 
 // Base schemas
 const BaseUserPayloadSchema = z.object({
-  'user-id': z.number(),
+  userId: z.number(),
 });
 
 const BaseEnvironmentPayloadSchema = BaseUserPayloadSchema.extend({
-  'environment-id': z.number().optional(),
+  environmentId: z.number().optional(),
 });
 
 const BaseEntityPayloadSchema = BaseEnvironmentPayloadSchema.extend({
-  'entity-uid': z.number(),
+  entityUid: z.number(),
 });
 
 // Environment Operations
@@ -114,11 +114,11 @@ export const EntitySelectRequestSchema = BaseEntityPayloadSchema;
 export const EntityDeselectRequestSchema = BaseEnvironmentPayloadSchema;
 
 export const EntityLoadMultipleRequestSchema = BaseEnvironmentPayloadSchema.extend({
-  'entity-uids': z.array(z.number()),
+  entityUids: z.array(z.number()),
 });
 
 export const EntityUnloadMultipleRequestSchema = BaseEnvironmentPayloadSchema.extend({
-  'entity-uids': z.array(z.number()),
+  entityUids: z.array(z.number()),
 });
 
 // Subtype Operations
@@ -173,8 +173,8 @@ export const SuccessResponseSchema = z.object({
   success: z.literal(true),
   environment: EnvironmentSchema.optional(),
   facts: z.array(FactSchema).optional(),
-  'fact-uids-removed': z.array(z.number()).optional(),
-  'model-uids-removed': z.array(z.number()).optional(),
+  factUidsRemoved: z.array(z.number()).optional(),
+  modelUidsRemoved: z.array(z.number()).optional(),
 });
 
 export const ErrorResponseSchema = z.object({
@@ -188,8 +188,8 @@ export const ApertureResponseSchema = z.union([SuccessResponseSchema, ErrorRespo
 export const FactsLoadedEventSchema = z.object({
   type: z.literal('aperture.facts/loaded'),
   facts: z.array(FactSchema),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 export const FactsUnloadedEventSchema = z.object({
@@ -202,15 +202,15 @@ export const FactsUnloadedEventSchema = z.object({
 
 export const EntitySelectedEventSchema = z.object({
   type: z.literal('aperture.entity/selected'),
-  'entity-uid': z.number(),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  entityUid: z.number(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 export const EntityDeselectedEventSchema = z.object({
   type: z.literal('aperture.entity/deselected'),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 // Type exports

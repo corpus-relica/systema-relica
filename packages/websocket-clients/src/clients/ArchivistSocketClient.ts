@@ -73,7 +73,7 @@ export class ArchivistSocketClient extends BaseWebSocketClient {
     // getSpecializationHierarchy(userId: number, uid: number) - Aperture style
     if (uid !== undefined) {
       // Aperture-style call with userId
-      const payload = { uid, "user-id": uidOrUserId };
+      const payload = { uid, userId: uidOrUserId };
       return this.sendRequestMessage(
         SpecializationActions.SPECIALIZATION_HIERARCHY_GET,
         payload
@@ -86,7 +86,7 @@ export class ArchivistSocketClient extends BaseWebSocketClient {
   }
 
   async getSpecializationFact(userId: number, uid: number): Promise<any> {
-    const payload = { uid, "user-id": userId };
+    const payload = { uid, userId };
     return this.sendRequestMessage(
       SpecializationActions.SPECIALIZATION_FACT_GET,
       payload

@@ -155,7 +155,7 @@ class PortalWebSocketClient extends EventEmitter {
     const clientID = this.clientId;
 
     if (this.ws?.readyState === WebSocket.OPEN && userID) {
-      const finalPayload = { ...payload, "user-id": userID, "client-id": clientID};
+      const finalPayload = { ...payload, userId: userID, clientId: clientID};
       this.ws.send(
         JSON.stringify({
           id,

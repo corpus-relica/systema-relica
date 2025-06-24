@@ -78,9 +78,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(ApertureActions.ENTITY_LOAD, payload);
   }
@@ -91,9 +91,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(ApertureActions.ENTITY_UNLOAD, payload);
   }
@@ -105,7 +105,7 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   ): Promise<any> {
     const payload = {
       userId,
-      uids,
+      entityUids: uids,
       environmentId,
     };
     return this.sendRequestMessage(
@@ -120,9 +120,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uids": uids,
-      "environment-id": environmentId,
+      userId,
+      entityUids: uids,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.ENTITY_UNLOAD_MULTIPLE,
@@ -135,12 +135,12 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   // =====================================================
 
   async searchLoadText(userId: number, term: string): Promise<any> {
-    const payload = { "user-id": userId, term };
+    const payload = { userId, term };
     return this.sendRequestMessage(ApertureActions.SEARCH_LOAD_TEXT, payload);
   }
 
   async searchLoadUid(userId: number, uid: number): Promise<any> {
-    const payload = { "user-id": userId, uid };
+    const payload = { userId, uid };
     return this.sendRequestMessage(ApertureActions.SEARCH_LOAD_UID, payload);
   }
 
@@ -170,9 +170,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
+      userId,
       uid,
-      "environment-id": environmentId,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.SPECIALIZATION_LOAD_FACT,
@@ -190,9 +190,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(ApertureActions.SUBTYPE_LOAD, payload);
   }
@@ -203,9 +203,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(ApertureActions.SUBTYPE_LOAD_CONE, payload);
   }
@@ -216,9 +216,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.SUBTYPE_UNLOAD_CONE,
@@ -236,9 +236,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.CLASSIFICATION_LOAD,
@@ -252,9 +252,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.CLASSIFICATION_LOAD_FACT,
@@ -272,9 +272,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(ApertureActions.COMPOSITION_LOAD, payload);
   }
@@ -285,9 +285,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.COMPOSITION_LOAD_IN,
@@ -305,9 +305,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(ApertureActions.CONNECTION_LOAD, payload);
   }
@@ -318,9 +318,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
-      "entity-uid": uid,
-      "environment-id": environmentId,
+      userId,
+      entityUid: uid,
+      environmentId,
     };
     return this.sendRequestMessage(ApertureActions.CONNECTION_LOAD_IN, payload);
   }
@@ -335,9 +335,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
+      userId,
       uid,
-      "environment-id": environmentId,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.RELATION_REQUIRED_ROLES_LOAD,
@@ -351,9 +351,9 @@ export class ApertureSocketClient extends BaseWebSocketClient {
     environmentId?: number
   ): Promise<any> {
     const payload = {
-      "user-id": userId,
+      userId,
       uid,
-      "environment-id": environmentId,
+      environmentId,
     };
     return this.sendRequestMessage(
       ApertureActions.RELATION_ROLE_PLAYERS_LOAD,
