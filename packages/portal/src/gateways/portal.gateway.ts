@@ -465,6 +465,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() message: any
   ): Promise<any> {
     try {
+      console.log("LOAD CONE", message);
       const payload = message.payload;
       // Validate payload
       const validation = LoadSubtypesConeRequestSchema.safeParse(payload);
@@ -482,9 +483,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Call Aperture service to load subtypes cone
       const result = await this.apertureClient.loadSubtypesCone(
-        Number(userId),
-        Number(uid),
-        Number(environmentId)
+        userId,
+        uid,
+        environmentId
       );
 
       if (!result) {

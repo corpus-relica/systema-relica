@@ -66,9 +66,7 @@ export class FactsController {
         throw new BadRequestException("uid must be a valid number");
       }
 
-      console.log("GET SUBTYPES", uidNumber);
       const subtypes = await this.archivistClient.getSubtypes(uidNumber);
-      console.log("GOT SUBTYPES", subtypes);
 
       return {
         success: true,
@@ -92,6 +90,7 @@ export class FactsController {
   })
   async getSubtypesCone(@User() user: any, @Query("uid") uid: string) {
     try {
+      console.log("GOT THIS FAR?");
       if (!uid) {
         throw new BadRequestException("uid parameter is required");
       }

@@ -723,21 +723,23 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD_CONE)
   async subtypeLoadCone(@MessageBody() message: any) {
     try {
-      const { userId, environmentId: envId, entityUid } = message.payload;
+      const { userId, environmentId, uid } = message.payload;
 
+      console.log("LOAD CONE", message);
+      console.log(userId, environmentId, uid);
       // Get subtypes cone from Archivist
-      const result = await this.archivistClient.getSubtypesCone(entityUid);
+      const result = await this.archivistClient.getSubtypesCone(uid);
 
       // Get environment
-      const environment = envId
+      const environment = environmentId
         ? await this.environmentService.findOne(
-            envId.toString(),
+            environmentId.toString(),
             userId.toString()
           )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // Add facts to environment
-      const facts = result.facts || [];
+      const facts = result;
       let updatedEnvironment = environment;
       if (facts.length > 0) {
         updatedEnvironment = await this.environmentService.addFacts(

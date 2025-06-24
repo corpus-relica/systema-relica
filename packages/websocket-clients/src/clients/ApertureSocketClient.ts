@@ -200,11 +200,11 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   async loadSubtypesCone(
     userId: number,
     uid: number,
-    environmentId?: number
+    environmentId?: string
   ): Promise<any> {
     const payload = {
       userId,
-      entityUid: uid,
+      uid,
       environmentId,
     };
     return this.sendRequestMessage(ApertureActions.SUBTYPE_LOAD_CONE, payload);

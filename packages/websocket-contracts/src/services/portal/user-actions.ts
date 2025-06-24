@@ -22,7 +22,7 @@ export const PortalUserActions = {
 // Request schemas for user actions
 export const SelectEntityRequestSchema = z.object({
   userId: z.number(),
-  environmentId: z.string().optional(), // Optional for environments
+  environmentId: z.string(),
   uid: z.number(),
 });
 
@@ -38,6 +38,7 @@ export const SelectNoneRequestSchema = z.object({
 export const LoadSpecializationHierarchyRequestSchema = z.object({
   uid: z.union([z.string(), z.number()]),
   userId: z.union([z.string(), z.number()]),
+  environmentId: z.string(),
 });
 
 export const LoadEntityRequestSchema = z.object({
@@ -47,7 +48,7 @@ export const LoadEntityRequestSchema = z.object({
 
 export const ClearEntitiesRequestSchema = z.object({
   userId: z.number(),
-  environmentId: z.string().optional(), // Optional for environments
+  environmentId: z.string(), // Optional for environments
 });
 
 export const LoadAllRelatedFactsRequestSchema = z.object({
@@ -56,8 +57,9 @@ export const LoadAllRelatedFactsRequestSchema = z.object({
 });
 
 export const LoadSubtypesConeRequestSchema = z.object({
-  uid: z.union([z.string(), z.number()]),
-  userId: z.string().optional(),
+  uid: z.number(),
+  userId: z.number(),
+  environmentId: z.string(),
 });
 
 export const UnloadEntityRequestSchema = z.object({

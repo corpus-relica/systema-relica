@@ -246,7 +246,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
   async loadSubtypesCone(
     userId: number,
     uid: number,
-    environmentId?: number
+    environmentId: string
   ): Promise<any> {
     const result = await this.apertureClient.loadSubtypesCone(
       userId,
