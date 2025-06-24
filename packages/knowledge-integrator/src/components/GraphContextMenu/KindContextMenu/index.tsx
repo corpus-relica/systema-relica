@@ -83,7 +83,11 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       const environmentId = rootStore.environmentId;
       switch (value) {
         case LOAD_SH:
-          portalSocket.emit("user", "loadSpecializationHierarchy", { uid });
+          portalSocket.emit("user", "loadSpecializationHierarchy", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case LOAD_CLASSIFIED:
@@ -131,15 +135,27 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_SUBTYPES_CONE:
-          portalSocket.emit("user", "loadSubtypesCone", { uid });
+          portalSocket.emit("user", "loadSubtypesCone", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case UNLOAD_THIS:
-          portalSocket.emit("user", "unloadEntity", { uid });
+          portalSocket.emit("user", "unloadEntity", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case UNLOAD_SUBTYPES_CONE:
-          portalSocket.emit("user", "unloadSubtypesCone", { uid });
+          portalSocket.emit("user", "unloadSubtypesCone", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case DELETE_THIS:

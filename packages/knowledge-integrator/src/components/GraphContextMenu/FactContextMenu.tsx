@@ -10,6 +10,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
 import { portalSocket } from "../../PortalSocket";
+import { useStores } from "../../context/RootStoreContext";
 
 const CLEAR_ALL = "Clear all";
 const REM_THIS = "rem this";
@@ -39,23 +40,44 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     relType,
   } = props;
 
+  const rootStore = useStores();
+  const { authStore } = rootStore;
+
   const handleItemClick = (e) => {
     const value = e.currentTarget.getAttribute("value");
     switch (value) {
-      case CLEAR_ALL:
-        portalSocket.emit("user", "clearEntities", {});
+      case CLEAR_ALL: {
+        const userId = authStore.userId;
+        const environmentId = rootStore.environmentId;
+        portalSocket.emit("user", "clearEntities", {
+          userId,
+          environmentId,
+        });
         handleClose();
         break;
-      case DELETE_THIS:
+      }
+      case DELETE_THIS: {
         setUidToDelete(uid);
         setWarnIsOpen(true);
         handleClose();
         break;
-      case REIFY:
-        portalSocket.emit("user", "loadSpecializationHierarchy", { uid: relType });
-        portalSocket.emit("user", "selectEntity", { uid: relType });
+      }
+      case REIFY: {
+        const userId = authStore.userId;
+        const environmentId = rootStore.environmentId;
+        portalSocket.emit("user", "loadSpecializationHierarchy", {
+          userId,
+          environmentId,
+          uid: relType,
+        });
+        portalSocket.emit("user", "selectEntity", {
+          userId,
+          environmentId,
+          uid: relType,
+        });
         handleClose();
         break;
+      }
       default:
         break;
     }

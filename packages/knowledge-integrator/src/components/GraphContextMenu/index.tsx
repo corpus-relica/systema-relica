@@ -143,7 +143,13 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={() => {
             setWarnIsOpen(false);
-            portalSocket.emit("user", "deleteEntity", { uid: uidToDelete });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "deleteEntity", {
+              userId,
+              environmentId,
+              uid: uidToDelete,
+            });
           }}
         />
       )}
@@ -156,7 +162,13 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={() => {
             setFactWarnIsOpen(false);
-            portalSocket.emit("user", "deleteFact", { uid: factUidToDelete });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "deleteFact", {
+              userId,
+              environmentId,
+              uid: factUidToDelete,
+            });
           }}
         />
       )}
