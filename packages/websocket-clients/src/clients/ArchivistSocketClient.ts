@@ -104,7 +104,7 @@ export class ArchivistSocketClient extends BaseWebSocketClient {
 
   async retrieveAllFacts(uid: number): Promise<any> {
     const payload = { uid };
-    return this.sendRequestMessage(FactActions.GET, payload);
+    return this.sendRequestMessage(FactActions.GET_ALL_RELATED, payload);
   }
 
   async getDefinitiveFacts(uid: number): Promise<any> {
