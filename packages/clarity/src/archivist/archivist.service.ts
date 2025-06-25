@@ -61,8 +61,13 @@ export class ArchivistService {
     lh_object_uid: number,
     rel_type_uid: number,
   ) {
-    this.logger.log(`Getting related on UID subtype cone for lh_object_uid: ${lh_object_uid}, rel_type_uid: ${rel_type_uid}`);
-    return this.webSocketClient.getRelatedOnUIDSubtypeCone(lh_object_uid, rel_type_uid);
+    this.logger.log(
+      `Getting related on UID subtype cone for lh_object_uid: ${lh_object_uid}, rel_type_uid: ${rel_type_uid}`,
+    );
+    return this.webSocketClient.getRelatedOnUIDSubtypeCone(
+      lh_object_uid,
+      rel_type_uid,
+    );
   }
 
   async getEntityType(uid: number) {
@@ -71,7 +76,9 @@ export class ArchivistService {
   }
 
   async getFactsRelatingEntities(uid1: number, uid2: number) {
-    this.logger.log(`Getting facts relating entities uid1: ${uid1}, uid2: ${uid2}`);
+    this.logger.log(
+      `Getting facts relating entities uid1: ${uid1}, uid2: ${uid2}`,
+    );
     return this.webSocketClient.getFactsRelatingEntities(uid1, uid2);
   }
 
@@ -88,8 +95,15 @@ export class ArchivistService {
     name: string,
     definition: string,
   ) {
-    this.logger.log(`Creating kind: ${name} as specialization of ${parentName} (${parentUID})`);
-    return this.webSocketClient.createKind(parentUID, parentName, name, definition);
+    this.logger.log(
+      `Creating kind: ${name} as specialization of ${parentName} (${parentUID})`,
+    );
+    return this.webSocketClient.createKind(
+      parentUID,
+      parentName,
+      name,
+      definition,
+    );
   }
 
   async createIndividual(
@@ -98,8 +112,15 @@ export class ArchivistService {
     name: string,
     definition: string,
   ) {
-    this.logger.log(`Creating individual: ${name} classified as ${kindName} (${kindUID})`);
-    return this.webSocketClient.createIndividual(kindUID, kindName, name, definition);
+    this.logger.log(
+      `Creating individual: ${name} classified as ${kindName} (${kindUID})`,
+    );
+    return this.webSocketClient.createIndividual(
+      kindUID,
+      kindName,
+      name,
+      definition,
+    );
   }
 
   async deleteEntity(uid: number) {
@@ -128,7 +149,11 @@ export class ArchivistService {
     full_definition: string,
   ) {
     this.logger.log(`Submitting definition for fact_uid: ${fact_uid}`);
-    return this.webSocketClient.submitDefinition(fact_uid, partial_definition, full_definition);
+    return this.webSocketClient.submitDefinition(
+      fact_uid,
+      partial_definition,
+      full_definition,
+    );
   }
 
   async submitCollection(
@@ -137,7 +162,11 @@ export class ArchivistService {
     collection_name: string,
   ) {
     this.logger.log(`Submitting collection for fact_uid: ${fact_uid}`);
-    return this.webSocketClient.submitCollection(fact_uid, collection_uid, collection_name);
+    return this.webSocketClient.submitCollection(
+      fact_uid,
+      collection_uid,
+      collection_name,
+    );
   }
 
   async submitName(fact_uid: number, name: string) {

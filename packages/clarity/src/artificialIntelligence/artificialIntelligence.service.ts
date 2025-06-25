@@ -27,7 +27,7 @@ export class ArtificialIntelligenceService {
       )
       .join('\n');
 
-    let sysPrompt: string = `
+    const sysPrompt: string = `
 You are an expert in ontology and concept hierarchies. You've been given a hierarchical structure of concepts, each defined in the format:
 
 [Specific Concept] : is a specialization of : [General Concept] :: [Definition]

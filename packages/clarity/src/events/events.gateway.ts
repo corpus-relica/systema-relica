@@ -7,6 +7,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ArchivistService } from '../archivist/archivist.service';
 import { ModelService } from '../model/model.service';
+import { SemanticModelService } from '../services/semantic-model.service';
 import { Logger } from '@nestjs/common';
 import { ClarityActions } from '@relica/websocket-contracts';
 import { toResponse, toErrorResponse } from '@relica/websocket-contracts';
@@ -28,6 +29,7 @@ export class EventsGateway {
   constructor(
     private readonly archivistService: ArchivistService,
     private readonly modelService: ModelService,
+    private readonly semanticModelService: SemanticModelService,
   ) {}
 
   afterInit(server: Server) {
@@ -52,10 +54,11 @@ export class EventsGateway {
 
   @SubscribeMessage(ClarityActions.MODEL_GET)
   async getModel(@MessageBody() message: any) {
+    console.log('HELLO?', message);
     try {
       const { uid } = message.payload;
       this.logger.log('GET MODEL:', uid);
-      const model = await this.modelService.retrieveModel(+uid);
+      const model = await this.semanticModelService.retrieveSemanticModel(+uid);
       console.log('Retrieved model:', model);
       return toResponse(model, message.id);
     } catch (error) {
@@ -69,7 +72,8 @@ export class EventsGateway {
     try {
       const { uids } = message.payload;
       this.logger.log('GET MODELS:', uids);
-      const models = await this.modelService.retrieveModels(uids);
+      const models =
+        await this.semanticModelService.retrieveSemanticModels(uids);
       return toResponse(models, message.id);
     } catch (error) {
       this.logger.error('Error retrieving models:', error);
@@ -82,7 +86,7 @@ export class EventsGateway {
     try {
       const { uid } = message.payload;
       this.logger.log('GET KIND MODEL:', uid);
-      const model = await this.modelService.retrieveKindModel(uid);
+      const model = await this.semanticModelService.retrieveSemanticModel(uid);
       return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving kind model:', error);
@@ -95,7 +99,7 @@ export class EventsGateway {
     try {
       const { uid } = message.payload;
       this.logger.log('GET INDIVIDUAL MODEL:', uid);
-      const model = await this.modelService.retrieveIndividualModel(uid);
+      const model = await this.semanticModelService.retrieveSemanticModel(uid);
       return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving individual model:', error);
@@ -107,7 +111,11 @@ export class EventsGateway {
   async updateDefinition(@MessageBody() message: any) {
     try {
       const { uid, partial_definition, full_definition } = message.payload;
-      this.logger.log('UPDATE DEFINITION:', { uid, partial_definition, full_definition });
+      this.logger.log('UPDATE DEFINITION:', {
+        uid,
+        partial_definition,
+        full_definition,
+      });
       const result = await this.modelService.updateDefinition(
         uid,
         partial_definition,
@@ -137,7 +145,11 @@ export class EventsGateway {
   async updateCollection(@MessageBody() message: any) {
     try {
       const { fact_uid, collection_uid, collection_name } = message.payload;
-      this.logger.log('UPDATE COLLECTION:', { fact_uid, collection_uid, collection_name });
+      this.logger.log('UPDATE COLLECTION:', {
+        fact_uid,
+        collection_uid,
+        collection_name,
+      });
       const result = await this.modelService.updateCollection(
         fact_uid,
         collection_uid,
