@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { ArchivistModule } from '../archivist/archivist.module';
@@ -11,7 +11,7 @@ import { OccurrenceModelService } from './occurrence-model.service';
 import { SemanticModelService } from './semantic-model.service';
 
 @Module({
-  imports: [ConfigModule, ArchivistModule],
+  imports: [ConfigModule, forwardRef(() => ArchivistModule)],
   providers: [
     ArchivistSocketClient,
     EntityModelService,
