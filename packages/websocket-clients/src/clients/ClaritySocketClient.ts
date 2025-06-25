@@ -1,12 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { BaseWebSocketClient } from './PortalSocketClient';
+import { BaseWebSocketClient } from "./PortalSocketClient";
 import { ClarityActions } from "@relica/websocket-contracts";
 
 @Injectable()
 export class ClaritySocketClient extends BaseWebSocketClient {
   constructor(configService: ConfigService) {
-    super(configService, 'clarity', 3001);
+    super(configService, "clarity", 3001);
   }
 
   // ClaritySocketClient doesn't need service-specific event handlers
@@ -45,8 +45,9 @@ export class ClaritySocketClient extends BaseWebSocketClient {
   // KIND OPERATIONS
   // =====================================================
 
-  async getKindModel(uid: string): Promise<any> {
+  async getKindModel(uid: number): Promise<any> {
     const payload = { uid };
+    console.log("SEND PAYLOAD!!!", payload);
     return this.sendRequestMessage(ClarityActions.KIND_GET, payload);
   }
 

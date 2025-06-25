@@ -51,7 +51,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
     const foo = async () => {
       if (uid) {
         if (type === "entity") {
-          const kind = (await getEntityType(uid)).type;
+          const kind = await getEntityType(uid);
           const category = await getEntityCategory(uid);
 
           console.log("KIND: ", kind, "CATEGORY: ", category);

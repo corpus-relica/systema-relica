@@ -82,10 +82,11 @@ export const textSearch = async (
 };
 
 export const getEntityType = async (uid: number) => {
-  const type = await axiosInstance.get(ENTITY_TYPE_ENDPOINT, {
+  const result = await axiosInstance.get(ENTITY_TYPE_ENDPOINT, {
     params: { uid },
   });
-  return type.data;
+  console.log("XXXXX", result.data);
+  return result.data.type;
 };
 
 export const getEntityCategory = async (uid: number) => {

@@ -54,12 +54,10 @@ export class EventsGateway {
 
   @SubscribeMessage(ClarityActions.MODEL_GET)
   async getModel(@MessageBody() message: any) {
-    console.log('HELLO?', message);
     try {
       const { uid } = message.payload;
       this.logger.log('GET MODEL:', uid);
-      const model = await this.semanticModelService.retrieveSemanticModel(+uid);
-      console.log('Retrieved model:', model);
+      const model = await this.semanticModelService.retrieveSemanticModel(uid);
       return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving model:', error);
@@ -81,12 +79,12 @@ export class EventsGateway {
     }
   }
 
-  @SubscribeMessage('clarity.kind/get')
+  @SubscribeMessage(ClarityActions.KIND_GET)
   async getKindModel(@MessageBody() message: any) {
     try {
       const { uid } = message.payload;
       this.logger.log('GET KIND MODEL:', uid);
-      const model = await this.semanticModelService.retrieveSemanticModel(uid);
+      const model = await this.semanticModelService.retrieveSemanticModel(+uid);
       return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving kind model:', error);
