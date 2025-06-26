@@ -88,6 +88,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Set up the broadcast forwarding after initialization
     this.prismClient.setPortalGateway(this);
     this.apertureClient.setPortalGateway(this);
+    this.nousClient.setPortalGateway(this);
   }
 
   handleConnection(client: Socket) {
@@ -526,9 +527,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Call Aperture service to unload entity
       const result = await this.apertureClient.unloadEntity(
-        Number(userId),
-        Number(uid),
-        Number(environmentId)
+        userId,
+        uid,
+        environmentId
       );
 
       if (!result) {
@@ -694,7 +695,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Call Aperture service to load multiple entities
       const result = await this.apertureClient.loadMultipleEntities(
-        Number(userId),
+        userId,
         uids,
         environmentId
       );
@@ -802,50 +803,45 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage("chatUserInput")
+  @SubscribeMessage(PortalUserActions.CHAT_USER_INPUT)
   async handleChatUserInput(
     @ConnectedSocket() client: Socket,
     @MessageBody() message: any
   ): Promise<any> {
     try {
+      console.log("CHAT INPUT", message);
+
       const payload = message.payload;
       const clientData = this.connectedClients.get(client.id);
-      if (!clientData) {
-        const error = new Error("Not authenticated");
-        this.logger.error("Chat input authentication failed", error);
-        return toErrorResponse(error, message.id);
-      }
+      // if (!clientData) {
+      //   const error = new Error("Not authenticated");
+      //   this.logger.error("Chat input authentication failed", error);
+      //   return toErrorResponse(error, message.id);
+      // }
 
       // Get environment context for the user
-      const environmentId = clientData.environmentId || "1";
+      const environmentId = payload.environmentId || "1";
 
-      // Process chat input through NOUS
+      // Process chat input through NOUS - this returns only receipt acknowledgment
       const result = await this.nousClient.processChatInput(
         payload.message,
-        payload.userId || clientData.userId,
+        payload.userId,
         {
           environmentId,
           timestamp: Date.now(),
         }
       );
 
-      // Broadcast AI response to environment
-      this.broadcastToEnvironment(environmentId, {
-        id: "system",
-        type: "portal:aiResponse",
-        payload: {
-          type: "nous.chat/response",
-          message: result.response,
-          userId: payload.userId || clientData.userId,
-          environment_id: environmentId,
-          metadata: result.metadata,
-        },
-      });
+      console.log("CHAT INPUT RECEIPT", result);
+
+      // Note: The actual AI response will come via event forwarding
+      // from NousWebSocketClientService when the nous.chat/response event is received
+      // No need to broadcast here - the event forwarding handles it automatically
 
       const data = {
-        message: "Chat input processed",
-        response: result.response,
-        metadata: result.metadata,
+        message: result.message,
+        success: result.success,
+        timestamp: result.timestamp,
       };
       return toResponse(data, message.id);
     } catch (error) {

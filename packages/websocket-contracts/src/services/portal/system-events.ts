@@ -1,18 +1,25 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // System event constants - events sent FROM portal TO knowledge-integrator
 export const PortalSystemEvents = {
-  LOADED_FACTS: 'system:loadedFacts',
-  UNLOADED_FACTS: 'system:unloadedFacts',
-  SELECTED_ENTITY: 'system:selectedEntity',
-  SELECTED_FACT: 'system:selectedFact',
-  SELECTED_NONE: 'system:selectedNone',
-  ENTITIES_CLEARED: 'system:entitiesCleared',
-  STATE_INITIALIZED: 'system:stateInitialized',
-  STATE_CHANGED: 'system:stateChanged',
-  LOADED_MODELS: 'system:loadedModels',
-  UNLOADED_MODELS: 'system:unloadedModels',
-  UPDATE_CATEGORY_DESCENDANTS_CACHE: 'system:updateCategoryDescendantsCache',
+  LOADED_FACTS: "system:loadedFacts",
+  UNLOADED_FACTS: "system:unloadedFacts",
+  SELECTED_ENTITY: "system:selectedEntity",
+  SELECTED_FACT: "system:selectedFact",
+  SELECTED_NONE: "system:selectedNone",
+  ENTITIES_CLEARED: "system:entitiesCleared",
+  STATE_INITIALIZED: "system:stateInitialized",
+  STATE_CHANGED: "system:stateChanged",
+  LOADED_MODELS: "system:loadedModels",
+  UNLOADED_MODELS: "system:unloadedModels",
+  UPDATE_CATEGORY_DESCENDANTS_CACHE: "system:updateCategoryDescendantsCache",
+  CHAT_FINAL_ANSER: "portal:finalAnswer",
+  // NOUS Events
+  NOUS_CHAT_RESPONSE: "system:nousChatResponse",
+  NOUS_CHAT_ERROR: "system:nousChatError", 
+  NOUS_AI_RESPONSE: "system:nousAiResponse",
+  NOUS_AI_ERROR: "system:nousAiError",
+  NOUS_CONNECTION_STATUS: "system:nousConnectionStatus",
 } as const;
 
 // Event payload schemas
@@ -53,10 +60,12 @@ export const StateChangedEventSchema = z.object({
 });
 
 export const LoadedModelsEventSchema = z.object({
-  models: z.array(z.object({
-    uid: z.union([z.string(), z.number()]),
-    // Additional model properties as needed
-  })),
+  models: z.array(
+    z.object({
+      uid: z.union([z.string(), z.number()]),
+      // Additional model properties as needed
+    })
+  ),
 });
 
 export const UnloadedModelsEventSchema = z.object({
@@ -65,6 +74,43 @@ export const UnloadedModelsEventSchema = z.object({
 
 export const UpdateCategoryDescendantsCacheEventSchema = z.object({
   // Category cache update event payload
+});
+
+// NOUS Event Schemas
+export const NOUSChatResponseEventSchema = z.object({
+  response: z.string(),
+  metadata: z.object({
+    user_id: z.string().optional(),
+    processed_at: z.number(),
+    status: z.string(),
+    context: z.record(z.unknown()).optional()
+  })
+});
+
+export const NOUSChatErrorEventSchema = z.object({
+  error: z.string(),
+  timestamp: z.number().optional(),
+  details: z.record(z.unknown()).optional()
+});
+
+export const NOUSAIResponseEventSchema = z.object({
+  response: z.string(),
+  metadata: z.object({
+    generated_at: z.number(),
+    context: z.record(z.unknown()).optional()
+  })
+});
+
+export const NOUSAIErrorEventSchema = z.object({
+  error: z.string(),
+  timestamp: z.number().optional(),
+  details: z.record(z.unknown()).optional()
+});
+
+export const NOUSConnectionStatusEventSchema = z.object({
+  message: z.string(),
+  timestamp: z.number(),
+  connected: z.boolean().optional()
 });
 
 // Type exports
@@ -78,7 +124,15 @@ export type StateInitializedEvent = z.infer<typeof StateInitializedEventSchema>;
 export type StateChangedEvent = z.infer<typeof StateChangedEventSchema>;
 export type LoadedModelsEvent = z.infer<typeof LoadedModelsEventSchema>;
 export type UnloadedModelsEvent = z.infer<typeof UnloadedModelsEventSchema>;
-export type UpdateCategoryDescendantsCacheEvent = z.infer<typeof UpdateCategoryDescendantsCacheEventSchema>;
+export type UpdateCategoryDescendantsCacheEvent = z.infer<
+  typeof UpdateCategoryDescendantsCacheEventSchema
+>;
+export type NOUSChatResponseEvent = z.infer<typeof NOUSChatResponseEventSchema>;
+export type NOUSChatErrorEvent = z.infer<typeof NOUSChatErrorEventSchema>;
+export type NOUSAIResponseEvent = z.infer<typeof NOUSAIResponseEventSchema>;
+export type NOUSAIErrorEvent = z.infer<typeof NOUSAIErrorEventSchema>;
+export type NOUSConnectionStatusEvent = z.infer<typeof NOUSConnectionStatusEventSchema>;
 
 // Event type union
-export type PortalSystemEventType = typeof PortalSystemEvents[keyof typeof PortalSystemEvents];
+export type PortalSystemEventType =
+  (typeof PortalSystemEvents)[keyof typeof PortalSystemEvents];

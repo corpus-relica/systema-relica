@@ -230,7 +230,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
   async unloadEntity(
     userId: number,
     uid: number,
-    environmentId?: number
+    environmentId?: string
   ): Promise<any> {
     const result = await this.apertureClient.unloadEntity(
       userId,
@@ -278,7 +278,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
   async loadMultipleEntities(
     userId: number,
     uids: number[],
-    environmentId: string
+    environmentId?: string
   ): Promise<any> {
     const result = await this.apertureClient.loadMultipleEntities(
       userId,

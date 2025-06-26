@@ -2,13 +2,14 @@ export { ArchivistSocketClient } from './clients/ArchivistSocketClient';
 export { ClaritySocketClient } from './clients/ClaritySocketClient';
 export { ApertureSocketClient } from './clients/ApertureSocketClient';
 export { PrismSocketClient } from './clients/PrismSocketClient';
+export { NOUSSocketClient } from './clients/NOUSSocketClient';
+export { PortalSocketClient } from './clients/PortalSocketClient';
 export { 
-  PortalSocketClient, 
   BaseWebSocketClient,
   type ServiceMessage,
   type ServiceResponse,
   type WebSocketServiceClient 
-} from './clients/PortalSocketClient';
+} from './clients/BaseWebSocketClient';
 
 // Re-export commonly used types for convenience
 export type {
@@ -30,4 +31,6 @@ export type {
   ApertureEvents,
   PrismActions,
   PrismEvents,
+  NOUSActions,
+  NOUSEvents,
 } from '@relica/websocket-contracts';

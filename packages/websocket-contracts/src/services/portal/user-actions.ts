@@ -17,6 +17,7 @@ export const PortalUserActions = {
   LOAD_ENTITIES: "user:loadEntities",
   UNLOAD_ENTITIES: "user:unloadEntities",
   GET_SPECIALIZATION_HIERARCHY: "user:getSpecializationHierarchy",
+  CHAT_USER_INPUT: "user:chatUserInput",
 } as const;
 
 // Request schemas for user actions
@@ -85,9 +86,9 @@ export const DeleteFactRequestSchema = z.object({
 });
 
 export const LoadEntitiesRequestSchema = z.object({
-  uids: z.array(z.union([z.string(), z.number()])),
+  uids: z.array(z.number()),
   userId: z.number(),
-  environmentId: z.string(),
+  environmentId: z.string().optional(),
 });
 
 export const UnloadEntitiesRequestSchema = z.object({

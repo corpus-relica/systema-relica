@@ -15,6 +15,7 @@ export class RootStore {
   // semanticModelStore: SemanticModelStore;
   setupStore: SetupStore;
   authStore: AuthStore;
+  nousDataStore: NOUSDataStore;
 
   private _environmentId: string | null;
 
@@ -27,6 +28,7 @@ export class RootStore {
     this.colorPaletteStore = new ColorPaletteStore(this.factDataStore);
     this.setupStore = new SetupStore();
     this.authStore = new AuthStore();
+    this.nousDataStore = new NOUSDataStore();
 
     this._environmentId = null;
   }

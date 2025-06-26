@@ -1,6 +1,5 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { ArchivistModule } from '../archivist/archivist.module';
 import { EntityModelService } from './entity-model.service';
 import { PhysicalObjectModelService } from './physical-object-model.service';
@@ -11,9 +10,8 @@ import { OccurrenceModelService } from './occurrence-model.service';
 import { SemanticModelService } from './semantic-model.service';
 
 @Module({
-  imports: [ConfigModule, forwardRef(() => ArchivistModule)],
+  imports: [ConfigModule, ArchivistModule],
   providers: [
-    ArchivistSocketClient,
     EntityModelService,
     PhysicalObjectModelService,
     AspectModelService,
@@ -23,7 +21,6 @@ import { SemanticModelService } from './semantic-model.service';
     SemanticModelService,
   ],
   exports: [
-    ArchivistSocketClient,
     EntityModelService,
     PhysicalObjectModelService,
     AspectModelService,

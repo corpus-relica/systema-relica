@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { BaseWebSocketClient } from "./PortalSocketClient";
+import { BaseWebSocketClient } from "./BaseWebSocketClient";
 import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
 
 @Injectable()
@@ -88,11 +88,11 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   async unloadEntity(
     userId: number,
     uid: number,
-    environmentId?: number
+    environmentId?: string
   ): Promise<any> {
     const payload = {
       userId,
-      entityUid: uid,
+      uid,
       environmentId,
     };
     return this.sendRequestMessage(ApertureActions.ENTITY_UNLOAD, payload);
@@ -101,7 +101,7 @@ export class ApertureSocketClient extends BaseWebSocketClient {
   async loadMultipleEntities(
     userId: number,
     uids: number[],
-    environmentId: string
+    environmentId?: string
   ): Promise<any> {
     const payload = {
       userId,

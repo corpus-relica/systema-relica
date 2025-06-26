@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Layout, useRedirect, useStore } from "react-admin";
 import { Slide, IconButton } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ExpandLess, ExpandMore, Chat as ChatIcon } from "@mui/icons-material";
+import { observer } from "mobx-react";
 import { MyMenu } from "./MyMenu";
 import { MyAppBar } from "./MyAppBar";
 import LispREPL from "./LispREPL";
+import Chat from "./components/Chat";
 import { useStores } from "./context/RootStoreContext";
 import { authProvider } from "./authProvider";
 import { loadUserEnvironment, resolveUIDs } from "./PortalClient";
 import { PortalSystemEvents } from "@relica/websocket-contracts";
 
 const replHeight = "40vh"; // Adjust as needed
+const chatHeight = "50vh"; // Adjust as needed
 
 // import { portalWs, initializeWebSocket } from "./socket.js";
 import { portalSocket } from "./PortalSocket";
@@ -26,15 +29,16 @@ const cats = {
   2850: "Relation",
 };
 
-export const MyLayout = (props) => {
+export const MyLayout = observer((props: any) => {
   const redirect = useRedirect();
   const rootStore: any = useStores();
 
   console.log("vvvv - ROOT STORE vvvv:");
   console.log(rootStore);
-  const { factDataStore, authStore } = rootStore;
+  const { factDataStore, authStore, nousDataStore } = rootStore;
 
   const [replOpen, setReplOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const { addFacts, addConcepts, setCategories } = factDataStore;
   const [isConnected, setIsConnected] = useState(false);
@@ -44,6 +48,31 @@ export const MyLayout = (props) => {
 
   const toggleRepl = () => {
     setReplOpen(!replOpen);
+  };
+
+  const toggleChat = () => {
+    setChatOpen(!chatOpen);
+  };
+
+  const sendChatMessage = async (message: string) => {
+    // Add user message to store
+    nousDataStore.addMessage("user", message);
+
+    // Get user identity for the chat message
+    try {
+      const identity = await authProvider.getIdentity?.();
+      const userId = identity?.id;
+      const environmentId = rootStore.environmentId;
+
+      // Send message via portal socket
+      const foo = await portalSocket.emit("user", "chatUserInput", {
+        message,
+        userId,
+        environmentId,
+      });
+    } catch (error) {
+      console.error("Failed to send chat message:", error);
+    }
   };
 
   // const establishCats = async () => {
@@ -192,6 +221,12 @@ export const MyLayout = (props) => {
       }
     };
 
+    const onFinalAnswer = (d: any) => {
+      console.log("FINAL ANSWER");
+      console.log(d.response);
+      nousDataStore.addMessage("assistant", d.response);
+    };
+
     const initializeEnvironment = async () => {
       try {
         // First ensure socket connection and client registration
@@ -231,6 +266,7 @@ export const MyLayout = (props) => {
     portalSocket.on(PortalSystemEvents.SELECTED_NONE, onNoneSelected);
     portalSocket.on(PortalSystemEvents.LOADED_FACTS, onAddFacts);
     portalSocket.on(PortalSystemEvents.UNLOADED_FACTS, onRemFacts);
+    portalSocket.on(PortalSystemEvents.NOUS_CHAT_RESPONSE, onFinalAnswer);
     // ccSocket.on("system:loadedModels", onAddModels);
     // ccSocket.on("system:unloadedModels", onRemModels);
     // ccSocket.on("system:updateCategoryDescendantsCache", establishCats);
@@ -240,19 +276,13 @@ export const MyLayout = (props) => {
     // ccSocket.on("system:stateChanged", onStateChange);
 
     return () => {
-      // ccSocket.off("connect", onConnect);
-      // ccSocket.off("disconnect", onDisconnect);
-      // ccSocket.off("system:selectedEntity", onSelectEntity);
-      // ccSocket.off("system:selectedFact", onSelectFact);
-      // ccSocket.off("system:selectedNone", onNoneSelected);
-      // ccSocket.off("system:loadedFacts", onAddFacts);
-      // ccSocket.off("system:unloadedFacts", onRemFacts);
-      // // ccSocket.off("system:updateCategoryDescendantsCache", establishCats);
-      // ccSocket.off("system:entitiesCleared", onEntitiesCleared);
-      // ccSocket.off("system:loadedModels", onAddModels);
-      // ccSocket.off("system:unloadedModels", onRemModels);
-      // ccSocket.off("system:stateInitialized", onStateInitialized);
-      // ccSocket.off("system:stateChanged", onStateChange);
+      portalSocket.off("connect", onConnect);
+      portalSocket.off("disconnect", onDisconnect);
+      portalSocket.off(PortalSystemEvents.SELECTED_ENTITY, onSelectEntity);
+      portalSocket.off(PortalSystemEvents.SELECTED_NONE, onNoneSelected);
+      portalSocket.off(PortalSystemEvents.LOADED_FACTS, onAddFacts);
+      portalSocket.off(PortalSystemEvents.UNLOADED_FACTS, onRemFacts);
+      portalSocket.off(PortalSystemEvents.NOUS_CHAT_RESPONSE, onFinalAnswer);
     };
   }, []);
 
@@ -299,6 +329,47 @@ export const MyLayout = (props) => {
             </div>
           </div>
         </Slide>
+
+        {/* Chat Panel */}
+        <Slide direction="left" in={chatOpen} mountOnEnter unmountOnExit>
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: "400px",
+              backgroundColor: "rgba(0, 0, 0, 0.9)",
+              backdropFilter: "blur(5px)",
+              display: "flex",
+              flexDirection: "column",
+              zIndex: 1300,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "8px 16px",
+                color: "white",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <span>NOUS Chat</span>
+              <IconButton onClick={toggleChat} color="inherit">
+                <ExpandMore />
+              </IconButton>
+            </div>
+            <div style={{ flexGrow: 1, overflow: "hidden", padding: "8px" }}>
+              <Chat
+                messages={nousDataStore.messages}
+                onSubmit={sendChatMessage}
+              />
+            </div>
+          </div>
+        </Slide>
+
         <IconButton
           color="primary"
           aria-label="open repl"
@@ -317,7 +388,27 @@ export const MyLayout = (props) => {
         >
           {replOpen ? <ExpandMore /> : <ExpandLess />}
         </IconButton>
+
+        {/* Chat Toggle Button */}
+        <IconButton
+          color="primary"
+          aria-label="open chat"
+          onClick={toggleChat}
+          sx={{
+            position: "fixed",
+            right: "20px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 1301,
+            backgroundColor: (theme) => theme.palette.background.paper,
+            "&:hover": {
+              backgroundColor: (theme) => theme.palette.action.hover,
+            },
+          }}
+        >
+          <ChatIcon />
+        </IconButton>
       </div>
     </Layout>
   );
-};
+});

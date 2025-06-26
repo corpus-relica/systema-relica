@@ -245,6 +245,33 @@ export class ArchivistGateway
     }
   }
 
+  // TODO: do this right, this is placeholder
+  @SubscribeMessage('get-definition')
+  async handleGetDefinition(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() message: any,
+  ) {
+    try {
+      const result = await this.factHandlers.handleFactGetDefinitive(
+        message.payload,
+        client,
+      );
+
+      console.log('GOT DEFINITION');
+      console.log(result);
+      if (result.length > 0) {
+        const def = result.map((f) => f.full_definition);
+        console.log('got def');
+        console.log(def);
+        return toResponse(def, message.id);
+      } else {
+        return toResponse('no definition found', message.id);
+      }
+    } catch (error) {
+      return toErrorResponse(error, message.id);
+    }
+  }
+
   @SubscribeMessage(FactActions.GET_ALL_RELATED)
   async handleFactGetAllRelated(
     @ConnectedSocket() client: Socket,

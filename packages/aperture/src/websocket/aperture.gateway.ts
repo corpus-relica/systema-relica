@@ -222,16 +222,19 @@ export class ApertureGateway
     try {
       const { userId, term } = message.payload;
 
+      console.log("TEST SERACH LOAD", userId, term);
+
       // Get text search results from Archivist
-      const searchResult = await this.archivistClient.textSearch({
-        searchTerm: term,
-        exactMatch: true,
-      });
+      const searchResult = await this.archivistClient.textSearch(term, true);
+
+      console.log("FOOBARBAZ");
 
       // Get or create default environment
       const environment = await this.environmentService.findDefaultForUser(
         userId.toString()
       );
+
+      console.log("ASEPEJFDSFDS WHAT THE FUCK?!!");
 
       // Filter facts to load (those matching the search term)
       const facts = searchResult.results?.facts || [];

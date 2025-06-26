@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseWebSocketClient } from './PortalSocketClient';
+import { BaseWebSocketClient } from './BaseWebSocketClient';
 import {
   PrismActions,
   PrismEvents,

@@ -33,6 +33,7 @@ export * from './services/archivist';
 export * from './services/aperture';
 export * from './services/clarity';
 export * from './services/portal';
+export * from './services/nous';
 
 // Simplified validation utilities
 export * from './validation';
@@ -256,3 +257,27 @@ export {
   type ClarityModelEvent,
   type ClarityIndividualEvent,
 } from './services/clarity';
+
+export {
+  // NOUS operations
+  NOUSActions,
+  NOUSEvents,
+  type ProcessChatInputRequest,
+  type GenerateResponseRequest,
+  type PingRequest,
+  type ChatResponse,
+  type AIResponse,
+  type PongResponse,
+  type ChatReceiptAcknowledgment,
+  type NOUSErrorResponse,
+  type NOUSRequest,
+  type NOUSResponse,
+  ProcessChatInputRequestSchema,
+  GenerateResponseRequestSchema,
+  PingRequestSchema,
+  ChatResponseSchema,
+  AIResponseSchema,
+  PongResponseSchema,
+  ChatReceiptAcknowledgmentSchema,
+  ErrorResponseSchema,
+} from './services/nous';

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { BaseWebSocketClient } from "./PortalSocketClient";
+import { BaseWebSocketClient } from "./BaseWebSocketClient";
 import {
   FactActions,
   SearchActions,
@@ -252,21 +252,18 @@ export class ArchivistSocketClient extends BaseWebSocketClient {
     return this.sendRequestMessage(SearchActions.GENERAL, payload);
   }
 
-  async textSearch(params: {
-    searchTerm: string;
-    exactMatch?: boolean;
-  }): Promise<any> {
+  async textSearch(searchTerm: string, exactMatch?: boolean): Promise<any> {
     const payload = {
-      query: params.searchTerm,
-      filters: { exactMatch: params.exactMatch },
+      searchTerm: searchTerm,
+      filter: { exactMatch: exactMatch },
     };
     return this.sendRequestMessage(SearchActions.GENERAL, payload);
   }
 
   async textSearchExact(searchTerm: string): Promise<any> {
     const payload = {
-      query: searchTerm,
-      filters: { exactMatch: true },
+      searchTerm: searchTerm,
+      filter: { exactMatch: true },
     };
     return this.sendRequestMessage(SearchActions.GENERAL, payload);
   }
