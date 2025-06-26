@@ -14,6 +14,8 @@ export class ConceptService {
 
   async deleteEntity(uid) {
     // to delete an entity we need to delete all the facts involving the entity
+    // deeper still, not pictured here, if the entity is a relationship type
+    // we need to delete all the eddges that are of that relationship type
     const factUIDs = await this.cacheService.allFactsInvolvingEntity(uid);
     const facts = await Promise.all(
       factUIDs.map(async (factUID) => {

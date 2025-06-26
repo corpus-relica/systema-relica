@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { sockSendCC } from "../../../socket";
+import { portalSocket } from "../../../PortalSocket";
 
 interface ValueProps {
   value: { quant: number; uom: { uid: number; name: string } };
@@ -9,7 +9,7 @@ interface ValueProps {
 
 const Value: React.FC<ValueProps> = ({ value }) => {
   const performRequest = async () => {
-    sockSendCC("user", "getSpecializationHierarchy", { uid: value.uom.uid });
+    portalSocket.emit("user", "getSpecializationHierarchy", { uid: value.uom.uid });
   };
 
   return (

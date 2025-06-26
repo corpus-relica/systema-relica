@@ -44,35 +44,47 @@ export class ModelService {
   async getPhysicalObjectModel(uid: number) {
     // Get all facts related to this physical object
     const facts = await this.archivistService.retrieveAllFacts(uid);
+    console.log(
+      'FFFFFFFFFFFAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCTTTTTTTTTTSSSSSS __ PO',
+      facts,
+    );
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
-    
+
     // Get aspects (things this physical object has)
-    const aspects = facts.filter(f => f.rel_type_name?.includes('has aspect')).map(f => ({
-      uid: f.rh_object_uid,
-      name: f.rh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const aspects = facts
+      .filter((f) => f.rel_type_name?.includes('has aspect'))
+      .map((f) => ({
+        uid: f.rh_object_uid,
+        name: f.rh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     // Get roles (roles this physical object can play)
-    const roles = facts.filter(f => f.rel_type_name?.includes('plays role')).map(f => ({
-      uid: f.rh_object_uid,
-      name: f.rh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const roles = facts
+      .filter((f) => f.rel_type_name?.includes('plays role'))
+      .map((f) => ({
+        uid: f.rh_object_uid,
+        name: f.rh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     // Get parts/components (things this object is composed of)
-    const components = facts.filter(f => f.rel_type_name?.includes('part of')).map(f => ({
-      uid: f.lh_object_uid,
-      name: f.lh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const components = facts
+      .filter((f) => f.rel_type_name?.includes('part of'))
+      .map((f) => ({
+        uid: f.lh_object_uid,
+        name: f.lh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     // Get connections (other objects this is connected to)
-    const connections = facts.filter(f => f.rel_type_name?.includes('connected')).map(f => ({
-      uid: f.rh_object_uid,
-      name: f.rh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const connections = facts
+      .filter((f) => f.rel_type_name?.includes('connected'))
+      .map((f) => ({
+        uid: f.rh_object_uid,
+        name: f.rh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     return {
       uid,
@@ -82,24 +94,34 @@ export class ModelService {
       roles,
       components,
       connections,
-      facts
+      facts,
     };
   }
 
   async getAspectModel(uid: number) {
     const facts = await this.archivistService.retrieveAllFacts(uid);
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
-    
+
+    console.log(
+      'FFFFFFFFFFFAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCTTTTTTTTTTSSSSSS __ ASP',
+      facts,
+    );
     // Get possessors (entities that have this aspect)
-    const possessors = facts.filter(f => f.rel_type_name?.includes('has aspect')).map(f => ({
-      uid: f.lh_object_uid,
-      name: f.lh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const possessors = facts
+      .filter((f) => f.rel_type_name?.includes('has aspect'))
+      .map((f) => ({
+        uid: f.lh_object_uid,
+        name: f.lh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     // Check if this is a quantitative aspect (has unit of measure)
-    const isQuantitative = facts.some(f => f.rel_type_name?.includes('unit of measure'));
-    const unitOfMeasure = facts.find(f => f.rel_type_name?.includes('unit of measure'));
+    const isQuantitative = facts.some((f) =>
+      f.rel_type_name?.includes('unit of measure'),
+    );
+    const unitOfMeasure = facts.find((f) =>
+      f.rel_type_name?.includes('unit of measure'),
+    );
 
     return {
       uid,
@@ -107,33 +129,41 @@ export class ModelService {
       name: definitiveFacts[0]?.lh_object_name,
       possessors,
       isQuantitative,
-      unitOfMeasure: unitOfMeasure ? {
-        uid: unitOfMeasure.rh_object_uid,
-        name: unitOfMeasure.rh_object_name
-      } : null,
-      facts
+      unitOfMeasure: unitOfMeasure
+        ? {
+            uid: unitOfMeasure.rh_object_uid,
+            name: unitOfMeasure.rh_object_name,
+          }
+        : null,
+      facts,
     };
   }
 
   async getRoleModel(uid: number) {
     const facts = await this.archivistService.retrieveAllFacts(uid);
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
-    
+
+    console.log(
+      'FFFFFFFFFFFAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCTTTTTTTTTTSSSSSS __ ROLE',
+      facts,
+    );
     // Get role players (entities that can play this role)
-    const rolePlayers = facts.filter(f => f.rel_type_name?.includes('plays role')).map(f => ({
-      uid: f.lh_object_uid,
-      name: f.lh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const rolePlayers = facts
+      .filter((f) => f.rel_type_name?.includes('plays role'))
+      .map((f) => ({
+        uid: f.lh_object_uid,
+        name: f.lh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     // Get required relations (relations that require this role)
-    const requiredInRelations = facts.filter(f => 
-      f.rel_type_uid === 4731 || f.rel_type_uid === 4733
-    ).map(f => ({
-      uid: f.lh_object_uid,
-      name: f.lh_object_name,
-      role_position: f.rel_type_uid === 4731 ? 1 : 2
-    }));
+    const requiredInRelations = facts
+      .filter((f) => f.rel_type_uid === 4731 || f.rel_type_uid === 4733)
+      .map((f) => ({
+        uid: f.lh_object_uid,
+        name: f.lh_object_name,
+        role_position: f.rel_type_uid === 4731 ? 1 : 2,
+      }));
 
     return {
       uid,
@@ -141,63 +171,83 @@ export class ModelService {
       name: definitiveFacts[0]?.lh_object_name,
       rolePlayers,
       requiredInRelations,
-      facts
+      facts,
     };
   }
 
   async getRelationModel(uid: number) {
     const facts = await this.archivistService.retrieveAllFacts(uid);
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
-    
+    console.log(
+      'FFFFFFFFFFFAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCTTTTTTTTTTSSSSSS __ RELATION',
+      facts,
+    );
+
     // Get required roles for this relation
-    const requiredRole1 = facts.find(f => f.rel_type_uid === 4731);
-    const requiredRole2 = facts.find(f => f.rel_type_uid === 4733);
+    const requiredRole1 = facts.find((f) => f.rel_type_uid === 4731);
+    const requiredRole2 = facts.find((f) => f.rel_type_uid === 4733);
 
     // Get inverse relation if any
-    const inverseRelation = facts.find(f => f.rel_type_uid === 1986);
+    const inverseRelation = facts.find((f) => f.rel_type_uid === 1986);
 
     return {
       uid,
       category: RELATION,
       name: definitiveFacts[0]?.lh_object_name,
-      requiredRole1: requiredRole1 ? {
-        uid: requiredRole1.rh_object_uid,
-        name: requiredRole1.rh_object_name
-      } : null,
-      requiredRole2: requiredRole2 ? {
-        uid: requiredRole2.rh_object_uid,
-        name: requiredRole2.rh_object_name
-      } : null,
-      inverseRelation: inverseRelation ? {
-        uid: inverseRelation.rh_object_uid,
-        name: inverseRelation.rh_object_name
-      } : null,
-      facts
+      requiredRole1: requiredRole1
+        ? {
+            uid: requiredRole1.rh_object_uid,
+            name: requiredRole1.rh_object_name,
+          }
+        : null,
+      requiredRole2: requiredRole2
+        ? {
+            uid: requiredRole2.rh_object_uid,
+            name: requiredRole2.rh_object_name,
+          }
+        : null,
+      inverseRelation: inverseRelation
+        ? {
+            uid: inverseRelation.rh_object_uid,
+            name: inverseRelation.rh_object_name,
+          }
+        : null,
+      facts,
     };
   }
 
   async getOccurrenceModel(uid: number) {
     const facts = await this.archivistService.retrieveAllFacts(uid);
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
-    
+
+    console.log(
+      'FFFFFFFFFFFAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCTTTTTTTTTTSSSSSS __ OCCUR',
+      facts,
+    );
     // Get aspects of this occurrence
-    const aspects = facts.filter(f => f.rel_type_name?.includes('has aspect')).map(f => ({
-      uid: f.rh_object_uid,
-      name: f.rh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const aspects = facts
+      .filter((f) => f.rel_type_name?.includes('has aspect'))
+      .map((f) => ({
+        uid: f.rh_object_uid,
+        name: f.rh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     // Get involved entities (things involved in this occurrence)
-    const involved = facts.filter(f => f.rel_type_uid === 5644).map(f => ({
-      uid: f.rh_object_uid,
-      name: f.rh_object_name,
-      relation_uid: f.rel_type_uid
-    }));
+    const involved = facts
+      .filter((f) => f.rel_type_uid === 5644)
+      .map((f) => ({
+        uid: f.rh_object_uid,
+        name: f.rh_object_name,
+        relation_uid: f.rel_type_uid,
+      }));
 
     // Get temporal aspects (begin time, end time, duration)
-    const beginTime = facts.find(f => f.rel_type_name?.includes('begin time'));
-    const endTime = facts.find(f => f.rel_type_name?.includes('end time'));
-    const duration = facts.find(f => f.rel_type_name?.includes('duration'));
+    const beginTime = facts.find((f) =>
+      f.rel_type_name?.includes('begin time'),
+    );
+    const endTime = facts.find((f) => f.rel_type_name?.includes('end time'));
+    const duration = facts.find((f) => f.rel_type_name?.includes('duration'));
 
     return {
       uid,
@@ -206,23 +256,29 @@ export class ModelService {
       aspects,
       involved,
       temporalAspects: {
-        beginTime: beginTime ? {
-          uid: beginTime.rh_object_uid,
-          name: beginTime.rh_object_name,
-          value: beginTime.full_definition
-        } : null,
-        endTime: endTime ? {
-          uid: endTime.rh_object_uid,
-          name: endTime.rh_object_name,
-          value: endTime.full_definition
-        } : null,
-        duration: duration ? {
-          uid: duration.rh_object_uid,
-          name: duration.rh_object_name,
-          value: duration.full_definition
-        } : null
+        beginTime: beginTime
+          ? {
+              uid: beginTime.rh_object_uid,
+              name: beginTime.rh_object_name,
+              value: beginTime.full_definition,
+            }
+          : null,
+        endTime: endTime
+          ? {
+              uid: endTime.rh_object_uid,
+              name: endTime.rh_object_name,
+              value: endTime.full_definition,
+            }
+          : null,
+        duration: duration
+          ? {
+              uid: duration.rh_object_uid,
+              name: duration.rh_object_name,
+              value: duration.full_definition,
+            }
+          : null,
       },
-      facts
+      facts,
     };
   }
 
@@ -231,15 +287,15 @@ export class ModelService {
     const category = await this.archivistService.getCategory(uid);
     console.log('category', category);
     const facts = await this.archivistService.retrieveAllFacts(uid);
-    // console.log('facts', facts);
+    console.log('facts', facts);
     const definitiveFacts = await this.archivistService.getDefinitiveFacts(uid);
-    // console.log('definitiveFacts', definitiveFacts);
+    console.log('definitiveFacts', definitiveFacts);
     const specialization =
       await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1146);
-    // console.log('specialization', specialization);
+    console.log('specialization', specialization);
     const classification =
       await this.archivistService.getRelatedOnUIDSubtypeCone(uid, 1225);
-    // console.log("classification", classification);
+    console.log('classification', classification);
     const synonyms = await this.archivistService.getRelatedOnUIDSubtypeCone(
       uid,
       1981,
@@ -373,7 +429,8 @@ export class ModelService {
   }
 
   async retrieveModel(uid: number) {
-    const type = await this.archivistService.getEntityType(uid);
+    const res = await this.archivistService.getEntityType(uid);
+    const type = res.type;
 
     console.log('type', type);
 
@@ -409,8 +466,8 @@ export class ModelService {
   }
 
   async throttlePromises(funcs, limit) {
-    let results = [];
-    let executing = [];
+    const results = [];
+    const executing = [];
     for (const func of funcs) {
       const p = Promise.resolve().then(func);
       results.push(p);

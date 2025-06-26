@@ -4,10 +4,10 @@ import React, { useContext } from "react";
 // import { observer } from "mobx-react";
 // import RootStoreContext from "../../../context/RootStoreContext";
 import { toJS } from "mobx";
-import { sockSendCC } from "../../../socket";
 import { useStore } from "react-admin";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import { portalSocket } from "../../../PortalSocket";
 
 interface SpecializationProps {
   uids: number[]; // specify the correct type instead of any if possible
@@ -18,8 +18,8 @@ const Specialization: React.FC<SpecializationProps> = ({ uids, childUID }) => {
   console.log("SPECIALIZATION");
 
   const handleUIDClick = (uid: number) => {
-    sockSendCC("user", "loadEntity", { uid: uid });
-    sockSendCC("user", "loadEntity", { uid: childUID });
+    portalSocket.emit("user", "loadEntity", { uid: uid });
+    portalSocket.emit("user", "loadEntity", { uid: childUID });
   };
 
   const ui = uids.map((uid, index) => {

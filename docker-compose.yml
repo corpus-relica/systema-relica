@@ -261,11 +261,13 @@ services:
       - PRISM_SEED_XLS_DIR=/usr/src/app/seed_xls
       - PRISM_CSV_OUTPUT_DIR=/usr/src/app/seed_csv
       - PRISM_NEO4J_IMPORT_DIR=/var/lib/neo4j/import
+      - ARCHIVIST_URL=http://archivist:3000
     command: ["sh", "-c", "cd packages/prism && yarn start:dev"]
     volumes:
       - ./packages/prism:/usr/src/app/packages/prism
       - ./packages/constants:/usr/src/app/packages/constants
       - ./packages/types:/usr/src/app/packages/types
+      - ./packages/websocket-contracts:/usr/src/app/packages/websocket-contracts
       - ./seed_xls:/usr/src/app/seed_xls
       - ./seed_csv:/usr/src/app/seed_csv
       - /usr/src/app/packages/prism/node_modules

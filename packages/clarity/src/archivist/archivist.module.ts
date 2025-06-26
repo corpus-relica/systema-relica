@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ArchivistService } from './archivist.service';
-import { ServicesModule } from '../services/services.module';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 
 @Module({
-  imports: [ConfigModule, ServicesModule],
-  providers: [ArchivistService],
+  imports: [ConfigModule],
+  providers: [ArchivistSocketClient, ArchivistService],
   controllers: [],
   exports: [ArchivistService],
 })

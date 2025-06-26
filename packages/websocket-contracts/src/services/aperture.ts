@@ -21,7 +21,7 @@ export const ApertureActions = {
   ENTITY_UNLOAD: 'aperture.entity/unload',
   ENTITY_LOAD_MULTIPLE: 'aperture.entity/load-multiple',
   ENTITY_UNLOAD_MULTIPLE: 'aperture.entity/unload-multiple',
-  ENTITY_SELECT: 'aperture.entity/select',
+  SELECT_ENTITY: 'aperture.entity/select',
   ENTITY_DESELECT: 'aperture.entity/deselect',
 
   // Subtype Operations
@@ -48,19 +48,37 @@ export const ApertureActions = {
   // Fact-related Events
   FACTS_LOADED: 'aperture.facts/loaded',
   FACTS_UNLOADED: 'aperture.facts/unloaded',
+
+  //
+  LOAD_ALL_RELATED_FACTS: 'aperture.facts/load-all-related',
+} as const;
+
+export const ApertureEvents = {
+  LOADED_FACTS: 'aperture.facts/loaded',
+  UNLOADED_FACTS: 'aperture.facts/unloaded',
+  ENTITY_SELECTED: 'aperture.entity/selected',
+  ENTITY_DESELECTED: 'aperture.entity/deselected',
+  // SELECTED_FACT: 'system:selectedFact',
+  // SELECTED_NONE: 'system:selectedNone',
+  // ENTITIES_CLEARED: 'system:entitiesCleared',
+  // STATE_INITIALIZED: 'system:stateInitialized',
+  // STATE_CHANGED: 'system:stateChanged',
+  // LOADED_MODELS: 'system:loadedModels',
+  // UNLOADED_MODELS: 'system:unloadedModels',
+  // UPDATE_CATEGORY_DESCENDANTS_CACHE: 'system:updateCategoryDescendantsCache',
 } as const;
 
 // Base schemas
 const BaseUserPayloadSchema = z.object({
-  'user-id': z.number(),
+  userId: z.number(),
 });
 
 const BaseEnvironmentPayloadSchema = BaseUserPayloadSchema.extend({
-  'environment-id': z.number().optional(),
+  environmentId: z.number().optional(),
 });
 
 const BaseEntityPayloadSchema = BaseEnvironmentPayloadSchema.extend({
-  'entity-uid': z.number(),
+  entityUid: z.number(),
 });
 
 // Environment Operations
@@ -96,11 +114,11 @@ export const EntitySelectRequestSchema = BaseEntityPayloadSchema;
 export const EntityDeselectRequestSchema = BaseEnvironmentPayloadSchema;
 
 export const EntityLoadMultipleRequestSchema = BaseEnvironmentPayloadSchema.extend({
-  'entity-uids': z.array(z.number()),
+  entityUids: z.array(z.number()),
 });
 
 export const EntityUnloadMultipleRequestSchema = BaseEnvironmentPayloadSchema.extend({
-  'entity-uids': z.array(z.number()),
+  entityUids: z.array(z.number()),
 });
 
 // Subtype Operations
@@ -155,8 +173,8 @@ export const SuccessResponseSchema = z.object({
   success: z.literal(true),
   environment: EnvironmentSchema.optional(),
   facts: z.array(FactSchema).optional(),
-  'fact-uids-removed': z.array(z.number()).optional(),
-  'model-uids-removed': z.array(z.number()).optional(),
+  factUidsRemoved: z.array(z.number()).optional(),
+  modelUidsRemoved: z.array(z.number()).optional(),
 });
 
 export const ErrorResponseSchema = z.object({
@@ -170,29 +188,29 @@ export const ApertureResponseSchema = z.union([SuccessResponseSchema, ErrorRespo
 export const FactsLoadedEventSchema = z.object({
   type: z.literal('aperture.facts/loaded'),
   facts: z.array(FactSchema),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 export const FactsUnloadedEventSchema = z.object({
   type: z.literal('aperture.facts/unloaded'),
-  'fact-uids': z.array(z.number()),
-  'model-uids': z.array(z.number()).optional(),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  factUids: z.array(z.number()),
+  modelUids: z.array(z.number()).optional(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 export const EntitySelectedEventSchema = z.object({
   type: z.literal('aperture.entity/selected'),
-  'entity-uid': z.number(),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  entityUid: z.number(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 export const EntityDeselectedEventSchema = z.object({
   type: z.literal('aperture.entity/deselected'),
-  'user-id': z.number(),
-  'environment-id': z.number(),
+  userId: z.number(),
+  environmentId: z.number(),
 });
 
 // Type exports
@@ -241,3 +259,5 @@ export type EntityDeselectedEvent = z.infer<typeof EntityDeselectedEventSchema>;
 
 export type Fact = z.infer<typeof FactSchema>;
 export type Environment = z.infer<typeof EnvironmentSchema>;
+
+export type ApertureActionType = typeof ApertureActions[keyof typeof ApertureActions];

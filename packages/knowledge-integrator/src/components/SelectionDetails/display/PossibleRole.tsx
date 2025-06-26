@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
 import { useStore } from "react-admin";
 import Stack from "@mui/material/Stack";
-import { sockSendCC } from "../../../socket";
 import Typography from "@mui/material/Typography";
+import { portalSocket } from "../../../PortalSocket";
 
 interface PossibleRoleProps {
   uid: number; // specify the correct type instead of any if possible
@@ -13,7 +13,7 @@ const PossibleRole: React.FC<PossibleRoleProps> = ({ uid, roleplayerUID }) => {
   const [model] = useStore("model:" + uid);
 
   const handleUIDClick = (uid: number) => {
-    sockSendCC("user", "loadEntity", { uid: uid });
+    portalSocket.emit("user", "loadEntity", { uid: uid });
   };
 
   let ui;

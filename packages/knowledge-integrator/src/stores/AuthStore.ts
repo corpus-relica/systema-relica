@@ -87,6 +87,14 @@ class AuthStore {
   get userDisplayName() {
     return this.user?.fullName || this.user?.username || 'Unknown User';
   }
+
+  // get user() {
+  //   return this.user;
+  // }
+
+  get userId() {
+    return this.user?.id || '';
+  }
 }
 
 export default AuthStore;

@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { BaseRequestSchema, BaseResponseSchema } from '../../base';
+import { z } from "zod";
+import { BaseRequestSchema, BaseResponseSchema } from "../../base";
 
 // =====================================================
 // FACT MESSAGE TYPES (from archivist websocket.types.ts)
@@ -8,11 +8,13 @@ import { BaseRequestSchema, BaseResponseSchema } from '../../base';
 /**
  * Fact creation data structure
  */
-export const FactCreateMessageSchema = z.object({
-  lh_object_uid: z.number(),
-  rh_object_uid: z.number(),
-  rel_type_uid: z.number(),
-}).catchall(z.any()); // Allow additional properties
+export const FactCreateMessageSchema = z
+  .object({
+    lh_object_uid: z.number(),
+    rh_object_uid: z.number(),
+    rel_type_uid: z.number(),
+  })
+  .catchall(z.any()); // Allow additional properties
 
 export type FactCreateMessage = z.infer<typeof FactCreateMessageSchema>;
 
@@ -51,8 +53,8 @@ export type FactQueryMessage = z.infer<typeof FactQueryMessageSchema>;
 // =====================================================
 
 export const FactCreateRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:create'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:create"),
   payload: FactCreateMessageSchema,
 });
 
@@ -69,8 +71,8 @@ export type FactCreateResponse = z.infer<typeof FactCreateResponseSchema>;
 // =====================================================
 
 export const FactUpdateRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:update'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:update"),
   payload: FactUpdateMessageSchema,
 });
 
@@ -87,18 +89,20 @@ export type FactUpdateResponse = z.infer<typeof FactUpdateResponseSchema>;
 // =====================================================
 
 export const FactDeleteRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:delete'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:delete"),
   payload: FactDeleteMessageSchema,
 });
 
 export type FactDeleteRequest = z.infer<typeof FactDeleteRequestSchema>;
 
 export const FactDeleteResponseSchema = BaseResponseSchema.extend({
-  data: z.object({
-    fact_uid: z.number(),
-    success: z.boolean(),
-  }).optional(),
+  data: z
+    .object({
+      fact_uid: z.number(),
+      success: z.boolean(),
+    })
+    .optional(),
 });
 
 export type FactDeleteResponse = z.infer<typeof FactDeleteResponseSchema>;
@@ -108,8 +112,8 @@ export type FactDeleteResponse = z.infer<typeof FactDeleteResponseSchema>;
 // =====================================================
 
 export const FactGetRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:get'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:get"),
   payload: FactQueryMessageSchema,
 });
 
@@ -126,72 +130,86 @@ export type FactGetResponse = z.infer<typeof FactGetResponseSchema>;
 // =====================================================
 
 export const FactGetSubtypesRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:getSubtypes'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:getSubtypes"),
   payload: FactQueryMessageSchema,
 });
 
-export type FactGetSubtypesRequest = z.infer<typeof FactGetSubtypesRequestSchema>;
+export type FactGetSubtypesRequest = z.infer<
+  typeof FactGetSubtypesRequestSchema
+>;
 
 export const FactGetSubtypesResponseSchema = BaseResponseSchema.extend({
   data: z.any().optional(),
 });
 
-export type FactGetSubtypesResponse = z.infer<typeof FactGetSubtypesResponseSchema>;
+export type FactGetSubtypesResponse = z.infer<
+  typeof FactGetSubtypesResponseSchema
+>;
 
 // =====================================================
 // FACT GET SUPERTYPES CONTRACT
 // =====================================================
 
 export const FactGetSupertypesRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:getSupertypes'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:getSupertypes"),
   payload: FactQueryMessageSchema,
 });
 
-export type FactGetSupertypesRequest = z.infer<typeof FactGetSupertypesRequestSchema>;
+export type FactGetSupertypesRequest = z.infer<
+  typeof FactGetSupertypesRequestSchema
+>;
 
 export const FactGetSupertypesResponseSchema = BaseResponseSchema.extend({
   data: z.array(z.any()),
 });
 
-export type FactGetSupertypesResponse = z.infer<typeof FactGetSupertypesResponseSchema>;
+export type FactGetSupertypesResponse = z.infer<
+  typeof FactGetSupertypesResponseSchema
+>;
 
 // =====================================================
 // FACT GET CLASSIFIED CONTRACT
 // =====================================================
 
 export const FactGetClassifiedRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:getClassified'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:getClassified"),
   payload: FactQueryMessageSchema,
 });
 
-export type FactGetClassifiedRequest = z.infer<typeof FactGetClassifiedRequestSchema>;
+export type FactGetClassifiedRequest = z.infer<
+  typeof FactGetClassifiedRequestSchema
+>;
 
 export const FactGetClassifiedResponseSchema = BaseResponseSchema.extend({
   data: z.any().optional(),
 });
 
-export type FactGetClassifiedResponse = z.infer<typeof FactGetClassifiedResponseSchema>;
+export type FactGetClassifiedResponse = z.infer<
+  typeof FactGetClassifiedResponseSchema
+>;
 
 // =====================================================
 // FACT VALIDATE CONTRACT
 // =====================================================
 
 export const FactValidateRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:validate'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:validate"),
   payload: FactCreateMessageSchema,
 });
 
 export type FactValidateRequest = z.infer<typeof FactValidateRequestSchema>;
 
 export const FactValidateResponseSchema = BaseResponseSchema.extend({
-  data: z.object({
-    valid: z.boolean(),
-    message: z.string(),
-  }).optional(),
+  data: z
+    .object({
+      valid: z.boolean(),
+      message: z.string(),
+    })
+    .optional(),
 });
 
 export type FactValidateResponse = z.infer<typeof FactValidateResponseSchema>;
@@ -212,8 +230,8 @@ export const FactBatchGetMessageSchema = z.object({
 export type FactBatchGetMessage = z.infer<typeof FactBatchGetMessageSchema>;
 
 export const FactBatchGetRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:batch-get'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:batch-get"),
   payload: FactBatchGetMessageSchema,
 });
 
@@ -230,8 +248,8 @@ export type FactBatchGetResponse = z.infer<typeof FactBatchGetResponseSchema>;
 // =====================================================
 
 export const FactCountRequestSchema = BaseRequestSchema.extend({
-  service: z.literal('archivist'),
-  action: z.literal('fact:count'),
+  service: z.literal("archivist"),
+  action: z.literal("fact:count"),
   payload: z.object({}), // Empty payload
 });
 
@@ -250,36 +268,39 @@ export type FactCountResponse = z.infer<typeof FactCountResponseSchema>;
 // =====================================================
 
 export const FactActions = {
-  CREATE: 'fact:create',
-  UPDATE: 'fact:update',
-  DELETE: 'fact:delete',
-  GET: 'fact:get',
-  GET_SUBTYPES: 'fact:getSubtypes',
-  GET_SUPERTYPES: 'fact:getSupertypes',
-  GET_CLASSIFIED: 'fact:getClassified',
-  VALIDATE: 'fact:validate',
-  BATCH_GET: 'fact:batch-get',
-  COUNT: 'fact:count',
+  CREATE: "fact:create",
+  UPDATE: "fact:update",
+  DELETE: "fact:delete",
+  GET: "fact:get",
+  GET_SUBTYPES: "fact:getSubtypes",
+  GET_SUBTYPES_CONE: "fact:getSubtypesCone",
+  GET_SUPERTYPES: "fact:getSupertypes",
+  GET_CLASSIFIED: "fact:getClassified",
+  GET_DEFINITIVE: "fact:getDefinitive",
+  GET_ALL_RELATED: "fact:getAllRelated",
+  VALIDATE: "fact:validate",
+  BATCH_GET: "fact:batch-get",
+  COUNT: "fact:count",
 } as const;
 
-export type FactActionType = typeof FactActions[keyof typeof FactActions];
+export type FactActionType = (typeof FactActions)[keyof typeof FactActions];
 
 // =====================================================
 // FACT EVENTS
 // =====================================================
 
 export const FactEvents = {
-  CREATED: 'fact:created',
-  UPDATED: 'fact:updated',
-  DELETED: 'fact:deleted',
-  RETRIEVED: 'fact:retrieved',
-  SUBTYPES: 'fact:subtypes',
-  SUPERTYPES: 'fact:supertypes',
-  CLASSIFIED: 'fact:classified',
-  VALIDATED: 'fact:validated',
-  BATCH_RETRIEVED: 'fact:batch-retrieved',
-  COUNT_RETRIEVED: 'fact:count-retrieved',
-  ERROR: 'fact:error',
+  CREATED: "fact:created",
+  UPDATED: "fact:updated",
+  DELETED: "fact:deleted",
+  RETRIEVED: "fact:retrieved",
+  SUBTYPES: "fact:subtypes",
+  SUPERTYPES: "fact:supertypes",
+  CLASSIFIED: "fact:classified",
+  VALIDATED: "fact:validated",
+  BATCH_RETRIEVED: "fact:batch-retrieved",
+  COUNT_RETRIEVED: "fact:count-retrieved",
+  ERROR: "fact:error",
 } as const;
 
-export type FactEventType = typeof FactEvents[keyof typeof FactEvents];
+export type FactEventType = (typeof FactEvents)[keyof typeof FactEvents];

@@ -1,38 +1,49 @@
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ClarityWebSocketClientService } from '../services/clarity-websocket-client.service';
-import { User } from '../decorators/user.decorator';
+import { Controller, Get, Query, BadRequestException } from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from "@nestjs/swagger";
+import { ApertureSocketClient } from "@relica/websocket-clients";
+import { User } from "../decorators/user.decorator";
 
-@ApiTags('Environment')
-@Controller('environment')
+@ApiTags("Environment")
+@Controller("environment")
 export class EnvironmentController {
-  constructor(private readonly clarityClient: ClarityWebSocketClientService) {}
+  constructor(private readonly apertureClient: ApertureSocketClient) {}
 
-
-  @Get('retrieve')
-  @ApiOperation({ summary: 'Retrieve environment information' })
+  @Get("retrieve")
+  @ApiOperation({ summary: "Retrieve environment information" })
   @ApiBearerAuth()
-  @ApiQuery({ name: 'uid', description: 'UID of the environment', required: true })
-  @ApiResponse({ status: 200, description: 'Environment retrieved successfully' })
+  @ApiQuery({
+    name: "uid",
+    description: "UID of the environment",
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Environment retrieved successfully",
+  })
   async retrieveEnvironment(
     @User() user: any,
-    @Query('uid') uid: string,
+    @Query("userId") userId: number
   ) {
     try {
-      if (!uid) {
-        throw new BadRequestException('uid parameter is required');
+      if (!userId) {
+        throw new BadRequestException("uid parameter is required");
       }
-      
-      const environment = await this.clarityClient.getEnvironment(uid);
-      
-      return {
-        success: true,
-        environment,
-      };
+
+      const result = await this.apertureClient.getEnvironment(
+        userId.toString()
+      );
+
+      return result;
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Environment not found',
+        error: error.message || "Environment not found",
       };
     }
   }

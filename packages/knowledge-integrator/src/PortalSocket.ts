@@ -2,7 +2,10 @@ import { io, Socket } from "socket.io-client";
 import { getAuthToken } from "./authProvider";
 
 // Import canonical types from WebSocket contracts
-export type { SetupStatus, SetupStatusBroadcastEvent } from '@relica/websocket-contracts';
+export type {
+  SetupStatus,
+  SetupStatusBroadcastEvent,
+} from "@relica/websocket-contracts";
 
 class PortalWebSocketClient {
   private socket: Socket | null = null;
@@ -21,20 +24,21 @@ class PortalWebSocketClient {
     }
 
     this.isConnecting = true;
-    const portalUrl = import.meta.env.VITE_PORTAL_API_URL || 'http://localhost:2204';
-    
-    console.log('🔌 Connecting to Portal WebSocket:', portalUrl);
+    const portalUrl =
+      import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2204";
+
+    console.log("🔌 Connecting to Portal WebSocket:", portalUrl);
 
     this.socket = io(portalUrl, {
       auth: {
-        token: getAuthToken()
+        token: getAuthToken(),
       },
       query: {
-        clientName: "KNOWLEDGE_INTEGRATOR"
+        clientName: "KNOWLEDGE_INTEGRATOR",
       },
-      transports: ['websocket', 'polling'],
+      transports: ["websocket", "polling"],
       timeout: 10000,
-      autoConnect: true
+      autoConnect: true,
     });
 
     this.setupBaseEventListeners();
@@ -44,35 +48,37 @@ class PortalWebSocketClient {
   private setupBaseEventListeners() {
     if (!this.socket) return;
 
-    this.socket.on('connect', () => {
-      console.log('✅ Connected to Portal WebSocket');
+    this.socket.on("connect", () => {
+      console.log("✅ Connected to Portal WebSocket");
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('❌ Disconnected from Portal WebSocket:', reason);
+    this.socket.on("disconnect", (reason) => {
+      console.log("❌ Disconnected from Portal WebSocket:", reason);
       this.handleReconnect();
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('🚫 Portal WebSocket connection error:', error);
+    this.socket.on("connect_error", (error) => {
+      console.error("🚫 Portal WebSocket connection error:", error);
       this.handleReconnect();
     });
 
     // Health check ping/pong
-    this.socket.on('ping', () => {
-      this.socket?.emit('pong');
+    this.socket.on("ping", () => {
+      this.socket?.emit("pong");
     });
   }
 
   private handleReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('🚫 Max reconnection attempts reached');
+      console.error("🚫 Max reconnection attempts reached");
       return;
     }
 
     this.reconnectAttempts++;
-    console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+    console.log(
+      `🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+    );
 
     setTimeout(() => {
       this.connect();
@@ -88,11 +94,11 @@ class PortalWebSocketClient {
     return this.socket?.connected || false;
   }
 
-  public emit(event: string, data: any) {
+  public emit(role: string, type: string, payload: any) {
     if (this.socket?.connected) {
-      this.socket.emit(event, data);
+      this.socket.emit(`${role}:${type}`, { payload });
     } else {
-      console.warn('⚠️ Socket not connected, cannot emit:', event);
+      console.warn("⚠️ Socket not connected, cannot emit:", event);
     }
   }
 

@@ -34,10 +34,15 @@ class NOUSSocketIOServer:
         self.sio.on('disconnect', self.handle_disconnect)
         self.sio.on('message', self.handle_message)
         
-        # Register standard handlers
-        self.register_handler('ping', self.handle_ping)
-        self.register_handler('process-chat-input', self.handle_process_chat_input)
-        self.register_handler('generate-response', self.handle_generate_response)
+        # Register direct event handlers for each message type
+        self.sio.on('ping', self.handle_ping_direct)
+        self.sio.on('process-chat-input', self.handle_process_chat_input_direct)
+        self.sio.on('generate-response', self.handle_generate_response_direct)
+        
+        # Register standard handlers for backwards compatibility
+        # self.register_handler('ping', self.handle_ping)
+        # self.register_handler('process-chat-input', self.handle_process_chat_input)
+        # self.register_handler('generate-response', self.handle_generate_response)
         
     def register_handler(self, message_type: str, handler):
         """Register a message handler"""
@@ -66,6 +71,7 @@ class NOUSSocketIOServer:
     
     async def handle_message(self, sid: str, data: Dict[str, Any]):
         """Handle incoming messages"""
+        print("HANDLE THE MESSAGE", sid , data)
         try:
             message_id = data.get('id', 'unknown')
             message_type = data.get('type', 'unknown')
@@ -129,14 +135,16 @@ class NOUSSocketIOServer:
         user_id = payload.get('userId', '')
         context = payload.get('context', {})
         
+        print ("HELLO????", payload)
         logger.info(f"Processing chat input from {user_id}: {message}")
         
         try:
-            # Use the existing NOUS user input handler if available
+            # Use the async NOUS user input handler if available
             if hasattr(self, '_nous_user_input_handler'):
-                # Call the NOUS handler
+                # Call the async handler - this will send the final answer via send_final_answer()
                 await self._nous_user_input_handler(user_id, context.get('environmentId', 1), message, sid)
                 
+                # Return simple processing acknowledgment
                 return {
                     'response': 'Processing your request...',
                     'metadata': {
@@ -146,9 +154,11 @@ class NOUSSocketIOServer:
                     }
                 }
             else:
-                # Fallback mock response
+                # Fallback - emit mock response as event
+                await self.send_final_answer(sid, f"NOUS received: {message}")
+                
                 return {
-                    'response': f"NOUS received: {message}",
+                    'response': 'Processing your request...',
                     'metadata': {
                         'user_id': user_id,
                         'processed_at': asyncio.get_event_loop().time(),
@@ -157,8 +167,11 @@ class NOUSSocketIOServer:
                 }
         except Exception as e:
             logger.error(f"Error processing chat input: {e}")
+            # Send error via event
+            await self.send_error_message(sid, f"Error processing your request: {str(e)}")
+            
             return {
-                'response': 'Sorry, there was an error processing your request.',
+                'response': 'Error occurred while processing your request.',
                 'metadata': {
                     'user_id': user_id,
                     'error': str(e),
@@ -183,6 +196,53 @@ class NOUSSocketIOServer:
             }
         }
     
+    # Direct event handlers for Socket.IO events
+    async def handle_ping_direct(self, sid: str, data=None):
+        """Handle direct ping events with acknowledgment"""
+        logger.debug(f"Direct ping from {sid}")
+        try:
+            result = await self.handle_ping(data or {}, sid)
+            return result  # Return directly for acknowledgment
+        except Exception as e:
+            logger.error(f"Error handling direct ping: {e}")
+            return {'error': str(e)}
+    
+    async def handle_process_chat_input_direct(self, sid: str, data):
+        """Handle direct process-chat-input events - return receipt acknowledgment only"""
+        print(f"Direct process-chat-input from {sid}: {data}")
+        logger.debug(f"Direct process-chat-input from {sid}: {data}")
+        try:
+            # Extract payload from data structure
+            payload = data.get('payload', data) if isinstance(data, dict) else data
+            
+            # Process the chat input - this will emit the final answer as an event
+            await self.handle_process_chat_input(payload, sid)
+            
+            # Return only receipt acknowledgment
+            return {
+                'success': True,
+                'message': 'Chat input received and processing',
+                'timestamp': asyncio.get_event_loop().time()
+            }
+        except Exception as e:
+            logger.error(f"Error handling direct process-chat-input: {e}")
+            return {
+                'success': False,
+                'message': f'Error processing chat input: {str(e)}',
+                'timestamp': asyncio.get_event_loop().time()
+            }
+    
+    async def handle_generate_response_direct(self, sid: str, data):
+        """Handle direct generate-response events with acknowledgment"""
+        logger.debug(f"Direct generate-response from {sid}: {data}")
+        try:
+            payload = data.get('payload', data) if isinstance(data, dict) else data
+            result = await self.handle_generate_response(payload, sid)
+            return result  # Return directly for acknowledgment
+        except Exception as e:
+            logger.error(f"Error handling direct generate-response: {e}")
+            return {'error': str(e)}
+    
     async def broadcast(self, event: str, data: Dict[str, Any]):
         """Broadcast message to all connected clients"""
         await self.sio.emit(event, data)
@@ -203,6 +263,7 @@ class NOUSSocketIOServer:
         """Set the NOUS user input handler"""
         self._nous_user_input_handler = handler
         logger.info("NOUS user input handler registered with Socket.IO server")
+    
     
     async def send_final_answer(self, client_id: str, answer: str):
         """Send final answer to client"""

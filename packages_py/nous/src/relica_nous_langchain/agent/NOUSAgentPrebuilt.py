@@ -227,7 +227,11 @@ class NOUSAgent:
                  aperture_client: ApertureClientProxy,
                  archivist_client: ArchivistClientProxy,
                  semantic_model: SemanticModel,
+                 user_id,
+                 env_id,
                  ):
+        self.user_id = user_id
+        self.env_id= env_id
         self.emitter = EventEmitter()
         self.conversation_history: List[Dict[str, Any]] = []
 
@@ -259,12 +263,9 @@ class NOUSAgent:
 
         user_input = messages[-1]['content']
 
-        user_id = self.aperture_client.user_id
-        env_id = self.aperture_client.env_id
-
         console.print("==================== NOUS AGENT HANDLE INPUT ===================")
-        console.print(f"User ID: {user_id}")
-        console.print(f"Env ID: {env_id}")
+        console.print(f"User ID: {self.user_id}")
+        console.print(f"Env ID: {self.env_id}")
         console.print(f"User Input: {messages}")
 
         # p = prompt(
@@ -291,8 +292,8 @@ class NOUSAgent:
                 config={"configurable": {
                     "environment": self.semantic_model.format_relationships(),
                     "selected_entity": self.semantic_model.selectedEntity,
-                    "user_id": self.aperture_client.user_id,
-                    "env_id": self.aperture_client.env_id,
+                    "user_id": self.user_id,
+                    "env_id": self.env_id,
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
                     }}
                 )

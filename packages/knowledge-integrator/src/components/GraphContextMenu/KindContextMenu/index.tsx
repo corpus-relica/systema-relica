@@ -15,7 +15,7 @@ import KindContextRoleSubmenu from "./submenu/Role";
 import KindContextRelationSubmenu from "./submenu/Relation";
 import KindContextOccurrenceSubmenu from "./submenu/Occurrence";
 
-import { sockSendCC } from "../../../socket";
+import { portalSocket } from "../../../PortalSocket";
 
 import {
   getAllRelatedFacts,
@@ -57,7 +57,8 @@ interface KindContextMenuProps {
 }
 
 const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
-  const { factDataStore } = useStores();
+  const rootStore = useStores();
+  const { factDataStore, authStore } = rootStore;
   const {
     uid,
     category,
@@ -78,9 +79,15 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
   const handleItemClick = useCallback(
     async (e: any) => {
       const value = e.currentTarget.getAttribute("value");
+      const userId = authStore.userId;
+      const environmentId = rootStore.environmentId;
       switch (value) {
         case LOAD_SH:
-          sockSendCC("user", "loadSpecializationHierarchy", { uid });
+          portalSocket.emit("user", "loadSpecializationHierarchy", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case LOAD_CLASSIFIED:
@@ -102,7 +109,11 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_ALL_RELATED:
-          sockSendCC("user", "loadAllRelatedFacts", { uid });
+          portalSocket.emit("user", "loadAllRelatedFacts", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case LOAD_SUBTYPES:
@@ -124,15 +135,27 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_SUBTYPES_CONE:
-          sockSendCC("user", "loadSubtypesCone", { uid });
+          portalSocket.emit("user", "loadSubtypesCone", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case UNLOAD_THIS:
-          sockSendCC("user", "unloadEntity", { uid });
+          portalSocket.emit("user", "unloadEntity", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case UNLOAD_SUBTYPES_CONE:
-          sockSendCC("user", "unloadSubtypesCone", { uid });
+          portalSocket.emit("user", "unloadSubtypesCone", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
         case DELETE_THIS:

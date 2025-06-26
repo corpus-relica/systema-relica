@@ -3,19 +3,19 @@
  * 
  * This package provides:
  * - Type-safe WebSocket message schemas
- * - Action → Topic mapping registry 
- * - Runtime validation utilities
- * - Development tools for contract alignment
+ * - Action constants for direct use as WebSocket topics
+ * - Optional validation utilities for development
+ * - Clean service boundaries with TypeScript safety
  * 
  * @example
  * ```typescript
- * import { PrismActions, MessageRegistryUtils, ContractUtils } from '@relica/websocket-contracts';
+ * import { PrismActions, ValidationUtils } from '@relica/websocket-contracts';
  * 
  * // Use action directly as WebSocket topic
  * const topic = PrismActions.GET_SETUP_STATUS; // 'setup/get-status'
  * 
- * // Validate message against contract
- * const validation = ContractUtils.validate.request(PrismActions.GET_SETUP_STATUS, message);
+ * // Optional validation for debugging
+ * const validation = ValidationUtils.validateBaseMessage(message);
  * if (validation.success) {
  *   // Message is valid
  * } else {
@@ -31,20 +31,15 @@ export * from './base';
 export * from './services/prism';
 export * from './services/archivist';
 export * from './services/aperture';
+export * from './services/clarity';
+export * from './services/portal';
+export * from './services/nous';
 
-// Message registry and utilities
-export * from './registry';
-
-// Validation utilities
+// Simplified validation utilities
 export * from './validation';
 
-// Re-export commonly used items for convenience
-export {
-  ContractUtils,
-  validator,
-  devValidator,
-  ContractValidator,
-} from './validation';
+// Response utilities
+export * from './utils/response.utils';
 
 export {
   PrismActions,
@@ -204,3 +199,85 @@ export {
   type Fact,
   type Environment,
 } from './services/aperture';
+
+export {
+  // Portal user actions (knowledge-integrator → portal)
+  PortalUserActions,
+  PortalSystemEvents,
+  PortalActions,
+  type PortalUserActionType,
+  type PortalSystemEventType,
+  type PortalCommunicationType,
+  type SelectEntityRequest,
+  type SelectFactRequest,
+  type SelectNoneRequest,
+  type LoadSpecializationHierarchyRequest,
+  type LoadEntityRequest,
+  type ClearEntitiesRequest,
+  type LoadAllRelatedFactsRequest,
+  type LoadSubtypesConeRequest,
+  type UnloadEntityRequest,
+  type UnloadSubtypesConeRequest,
+  type DeleteEntityRequest,
+  type DeleteFactRequest,
+  type LoadEntitiesRequest,
+  type UnloadEntitiesRequest,
+  type GetSpecializationHierarchyRequest,
+  type StandardResponse,
+  // Portal system events (portal → knowledge-integrator)
+  type LoadedFactsEvent,
+  type UnloadedFactsEvent,
+  type SelectedEntityEvent,
+  type SelectedFactEvent,
+  type SelectedNoneEvent,
+  type EntitiesClearedEvent,
+  type StateInitializedEvent,
+  type StateChangedEvent,
+  type LoadedModelsEvent,
+  type UnloadedModelsEvent,
+  type UpdateCategoryDescendantsCacheEvent,
+} from './services/portal';
+
+export {
+  // Clarity operations
+  ClarityActions,
+  type ClarityActionType,
+  type ModelGetRequest,
+  type ModelBatchRequest,
+  type ModelCreateRequest,
+  type ModelUpdateRequest,
+  type KindGetRequest,
+  type IndividualGetRequest,
+  type ClarityEnvironmentGetRequest,
+  type ModelResponse,
+  type ModelBatchResponse,
+  type KindResponse,
+  type IndividualResponse,
+  type ClarityEnvironmentResponse,
+  type ClarityModelEvent,
+  type ClarityIndividualEvent,
+} from './services/clarity';
+
+export {
+  // NOUS operations
+  NOUSActions,
+  NOUSEvents,
+  type ProcessChatInputRequest,
+  type GenerateResponseRequest,
+  type PingRequest,
+  type ChatResponse,
+  type AIResponse,
+  type PongResponse,
+  type ChatReceiptAcknowledgment,
+  type NOUSErrorResponse,
+  type NOUSRequest,
+  type NOUSResponse,
+  ProcessChatInputRequestSchema,
+  GenerateResponseRequestSchema,
+  PingRequestSchema,
+  ChatResponseSchema,
+  AIResponseSchema,
+  PongResponseSchema,
+  ChatReceiptAcknowledgmentSchema,
+  ErrorResponseSchema,
+} from './services/nous';

@@ -1,10 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ArchivistGateway } from './archivist.gateway';
-import { FactGateway } from './gateways/fact.gateway';
-import { LineageGateway } from './gateways/lineage.gateway';
-import { SearchGateway } from './gateways/search.gateway';
-import { QueryGateway } from './gateways/query.gateway';
-import { KindGateway } from './gateways/kind.gateway';
 import { FactHandlers } from './handlers/fact.handlers';
 import { SearchHandlers } from './handlers/search.handlers';
 import { QueryHandlers } from './handlers/query.handlers';
@@ -17,6 +12,8 @@ import { SubmissionHandlers } from './handlers/submission.handlers';
 import { TransactionHandlers } from './handlers/transaction.handlers';
 import { UIDHandlers } from './handlers/uid.handlers';
 import { LineageHandlers } from './handlers/lineage.handlers';
+import { EntityHandlers } from './handlers/entity.handlers';
+import { SpecializationHandlers } from './handlers/specialization.handlers';
 
 // Import all the services that handlers depend on
 import { FactService } from '../fact/fact.service';
@@ -46,12 +43,6 @@ import { TransactionService } from '../transaction/transaction.service';
   providers: [
     // Main gateway (connection/health only)
     ArchivistGateway,
-    // Domain-specific gateways
-    FactGateway,
-    LineageGateway,
-    SearchGateway,
-    QueryGateway,
-    KindGateway,
     // Handler classes
     FactHandlers,
     SearchHandlers,
@@ -65,6 +56,8 @@ import { TransactionService } from '../transaction/transaction.service';
     TransactionHandlers,
     UIDHandlers,
     LineageHandlers,
+    EntityHandlers,
+    SpecializationHandlers,
     // Core services
     FactService,
     GeneralSearchService,
@@ -89,12 +82,6 @@ import { TransactionService } from '../transaction/transaction.service';
     LinearizationService,
     GellishToCypherConverter,
   ],
-  exports: [
-    ArchivistGateway,
-    FactGateway,
-    LineageGateway,
-    SearchGateway,
-    QueryGateway,
-  ],
+  exports: [ArchivistGateway],
 })
 export class WebSocketModule {}

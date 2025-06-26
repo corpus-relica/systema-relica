@@ -17,17 +17,6 @@ export class ExecuteSearchQueryService {
         pageSize = 10,
         exactMatch = false,
     ) {
-        console.log('searchQuery', searchQuery);
-        console.log('countQuery', countQuery);
-        console.log('searchTerm', searchTerm);
-        console.log('typeof searchTerm', typeof searchTerm);
-        console.log('relTypeUIDs', relTypeUIDs);
-        console.log('filterUIDs', filterUIDs);
-        console.log('collectionUID', collectionUID);
-        console.log('page', page);
-        console.log('pageSize', pageSize);
-        console.log('exactMatch', exactMatch);
-
         const skip = (page - 1) * pageSize;
         const result = await this.graphService.execQuery(searchQuery, {
             searchTerm,
@@ -43,8 +32,6 @@ export class ExecuteSearchQueryService {
             this.graphService.transformResult(item),
         );
 
-        console.log('transformedResult', transformedResult);
-
         const countResult = await this.graphService.execQuery(countQuery, {
             searchTerm,
             relTypeUIDs,
@@ -56,9 +43,6 @@ export class ExecuteSearchQueryService {
         });
 
         const totalCount = countResult[0]?.get('total').toNumber() ?? 0;
-
-        console.log('totalCount', totalCount);
-        console.log('facts', transformedResult);
 
         return {
             facts: transformedResult,

@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { CacheService } from './cache.service';
-import { ArchivistClientModule } from '../archivist-client/archivist-client.module';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 
 @Module({
-  imports: [ArchivistClientModule],
-  providers: [CacheService],
+  imports: [ConfigModule],
+  providers: [CacheService, ArchivistSocketClient],
   exports: [CacheService],
 })
 export class CacheModule {}

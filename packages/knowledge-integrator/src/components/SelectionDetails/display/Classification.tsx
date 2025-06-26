@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
 import { useStore } from "react-admin";
 import RootStoreContext from "../../../context/RootStoreContext";
-import { sockSendCC } from "../../../socket";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import { portalSocket } from "../../../PortalSocket";
 
 interface ClassificationProps {
   uids: number[];
@@ -15,8 +15,8 @@ const Classification: React.FC<ClassificationProps> = ({
   individualUID,
 }) => {
   const handleUIDClick = (uid: number) => {
-    sockSendCC("user", "loadEntity", { uid: uid });
-    sockSendCC("user", "loadEntity", { uid: individualUID });
+    portalSocket.emit("user", "loadEntity", { uid: uid });
+    portalSocket.emit("user", "loadEntity", { uid: individualUID });
   };
 
   const ui = uids.map((uid, index) => {

@@ -6,7 +6,8 @@ import { observer } from "mobx-react";
 
 import { useStore } from "react-admin";
 
-import { sockSendCC } from "../socket";
+import { portalSocket } from "../PortalSocket";
+import { PortalUserActions } from "@relica/websocket-contracts";
 
 import Box from "@mui/material/Box";
 
@@ -20,13 +21,13 @@ import Modal from "@mui/material/Modal";
 import GraphAndSelectionLayout from "./GraphToo";
 import { Fact } from "../types";
 
-import { getAuthToken } from "../authProvider";
+import authProvider, { getAuthToken } from "../authProvider";
 
 const USER = "user";
-const LOAD_SPECIALIZATION_HIERARCHY = "loadSpecializationHierarchy";
 
 const Graph = observer(() => {
-  const { factDataStore, colorPaletteStore } = useStores();
+  const rootStore = useStores();
+  const { factDataStore, colorPaletteStore, authStore } = rootStore;
   const { paletteMap } = colorPaletteStore;
   const { facts, categories } = factDataStore;
 
@@ -37,7 +38,9 @@ const Graph = observer(() => {
   const [filter, setFilter] = useState<number>(0);
 
   const selectNode = (id: number) => {
-    sockSendCC("user", "selectEntity", { uid: id });
+    const userId = authStore.userId;
+    const environmentId = rootStore.environmentId;
+    portalSocket.emit(USER, "selectEntity", { userId, environmentId, uid: id });
   };
 
   const token = getAuthToken();
@@ -83,22 +86,30 @@ const Graph = observer(() => {
   }, []);
 
   const handleEdgeClick = (uid: any) => {
-    sockSendCC(USER, "selectFact", { uid });
+    portalSocket.emit(USER, "selectFact", { uid });
   };
 
   const onStageClick = () => {
     setOpen(false);
-    sockSendCC(USER, "selectNone", {});
+    const userId = authStore.userId;
+    const environmentId = rootStore.environmentId;
+    portalSocket.emit(USER, "selectNone", { userId, environmentId });
   };
 
-  const handleSearchUIClose = (res: any) => {
+  const handleSearchUIClose = async (res: any) => {
     setSearchUIOpen(false);
 
     if (!res) return;
 
+    console.log("Search UI closed with result:", authStore.userId, res);
+
+    const identityx = await authProvider.getIdentity();
+    console.log("authprovider userId:", identityx);
     const { lh_object_uid } = res;
-    sockSendCC(USER, LOAD_SPECIALIZATION_HIERARCHY, {
+    portalSocket.emit(USER, "loadSpecializationHierarchy", {
       uid: lh_object_uid,
+      userId: authStore.userId || identityx?.id || "unknown",
+      environmentId: rootStore.environmentId,
     });
     selectNode(lh_object_uid);
   };

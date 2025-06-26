@@ -1,42 +1,46 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ArchivistSocketClient } from '@relica/websocket-clients';
 import { User } from '../decorators/user.decorator';
 
 @ApiTags('Search')
 @Controller()
 export class SearchController {
-  constructor(private readonly archivistClient: ArchivistWebSocketClientService) {}
+  constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
 
   @Get('generalSearch/text')
   @ApiOperation({ summary: 'Search entities by text' })
   @ApiBearerAuth()
-  @ApiQuery({ name: 'query', description: 'Text to search for', required: true })
-  @ApiQuery({ name: 'limit', description: 'Maximum number of results', required: false })
-  @ApiQuery({ name: 'offset', description: 'Offset for pagination', required: false })
+  // @ApiQuery({ name: 'query', description: 'Text to search for', required: true })
+  // @ApiQuery({ name: 'limit', description: 'Maximum number of results', required: false })
+  // @ApiQuery({ name: 'offset', description: 'Offset for pagination', required: false })
+  @ApiQuery({ name: 'searchTerm', description: 'Text to search for', required: true })
+  @ApiQuery({ name: 'collectionUID', description: 'Collection UID to search within', required: false })
+  @ApiQuery({ name: 'page', description: 'Page number for pagination', required: false })
+  @ApiQuery({ name: 'pageSize', description: 'Number of results per page', required: false })
+  @ApiQuery({ name: 'filter', description: 'Filter criteria for search', required: false })
   @ApiResponse({ status: 200, description: 'Search results retrieved successfully' })
   async searchText(
     @User() user: any,
-    @Query('query') query: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('searchTerm') searchTerm: string,
+    @Query('collectionUID') collectionUID?: number,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('filter') searchFilter?: string,
   ) {
     try {
-      if (!query) {
+
+      if (!searchTerm) {
         throw new BadRequestException('query parameter is required');
       }
       
-      const limitNum = limit ? parseInt(limit, 10) : 10;
-      const offsetNum = offset ? parseInt(offset, 10) : 0;
-      
-      const results = await this.archivistClient.searchText(query, limitNum, offsetNum);
-      
-      return {
-        success: true,
-        results,
-        total: results.length,
-      };
+      const limitNum = pageSize ? pageSize : 10; // Default to 10 if not provided
+      const offsetNum = page ? page : 0; // Default to 0 if not provided
+
+      const results = await this.archivistClient.searchText(searchTerm, collectionUID, limitNum, offsetNum, searchFilter);
+      return results;
+
     } catch (error) {
       return {
         success: false,

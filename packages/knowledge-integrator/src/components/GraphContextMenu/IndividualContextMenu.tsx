@@ -9,7 +9,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
-import { sockSendCC } from "../../socket";
+import { portalSocket } from "../../PortalSocket";
+import { useStores } from "../../context/RootStoreContext";
 
 const SHOW_ALL = "show 'all'";
 const REM_THIS = "rem this";
@@ -37,19 +38,36 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
     setWarnIsOpen,
   } = props;
 
+  const rootStore = useStores();
+  const { authStore } = rootStore;
+
   const handleItemClick = useCallback(
     (e) => {
       const value = e.currentTarget.getAttribute("value");
       console.log(`Clicked item with value: ${value}`);
       switch (value) {
-        case SHOW_ALL:
-          sockSendCC("user", "loadAllRelatedFacts", { uid });
+        case SHOW_ALL: {
+          const userId = authStore.userId;
+          const environmentId = rootStore.environmentId;
+          portalSocket.emit("user", "loadAllRelatedFacts", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
-        case REM_THIS:
-          sockSendCC("user", "unloadEntity", { uid });
+        }
+        case REM_THIS: {
+          const userId = authStore.userId;
+          const environmentId = rootStore.environmentId;
+          portalSocket.emit("user", "unloadEntity", {
+            userId,
+            environmentId,
+            uid,
+          });
           handleClose();
           break;
+        }
         case DELETE_THIS:
           setUidToDelete(uid);
           setWarnIsOpen(true);

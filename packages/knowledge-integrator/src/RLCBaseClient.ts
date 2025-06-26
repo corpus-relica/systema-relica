@@ -2,6 +2,7 @@ import axios from "axios";
 //@ts-ignore
 import {
   ENTITY_TYPE_ENDPOINT,
+  ENTITY_CATEGORY_ENDPOINT,
   SPECIALIZATION_HIERARCHY_ENDPOINT,
   GET_DEFINITION_ENDPOINT,
   COLLECTIONS_ENDPOINT,
@@ -18,15 +19,19 @@ import {
 import { Fact } from "./types";
 import { getAuthToken } from "./authProvider";
 
-console.log('Creating ArchivistDataProvider axios instance...');
-const apiUrl = import.meta.env.VITE_RELICA_DB_API_URL || 'http://localhost:3000';
-
-console.log(
-  "connections RLC BASE CLIENT ", apiUrl
-);
+const apiUrl = import.meta.env.VITE_RELICA_API_URL || "http://localhost:2204";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_RELICA_DB_API_URL,
+  baseURL: import.meta.env.VITE_RELICA_API_URL,
+});
+
+// Add request interceptor to include auth token
+axiosInstance.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export const getSpecializationHierarchy = async (uid: number) => {
@@ -52,7 +57,7 @@ export const getDefinition = async (uid: number) => {
 
 export const uidSearch = async (
   searchTerm: number,
-  collectionUID: string = "",
+  collectionUID: string = ""
 ) => {
   try {
     const response = await axiosInstance.get(UID_SEARCH_ENDPOINT, {
@@ -68,7 +73,7 @@ export const uidSearch = async (
 export const textSearch = async (
   searchTerm: string,
   page: number = 1,
-  pageSize: number = 50,
+  pageSize: number = 50
 ) => {
   const response = await axiosInstance.get(TEXT_SEARCH_ENDPOINT, {
     params: { searchTerm, page, pageSize, collectionUID: "" },
@@ -77,7 +82,15 @@ export const textSearch = async (
 };
 
 export const getEntityType = async (uid: number) => {
-  const type = await axiosInstance.get(ENTITY_TYPE_ENDPOINT, {
+  const result = await axiosInstance.get(ENTITY_TYPE_ENDPOINT, {
+    params: { uid },
+  });
+  console.log("XXXXX", result.data);
+  return result.data.type;
+};
+
+export const getEntityCategory = async (uid: number) => {
+  const type = await axiosInstance.get(ENTITY_CATEGORY_ENDPOINT, {
     params: { uid },
   });
   return type.data;
@@ -94,7 +107,8 @@ export const getSubtypes = async (uid: number) => {
   const response = await axiosInstance.get(SUBTYPES_ENDPOINT, {
     params: { uid },
   });
-  return response.data;
+  console.log("RLCBaseClient.getSubtypes response", response.data.subtypes);
+  return response.data.subtypes;
 };
 
 export const getSubtypesCone = async (uid: number) => {
@@ -144,7 +158,7 @@ export const postEntityPrompt = async (uid: number, prompt: string) => {
 export const validateBinaryFact = async (fact: Fact) => {
   const response = await axiosInstance.get(
     SIMPLE_VALIDATE_BINARY_FACT_ENDPOINT,
-    { params: fact },
+    { params: fact }
   );
   return response.data;
 };

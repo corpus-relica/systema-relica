@@ -17,7 +17,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.APERTURE_PORT || 3002;
+  const port = process.env.APERTURE_PORT || 3007;
   await app.listen(port);
   console.log(`Aperture service running on port ${port} (WebSocket-only)`);
 }

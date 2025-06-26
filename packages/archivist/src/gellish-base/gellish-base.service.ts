@@ -97,7 +97,6 @@ export class GellishBaseService {
   };
 
   getEntities = async (uids: number[]) => {
-    console.log('UIDS', uids);
     const result = await this.graphService.execQuery(entities, { uids });
     if (result.length === 0) {
       return null;
@@ -110,6 +109,7 @@ export class GellishBaseService {
         const descendants = await this.cacheService.allDescendantsOf(
           entity.properties.uid,
         );
+
         // Combine the entity properties and the descendants
         return Object.assign({}, entity.properties, { descendants });
       }),
@@ -182,7 +182,6 @@ export class GellishBaseService {
   };
 
   getCategory = async (uid) => {
-    console.log('GETTING CATEGORY MUTHER SUCKER!!!!', uid);
     //is this an individual or a kind?
     const classificationFact = await this.getClassificationFact(uid);
     if (classificationFact.length > 0) {
@@ -320,19 +319,14 @@ export class GellishBaseService {
       const res = await this.graphService.execQuery(possibleRolePlayers, {
         uid: fact.lh_object_uid,
       });
-      console.log(
-        '!!!!!!!!!!!!111 GET POSSIBLE ROLE PLAYERS',
-        typeof fact.lh_object_uid,
-        fact.lh_object_uid,
-        res,
-      );
-      result = [...result, ...res];
+      const txRes = this.graphService.transformResults(res);
+      result = [...result, ...txRes];
       i++;
     }
     if (result.length === 0) {
       return [];
     }
-    return this.graphService.transformResults(result);
+    return result;
   };
 
   getRequiringRelations = async (roleUID) => {
@@ -342,17 +336,18 @@ export class GellishBaseService {
     let i = 0;
     let result = [];
     while (i < facts.length - 1 && result.length === 0) {
-      const fact = specH[i];
+      const fact = facts[i];
       const res = await this.graphService.execQuery(requiringRelations, {
         uid: fact.lh_object_uid,
       });
-      result = [...result, ...res];
+      const txRes = this.graphService.transformResults(res);
+      result = [...result, ...txRes];
       i++;
     }
     if (result.length === 0) {
       return [];
     }
-    return this.graphService.transformResult(result);
+    return result;
   };
 
   getFact = async (factUID) => {
@@ -387,9 +382,6 @@ export class GellishBaseService {
     const classificationFact = await this.getClassificationFact(uid);
     const qualificationFact = await this.getQualificationFact(uid);
 
-    console.log('GET DEFINITIVE FACTS', uid);
-    console.log(specializationFact, classificationFact, qualificationFact);
-
     if (
       specializationFact.length === 0 &&
       classificationFact.length === 0 &&
@@ -399,21 +391,17 @@ export class GellishBaseService {
     }
 
     if (specializationFact.length > 0) {
-      console.log('RETURN SPEC FACT');
       return specializationFact;
     }
 
     if (classificationFact.length > 0) {
-      console.log('RETURN CLASS FACT');
       return classificationFact;
     }
 
     if (qualificationFact.length > 0) {
-      console.log('RETURN QUAL FACT');
       return qualificationFact;
     }
 
-    console.log('RETURN NO FACT');
     return [];
   };
 
@@ -497,13 +485,7 @@ export class GellishBaseService {
       }),
     );
 
-    // for (let i = 0; i < result.length; i++) {
-    //   console.log('RESULT', result[i][0].get('r').properties);
-    // }
-
     const barResult = result.map((x) => x[0].get('r').properties);
-
-    // console.log('RESULT', barResult);
 
     this.logger.verbose('BLANKET UPDATE FACT NAME', barResult);
     return barResult;

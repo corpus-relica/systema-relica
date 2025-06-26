@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ApertureGateway } from './aperture.gateway';
 import { EnvironmentModule } from '../environment/environment.module';
-import { ArchivistWebSocketClientService } from '../services/archivist-websocket-client.service';
+import { ServicesModule } from '../services/services.module';
 
 @Module({
-  imports: [EnvironmentModule],
-  providers: [ApertureGateway, ArchivistWebSocketClientService],
+  imports: [EnvironmentModule, ServicesModule],
+  providers: [ApertureGateway],
   exports: [ApertureGateway],
 })
 export class WebSocketModule {}

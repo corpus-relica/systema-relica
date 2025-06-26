@@ -13,6 +13,8 @@ from src.socketio_server import nous_socketio_server
 
 from src.relica_nous_langchain.agent.NOUSAgentPrebuilt import NOUSAgent
 from src.relica_nous_langchain.SemanticModel import semantic_model
+from src.socketio_clients.aperture_proxy import ApertureSocketIOProxy
+from src.socketio_clients.archivist_proxy import ArchivistSocketIOProxy
 
 # Set up logging - suppress EDN format logs
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +31,7 @@ async def main():
             if not aperture_client.is_connected():
                 await aperture_client.connect()
             
-            result = await aperture_client.retrieve_environment(1, None)
+            result = await aperture_client.retrieve_environment("bb121d97-1ab4-4cd3-bcb9-54459ad9b9b3", None)
             print("*******************************************")
             print(result)
 
@@ -55,14 +57,20 @@ async def main():
         if not archivist_client.is_connected():
             await archivist_client.connect()
 
-        # 2. Instantiate the NOUSAgent
+        # 2. Create proxy clients for the agent using the existing Socket.IO connections
+        aperture_proxy = ApertureSocketIOProxy(aperture_client, user_id, env_id)
+        archivist_proxy = ArchivistSocketIOProxy(archivist_client, user_id, env_id)
+        
+        # 3. Instantiate the NOUSAgent
         agent = NOUSAgent(
-            aperture_client=aperture_client,
-            archivist_client=archivist_client,
+            aperture_client=aperture_proxy,
+            archivist_client=archivist_proxy,
             semantic_model=semantic_model,
+            user_id=user_id,
+            env_id=env_id
         )
 
-        # 3. Invoke the agent to process the input
+        # 4. Invoke the agent to process the input
         try:
             # Assuming the agent returns the final answer to send to the user
             messages.append({"role":"user", "content": message})
@@ -79,9 +87,10 @@ async def main():
             # Send error message via Socket.IO
             await nous_socketio_server.send_error_message(client_id, f"An error occurred: {e}")
 
+
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
-    # Register handler with Socket.IO server
+    # Register async handler with Socket.IO server
     nous_socketio_server.set_nous_handler(handle_user_input)
 
     # Connect to services
@@ -96,7 +105,7 @@ async def main():
     if aperture_connected:
         # Call retrieveEnv which uses the singleton client
         env = await retrieveEnv()
-        print(f">>>>>>>>>> Retrieved environment: {env is not None}")
+        print(f">>>>>>>>>> Retrieved environment - direct socketio: {env is not None}")
     else:
         print("Cannot retrieve environment - Aperture not connected")
 

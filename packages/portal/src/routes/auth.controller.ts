@@ -123,7 +123,7 @@ export class AuthController {
       return {
         success: true,
         token: socketToken,
-        'user-id': validationResult.user?.id || user.id,
+        userId: validationResult.user?.id || user.id,
       };
     } catch (error) {
       return {

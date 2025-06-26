@@ -7,7 +7,9 @@ import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
 import DeleteFactDialogue from "./DeleteFactDialogue";
-import { sockSendCC } from "../../socket";
+import { portalSocket } from "../../PortalSocket";
+import { getEntityType, getEntityCategory } from "../../RLCBaseClient";
+import { useStores } from "../../context/RootStoreContext";
 
 interface GraphContextMenuProps {
   open: boolean;
@@ -24,6 +26,8 @@ import { useStore, useDataProvider } from "react-admin";
 
 const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
   const dataProvider = useDataProvider();
+  const rootStore = useStores();
+  const { authStore } = rootStore;
   const { open, handleClose, x, y, uid, type, relType, setSearchUIOpen } =
     props;
   const [menu, setMenu] = useState<JSX.Element | null>(null);
@@ -47,15 +51,23 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
     const foo = async () => {
       if (uid) {
         if (type === "entity") {
-          const result = await dataProvider.getOne("env/", {
-            uid: uid,
-          });
-          const model = result.data;
-          if (model.type === "kind") {
+          const kind = await getEntityType(uid);
+          const category = await getEntityCategory(uid);
+
+          console.log("KIND: ", kind, "CATEGORY: ", category);
+          // this isn't even a bad idea...
+          // the model will have been computed and loaded by clarity
+          // before here...re-implment when clarity is ready.
+          // const result = await dataProvider.getOne("env/", {
+          //   uid: uid,
+          // });
+          // const model = result.data;
+          if (kind === "kind") {
+            // console.log("KIND CONTEXT MENU", model);
             setMenu(
               <KindContextMenu
                 uid={uid}
-                category={model.category}
+                category={category}
                 open={open}
                 handleClose={handleClose}
                 x={x}
@@ -70,7 +82,8 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 setWarnIsOpen={setWarnIsOpen}
               />
             );
-          } else if (model.type === "individual") {
+          } else if (kind === "individual") {
+            // console.log("KIND INDIVIDUAL MENU", model);
             setMenu(
               <IndividualContextMenu
                 uid={uid}
@@ -83,10 +96,10 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
                 setWarnIsOpen={setWarnIsOpen}
               />
             );
-          } else if (model.type === "qualification") {
+          } else if (kind === "qualification") {
             // menu = <div>Qualification</div>;
           } else {
-            console.log("unknown model type: ", model.type);
+            console.log("unknown model type: ", kind);
           }
         } else if (type === "fact") {
           setMenu(
@@ -130,7 +143,13 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={() => {
             setWarnIsOpen(false);
-            sockSendCC("user", "deleteEntity", { uid: uidToDelete });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "deleteEntity", {
+              userId,
+              environmentId,
+              uid: uidToDelete,
+            });
           }}
         />
       )}
@@ -143,7 +162,13 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={() => {
             setFactWarnIsOpen(false);
-            sockSendCC("user", "deleteFact", { uid: factUidToDelete });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "deleteFact", {
+              userId,
+              environmentId,
+              uid: factUidToDelete,
+            });
           }}
         />
       )}
@@ -158,8 +183,18 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setSubtypesDialogueIsOpen(false);
-            sockSendCC("user", "loadEntities", { uids: selected });
-            sockSendCC("user", "unloadEntities", { uids: notSelected });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "loadEntities", {
+              userId,
+              environmentId,
+              uids: selected,
+            });
+            portalSocket.emit("user", "unloadEntities", {
+              userId,
+              environmentId,
+              uids: notSelected,
+            });
           }}
         />
       )}
@@ -174,8 +209,18 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           }}
           handleOk={(selected: number[], notSelected: number[]) => {
             setClassifiedDialogueIsOpen(false);
-            sockSendCC("user", "loadEntities", { uids: selected });
-            sockSendCC("user", "unloadEntities", { uids: notSelected });
+            const userId = authStore.userId;
+            const environmentId = rootStore.environmentId;
+            portalSocket.emit("user", "loadEntities", {
+              userId,
+              environmentId,
+              uids: selected,
+            });
+            portalSocket.emit("user", "unloadEntities", {
+              userId,
+              environmentId,
+              uids: notSelected,
+            });
           }}
         />
       )}

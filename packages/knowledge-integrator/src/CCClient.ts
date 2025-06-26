@@ -1,8 +1,17 @@
 import axios from "axios";
+import { getAuthToken } from "./authProvider";
 
-console.log("CONNECTING CC CLIENT", import.meta.env.VITE_RELICA_CC_API_URL);
 const CCAxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_RELICA_CC_API_URL,
+  baseURL: import.meta.env.VITE_RELICA_API_URL,
+});
+
+// Add request interceptor to include auth token
+CCAxiosInstance.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export const retrieveEnvironment = async () => {

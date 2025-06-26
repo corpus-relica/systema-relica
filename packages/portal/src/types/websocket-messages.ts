@@ -1,6 +1,6 @@
 // Ruthless alignment with shared contracts - use as single source of truth
 import { BaseRequest, BaseResponse, BaseEvent } from '@relica/websocket-contracts';
-import { PrismActionType } from '@relica/websocket-contracts';
+import { PrismActionType, EntityActionType, KindActionType, SearchActionType, ApertureActionType, ClarityActionType } from '@relica/websocket-contracts';
 
 // All service messages now use shared contract structure
 export type ServiceMessage = BaseRequest;
@@ -38,37 +38,34 @@ export interface PrismMessage extends BaseRequest {
 export interface ArchivistMessage extends BaseRequest {
   service: 'archivist';
   action: 
-    | 'get-kinds'
-    | 'search-text'
+    | EntityActionType
+    | KindActionType
+    | SearchActionType
     | 'search-uid'
     | 'resolve-uids'
     | 'get-classified'
     | 'get-subtypes'
     | 'get-subtypes-cone'
     | 'submit-fact'
-    | 'delete-fact';
+    | 'delete-fact'
+    // Legacy actions (to be migrated to contracts)
+    | 'get-kinds';
 }
 
 export interface ClarityMessage extends BaseRequest {
   service: 'clarity';
-  action:
-    | 'get-model'
-    | 'get-kind-model'
-    | 'get-individual-model'
-    | 'create-model'
-    | 'update-model'
-    | 'get-environment';
+  action: ClarityActionType;
 }
 
 export interface ApertureMessage extends BaseRequest {
   service: 'aperture';
   action:
+    | ApertureActionType
     | 'get-environment'
     | 'create-environment'
     | 'update-environment'
     | 'select-entity'
     | 'load-entities'
-    | 'load-specialization-hierarchy'
     | 'clear-environment-entities'
     | 'load-all-related-facts';
 }

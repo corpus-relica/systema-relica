@@ -9,11 +9,11 @@ import {
   OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SetupService } from '../setup/setup.service';
 import { CacheService } from '../cache/cache.service';
 import { HealthService } from '../health/health.service';
-import { PrismActions, PrismEvents, SetupStatusBroadcastEvent } from '@relica/websocket-contracts';
+import { PrismActions, PrismEvents, SetupStatusBroadcastEvent, toResponse, toErrorResponse } from '@relica/websocket-contracts';
 
 @Injectable()
 @WebSocketGateway({ 
@@ -21,6 +21,8 @@ import { PrismActions, PrismEvents, SetupStatusBroadcastEvent } from '@relica/we
   transports: ['websocket'],
 })
 export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
+  private readonly logger = new Logger(PrismWebSocketGateway.name);
+
   @WebSocketServer()
   server: Server;
 
@@ -62,160 +64,157 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   }
 
   @SubscribeMessage(':relica.app/heartbeat')
-  handleHeartbeat(@MessageBody() payload: any) {
-    console.log('Heartbeat received:', payload);
-    return {
-      success: true,
-      data: {
+  handleHeartbeat(@MessageBody() message: any) {
+    try {
+      const payload = message.payload;
+      this.logger.log('Heartbeat received:', payload);
+      const data = {
         receivedAt: Date.now(),
         serverTime: new Date().toISOString(),
-      },
-    };
+      };
+      return toResponse(data, message.id);
+    } catch (error) {
+      this.logger.error('Heartbeat failed', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(PrismActions.GET_SETUP_STATUS)
-  handleGetSetupStatus() {
-    console.log('Handling setup status request');
-    const status = this.setupService.getSetupState();
-    return {
-      success: true,
-      data: status,
-    };
+  handleGetSetupStatus(@MessageBody() message: any) {
+    try {
+      this.logger.log('Handling setup status request');
+      const status = this.setupService.getSetupState();
+      return toResponse(status, message.id);
+    } catch (error) {
+      this.logger.error('Failed to get setup status', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(PrismActions.START_SETUP)
-  handleStartSetup() {
-    console.log('Starting setup sequence via WebSocket');
-    this.setupService.startSetup();
-    return {
-      success: true,
-      message: 'Setup sequence started',
-    };
+  handleStartSetup(@MessageBody() message: any) {
+    try {
+      this.logger.log('Starting setup sequence via WebSocket');
+      this.setupService.startSetup();
+      const data = { message: 'Setup sequence started' };
+      return toResponse(data, message.id);
+    } catch (error) {
+      this.logger.error('Failed to start setup', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(PrismActions.CREATE_USER)
-  handleCreateUser(@MessageBody() payload: any) {
-    const { username, email, password } = payload || {};
-    console.log('Creating admin user via WebSocket:', username);
+  handleCreateUser(@MessageBody() message: any) {
+    try {
+      const { username, email, password } = message.payload || {};
+      this.logger.log('Creating admin user via WebSocket:', username);
 
-    if (!username || !password || !email) {
-      return {
-        success: false,
-        error: {
-          code: 'validation-error',
-          type: 'input-validation',
-          message: 'Missing required fields',
-        },
-      };
-    }
+      if (!username || !password || !email) {
+        const error = new Error('Missing required fields: username, email, and password are required');
+        this.logger.error('User creation validation failed', error);
+        return toErrorResponse(error, message.id);
+      }
 
-    // if (password !== confirmPassword) {
-    //   return {
-    //     success: false,
-    //     error: {
-    //       code: 'validation-error',
-    //       type: 'input-validation',
-    //       message: 'Passwords do not match',
-    //     },
-    //   };
-    // }
-
-    // Submit credentials to setup service
-    this.setupService.submitCredentials(username, email, password);
-    
-    return {
-      success: true,
-      data: {
+      // Submit credentials to setup service
+      this.setupService.submitCredentials(username, email, password);
+      
+      const data = {
         message: 'Admin user creation initiated',
         user: {
           username,
           role: 'admin',
         },
-      },
-    };
+      };
+      return toResponse(data, message.id);
+    } catch (error) {
+      this.logger.error('Failed to create user', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(PrismActions.RESET_SYSTEM)
-  async handleResetSystem() {
-    console.log('🚨 Resetting system state via WebSocket');
+  async handleResetSystem(@MessageBody() message: any) {
     try {
+      this.logger.warn('🚨 Resetting system state via WebSocket');
       const result = await this.setupService.resetSystem();
-      return {
+      const data = {
         success: result.success,
         message: result.message,
         errors: result.errors,
         timestamp: new Date().toISOString(),
       };
+      return toResponse(data, message.id);
     } catch (error) {
-      console.error('System reset failed via WebSocket:', error);
-      return {
-        success: false,
-        message: `System reset failed: ${error.message}`,
-        errors: [error.message],
-        timestamp: new Date().toISOString(),
-      };
+      this.logger.error('System reset failed via WebSocket', error);
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage(':prism.cache/rebuild')
-  async handleCacheRebuild() {
-    console.log('Starting cache rebuild via WebSocket');
+  async handleCacheRebuild(@MessageBody() message: any) {
     try {
+      this.logger.log('Starting cache rebuild via WebSocket');
       const result = await this.cacheService.rebuildAllCaches();
-      return {
+      const data = {
         success: result,
         message: result 
           ? 'Cache rebuild completed successfully'
           : 'Cache rebuild failed',
       };
+      return toResponse(data, message.id);
     } catch (error) {
-      console.error('Failed to start cache rebuild:', error);
-      return {
-        success: false,
-        error: error.message,
-        message: 'Failed to start cache rebuild',
-      };
+      this.logger.error('Failed to start cache rebuild', error);
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage(':prism.cache/status')
-  handleGetCacheStatus() {
-    console.log('Getting cache rebuild status');
-    const status = this.cacheService.getRebuildStatus();
-    return {
-      success: true,
-      data: status,
-    };
+  handleGetCacheStatus(@MessageBody() message: any) {
+    try {
+      this.logger.log('Getting cache rebuild status');
+      const status = this.cacheService.getRebuildStatus();
+      return toResponse(status, message.id);
+    } catch (error) {
+      this.logger.error('Failed to get cache status', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(':prism.health/status')
-  async handleGetHealthStatus() {
-    console.log('Getting system health status');
-    const health = await this.healthService.checkSystemHealth();
-    return {
-      success: true,
-      data: health,
-    };
+  async handleGetHealthStatus(@MessageBody() message: any) {
+    try {
+      this.logger.log('Getting system health status');
+      const health = await this.healthService.checkSystemHealth();
+      return toResponse(health, message.id);
+    } catch (error) {
+      this.logger.error('Failed to get health status', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(':prism.health/neo4j')
-  async handleGetNeo4jHealth() {
-    console.log('Getting Neo4j health status');
-    const health = await this.healthService.checkNeo4jHealth();
-    return {
-      success: true,
-      data: health,
-    };
+  async handleGetNeo4jHealth(@MessageBody() message: any) {
+    try {
+      this.logger.log('Getting Neo4j health status');
+      const health = await this.healthService.checkNeo4jHealth();
+      return toResponse(health, message.id);
+    } catch (error) {
+      this.logger.error('Failed to get Neo4j health', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   @SubscribeMessage(':prism.health/cache')
-  async handleGetCacheHealthStatus() {
-    console.log('Getting cache health status');
-    const health = await this.healthService.checkCacheHealth();
-    return {
-      success: true,
-      data: health,
-    };
+  async handleGetCacheHealthStatus(@MessageBody() message: any) {
+    try {
+      this.logger.log('Getting cache health status');
+      const health = await this.healthService.checkCacheHealth();
+      return toResponse(health, message.id);
+    } catch (error) {
+      this.logger.error('Failed to get cache health', error);
+      return toErrorResponse(error, message.id);
+    }
   }
 
   public broadcastSetupUpdate(setupStatus: any) {
