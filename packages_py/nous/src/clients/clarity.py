@@ -1,7 +1,7 @@
 import os
 import logging
 from typing import List, Dict, Any, Optional
-from .base_client import BaseSocketIOClient
+from .base import BaseSocketIOClient
 
 logger = logging.getLogger('clarity-client')
 

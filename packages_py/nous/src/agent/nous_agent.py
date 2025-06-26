@@ -12,12 +12,9 @@ from langgraph.graph import StateGraph
 
 from typing import Optional, List, Dict, Any, TypedDict, Annotated, Sequence
 
-from src.relica_nous_langchain.utils.EventEmitter import EventEmitter
-from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
-from src.relica_nous_langchain.services.archivist_client import ArchivistClientProxy
-from src.relica_nous_langchain.SemanticModel import SemanticModel
-
-from src.relica_nous_langchain.agent.ToolsPrebuilt import create_agent_tools
+from src.utils.event_emitter import EventEmitter
+from src.models.semantic_model import SemanticModel
+from src.agent.tools import create_agent_tools
 
 from langchain_core.messages import AnyMessage
 from langchain_core.runnables import RunnableConfig
@@ -214,18 +211,20 @@ Do your best to maintain the level of discourse at the level of a 12th grader.
 
 from langchain_groq import ChatGroq
 
-llm = ChatGroq(
-    model="qwen-qwq-32b",
-    # model="mistral-saba-24b",
-    temperature=0.6,
-    max_retries=2,
-    # other params...
-)
+def get_llm():
+    """Get the LLM instance. Called after config is loaded."""
+    return ChatGroq(
+        model="qwen-qwq-32b",
+        # model="mistral-saba-24b",
+        temperature=0.6,
+        max_retries=2,
+        # other params...
+    )
 
 class NOUSAgent:
     def __init__(self,
-                 aperture_client: ApertureClientProxy,
-                 archivist_client: ArchivistClientProxy,
+                 aperture_client,
+                 archivist_client,
                  semantic_model: SemanticModel,
                  user_id,
                  env_id,

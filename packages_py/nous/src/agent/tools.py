@@ -5,9 +5,7 @@ from rich import print
 import asyncio
 from langchain_core.utils.function_calling import convert_to_openai_tool
 
-from src.relica_nous_langchain.SemanticModel import semantic_model
-from src.relica_nous_langchain.services.aperture_client import ApertureClientProxy
-from src.relica_nous_langchain.services.archivist_client import ArchivistClientProxy
+from src.models.semantic_model import semantic_model
 
 def facts_to_related_entities_str(facts) -> str:
     entities = {}
@@ -40,8 +38,8 @@ def facts_to_metadata_str(facts) -> str:
 
     return "\n".join(metadata)
 
-def create_agent_tools(aperture_proxy: ApertureClientProxy,
-                       archivist_proxy: ArchivistClientProxy):
+def create_agent_tools(aperture_proxy,
+                       archivist_proxy):
     """Creates and returns LangChain tools and related metadata configured with a specific ApertureClientProxy."""
 
 

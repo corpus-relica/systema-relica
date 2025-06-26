@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import socketio
+import socketio  # python-socketio
 from typing import Any, Dict, Optional, Callable
 import uuid
 

@@ -39,7 +39,7 @@ class SemanticModel:
 
         try:
             # Import here to avoid circular imports
-            from src.relica_nous_langchain.services.clarity_client import clarity_client
+            from src.clients.clarity import clarity_client
 
             # Call the external API to get the models
             models_result = await clarity_client.retrieveModels(uids_to_load)
