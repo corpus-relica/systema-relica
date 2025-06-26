@@ -314,7 +314,10 @@ def create_agent_tools(aperture_proxy: ApertureClientProxy,
     async def getEntityDefinition(uid: int) -> str | None:
         """Gets textual definition of an entity identified by its UID. Also selects this entity as the current focus."""
         uid = int(uid)
+        print("GET THE FUGGIND DEFINITION", uid)
         content = await archivist_proxy.get_definition(uid)
+
+        print("GOT FUGGIN DEF", content)
         # if content is None:
         #     return "<<model not yet loaded>>. this is ok. load it using 'loadEntity'"
         await aperture_proxy.selectEntity(uid)

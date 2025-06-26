@@ -22,12 +22,10 @@ class BaseSocketIOClient:
             engineio_logger=logger
         )
         self.connected = False
-        self.pending_requests: Dict[str, asyncio.Future] = {}
         
         # Register standard event handlers
         self.sio.on('connect', self._on_connect)
         self.sio.on('disconnect', self._on_disconnect)
-        self.sio.on('message', self._on_message)
         self.sio.on('connect_error', self._on_connect_error)
     
     async def connect(self) -> bool:
@@ -54,28 +52,14 @@ class BaseSocketIOClient:
         """Handle disconnect event"""
         self.connected = False
         logger.warning(f"Disconnected from {self.service_name} service")
-        
-        # Reject all pending requests
-        for request_id, future in self.pending_requests.items():
-            if not future.done():
-                future.set_exception(ConnectionError(f"Disconnected from {self.service_name}"))
-        self.pending_requests.clear()
     
     async def _on_connect_error(self, data):
         """Handle connection error"""
         logger.error(f"Connection error to {self.service_name}: {data}")
     
-    async def _on_message(self, data):
-        """Handle incoming messages"""
-        if isinstance(data, dict) and 'id' in data:
-            request_id = data['id']
-            if request_id in self.pending_requests:
-                future = self.pending_requests.pop(request_id)
-                if not future.done():
-                    future.set_result(data)
     
     async def send_request(self, action: str, payload: Dict[str, Any], timeout: float = 30.0) -> Dict[str, Any]:
-        """Send a request and wait for response"""
+        """Send a request and wait for response using Socket.IO acknowledgment pattern like TypeScript clients"""
         if not self.connected:
             raise ConnectionError(f"Not connected to {self.service_name}")
         
@@ -88,28 +72,19 @@ class BaseSocketIOClient:
             'payload': payload
         }
         
-        # Create future for response
-        future = asyncio.Future()
-        self.pending_requests[request_id] = future
-        
         try:
-            # Send message
-            await self.sio.emit('message', message)
+            # Use sio.call() which mirrors TypeScript's emit with callback acknowledgment
+            response = await self.sio.call(action, message, timeout=timeout)
             
-            # Wait for response
-            response = await asyncio.wait_for(future, timeout=timeout)
-            
-            if response.get('success', False):
-                return response.get('payload', {})
+            if response and response.get('success', False):
+                return response.get('data', response.get('payload', {}))
             else:
-                error_msg = response.get('error', 'Unknown error')
+                error_msg = response.get('error', 'Unknown error') if response else 'No response received'
                 raise Exception(f"{self.service_name} error: {error_msg}")
                 
         except asyncio.TimeoutError:
-            self.pending_requests.pop(request_id, None)
             raise TimeoutError(f"Request to {self.service_name} timed out")
         except Exception as e:
-            self.pending_requests.pop(request_id, None)
             raise e
     
     async def emit_event(self, event: str, data: Any):

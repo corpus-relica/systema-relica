@@ -107,7 +107,7 @@ async def main():
     if aperture_connected:
         # Call retrieveEnv which uses the singleton client
         env = await retrieveEnv()
-        print(f">>>>>>>>>> Retrieved environment: {env is not None}")
+        print(f">>>>>>>>>> Retrieved environment - startup: {env is not None}")
     else:
         print("Cannot retrieve environment - Aperture not connected")
 
