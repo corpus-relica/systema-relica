@@ -3,9 +3,21 @@
 from rich import print
 
 import asyncio
+from typing import Optional, List, Tuple, Literal
+from pydantic import BaseModel, Field
 from langchain_core.utils.function_calling import convert_to_openai_tool
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
 
 from src.models.semantic_model import semantic_model
+from src.config import CATEGORY_ROOTS
+from .concept_placement import get_subtypes_with_definitions, select_best_subtype, find_best_placement_recursive
+
+# Pydantic models for structured output
+class ConceptCategory(BaseModel):
+    """Semantic category classification for a concept."""
+    category: Literal["physical object", "aspect", "role", "relation", "state", "occurrence", "other"]
+    reasoning: str = Field(description="Brief explanation for the classification")
 
 def facts_to_related_entities_str(facts) -> str:
     entities = {}
@@ -42,6 +54,80 @@ def create_agent_tools(aperture_proxy,
                        archivist_proxy):
     """Creates and returns LangChain tools and related metadata configured with a specific ApertureClientProxy."""
 
+    # Initialize LLM for concept placement tools
+    llm = ChatGroq(
+        model="qwen-qwq-32b",
+        temperature=0.1,  # Low temperature for consistent classification
+        max_retries=2,
+    )
+
+    # --- Concept Placement Tools --- #
+    
+    async def categorizeConceptType(term: str, definition: str = "") -> str:
+        """
+        Determines the fundamental semantic category of a concept.
+        
+        Args:
+            term: The concept term to categorize
+            definition: Optional brief definition of the concept
+            
+        Returns:
+            JSON string with category and reasoning
+        """
+        try:
+            categorization_prompt = ChatPromptTemplate.from_template("""
+Analyze this concept and determine its fundamental semantic category:
+
+Term: {term}
+Definition: {definition}
+
+Categories:
+- physical object: tangible things that exist in space (cars, buildings, people)
+- aspect: properties or characteristics of things (color, weight, temperature)
+- role: functions played by entities in relations (driver, owner, participant)
+- relation: connections between entities (contains, produces, manages)
+- state: conditions or situations (broken, active, completed)
+- occurrence: events or processes (meeting, explosion, growth)
+- other: doesn't fit the above categories
+
+Respond with the most appropriate category and brief reasoning.
+""")
+            
+            categorize_chain = categorization_prompt | llm.with_structured_output(ConceptCategory)
+            result = await categorize_chain.ainvoke({"term": term, "definition": definition})
+            
+            return f"Category: {result.category}\nReasoning: {result.reasoning}"
+            
+        except Exception as e:
+            return f"Error categorizing concept: {e}"
+
+    async def findOptimalPlacement(term: str, definition: str, category: str) -> str:
+        """
+        Finds the most specific suitable supertype for a concept within its category.
+        
+        Args:
+            term: The concept term
+            definition: Brief definition of the concept
+            category: The category from categorizeConceptType
+            
+        Returns:
+            Description of the optimal placement with UID
+        """
+        try:
+            # Get root UID for the category
+            root_uid = CATEGORY_ROOTS.get(category)
+            if root_uid is None:
+                return f"Error: Unknown category '{category}'. Use categorizeConceptType first."
+            
+            # Find the best placement using the standalone function
+            optimal_uid = await find_best_placement_recursive(
+                term, definition, root_uid, aperture_proxy, llm
+            )
+            
+            return f"Optimal placement for '{term}':\nUID: {optimal_uid}\nCategory: {category}\n\nTo get more details about this entity, use getEntityDefinition({optimal_uid})"
+            
+        except Exception as e:
+            return f"Error finding optimal placement: {e}"
 
     # --- Search Tools --- #
 
@@ -134,12 +220,38 @@ def create_agent_tools(aperture_proxy,
         )
         return ret
 
-
-    async def loadDirectSubtypes(uid: int)->str:
-        """Use this to retrieve the direct subtypes of a kind. Provide the uid of the kind, and the system will return a string representation of the subtypes.
+    async def getDirectSubtypes(uid: int)->str:
+        """Use this to get the direct subtypes of a kind. Provide the uid of the kind, and the system will return a string representation of the subtypes. *will not* load to environment
             Args:
                 uid: The unique identifier of the kind to retrieve the subtypes for
         """
+        print("GET SUBTYPES", uid)
+        uid = int(uid)
+
+        result = await archivist_proxy.get_subtypes(uid)
+
+        print("GET SUBTYPES RESULT", result)
+
+        # if result is None or ('facts' not in result):
+        #     return "No kind with that uid exists or no facts returned"
+
+        related_str = facts_to_related_entities_str(result)
+        relationships_str = facts_to_relations_str(result)
+
+        ret =  (
+            f"\tRelated Entities (uid:name):\n"
+            f"{related_str}\n"
+            f"\tRelationships in the following format ([left hand object uid],[relation type uid],[right hand object uid]):\n"
+            f"{relationships_str}"
+        )
+        return ret
+
+    async def loadDirectSubtypes(uid: int)->str:
+        """Use this to load the direct subtypes of a kind. Provide the uid of the kind, and the system will return a string representation of the subtypes. *and load the subtypes into the environment*
+            Args:
+                uid: The unique identifier of the kind to retrieve the subtypes for
+        """
+        print("LOAD SUBTYPES", uid)
         uid = int(uid)
         # Assumes retrieveSubtypes exists on the proxy/client
         result = await aperture_proxy.loadSubtypes(uid)
@@ -442,22 +554,25 @@ def create_agent_tools(aperture_proxy,
     # Define the list of *active* tool objects created within this scope
 
     active_tools = [
-        # --------------------------------------
+        # --- Concept Placement Tools ---
+        categorizeConceptType,
+        findOptimalPlacement,
+        # --- Search Tools ---
         textSearchLoad,
         uidSearchLoad,
-        #
+        # --- Taxonomy Tools ---
         loadDirectSupertypes,
-        loadDirectSubtypes,
+        getDirectSubtypes,
+        # loadDirectSubtypes,
         loadLineage,
-        #
+        # --- Classification Tools ---
         loadClassifier,
         loadClassified,
-        #
+        # --- Relation Tools ---
         loadRelations,
         loadRoleRequirements,
         loadRolePlayers,
-        # loadRolePlayers (of role)
-        #
+        # --- Entity Tools ---
         getEntityDefinition
         ]
 
