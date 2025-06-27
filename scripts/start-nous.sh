@@ -50,4 +50,5 @@ echo "🤖 LLM APIs configured"
 echo ""
 
 # Start the service
-python direct_socketio_main.py
+conda activate systema-relica-nous
+python main.py

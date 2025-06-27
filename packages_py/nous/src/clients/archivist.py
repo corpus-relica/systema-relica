@@ -72,5 +72,17 @@ class ArchivistClient(BaseSocketIOClient):
         """Get subtypes of a fact type"""
         return await self.send_request('get-fact-subtypes', {'factTypeUid': fact_type_uid})
 
+    # async def get_subtypes(self, uid: int):
+    #     """Get subtypes of a kind"""
+    #     try:
+    #         print("STILL GETTING SUBTYPES")
+    #         result = await self.client.send_request("fact:getSubtypes", {
+    #             "uid": uid
+    #         })
+
+    #         print("GOT SUBTYPES INNER")
+    #         return result
+    #     except Exception as e:
+    #         return [f"Error getting subntypes: {str(e)}"]
 # Create singleton instance
 archivist_client = ArchivistClient()

@@ -45,3 +45,16 @@ class ArchivistSocketIOProxy:
         except Exception as e:
             logger.error(f"Error in get_definition: {e}")
             return [f"Error retrieving definition: {str(e)}"]
+    
+    async def get_subtypes(self, uid: int):
+        """Get subtypes of a kind"""
+        try:
+            print("STILL GETTING SUBTYPES")
+            result = await self.client.send_request("fact:getSubtypes", {
+                "uid": uid
+            })
+
+            print("GOT SUBTYPES INNER")
+            return result
+        except Exception as e:
+            return [f"Error getting subntypes: {str(e)}"]

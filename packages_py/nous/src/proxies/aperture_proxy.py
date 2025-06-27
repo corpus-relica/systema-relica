@@ -84,11 +84,13 @@ class ApertureSocketIOProxy:
     async def loadSubtypes(self, uid: int) -> Dict[str, Any]:
         """Load direct subtypes of an entity"""
         try:
+            print("STILL LOADING SUBTYPE", uid)
             result = await self.client.send_request("aperture.subtype/load", {
                 "userId": self.user_id,
                 "environmentId": self.env_id,
                 "uid": uid
             })
+            print("LOADED SUPTYPES", result)
             return result.get('payload', result) if result else {"facts": []}
         except Exception as e:
             logger.error(f"Error in loadSubtypes: {e}")
