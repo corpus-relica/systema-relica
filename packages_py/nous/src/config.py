@@ -28,3 +28,15 @@ LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
 # Default environment settings
 DEFAULT_ENVIRONMENT_ID = os.getenv('DEFAULT_ENVIRONMENT_ID', 'bb121d97-1ab4-4cd3-bcb9-54459ad9b9b3')
+
+# Concept placement category root UIDs
+# TODO: Verify these UIDs match actual ontology structure
+CATEGORY_ROOTS = {
+    'physical object': 730044,  # placeholder - verify actual UID
+    'aspect': 790229,          # placeholder - verify actual UID  
+    'role': 160170,            # placeholder - verify actual UID
+    'relation': 2850,          # placeholder - verify actual UID
+    'state': 790123,             # placeholder - verify actual UID
+    'occurrence': 193671,        # placeholder - verify actual UID
+    'other': 730000           # fallback to 'anything' - verify actual UID
+}
