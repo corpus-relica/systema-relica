@@ -229,7 +229,26 @@ export class SetupService implements OnModuleInit {
       // Validate credentials
       const validation = this.validateCredentials(userCredentials);
       if (!validation.valid) {
-        this.sendEvent({ type: 'ERROR', errorMessage: validation.message });
+        this.sendEvent({ type: 'USER_CREATION_ERROR', errorMessage: validation.message });
+        return;
+      }
+
+      // Check for existing users
+      const existingUserByEmail = await this.usersService.findByEmail(userCredentials.email);
+      if (existingUserByEmail) {
+        this.sendEvent({ 
+          type: 'USER_CREATION_ERROR', 
+          errorMessage: 'A user with this email address already exists. Please use a different email.' 
+        });
+        return;
+      }
+
+      const existingUserByUsername = await this.usersService.findOne(userCredentials.username);
+      if (existingUserByUsername) {
+        this.sendEvent({ 
+          type: 'USER_CREATION_ERROR', 
+          errorMessage: 'This username is already taken. Please choose a different username.' 
+        });
         return;
       }
 
@@ -246,7 +265,20 @@ export class SetupService implements OnModuleInit {
       this.sendEvent({ type: 'USER_CREATION_SUCCESS' });
     } catch (error) {
       console.error('Error creating admin user:', error);
-      this.sendEvent({ type: 'ERROR', errorMessage: `Failed to create admin user: ${error.message}` });
+      
+      // Handle database constraint errors
+      if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+        let errorMessage = 'User creation failed due to duplicate information.';
+        if (error.message.includes('email')) {
+          errorMessage = 'A user with this email address already exists.';
+        } else if (error.message.includes('username')) {
+          errorMessage = 'This username is already taken.';
+        }
+        this.sendEvent({ type: 'USER_CREATION_ERROR', errorMessage });
+      } else {
+        // For other errors, use the generic ERROR event that goes to error state
+        this.sendEvent({ type: 'ERROR', errorMessage: `Failed to create admin user: ${error.message}` });
+      }
     }
   }
 
