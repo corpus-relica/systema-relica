@@ -133,12 +133,6 @@ export class ApertureGateway
   async deselectEntity(@MessageBody() message: any) {
     try {
       const { userId, environmentId } = message.payload;
-      console.log(
-        "Deselecting entity for user:",
-        userId,
-        "in environment:",
-        environmentId
-      );
       await this.environmentService.deselectEntity(environmentId, userId);
 
       // Broadcast to all clients
@@ -222,19 +216,13 @@ export class ApertureGateway
     try {
       const { userId, term } = message.payload;
 
-      console.log("TEST SERACH LOAD", userId, term);
-
       // Get text search results from Archivist
       const searchResult = await this.archivistClient.textSearch(term, true);
-
-      console.log("FOOBARBAZ");
 
       // Get or create default environment
       const environment = await this.environmentService.findDefaultForUser(
         userId.toString()
       );
-
-      console.log("ASEPEJFDSFDS WHAT THE FUCK?!!");
 
       // Filter facts to load (those matching the search term)
       const facts = searchResult.results?.facts || [];
@@ -683,21 +671,21 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD)
   async subtypeLoad(@MessageBody() message: any) {
     try {
-      const { userId, environmentId: envId, entityUid } = message.payload;
+      const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes from Archivist
-      const result = await this.archivistClient.getSubtypes(entityUid);
+      const result = await this.archivistClient.getSubtypes(uid);
 
       // Get environment
-      const environment = envId
+      const environment = environmentId
         ? await this.environmentService.findOne(
-            envId.toString(),
+            environmentId.toString(),
             userId.toString()
           )
         : await this.environmentService.findDefaultForUser(userId.toString());
 
       // Add facts to environment
-      const facts = result.facts || [];
+      const facts = result;
       let updatedEnvironment = environment;
       if (facts.length > 0) {
         updatedEnvironment = await this.environmentService.addFacts(
@@ -769,7 +757,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_UNLOAD_CONE)
   async subtypeUnloadCone(@MessageBody() message: any) {
     try {
-      console.log("GLOBBER GLOBBER", message);
       const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes cone from Archivist
