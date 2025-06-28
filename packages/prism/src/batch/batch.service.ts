@@ -348,7 +348,7 @@ export class BatchService {
     return validResults;
   }
 
-  public async seedDatabase(): Promise<{ success: boolean; error?: string }> {
+  public async seedDatabase(): Promise<{ success: boolean; error?: string; statistics?: any }> {
     try {
       console.log('Starting database seeding process...');
       
@@ -368,30 +368,98 @@ export class BatchService {
 
       console.log(`Generated ${csvFiles.length} CSV files for import.`);
 
+      // Track overall statistics
+      const overallStats = {
+        totalFiles: csvFiles.length,
+        processedFiles: 0,
+        failedFiles: 0,
+        nodes: { loaded: 0, skipped: 0, total: 0 },
+        relationships: { loaded: 0, skipped: 0, total: 0 }
+      };
+
       // Load each CSV file into Neo4j
       for (const csvPath of csvFiles) {
         const fileName = path.basename(csvPath);
-        console.log(`--- Processing CSV: ${fileName} ---`);
+        console.log(`\n--- Processing CSV: ${fileName} ---`);
 
-        // Load nodes
-        console.log('Loading nodes...');
-        const nodeResult = await this.neo4jService.loadNodesFromCsv(fileName);
-        if (!nodeResult.success) {
-          throw new Error(`Failed to load nodes from ${fileName}: ${nodeResult.error}`);
+        try {
+          // Load nodes
+          console.log('Loading nodes...');
+          const nodeResult = await this.neo4jService.loadNodesFromCsv(fileName);
+          
+          if (nodeResult.success) {
+            overallStats.nodes.loaded += nodeResult.loaded || 0;
+            overallStats.nodes.skipped += nodeResult.skipped || 0;
+            overallStats.nodes.total += nodeResult.total || 0;
+          } else {
+            console.error(`⚠️  Failed to load nodes from ${fileName}: ${nodeResult.error}`);
+            console.log('Continuing with next file...');
+            overallStats.failedFiles++;
+            continue;
+          }
+
+          // Load relationships
+          console.log('Loading relationships...');
+          const relResult = await this.neo4jService.loadRelationshipsFromCsv(fileName);
+          
+          if (relResult.success) {
+            overallStats.relationships.loaded += relResult.loaded || 0;
+            overallStats.relationships.skipped += relResult.skipped || 0;
+            overallStats.relationships.total += relResult.total || 0;
+          } else {
+            console.error(`⚠️  Failed to load relationships from ${fileName}: ${relResult.error}`);
+            console.log('Continuing with next file...');
+            overallStats.failedFiles++;
+            continue;
+          }
+
+          overallStats.processedFiles++;
+          console.log(`✅ Finished processing CSV: ${fileName}`);
+
+        } catch (fileError) {
+          console.error(`❌ Error processing ${fileName}:`, fileError);
+          overallStats.failedFiles++;
+          // Continue with next file
         }
-
-        // Load relationships
-        console.log('Loading relationships...');
-        const relResult = await this.neo4jService.loadRelationshipsFromCsv(fileName);
-        if (!relResult.success) {
-          throw new Error(`Failed to load relationships from ${fileName}: ${relResult.error}`);
-        }
-
-        console.log(`--- Finished processing CSV: ${fileName} ---`);
       }
 
-      console.log('Database seeding completed successfully.');
-      return { success: true };
+      // Summary report
+      console.log('\n=== Database Seeding Summary ===');
+      console.log(`Files: ${overallStats.processedFiles}/${overallStats.totalFiles} successfully processed`);
+      if (overallStats.failedFiles > 0) {
+        console.log(`⚠️  Failed files: ${overallStats.failedFiles}`);
+      }
+      console.log(`\nNodes:`);
+      console.log(`  - Total potential: ${overallStats.nodes.total}`);
+      console.log(`  - Successfully loaded: ${overallStats.nodes.loaded}`);
+      console.log(`  - Skipped: ${overallStats.nodes.skipped}`);
+      console.log(`\nRelationships:`);
+      console.log(`  - Total rows: ${overallStats.relationships.total}`);
+      console.log(`  - Successfully created: ${overallStats.relationships.loaded}`);
+      console.log(`  - Skipped: ${overallStats.relationships.skipped}`);
+
+      // Determine overall success
+      const hasLoadedData = overallStats.nodes.loaded > 0 || overallStats.relationships.loaded > 0;
+      const partialSuccess = hasLoadedData && (overallStats.nodes.skipped > 0 || overallStats.relationships.skipped > 0);
+      
+      if (!hasLoadedData) {
+        return { 
+          success: false, 
+          error: 'No data was successfully loaded into the database',
+          statistics: overallStats
+        };
+      }
+
+      if (partialSuccess) {
+        console.log('\n⚠️  Database seeding completed with warnings. Some data was skipped.');
+      } else {
+        console.log('\n✅ Database seeding completed successfully.');
+      }
+
+      return { 
+        success: true,
+        statistics: overallStats
+      };
 
     } catch (error) {
       console.error('Error during database seeding:', error);

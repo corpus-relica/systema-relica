@@ -312,10 +312,38 @@ export class SetupService implements OnModuleInit {
     console.log('[Activity] Starting DB seed...');
     try {
       const result = await this.batchService.seedDatabase();
+      
       if (result.success) {
+        // Log seeding statistics if available
+        if (result.statistics) {
+          const stats = result.statistics;
+          console.log('[Setup] Database seeding statistics:');
+          console.log(`  Files processed: ${stats.processedFiles}/${stats.totalFiles}`);
+          console.log(`  Nodes: ${stats.nodes.loaded} loaded, ${stats.nodes.skipped} skipped`);
+          console.log(`  Relationships: ${stats.relationships.loaded} loaded, ${stats.relationships.skipped} skipped`);
+          
+          // Check if we had significant data skipping
+          const totalSkipped = stats.nodes.skipped + stats.relationships.skipped;
+          const totalLoaded = stats.nodes.loaded + stats.relationships.loaded;
+          
+          if (totalSkipped > 0 && totalLoaded > 0) {
+            console.log(`[Setup] ⚠️  Warning: Database seeding completed with ${totalSkipped} items skipped due to data quality issues`);
+          }
+        }
+        
         this.sendEvent({ type: 'SEEDING_COMPLETE' });
       } else {
-        this.sendEvent({ type: 'SEEDING_SKIPPED' });
+        console.error('[Setup] Database seeding failed:', result.error);
+        
+        // Check if this was a partial failure (some data loaded)
+        if (result.statistics?.nodes?.loaded > 0 || result.statistics?.relationships?.loaded > 0) {
+          console.log('[Setup] Some data was loaded despite errors. Continuing setup process...');
+          this.sendEvent({ type: 'SEEDING_COMPLETE' });
+        } else {
+          // Complete failure - skip seeding stage
+          console.log('[Setup] No data was loaded. Skipping database seeding...');
+          this.sendEvent({ type: 'SEEDING_SKIPPED' });
+        }
       }
     } catch (error) {
       console.error('Error during database seeding:', error);
