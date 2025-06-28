@@ -11,13 +11,15 @@ import { Server, Socket } from "socket.io";
 import { EnvironmentService } from "../environment/environment.service";
 import { ArchivistSocketClient } from "@relica/websocket-clients";
 import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
-import { toResponse, toErrorResponse, createBroadcast } from "@relica/websocket-contracts";
+import customParser from "socket.io-msgpack-parser";
+import { toResponse, toErrorResponse } from "@relica/websocket-contracts";
 
 @WebSocketGateway({
   cors: {
     origin: "*",
   },
   transports: ["websocket"],
+  // parser: customParser,
 })
 export class ApertureGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -31,8 +33,6 @@ export class ApertureGateway
     private readonly environmentService: EnvironmentService,
     private readonly archivistClient: ArchivistSocketClient
   ) {}
-
-  // Binary serialization methods now provided by shared websocket-contracts utilities
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
@@ -50,7 +50,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENVIRONMENT_GET)
   async getEnvironment(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId } = message.payload;
       let environment;
 
@@ -73,7 +72,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENVIRONMENT_LIST)
   async listEnvironments(@MessageBody() message: any) {
     try {
-      
       const { userId } = message.payload;
       const environments = await this.environmentService.findAll(userId);
 
@@ -87,7 +85,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENVIRONMENT_CREATE)
   async createEnvironment(@MessageBody() message: any) {
     try {
-      
       const { userId, name } = message.payload;
       const environment = await this.environmentService.create({
         userId,
@@ -106,7 +103,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SELECT_ENTITY)
   async selectEntity(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId, uid } = message.payload;
       const environment = await this.environmentService.selectEntity(
         environmentId,
@@ -115,7 +111,7 @@ export class ApertureGateway
       );
 
       // Broadcast to all clients
-      createBroadcast(this.server, ApertureEvents.ENTITY_SELECTED, {
+      this.server.emit(ApertureEvents.ENTITY_SELECTED, {
         uid,
         userId,
         environmentId,
@@ -136,12 +132,11 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_DESELECT)
   async deselectEntity(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId } = message.payload;
       await this.environmentService.deselectEntity(environmentId, userId);
 
       // Broadcast to all clients
-      createBroadcast(this.server, ApertureEvents.ENTITY_DESELECTED, {
+      this.server.emit(ApertureEvents.ENTITY_DESELECTED, {
         userId,
         environmentId,
       });
@@ -156,7 +151,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENVIRONMENT_CLEAR)
   async clearEnvironment(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId } = message.payload;
       const environment = await this.environmentService.findOne(
         environmentId,
@@ -167,7 +161,7 @@ export class ApertureGateway
       await this.environmentService.clearFacts(environmentId, userId);
 
       // Broadcast to all clients - matches FactsUnloadedEventSchema
-      createBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
+      this.server.emit("aperture.facts/unloaded", {
         factUids,
         modelUids: [],
         userId: Number(userId),
@@ -184,7 +178,6 @@ export class ApertureGateway
   // Heartbeat
   @SubscribeMessage("relica.app/heartbeat")
   async heartbeat(@MessageBody() message: any) {
-    
     return toResponse(
       {
         timestamp: Date.now(),
@@ -195,7 +188,7 @@ export class ApertureGateway
 
   // Helper method to broadcast facts loaded
   broadcastFactsLoaded(facts: any[], userId: string, environmentId: string) {
-    createBroadcast(this.server, ApertureEvents.LOADED_FACTS, {
+    this.server.emit(ApertureEvents.LOADED_FACTS, {
       facts,
       userId,
       environmentId,
@@ -209,7 +202,7 @@ export class ApertureGateway
     userId: number,
     environmentId: string
   ) {
-    createBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
+    this.server.emit(ApertureEvents.UNLOADED_FACTS, {
       factUids,
       modelUids,
       userId,
@@ -221,7 +214,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_TEXT)
   async searchLoadText(@MessageBody() message: any) {
     try {
-      
       const { userId, term } = message.payload;
 
       // Get text search results from Archivist
@@ -267,7 +259,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_UID)
   async searchLoadUid(@MessageBody() message: any) {
     try {
-      
       const { userId, uid } = message.payload;
 
       // Get UID search results from Archivist
@@ -316,7 +307,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD_FACT)
   async specializationLoadFact(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, uid } = message.payload;
 
       // Get specialization fact from Archivist
@@ -363,7 +353,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD)
   async specializationLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId, uid } = message.payload;
 
       // Get specialization hierarchy from Archivist
@@ -411,7 +400,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_LOAD)
   async entityLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId, entityUid } = message.payload;
 
       // Get environment
@@ -468,7 +456,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD)
   async entityUnload(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get environment
@@ -537,7 +524,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_LOAD_MULTIPLE)
   async entityLoadMultiple(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId, uids } = message.payload;
 
       // Get environment
@@ -592,7 +578,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD_MULTIPLE)
   async entityUnloadMultiple(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUids } = message.payload;
 
       // Get environment
@@ -662,7 +647,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.LOAD_ALL_RELATED_FACTS)
   async loadAllRelatedFacts(@MessageBody() message: any) {
     try {
-      
       const result = await this.environmentService.loadAllRelatedFacts(
         message.payload.userId,
         message.payload.environmentId,
@@ -687,7 +671,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD)
   async subtypeLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes from Archivist
@@ -731,7 +714,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD_CONE)
   async subtypeLoadCone(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes cone from Archivist
@@ -775,7 +757,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_UNLOAD_CONE)
   async subtypeUnloadCone(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes cone from Archivist
@@ -850,7 +831,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD)
   async classificationLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get classified entities from Archivist
@@ -894,7 +874,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD_FACT)
   async classificationLoadFact(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get classification fact from Archivist
@@ -940,7 +919,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD)
   async compositionLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get composition relationships from Archivist (1190 is composition relation type)
@@ -987,7 +965,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD_IN)
   async compositionLoadIn(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get incoming composition relationships from Archivist (1190 is composition relation type)
@@ -1038,7 +1015,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD)
   async connectionLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get connection relationships from Archivist (1487 is connection relation type)
@@ -1085,7 +1061,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD_IN)
   async connectionLoadIn(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get incoming connection relationships from Archivist (1487 is connection relation type)
@@ -1136,7 +1111,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.RELATION_REQUIRED_ROLES_LOAD)
   async relationRequiredRolesLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, uid } = message.payload;
 
       // Get required roles from Archivist
@@ -1180,7 +1154,6 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.RELATION_ROLE_PLAYERS_LOAD)
   async relationRolePlayersLoad(@MessageBody() message: any) {
     try {
-      
       const { userId, environmentId: envId, uid } = message.payload;
 
       // Get role players from Archivist
