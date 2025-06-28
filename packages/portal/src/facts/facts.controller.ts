@@ -6,13 +6,13 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from "@nestjs/swagger";
-import { ArchivistSocketClient } from "@relica/websocket-clients";
-import { User } from "../decorators/user.decorator";
+import { FactsService } from "./facts.service";
+import { User } from "../shared/decorators/user.decorator";
 
 @ApiTags("Facts")
 @Controller("fact")
 export class FactsController {
-  constructor(private readonly archivistClient: ArchivistSocketClient) {}
+  constructor(private readonly factsService: FactsService) {}
 
   @Get("classified")
   @ApiOperation({ summary: "Get classification facts for an entity" })
@@ -33,7 +33,7 @@ export class FactsController {
         throw new BadRequestException("uid must be a valid number");
       }
 
-      const facts = await this.archivistClient.getClassified(uidNumber);
+      const facts = await this.factsService.getClassified(uidNumber);
 
       return {
         success: true,
@@ -66,7 +66,7 @@ export class FactsController {
         throw new BadRequestException("uid must be a valid number");
       }
 
-      const subtypes = await this.archivistClient.getSubtypes(uidNumber);
+      const subtypes = await this.factsService.getSubtypes(uidNumber);
 
       return {
         success: true,
@@ -99,7 +99,7 @@ export class FactsController {
         throw new BadRequestException("uid must be a valid number");
       }
 
-      const cone = await this.archivistClient.getSubtypesCone(uidNumber);
+      const cone = await this.factsService.getSubtypesCone(uidNumber);
 
       return {
         success: true,

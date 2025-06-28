@@ -14,8 +14,8 @@ import {
   ApiQuery,
   ApiBody,
 } from "@nestjs/swagger";
-import { ArchivistSocketClient } from "@relica/websocket-clients";
-import { User } from "../decorators/user.decorator";
+import { EntitiesService } from "./entities.service";
+import { User } from "../shared/decorators/user.decorator";
 import {
   ENTITY_TYPE_ENDPOINT,
   ENTITY_CATEGORY_ENDPOINT,
@@ -25,7 +25,7 @@ import {
 @ApiTags("Entities")
 @Controller()
 export class EntitiesController {
-  constructor(private readonly archivistClient: ArchivistSocketClient) {}
+  constructor(private readonly entitiesService: EntitiesService) {}
 
   // @Get('kinds')
   // @ApiOperation({ summary: 'Get all available kinds' })
@@ -79,7 +79,7 @@ export class EntitiesController {
         );
       }
 
-      const result = await this.archivistClient.resolveUIDs(uidArray);
+      const result = await this.entitiesService.resolveUIDs(uidArray);
       if (result.success === false) {
         throw new Error(
           `Failed to resolve entities: ${result.payload || "Unknown error"}`
@@ -124,7 +124,7 @@ export class EntitiesController {
         throw new BadRequestException("All UIDs must be valid numbers");
       }
 
-      const entities = await this.archivistClient.resolveUIDs(body.uids);
+      const entities = await this.entitiesService.resolveUIDs(body.uids);
 
       return {
         success: true,
@@ -151,7 +151,7 @@ export class EntitiesController {
     @Query("uid") uid: number // Optional query parameter to filter by kind
   ) {
     try {
-      const entityType = await this.archivistClient.getEntityType(+uid);
+      const entityType = await this.entitiesService.getEntityType(+uid);
       return entityType;
     } catch (error) {
       return {
@@ -173,7 +173,7 @@ export class EntitiesController {
     @Query("uid") uid: number // Optional query parameter to filter by kind
   ) {
     try {
-      const entityCat = await this.archivistClient.getEntityCategory(+uid);
+      const entityCat = await this.entitiesService.getEntityCategory(+uid);
       return entityCat;
     } catch (error) {
       return {
@@ -195,7 +195,7 @@ export class EntitiesController {
   })
   async retrieveEntityCollections() {
     try {
-      const collections = await this.archivistClient.getEntityCollections();
+      const collections = await this.entitiesService.getEntityCollections();
       return collections;
     } catch (error) {
       return {

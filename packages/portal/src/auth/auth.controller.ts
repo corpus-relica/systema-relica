@@ -1,13 +1,13 @@
 import { Controller, Post, Body, UnauthorizedException, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { ShutterRestClientService } from '../services/shutter-rest-client.service';
-import { User } from '../decorators/user.decorator';
-import { Public } from '../decorators/public.decorator';
+import { AuthService } from './auth.service';
+import { User } from '../shared/decorators/user.decorator';
+import { Public } from '../shared/decorators/public.decorator';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly shutterClient: ShutterRestClientService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('login')
   @Public()
@@ -18,7 +18,7 @@ export class AuthController {
   })
   async login(@Body() credentials: { username: string; password: string }) {
     try {
-      const result = await this.shutterClient.authenticate(
+      const result = await this.authService.authenticate(
         credentials.username,
         credentials.password
       );
@@ -41,7 +41,7 @@ export class AuthController {
   })
   async refreshToken(@Body() body: { refresh_token: string }) {
     try {
-      const result = await this.shutterClient.refreshToken(body.refresh_token);
+      const result = await this.authService.refreshToken(body.refresh_token);
       return {
         success: true,
         ...result,
@@ -60,7 +60,7 @@ export class AuthController {
   })
   async getGuestToken() {
     try {
-      const result = await this.shutterClient.getGuestToken();
+      const result = await this.authService.getGuestToken();
       return {
         success: true,
         ...result,
@@ -86,7 +86,7 @@ export class AuthController {
       if (!token) {
         throw new UnauthorizedException('No token provided');
       }
-      await this.shutterClient.logout(token);
+      await this.authService.logout(token);
       return {
         success: true,
         message: 'Logged out successfully',
@@ -113,7 +113,7 @@ export class AuthController {
         throw new UnauthorizedException('No token provided');
       }
       
-      const validationResult = await this.shutterClient.validateToken(token);
+      const validationResult = await this.authService.validateToken(token);
       if (!validationResult.valid) {
         throw new UnauthorizedException(validationResult.error || 'Invalid token');
       }

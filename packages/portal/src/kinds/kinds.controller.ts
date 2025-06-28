@@ -6,13 +6,13 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from "@nestjs/swagger";
-import { ArchivistSocketClient } from "@relica/websocket-clients";
-import { User } from "../decorators/user.decorator";
+import { KindsService } from "./kinds.service";
+import { User } from "../shared/decorators/user.decorator";
 
 @ApiTags("Kinds")
 @Controller()
 export class KindsController {
-  constructor(private readonly archivistClient: ArchivistSocketClient) {}
+  constructor(private readonly kindsService: KindsService) {}
 
   @Get("kinds")
   @ApiOperation({
@@ -75,7 +75,7 @@ export class KindsController {
       }
 
       // Call Archivist via WebSocket with contract-compliant message
-      const result = await this.archivistClient.getKindsList(
+      const result = await this.kindsService.getKindsList(
         sortField,
         sortOrder.toUpperCase(),
         skip,

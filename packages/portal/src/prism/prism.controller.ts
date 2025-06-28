@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { PrismWebSocketClientService } from '../services/prism-websocket-client.service';
-import { User } from '../decorators/user.decorator';
-import { Public } from '../decorators/public.decorator';
+import { PrismService } from './prism.service';
+import { User } from '../shared/decorators/user.decorator';
+import { Public } from '../shared/decorators/public.decorator';
 
 @ApiTags('Prism')
 @Controller('api/prism/setup')
 export class PrismController {
-  constructor(private readonly prismClient: PrismWebSocketClientService) {}
+  constructor(private readonly prismService: PrismService) {}
 
   @Get('status')
   @Public()
@@ -16,7 +16,7 @@ export class PrismController {
   async getSetupStatus() {
     try {
       
-      const status = await this.prismClient.getSetupStatus();
+      const status = await this.prismService.getSetupStatus();
       
       return {
         success: true,
@@ -37,7 +37,7 @@ export class PrismController {
   async startSetup(@User() user: any) {
     try {
       
-      const result = await this.prismClient.startSetup();
+      const result = await this.prismService.startSetup();
       
       return {
         success: true,
@@ -82,7 +82,7 @@ export class PrismController {
       //   throw new BadRequestException('Password and confirmation do not match');
       // }
 
-      const result = await this.prismClient.createUser(body);
+      const result = await this.prismService.createUser(body);
       
       return {
         success: true,
@@ -121,7 +121,7 @@ export class PrismController {
         throw new BadRequestException('dataSource is required');
       }
       
-      const result = await this.prismClient.importData(body);
+      const result = await this.prismService.importData(body);
       
       return {
         success: true,
@@ -143,7 +143,7 @@ export class PrismController {
     try {
       console.log('🚨 Portal: DEBUG reset system requested by user:', user?.username || 'unknown');
       
-      const result = await this.prismClient.resetSystem();
+      const result = await this.prismService.resetSystem();
       
       return {
         success: true,

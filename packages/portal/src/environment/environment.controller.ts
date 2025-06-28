@@ -6,13 +6,13 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from "@nestjs/swagger";
-import { ApertureSocketClient } from "@relica/websocket-clients";
-import { User } from "../decorators/user.decorator";
+import { EnvironmentService } from "./environment.service";
+import { User } from "../shared/decorators/user.decorator";
 
 @ApiTags("Environment")
 @Controller("environment")
 export class EnvironmentController {
-  constructor(private readonly apertureClient: ApertureSocketClient) {}
+  constructor(private readonly environmentService: EnvironmentService) {}
 
   @Get("retrieve")
   @ApiOperation({ summary: "Retrieve environment information" })
@@ -35,7 +35,7 @@ export class EnvironmentController {
         throw new BadRequestException("uid parameter is required");
       }
 
-      const result = await this.apertureClient.getEnvironment(
+      const result = await this.environmentService.getEnvironment(
         userId.toString()
       );
 

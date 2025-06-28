@@ -10,10 +10,10 @@ import {
 } from "@nestjs/websockets";
 import { Logger, Injectable, Inject } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
-import { ShutterRestClientService } from "../services/shutter-rest-client.service";
-import { ApertureWebSocketClientService } from "../services/aperture-websocket-client.service";
-import { NousWebSocketClientService } from "../services/nous-websocket-client.service";
-import { PrismWebSocketClientService } from "../services/prism-websocket-client.service";
+import { ShutterRestClientService } from "../shared/services/shutter-rest-client.service";
+import { ApertureWebSocketClientService } from "../shared/services/aperture-websocket-client.service";
+import { NousWebSocketClientService } from "../shared/services/nous-websocket-client.service";
+import { PrismWebSocketClientService } from "../shared/services/prism-websocket-client.service";
 import { ArchivistSocketClient } from "@relica/websocket-clients";
 import {
   ServiceMessage,
@@ -21,7 +21,7 @@ import {
   ClientMessage,
   ClientResponse,
   ClientEvent,
-} from "../types/websocket-messages";
+} from "../shared/types/websocket-messages";
 import {
   PortalUserActions,
   PortalSystemEvents,

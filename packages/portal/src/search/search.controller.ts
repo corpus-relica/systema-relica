@@ -1,12 +1,12 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { User } from '../decorators/user.decorator';
+import { SearchService } from './search.service';
+import { User } from '../shared/decorators/user.decorator';
 
 @ApiTags('Search')
 @Controller()
 export class SearchController {
-  constructor(private readonly archivistClient: ArchivistSocketClient) {}
+  constructor(private readonly searchService: SearchService) {}
 
 
   @Get('generalSearch/text')
@@ -38,7 +38,7 @@ export class SearchController {
       const limitNum = pageSize ? pageSize : 10; // Default to 10 if not provided
       const offsetNum = page ? page : 0; // Default to 0 if not provided
 
-      const results = await this.archivistClient.searchText(searchTerm, collectionUID, limitNum, offsetNum, searchFilter);
+      const results = await this.searchService.searchText(searchTerm, collectionUID, limitNum, offsetNum, searchFilter);
       return results;
 
     } catch (error) {
@@ -63,7 +63,7 @@ export class SearchController {
         throw new BadRequestException('uid parameter is required');
       }
       
-      const entity = await this.archivistClient.searchUid(uid);
+      const entity = await this.searchService.searchUid(uid);
       
       return {
         success: true,

@@ -6,14 +6,14 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from "@nestjs/swagger";
-import { ClaritySocketClient } from "@relica/websocket-clients";
-import { User } from "../decorators/user.decorator";
+import { ModelService } from "./model.service";
+import { User } from "../shared/decorators/user.decorator";
 
 @ApiTags("Model")
 // @Controller('model')
 @Controller("model")
 export class ModelController {
-  constructor(private readonly clarityClient: ClaritySocketClient) {}
+  constructor(private readonly modelService: ModelService) {}
 
   @Get()
   @ApiOperation({ summary: "Retrieve model information" })
@@ -25,7 +25,7 @@ export class ModelController {
   async getModel(@User() user: any, @Query("uid") uid: number) {
     try {
       console.log("Retrieving model information for user:", user, uid);
-      const model = await this.clarityClient.getModel(uid);
+      const model = await this.modelService.getModel(uid);
 
       return {
         success: true,
@@ -53,7 +53,7 @@ export class ModelController {
         throw new BadRequestException("uid parameter is required");
       }
 
-      const kind = await this.clarityClient.getKindModel(uid);
+      const kind = await this.modelService.getKindModel(uid);
 
       return {
         success: true,
@@ -85,7 +85,7 @@ export class ModelController {
         throw new BadRequestException("uid parameter is required");
       }
 
-      const individual = await this.clarityClient.getIndividualModel(uid);
+      const individual = await this.modelService.getIndividualModel(uid);
 
       return {
         success: true,

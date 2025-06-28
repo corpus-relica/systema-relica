@@ -1,12 +1,12 @@
 import { Controller, Get, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Public } from '../decorators/public.decorator';
-import { PrismSocketClient } from '@relica/websocket-clients';
+import { Public } from '../shared/decorators/public.decorator';
+import { SystemService } from './system.service';
 
 @ApiTags('System')
 @Controller()
 export class SystemController {
-  constructor(private readonly prismClient: PrismSocketClient) {}
+  constructor(private readonly systemService: SystemService) {}
 
   @Get('health')
   @Public()
@@ -25,7 +25,7 @@ export class SystemController {
     try {
       console.log('🚨 Resetting system via Portal → Prism...');
       
-      const result = await this.prismClient.resetSystem();
+      const result = await this.systemService.resetSystem();
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to reset system');
