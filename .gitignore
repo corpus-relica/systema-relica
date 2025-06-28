@@ -36,3 +36,4 @@ temp.*
 /packages/websocket-contracts/dist/
 /packages/websocket-clients/dist/
 /reference/
+.clj-kondo/
