@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismSocketClient } from '@relica/websocket-clients';
-import { PrismEvents, SetupStatusBroadcastEvent } from '@relica/websocket-contracts';
+import { PrismEvents, SetupStatusBroadcastEvent, decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class PrismWebSocketClientService implements OnModuleInit {
@@ -17,8 +17,9 @@ export class PrismWebSocketClientService implements OnModuleInit {
         this.logger.warn('PortalGateway not set, cannot forward event');
         return;
       }
-      // Forward the broadcast to all connected frontend clients via Portal Gateway
-      this.portalGateway.server.emit(PrismEvents.SETUP_STATUS_UPDATE, broadcastEvent);
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedEvent = decodePayload(broadcastEvent);
+      this.portalGateway.server.emit(PrismEvents.SETUP_STATUS_UPDATE, decodedEvent);
     });
   }
 

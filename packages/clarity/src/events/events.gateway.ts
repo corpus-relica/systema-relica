@@ -10,15 +10,13 @@ import { ModelService } from '../model/model.service';
 import { SemanticModelService } from '../services/semantic-model.service';
 import { Logger } from '@nestjs/common';
 import { ClarityActions } from '@relica/websocket-contracts';
-import { toResponse, toErrorResponse } from '@relica/websocket-contracts';
-import customParser from 'socket.io-msgpack-parser';
+import { toResponse, toErrorResponse, decodeRequest, createServiceBroadcast } from '@relica/websocket-contracts';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
   transports: ['websocket'],
-  parser: customParser,
 })
 export class EventsGateway {
   private logger: Logger = new Logger('EventsGateway');
@@ -32,6 +30,8 @@ export class EventsGateway {
     private readonly semanticModelService: SemanticModelService,
   ) {}
 
+  // Binary serialization methods now provided by shared websocket-contracts utilities
+
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
   }
@@ -41,27 +41,30 @@ export class EventsGateway {
     // You can emit a welcome message or initial data here
     client.emit('connection', { message: 'Successfully connected to server' });
     // Optionally broadcast to other clients that a new client has joined
-    client.broadcast.emit('clientJoined', { clientId: client.id });
+    createServiceBroadcast(this.server, 'clientJoined', { clientId: client.id });
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
     // Optionally broadcast to other clients that a client has left
-    this.server.emit('clientLeft', { clientId: client.id });
+    createServiceBroadcast(this.server, 'clientLeft', { clientId: client.id });
   }
 
   // SEMANTIC MODEL OPERATIONS //
 
   @SubscribeMessage(ClarityActions.MODEL_GET)
-  async getModel(@MessageBody() message: any) {
+  async getModel(@MessageBody() rawMessage: any) {
     try {
+      const message = decodeRequest(rawMessage);
       const { uid } = message.payload;
       this.logger.log('GET MODEL:', uid);
       const model = await this.semanticModelService.retrieveSemanticModel(uid);
-      return toResponse(model, message.id);
+      const response = toResponse(model, message.id);
+      return response;
     } catch (error) {
       this.logger.error('Error retrieving model:', error);
-      return toErrorResponse(error, message.id);
+      const errorResponse = toErrorResponse(error, rawMessage.id || 'unknown');
+      return errorResponse;
     }
   }
 
@@ -80,15 +83,18 @@ export class EventsGateway {
   }
 
   @SubscribeMessage(ClarityActions.KIND_GET)
-  async getKindModel(@MessageBody() message: any) {
+  async getKindModel(@MessageBody() rawMessage: any) {
     try {
+      const message = decodeRequest(rawMessage);
       const { uid } = message.payload;
       this.logger.log('GET KIND MODEL:', uid);
       const model = await this.semanticModelService.retrieveSemanticModel(+uid);
-      return toResponse(model, message.id);
+      const response = toResponse(model, message.id);
+      return response;
     } catch (error) {
       this.logger.error('Error retrieving kind model:', error);
-      return toErrorResponse(error, message.id);
+      const errorResponse = toErrorResponse(error, rawMessage.id || 'unknown');
+      return errorResponse;
     }
   }
 
@@ -106,8 +112,9 @@ export class EventsGateway {
   }
 
   @SubscribeMessage('clarity.model/update-definition')
-  async updateDefinition(@MessageBody() message: any) {
+  async updateDefinition(@MessageBody() rawMessage: any) {
     try {
+      const message = decodeRequest(rawMessage);
       const { uid, partial_definition, full_definition } = message.payload;
       this.logger.log('UPDATE DEFINITION:', {
         uid,
@@ -119,10 +126,12 @@ export class EventsGateway {
         partial_definition,
         full_definition,
       );
-      return toResponse(result, message.id);
+      const response = toResponse(result, message.id);
+      return response;
     } catch (error) {
       this.logger.error('Error updating definition:', error);
-      return toErrorResponse(error, message.id);
+      const errorResponse = toErrorResponse(error, rawMessage.id || 'unknown');
+      return errorResponse;
     }
   }
 

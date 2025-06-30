@@ -37,3 +37,4 @@ temp.*
 /packages/websocket-clients/dist/
 /reference/
 .clj-kondo/
+SCRATCHPAD.md

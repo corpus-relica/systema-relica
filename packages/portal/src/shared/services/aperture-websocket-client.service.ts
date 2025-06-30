@@ -3,6 +3,7 @@ import { ApertureSocketClient } from "@relica/websocket-clients";
 import {
   ApertureEvents,
   PortalSystemEvents,
+  decodePayload,
 } from "@relica/websocket-contracts";
 
 @Injectable()
@@ -20,8 +21,9 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
-      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, payload);
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
+      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, decodedPayload.data);
     });
 
     this.apertureClient.on(ApertureEvents.UNLOADED_FACTS, (payload) => {
@@ -30,10 +32,11 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.UNLOADED_FACTS,
-        payload
+        decodedPayload.data
       );
     });
 
@@ -43,10 +46,11 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.SELECTED_ENTITY,
-        payload
+        decodedPayload.data
       );
     });
 
@@ -56,8 +60,9 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
-      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE, payload);
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
+      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE, decodedPayload.data);
     });
   }
 

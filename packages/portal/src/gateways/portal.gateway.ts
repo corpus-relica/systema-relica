@@ -45,10 +45,8 @@ import {
   type SelectNoneRequest,
   type LoadSpecializationHierarchyRequest,
   type StandardResponse,
-  toResponse,
-  toErrorResponse,
+  createTargetedPortalBroadcast,
 } from "@relica/websocket-contracts";
-import customParser from "socket.io-msgpack-parser";
 
 interface ConnectedClient {
   userId: string;
@@ -65,7 +63,6 @@ interface ConnectedClient {
     credentials: true,
   },
   transports: ["websocket"],
-  parser: customParser,
 })
 export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -90,6 +87,8 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.apertureClient.setPortalGateway(this);
     this.nousClient.setPortalGateway(this);
   }
+
+  // Binary serialization methods are now provided by shared utilities
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
@@ -123,25 +122,33 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private broadcastToEnvironment(environmentId: string, message: any) {
+    const targetClients = [];
     for (const [clientId, clientData] of this.connectedClients) {
       if (clientData.environmentId === environmentId) {
-        clientData.socket.emit("message", message);
+        targetClients.push(clientData.socket);
       }
     }
+    createTargetedPortalBroadcast(targetClients, "message", message);
   }
 
   @SubscribeMessage("auth")
   async handleAuth(
     @ConnectedSocket() client: Socket,
-    @MessageBody() message: any
+    @MessageBody() rawMessage: any
   ): Promise<any> {
     try {
+      const message = rawMessage;
       const { jwt } = message.payload;
       const authResult = await this.validateJWT(jwt);
       if (!authResult) {
         const error = new Error("Invalid JWT");
         this.logger.error("Auth validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
       const socketToken = this.generateSocketToken();
@@ -161,10 +168,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId: authResult.userId,
         user: authResult.user,
       };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Auth error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: rawMessage.id || 'unknown',
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -194,10 +211,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         token: socketToken,
         userId: guestId,
       };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Guest auth error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -211,19 +238,30 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         message: "Pong",
         timestamp: Date.now(),
       };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Ping failed", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
   @SubscribeMessage(PortalUserActions.SELECT_ENTITY)
   async handleSelectEntity(
     @ConnectedSocket() client: Socket,
-    @MessageBody() message: any
+    @MessageBody() rawMessage: any
   ): Promise<any> {
     try {
+      const message = rawMessage;
       const payload = message.payload;
       // Validate payload
       const validation = SelectEntityRequestSchema.safeParse(payload);
@@ -232,7 +270,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Select entity validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
       // const clientData = this.connectedClients.get(client.id);
@@ -260,10 +303,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // });
 
       const data = { message: "Entity selected" };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Select entity error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: rawMessage.id || 'unknown',
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -297,10 +350,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // });
 
       const data = { message: "Entity deselected" };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Select none error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -323,7 +386,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Load specialization hierarchy validation failed",
           error
         );
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const result = await this.apertureClient.loadSpecializationHierarchy(
@@ -334,22 +402,38 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!result) {
         const error = new Error("Failed to load specialization hierarchy");
         this.logger.error("Load specialization hierarchy failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Load specialization hierarchy error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
   @SubscribeMessage(PortalUserActions.LOAD_ENTITY)
   async handleLoadEntity(
     @ConnectedSocket() client: Socket,
-    @MessageBody() message: any
+    @MessageBody() rawMessage: any
   ): Promise<any> {
     try {
+      const message = rawMessage;
       const payload = message.payload;
       // Validate payload
       const validation = LoadEntityRequestSchema.safeParse(payload);
@@ -358,7 +442,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Load entity validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
       const userId = payload.userId;
@@ -377,13 +466,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to load entity - no response from Aperture service"
         );
         this.logger.error("Load entity failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Load entity error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: rawMessage.id || 'unknown',
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -401,7 +505,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Clear entities validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       this.logger.log("CLEAR ENTITIES", payload);
@@ -424,7 +533,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to clear entities - no response from Aperture service"
         );
         this.logger.error("Clear entities failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const data = {
@@ -434,10 +548,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           clearedFactCount: result.factUids ? result.factUids.length : 0,
         },
       };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Clear entities error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -454,10 +578,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         payload.uid
       );
       // TODO: Implement Aperture service call
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Load all related facts error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -475,7 +609,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Load subtypes cone validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const userId = payload.userId;
@@ -494,13 +633,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to load subtypes cone - no response from Aperture service"
         );
         this.logger.error("Load subtypes cone failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Load subtypes cone error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -518,7 +672,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Unload entity validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const userId = payload.userId;
@@ -537,13 +696,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to unload entity - no response from Aperture service"
         );
         this.logger.error("Unload entity failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Unload entity error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -562,7 +736,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Unload subtypes cone validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const userId = payload.userId;
@@ -581,13 +760,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to unload subtypes cone - no response from Aperture service"
         );
         this.logger.error("Unload subtypes cone failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Unload subtypes cone error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -605,7 +799,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Delete entity validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const uid = payload.uid;
@@ -618,13 +817,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to delete entity - no response from Archivist service"
         );
         this.logger.error("Delete entity failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Delete entity error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -642,7 +856,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Delete fact validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const factUid = payload.factUid;
@@ -655,13 +874,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to delete fact - no response from Archivist service"
         );
         this.logger.error("Delete fact failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Delete fact error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -680,7 +914,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Load entities validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const userId = payload.userId;
@@ -690,7 +929,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!Array.isArray(uids) || uids.length === 0) {
         const error = new Error("uids must be a non-empty array");
         this.logger.error("Load entities invalid uids", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       // Call Aperture service to load multiple entities
@@ -705,13 +949,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to load entities - no response from Aperture service"
         );
         this.logger.error("Load entities failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Load entities error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -729,7 +988,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           `Invalid payload format: ${validation.error.issues.map((i) => i.message).join(", ")}`
         );
         this.logger.error("Unload entities validation failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       const userId = payload.userId;
@@ -739,7 +1003,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!Array.isArray(uids) || uids.length === 0) {
         const error = new Error("uids must be a non-empty array");
         this.logger.error("Unload entities invalid uids", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       // Call Aperture service to unload multiple entities
@@ -753,13 +1022,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Failed to unload entities - no response from Aperture service"
         );
         this.logger.error("Unload entities failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Unload entities error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -781,7 +1065,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           "Get specialization hierarchy validation failed",
           error
         );
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       // Call Aperture service to get specialization hierarchy
@@ -793,13 +1082,28 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!result) {
         const error = new Error("Failed to get specialization hierarchy");
         this.logger.error("Get specialization hierarchy failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
-      return toResponse(result, message.id);
+      return {
+        data: result,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Get specialization hierarchy error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -843,10 +1147,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         success: result.success,
         timestamp: result.timestamp,
       };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Chat input error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -861,7 +1175,12 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!clientData) {
         const error = new Error("Not authenticated");
         this.logger.error("Generate AI response authentication failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       // Generate AI response through NOUS
@@ -875,10 +1194,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         response: result.response,
         metadata: result.metadata,
       };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Generate AI response error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -893,15 +1222,30 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!clientData) {
         const error = new Error("Not authenticated");
         this.logger.error("Clear chat history authentication failed", error);
-        return toErrorResponse(error, message.id);
+        return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
       }
 
       // TODO: Implement chat history clearing when NOUS supports it
       const data = { message: "Chat history cleared" };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Clear chat history error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -914,10 +1258,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // TODO: Implement Prism service call
       const data = { result: {} };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Prism start setup error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 
@@ -930,10 +1284,20 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = message.payload;
       // TODO: Implement Prism service call
       const data = { result: {} };
-      return toResponse(data, message.id);
+      return {
+        data,
+        id: message.id,
+        success: true,
+        timestamp: Date.now()
+      };
     } catch (error) {
       this.logger.error("Prism create user error:", error);
-      return toErrorResponse(error, message.id);
+      return {
+        error: error.message,
+        id: message.id,
+        success: false,
+        timestamp: Date.now()
+      };
     }
   }
 

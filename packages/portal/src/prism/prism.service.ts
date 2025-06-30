@@ -1,27 +1,60 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismWebSocketClientService } from '../shared/services/prism-websocket-client.service';
+import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class PrismService {
+  private readonly logger = new Logger(PrismService.name);
+  
   constructor(private readonly prismClient: PrismWebSocketClientService) {}
 
   async getSetupStatus() {
-    return this.prismClient.getSetupStatus();
+    try {
+      const binaryResponse = await this.prismClient.getSetupStatus();
+      return decodePayload(binaryResponse);
+    } catch (error) {
+      this.logger.error('Failed to get setup status:', error);
+      throw error;
+    }
   }
 
   async startSetup() {
-    return this.prismClient.startSetup();
+    try {
+      const binaryResponse = await this.prismClient.startSetup();
+      return decodePayload(binaryResponse);
+    } catch (error) {
+      this.logger.error('Failed to start setup:', error);
+      throw error;
+    }
   }
 
   async createUser(userData: { username: string; email: string; password: string }) {
-    return this.prismClient.createUser(userData);
+    try {
+      const binaryResponse = await this.prismClient.createUser(userData);
+      return decodePayload(binaryResponse);
+    } catch (error) {
+      this.logger.error('Failed to create user:', error);
+      throw error;
+    }
   }
 
   async importData(importData: { dataSource: string; options?: any }) {
-    return this.prismClient.importData(importData);
+    try {
+      const binaryResponse = await this.prismClient.importData(importData);
+      return decodePayload(binaryResponse);
+    } catch (error) {
+      this.logger.error('Failed to import data:', error);
+      throw error;
+    }
   }
 
   async resetSystem() {
-    return this.prismClient.resetSystem();
+    try {
+      const binaryResponse = await this.prismClient.resetSystem();
+      return decodePayload(binaryResponse);
+    } catch (error) {
+      this.logger.error('Failed to reset system:', error);
+      throw error;
+    }
   }
 }

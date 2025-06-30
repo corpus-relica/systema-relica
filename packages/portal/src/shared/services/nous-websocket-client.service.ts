@@ -7,6 +7,7 @@ import {
   type AIResponse,
   type PongResponse,
   type ChatReceiptAcknowledgment,
+  decodePayload,
 } from "@relica/websocket-contracts";
 
 @Injectable()
@@ -25,10 +26,11 @@ export class NousWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway for broadcast to frontend clients
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CHAT_RESPONSE,
-        payload
+        decodedPayload.data || decodedPayload
       );
     });
 
@@ -38,10 +40,11 @@ export class NousWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward error events to frontend clients
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CHAT_ERROR,
-        payload
+        decodedPayload.data || decodedPayload
       );
     });
 
@@ -51,10 +54,11 @@ export class NousWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward AI response events to frontend clients
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_AI_RESPONSE,
-        payload
+        decodedPayload.data || decodedPayload
       );
     });
 
@@ -64,8 +68,9 @@ export class NousWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward AI error events to frontend clients
-      this.portalGateway.server.emit(PortalSystemEvents.NOUS_AI_ERROR, payload);
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
+      this.portalGateway.server.emit(PortalSystemEvents.NOUS_AI_ERROR, decodedPayload.data || decodedPayload);
     });
 
     this.nousClient.on(NOUSEvents.CONNECTION_STATUS, (payload) => {
@@ -74,10 +79,11 @@ export class NousWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward connection status events to frontend clients
+      // Decode binary broadcast event before forwarding to frontend clients
+      const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CONNECTION_STATUS,
-        payload
+        decodedPayload.data || decodedPayload
       );
     });
   }
@@ -89,7 +95,7 @@ export class NousWebSocketClientService implements OnModuleInit {
   // Delegate all methods to the shared NOUSSocketClient
   async processChatInput(
     message: string,
-    userId: number,
+    userId: string,
     context?: {
       environmentId?: string;
       timestamp?: number;
@@ -99,7 +105,7 @@ export class NousWebSocketClientService implements OnModuleInit {
     try {
       const result = await this.nousClient.processChatInput(
         message,
-        userId.toString(),
+        userId,
         context
       );
       // This returns only the receipt acknowledgment

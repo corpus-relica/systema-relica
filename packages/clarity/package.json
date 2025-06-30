@@ -33,8 +33,8 @@
     "@nestjs/websockets": "^11.0.0",
     "@relica/constants": "*",
     "@relica/types": "*",
-    "@relica/websocket-contracts": "*",
     "@relica/websocket-clients": "*",
+    "@relica/websocket-contracts": "*",
     "add": "^2.0.6",
     "axios": "^1.7.2",
     "lodash": "^4.17.21",
@@ -43,7 +43,6 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "socket.io-client": "^4.7.5",
-    "socket.io-msgpack-parser": "^3.0.2",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {

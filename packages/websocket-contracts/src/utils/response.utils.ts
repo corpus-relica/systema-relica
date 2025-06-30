@@ -1,4 +1,5 @@
 import { BaseResponse } from '../base';
+import { _encodeResponseData } from './binary-serialization.util';
 
 /**
  * Cross-platform UUID generation
@@ -32,10 +33,10 @@ function generateUUID(): string {
  */
 
 /**
- * Creates a successful BaseResponse
+ * Creates a successful BaseResponse with automatic binary encoding
  */
-export function toResponse(data: any, correlationId?: string): BaseResponse {
-  return {
+export function toResponse(data: any, correlationId?: string): any {
+  const response: BaseResponse = {
     id: generateUUID(),
     type: 'response',
     success: true,
@@ -43,15 +44,18 @@ export function toResponse(data: any, correlationId?: string): BaseResponse {
     correlationId,
     timestamp: Date.now()
   };
+  
+  // Automatically encode the entire response for binary transmission
+  return _encodeResponseData(response);
 }
 
 /**
- * Creates an error BaseResponse
+ * Creates an error BaseResponse with automatic binary encoding
  */
-export function toErrorResponse(error: Error | string, correlationId?: string): BaseResponse {
+export function toErrorResponse(error: Error | string, correlationId?: string): any {
   const errorMessage = error instanceof Error ? error.message : String(error);
   
-  return {
+  const response: BaseResponse = {
     id: generateUUID(),
     type: 'response',
     success: false,
@@ -59,4 +63,7 @@ export function toErrorResponse(error: Error | string, correlationId?: string): 
     correlationId,
     timestamp: Date.now()
   };
+  
+  // Automatically encode the entire response for binary transmission
+  return _encodeResponseData(response);
 }

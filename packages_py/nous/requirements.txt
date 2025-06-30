@@ -32,6 +32,7 @@ jsonschema>=4.23.0
 orjson>=3.10.0
 httpx>=0.28.0
 rich>=13.0.0
+msgpack>=1.0.7
 
 # Testing infrastructure (Phase 1: Foundation Setup)
 pytest>=8.0.0

@@ -47,7 +47,6 @@ export class KindsController {
     @Query("range") range?: string,
     @Query("filter") filter?: string
   ) {
-    console.log("FOOOEY!!!");
     try {
       // Parse parameters with defaults (following Clojure implementation pattern)
       const sortParams = this.parseJsonParam(sort, ["lh_object_name", "ASC"]);
@@ -56,14 +55,6 @@ export class KindsController {
 
       const [sortField, sortOrder] = sortParams;
       const [skip, pageSize] = rangeParams;
-
-      console.log("Parsed parameters:", {
-        sortField,
-        sortOrder,
-        skip,
-        pageSize,
-        filterParams,
-      });
 
       // Validate parameters
       if (!["ASC", "DESC"].includes(sortOrder.toUpperCase())) {
@@ -89,10 +80,7 @@ export class KindsController {
         );
       }
 
-      console.log("result", result);
       const { facts, total } = result;
-
-      console.log("Received kinds list from Archivist:", result);
 
       const response = {
         success: true,

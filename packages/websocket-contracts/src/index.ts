@@ -41,6 +41,12 @@ export * from './validation';
 // Response utilities
 export * from './utils/response.utils';
 
+// Binary serialization utilities
+export * from './utils/binary-serialization.util';
+
+// Broadcasting utilities
+export * from './utils/broadcast.util';
+
 export {
   PrismActions,
   PrismEvents,
