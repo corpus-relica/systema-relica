@@ -15,6 +15,7 @@ PortalAxiosInstance.interceptors.request.use((config) => {
 });
 
 // Import canonical types from contracts
+import type { SetupStatus } from "@relica/websocket-contracts";
 export type { SetupStatus } from "@relica/websocket-contracts";
 
 export interface AdminUserData {

@@ -3,7 +3,9 @@ import { useStore } from "react-admin";
 import RootStoreContext from "../../../context/RootStoreContext";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import { portalSocket } from "../../../PortalSocket";
+
+import { PortalUserActions } from "@relica/websocket-contracts";
+import { portalSocket } from "../../../socket";
 
 interface ClassificationProps {
   uids: number[];
@@ -15,8 +17,8 @@ const Classification: React.FC<ClassificationProps> = ({
   individualUID,
 }) => {
   const handleUIDClick = (uid: number) => {
-    portalSocket.emit("user", "loadEntity", { uid: uid });
-    portalSocket.emit("user", "loadEntity", { uid: individualUID });
+    portalSocket.send(PortalUserActions.LOAD_ENTITY, { uid: uid });
+    portalSocket.send(PortalUserActions.LOAD_ENTITY, { uid: individualUID });
   };
 
   const ui = uids.map((uid, index) => {

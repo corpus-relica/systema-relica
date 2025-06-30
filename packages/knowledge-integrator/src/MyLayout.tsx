@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Layout, useRedirect, useStore } from "react-admin";
 import { Slide, IconButton } from "@mui/material";
 import { ExpandLess, ExpandMore, Chat as ChatIcon } from "@mui/icons-material";
@@ -15,8 +15,8 @@ import { PortalSystemEvents } from "@relica/websocket-contracts";
 const replHeight = "40vh"; // Adjust as needed
 const chatHeight = "50vh"; // Adjust as needed
 
-// import { portalWs, initializeWebSocket } from "./socket.js";
-import { portalSocket } from "./PortalSocket";
+import { PortalUserActions } from "@relica/websocket-contracts";
+import { portalSocket, initializeWebSocket  } from "./socket";
 
 // const memStore = localStorageStore();
 
@@ -46,6 +46,8 @@ export const MyLayout = observer((props: any) => {
   const [selectedNode, setSelectedNode] = useStore("selectedNode", null);
   const [selectedEdge, setSelectedEdge] = useStore("selectedEdge", null);
 
+  const socketInitialized = React.useRef(false);
+
   const toggleRepl = () => {
     setReplOpen(!replOpen);
   };
@@ -65,7 +67,7 @@ export const MyLayout = observer((props: any) => {
       const environmentId = rootStore.environmentId;
 
       // Send message via portal socket
-      const foo = await portalSocket.emit("user", "chatUserInput", {
+      const foo = await portalSocket.send(PortalUserActions.CHAT_USER_INPUT, {
         message,
         userId,
         environmentId,
@@ -74,26 +76,6 @@ export const MyLayout = observer((props: any) => {
       console.error("Failed to send chat message:", error);
     }
   };
-
-  // const establishCats = async () => {
-  //   if (categories.length > 0) return;
-
-  //   console.log("vvvv - VULNERABLE II - vvvv");
-  //   const result = await portalClient.resolveUIDs(
-  //     Object.keys(cats).map((x) => parseInt(x))
-  //   );
-  //   console.log("vvvv - CONCEPTS vvvv:");
-  //   console.log(result.data);
-  //   const newCats = [];
-  //   for (const [key, name] of Object.entries(cats)) {
-  //     const concept = result.data.find((c: any) => c.uid === parseInt(key));
-  //     const { uid, descendants } = concept;
-  //     newCats.push({ uid, name, descendants });
-  //   }
-  //   console.log("vvvv - CATEGORIES vvvv:");
-  //   console.log(newCats);
-  //   setCategories(newCats);
-  // };
 
   const establishCats = async () => {
     // getting the list of uids for the subtypes of the major categories
@@ -111,34 +93,36 @@ export const MyLayout = observer((props: any) => {
     setCategories(newCats);
   };
 
-  // const initializeSocketConnection = async () => {
-  //   return new Promise((resolve, reject) => {
-  //     const onPortalConnect = () => {
-  //       console.log("\\\\ CONNECTED SOCKET> PORTAL");
-  //     };
+  const initializeSocketConnection = async () => {
+    return new Promise((resolve, reject) => {
+      const onPortalConnect = () => {
+        console.log("\\\\ CONNECTED SOCKET> PORTAL");
+      };
 
-  //     const onClientRegistered = (d) => {
-  //       if (d.clientID) {
-  //         portalWs.clientId = d.clientID;
-  //         // Clean up the one-time listener
-  //         portalWs.off("system:clientRegistered", onClientRegistered);
-  //         resolve(d.clientID);
-  //       } else {
-  //         reject(new Error("Failed to register client"));
-  //       }
-  //     };
+      const onClientRegistered = (d) => {
+        console.log("CLIENT REGISTERED?", d)
+        if (d.clientId) {
+          // portalSocket.clientId = d.clientId;
+          // Clean up the one-time listener
+          portalSocket.off("system:clientRegistered", onClientRegistered);
+          // resolve(d.clientId);
+          resolve();
+        } else {
+          reject(new Error("Failed to register client"));
+        }
+      };
 
-  //     portalWs.on("connect", onPortalConnect);
-  //     portalWs.on("system:clientRegistered", onClientRegistered);
+      portalSocket.on("connect", onPortalConnect);
+      portalSocket.on("system:clientRegistered", onClientRegistered);
 
-  //     const token = localStorage.getItem("access_token");
-  //     if (token) {
-  //       initializeWebSocket(token);
-  //     } else {
-  //       reject(new Error("No access token available"));
-  //     }
-  //   });
-  // };
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        initializeWebSocket(token);
+      } else {
+        reject(new Error("No access token available"));
+      }
+    });
+  };
 
   useEffect(() => {
     console.log("vvvv - MY LAYOUT vvvv:");
@@ -230,10 +214,10 @@ export const MyLayout = observer((props: any) => {
     const initializeEnvironment = async () => {
       try {
         // First ensure socket connection and client registration
-        // if (!socketInitialized.current) {
-        //   await initializeSocketConnection();
-        //   socketInitialized.current = true;
-        // }
+        if (!socketInitialized.current) {
+          await initializeSocketConnection();
+          socketInitialized.current = true;
+        }
 
         // Then proceed with environment setup
         await establishCats();

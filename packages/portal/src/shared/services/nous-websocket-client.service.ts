@@ -29,7 +29,7 @@ export class NousWebSocketClientService implements OnModuleInit {
       const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CHAT_RESPONSE,
-        decodedPayload.data || decodedPayload
+        {payload: decodedPayload.data}// || decodedPayload
       );
     });
 
@@ -43,7 +43,7 @@ export class NousWebSocketClientService implements OnModuleInit {
       const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CHAT_ERROR,
-        decodedPayload.data || decodedPayload
+        {payload: decodedPayload.data}// || decodedPayload
       );
     });
 
@@ -57,7 +57,7 @@ export class NousWebSocketClientService implements OnModuleInit {
       const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_AI_RESPONSE,
-        decodedPayload.data || decodedPayload
+        {payload: decodedPayload.data}// || decodedPayload
       );
     });
 
@@ -69,7 +69,10 @@ export class NousWebSocketClientService implements OnModuleInit {
       }
       // Decode binary broadcast event before forwarding to frontend clients
       const decodedPayload = decodePayload(payload);
-      this.portalGateway.server.emit(PortalSystemEvents.NOUS_AI_ERROR, decodedPayload.data || decodedPayload);
+      this.portalGateway.server.emit(
+        PortalSystemEvents.NOUS_AI_ERROR,
+        {payload: decodedPayload.data}// || decodedPayload
+      );
     });
 
     this.nousClient.on(NOUSEvents.CONNECTION_STATUS, (payload) => {
@@ -82,7 +85,7 @@ export class NousWebSocketClientService implements OnModuleInit {
       const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CONNECTION_STATUS,
-        decodedPayload.data || decodedPayload
+        {payload: decodedPayload.data}// || decodedPayload
       );
     });
   }

@@ -16,7 +16,8 @@ import {
   getGuestToken,
   AdminUserData 
 } from '../../PortalClient';
-import { portalSocket, SetupStatus, SetupStatusBroadcastEvent } from '../../PortalSocket';
+import { portalSocket } from '../../socket';
+import { SetupStatus, SetupStatusBroadcastEvent } from '@relica/websocket-contracts';
 import { PrismEvents } from '@relica/websocket-contracts';
 import { SETUP_STATES } from '@relica/constants';
 import { withRetry, SetupError } from '../../utils/ErrorHandler';

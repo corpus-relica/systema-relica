@@ -167,12 +167,13 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         token: socketToken,
         userId: authResult.userId,
         user: authResult.user,
+        clientId: client.id,
       };
       return {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Auth error:", error);
@@ -278,10 +279,21 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         };
       }
 
-      // const clientData = this.connectedClients.get(client.id);
-      // if (!clientData) {
-      //   return toErrorResponse(new Error('Not authenticated'), message.id);
-      // }
+      const clientData = this.connectedClients.get(client.id);
+
+      console.log("Client data:", client);
+      console.log(clientData)
+
+      if (!clientData) {
+        const error = new Error("Not authenticated");
+        this.logger.error("Select Entity authentication failed", error);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
+      }
 
       const environmentId = payload.environmentId || "1";
 
@@ -327,10 +339,17 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<any> {
     try {
       const payload = message.payload;
-      // const clientData = this.connectedClients.get(client.id);
-      // if (!clientData) {
-      //   return toErrorResponse(new Error('Not authenticated'), message.id);
-      // }
+      const clientData = this.connectedClients.get(client.id);
+      if (!clientData) {
+        const error = new Error("Not authenticated");
+        this.logger.error("Chat User Input authentication failed", error);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
+      }
 
       const environmentId = payload.environmentId || "1";
 
@@ -386,11 +405,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error
         );
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
       const result = await this.apertureClient.loadSpecializationHierarchy(
@@ -513,10 +532,17 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       this.logger.log("CLEAR ENTITIES", payload);
-      // const clientData = this.connectedClients.get(client.id);
-      // if (!clientData) {
-      //   return toErrorResponse(new Error('Not authenticated'), message.id);
-      // }
+      const clientData = this.connectedClients.get(client.id);
+      if (!clientData) {
+        const error = new Error("Not authenticated");
+        this.logger.error("Clear Entities authentication failed", error);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
+      }
 
       const userId = payload.userId; // || clientData.userId;
       const environmentId = payload.environmentId || "1"; // Default to environment 1 if not provided
@@ -1113,11 +1139,19 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const payload = message.payload;
       const clientData = this.connectedClients.get(client.id);
-      // if (!clientData) {
-      //   const error = new Error("Not authenticated");
-      //   this.logger.error("Chat input authentication failed", error);
-      //   return toErrorResponse(error, message.id);
-      // }
+      console.log("client:", client);
+      console.log("Client data:", clientData);
+      console.log(this.connectedClients);
+      if (!clientData) {
+        const error = new Error("Not authenticated");
+        this.logger.error("Chat User Input authentication failed", error);
+        return {
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
+      }
 
       // Get environment context for the user
       const environmentId = payload.environmentId || "1";
@@ -1170,11 +1204,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const error = new Error("Not authenticated");
         this.logger.error("Generate AI response authentication failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
       // Generate AI response through NOUS
@@ -1217,11 +1251,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const error = new Error("Not authenticated");
         this.logger.error("Clear chat history authentication failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now()
+        };
       }
 
       // TODO: Implement chat history clearing when NOUS supports it

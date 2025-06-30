@@ -7,7 +7,8 @@ import ClassifiedDialogue from "./ClassifiedDialogue";
 import SubtypesDialogue from "./SubtypesDialogue";
 import DeleteEntityDialogue from "./DeleteEntityDialogue";
 import DeleteFactDialogue from "./DeleteFactDialogue";
-import { portalSocket } from "../../PortalSocket";
+import { PortalUserActions } from "@relica/websocket-contracts";
+import { portalSocket } from "../../socket";
 import { getEntityType, getEntityCategory } from "../../RLCBaseClient";
 import { useStores } from "../../context/RootStoreContext";
 
@@ -145,7 +146,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             setWarnIsOpen(false);
             const userId = authStore.userId;
             const environmentId = rootStore.environmentId;
-            portalSocket.emit("user", "deleteEntity", {
+            portalSocket.send(PortalUserActions.DELETE_ENTITY, {
               userId,
               environmentId,
               uid: uidToDelete,
@@ -164,7 +165,7 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             setFactWarnIsOpen(false);
             const userId = authStore.userId;
             const environmentId = rootStore.environmentId;
-            portalSocket.emit("user", "deleteFact", {
+            portalSocket.send(PortalUserActions.DELETE_FACT, {
               userId,
               environmentId,
               uid: factUidToDelete,
@@ -185,12 +186,12 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             setSubtypesDialogueIsOpen(false);
             const userId = authStore.userId;
             const environmentId = rootStore.environmentId;
-            portalSocket.emit("user", "loadEntities", {
+            portalSocket.send(PortalUserActions.LOAD_ENTITIES, {
               userId,
               environmentId,
               uids: selected,
             });
-            portalSocket.emit("user", "unloadEntities", {
+            portalSocket.send(PortalUserActions.UNLOAD_ENTITIES, {
               userId,
               environmentId,
               uids: notSelected,
@@ -211,12 +212,12 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
             setClassifiedDialogueIsOpen(false);
             const userId = authStore.userId;
             const environmentId = rootStore.environmentId;
-            portalSocket.emit("user", "loadEntities", {
+            portalSocket.send(PortalUserActions.LOAD_ENTITIES, {
               userId,
               environmentId,
               uids: selected,
             });
-            portalSocket.emit("user", "unloadEntities", {
+            portalSocket.send(PortalUserActions.UNLOAD_ENTITIES, {
               userId,
               environmentId,
               uids: notSelected,

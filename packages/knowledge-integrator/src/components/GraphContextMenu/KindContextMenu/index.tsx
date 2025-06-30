@@ -15,7 +15,8 @@ import KindContextRoleSubmenu from "./submenu/Role";
 import KindContextRelationSubmenu from "./submenu/Relation";
 import KindContextOccurrenceSubmenu from "./submenu/Occurrence";
 
-import { portalSocket } from "../../../PortalSocket";
+import { PortalUserActions } from "@relica/websocket-contracts";
+import { portalSocket } from "../../../socket";
 
 import {
   getAllRelatedFacts,
@@ -83,7 +84,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
       const environmentId = rootStore.environmentId;
       switch (value) {
         case LOAD_SH:
-          portalSocket.emit("user", "loadSpecializationHierarchy", {
+          portalSocket.send(PortalUserActions.LOAD_SPECIALIZATION_HIERARCHY, {
             userId,
             environmentId,
             uid,
@@ -109,7 +110,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_ALL_RELATED:
-          portalSocket.emit("user", "loadAllRelatedFacts", {
+          portalSocket.send(PortalUserActions.LOAD_ALL_RELATED_FACTS, {
             userId,
             environmentId,
             uid,
@@ -135,7 +136,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case LOAD_SUBTYPES_CONE:
-          portalSocket.emit("user", "loadSubtypesCone", {
+          portalSocket.send(PortalUserActions.LOAD_SUBTYPES_CONE, {
             userId,
             environmentId,
             uid,
@@ -143,7 +144,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case UNLOAD_THIS:
-          portalSocket.emit("user", "unloadEntity", {
+          portalSocket.send(PortalUserActions.UNLOAD_ENTITY, {
             userId,
             environmentId,
             uid,
@@ -151,7 +152,7 @@ const KindContextMenu: React.FC<KindContextMenuProps> = (props) => {
           handleClose();
           break;
         case UNLOAD_SUBTYPES_CONE:
-          portalSocket.emit("user", "unloadSubtypesCone", {
+          portalSocket.send(PortalUserActions.UNLOAD_SUBTYPES_CONE, {
             userId,
             environmentId,
             uid,

@@ -2,7 +2,9 @@ import React, { useContext } from "react";
 import { useStore } from "react-admin";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { portalSocket } from "../../../PortalSocket";
+
+import { PortalUserActions } from "@relica/websocket-contracts";
+import { portalSocket } from "../../../socket";
 
 interface PossibleRoleProps {
   uid: number; // specify the correct type instead of any if possible
@@ -13,7 +15,7 @@ const PossibleRole: React.FC<PossibleRoleProps> = ({ uid, roleplayerUID }) => {
   const [model] = useStore("model:" + uid);
 
   const handleUIDClick = (uid: number) => {
-    portalSocket.emit("user", "loadEntity", { uid: uid });
+    portalSocket.send(PortalUserActions.LOAD_ENTITY, { uid: uid });
   };
 
   let ui;

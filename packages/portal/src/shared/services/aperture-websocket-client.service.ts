@@ -23,7 +23,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
       }
       // Decode binary broadcast event before forwarding to frontend clients
       const decodedPayload = decodePayload(payload);
-      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, decodedPayload.data);
+      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, {payload: decodedPayload.data});
     });
 
     this.apertureClient.on(ApertureEvents.UNLOADED_FACTS, (payload) => {
@@ -36,7 +36,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
       const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.UNLOADED_FACTS,
-        decodedPayload.data
+        {payload: decodedPayload.data}
       );
     });
 
@@ -50,7 +50,7 @@ export class ApertureWebSocketClientService implements OnModuleInit {
       const decodedPayload = decodePayload(payload);
       this.portalGateway.server.emit(
         PortalSystemEvents.SELECTED_ENTITY,
-        decodedPayload.data
+        {payload: decodedPayload.data}
       );
     });
 
@@ -62,7 +62,9 @@ export class ApertureWebSocketClientService implements OnModuleInit {
       }
       // Decode binary broadcast event before forwarding to frontend clients
       const decodedPayload = decodePayload(payload);
-      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE, decodedPayload.data);
+      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE,
+        {payload: decodedPayload.data}
+      );
     });
   }
 
