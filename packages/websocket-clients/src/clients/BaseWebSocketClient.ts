@@ -161,11 +161,8 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
       this.socket!.emit(action, message, (response: any) => {
         clearTimeout(timeout);
 
-        console.log('got raw response:', response);
         // Decode binary response if present
         const decodedResponse = decodePayload(response);
-
-        console.log(`Received response for action ${action}:`, decodedResponse);
 
         if (decodedResponse && decodedResponse.success === false) {
           reject(new Error(decodedResponse.error || 'Request failed'));

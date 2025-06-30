@@ -21,7 +21,6 @@ export class ModelService {
   async getKindModel(uid: number) {
     try {
       const binaryResponse = await this.clarityClient.getKindModel(uid);
-      console.log('get kind binaryResponse:', decodePayload(binaryResponse));
       return decodePayload(binaryResponse);
     } catch (error) {
       this.logger.error(`Failed to get kind model for uid ${uid}:`, error);

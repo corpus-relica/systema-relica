@@ -21,7 +21,6 @@ export class NousWebSocketClientService implements OnModuleInit {
     // Set up event forwarding from NOUS to Portal
     this.nousClient.on(NOUSEvents.CHAT_RESPONSE, (payload) => {
       this.logger.debug("Received nous.chat/response event");
-      console.log(payload);
       if (!this.portalGateway) {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;

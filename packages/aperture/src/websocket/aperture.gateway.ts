@@ -107,7 +107,6 @@ export class ApertureGateway
   async selectEntity(@MessageBody() rawMessage: any) {
     try {
       const decodedMessage = decodeRequest(rawMessage);
-      console.log("Selecting entity with payload:", decodedMessage);
       const { userId, environmentId, uid } = decodedMessage.payload;
       const environment = await this.environmentService.selectEntity(
         environmentId,

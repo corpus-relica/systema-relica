@@ -228,7 +228,6 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
       data: setupStatus,
     };
     
-    console.log('Broadcasting canonical setup status update:', broadcastEvent);
     this.broadcast(broadcastEvent);
   }
 

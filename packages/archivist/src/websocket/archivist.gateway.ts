@@ -267,12 +267,8 @@ export class ArchivistGateway
         client,
       );
 
-      console.log('GOT DEFINITION');
-      console.log(result);
       if (result.length > 0) {
         const def = result.map((f) => f.full_definition);
-        console.log('got def');
-        console.log(def);
         return toResponse(def, decodedMessage.id || message.id);
       } else {
         return toResponse('no definition found', decodedMessage.id || message.id);
@@ -440,7 +436,6 @@ export class ArchivistGateway
         message,
       );
       const decodedMessage = decodeRequest(message);
-      console.log("DECODED MESSAGE", decodedMessage);
       const result = await this.kindHandlers.handleKindsList(
         decodedMessage.payload,
         client,

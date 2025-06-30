@@ -128,7 +128,6 @@ export class ApertureWebSocketClientService implements OnModuleInit {
     environmentId: string = "1",
     uid: number
   ): Promise<any> {
-    console.log("SELECTING ENTITY", { userId, environmentId, uid });
     const result = await this.apertureClient.selectEntity(
       userId.toString(),
       environmentId,
@@ -137,7 +136,6 @@ export class ApertureWebSocketClientService implements OnModuleInit {
     if (!result.success && result.error) {
       throw new Error(result.error.message || "Failed to select entity");
     }
-    console.log("APERTURE SELECT ENTITY RESPONSE", result);
     return result.data || result;
   }
 
