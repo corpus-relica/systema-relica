@@ -8,7 +8,10 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "test": "jest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "echo \"No linting configured\"",
+    "format": "echo \"No formatting configured\"",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@relica/websocket-contracts": "*",

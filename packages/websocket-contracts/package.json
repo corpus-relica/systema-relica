@@ -21,7 +21,11 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:types": "tsc -p tsconfig.types.json",
     "dev": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "type-check": "tsc --noEmit",
+    "lint": "echo \"No linting configured\"",
+    "format": "echo \"No formatting configured\"",
+    "clean": "rm -rf dist"
   },
   "keywords": ["websocket", "contracts", "types", "relica"],
   "author": "Relica Team",
