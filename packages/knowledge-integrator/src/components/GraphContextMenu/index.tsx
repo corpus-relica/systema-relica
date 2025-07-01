@@ -55,7 +55,6 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
           const kind = await getEntityType(uid);
           const category = await getEntityCategory(uid);
 
-          console.log("KIND: ", kind, "CATEGORY: ", category);
           // this isn't even a bad idea...
           // the model will have been computed and loaded by clarity
           // before here...re-implment when clarity is ready.
@@ -84,11 +83,11 @@ const GraphContextMenu: React.FC<GraphContextMenuProps> = (props) => {
               />
             );
           } else if (kind === "individual") {
-            // console.log("KIND INDIVIDUAL MENU", model);
+            console.log("KIND INDIVIDUAL MENU")//, model);
             setMenu(
               <IndividualContextMenu
                 uid={uid}
-                category={model.category}
+                category={category}
                 open={open}
                 handleClose={handleClose}
                 x={x}

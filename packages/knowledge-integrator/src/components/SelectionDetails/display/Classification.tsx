@@ -21,7 +21,7 @@ const Classification: React.FC<ClassificationProps> = ({
     portalSocket.send(PortalUserActions.LOAD_ENTITY, { uid: individualUID });
   };
 
-  const ui = uids.map((uid, index) => {
+  const ui = uids? uids.map((uid, index) => {
     const [model] = useStore("model:" + uid);
     if (model) {
       return <Typography size="xsmall">{model.name}</Typography>;
@@ -36,7 +36,7 @@ const Classification: React.FC<ClassificationProps> = ({
         </Typography>
       );
     }
-  });
+  }) : <Typography size="xsmall" color="textSecondary">No classifiers</Typography>;
 
   return (
     <Stack direction="column" align="start">

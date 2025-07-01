@@ -66,9 +66,10 @@ const GraphAndSelectionLayout = ({
             categories={categories}
             facts={facts}
             onNodeClick={selectNode}
-            onNodeRightClick={(uid, event) =>
+            onNodeRightClick={(uid, event) =>{
+              console.log("Node right-clicked:", uid);
               handleContextMenuTrigger(uid, "entity", event)
-            }
+            }}
             onStageClick={onStageClick}
             onEdgeRollOver={handleEdgeRollOver}
             onEdgeRollOut={handleEdgeRollOut}

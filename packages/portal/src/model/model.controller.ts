@@ -85,7 +85,9 @@ export class ModelController {
         throw new BadRequestException("uid parameter is required");
       }
 
+      console.log("Retrieving individual model for user:", user, uid);
       const individual = await this.modelService.getIndividualModel(uid);
+      console.log("Individual model retrieved:", individual);
 
       return {
         success: true,

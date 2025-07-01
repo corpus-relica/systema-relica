@@ -32,7 +32,8 @@ export const retrieveIndividualModel = async (uid: number) => {
   const response = await CCAxiosInstance.get("/model/individual", {
     params: { uid },
   });
-  return response.data;
+  console.log("RETRIEVED INDIVIDUAL MODEL", response.data.individual);
+  return response.data.individual;
 };
 
 export const retrieveModels = async (uids: number[]) => {
