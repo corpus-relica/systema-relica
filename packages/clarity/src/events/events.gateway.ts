@@ -98,16 +98,16 @@ export class EventsGateway {
     }
   }
 
-  @SubscribeMessage('clarity.individual/get')
-  async getIndividualModel(@MessageBody() message: any) {
+  @SubscribeMessage(ClarityActions.INDIVIDUAL_GET)
+  async getIndividualModel(@MessageBody() rawMessage: any) {
     try {
+      const message = decodeRequest(rawMessage);
       const { uid } = message.payload;
-      this.logger.log('GET INDIVIDUAL MODEL:', uid);
-      const model = await this.semanticModelService.retrieveSemanticModel(uid);
+      const model = await this.semanticModelService.retrieveSemanticModel(+uid);
       return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving individual model:', error);
-      return toErrorResponse(error, message.id);
+      return toErrorResponse(error, rawMessage.id || 'unknown');
     }
   }
 

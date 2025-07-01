@@ -8,6 +8,8 @@ import { RelationModelService } from './relation-model.service';
 import { OccurrenceModelService } from './occurrence-model.service';
 import { CATEGORY_CONSTANTS, ENTITY_NATURE } from '../constants';
 
+import { decodeRequest } from '@relica/websocket-contracts';
+
 export type SemanticModel = any; // Union of all model types
 
 @Injectable()
@@ -34,10 +36,16 @@ export class SemanticModelService {
 
       // 1. Get entity type and category directly
       const entityType = await this.archivistService.getEntityType(uid);
-      this.logger.debug(`Entity type: ${JSON.stringify(entityType)}`);
+      const type = decodeRequest(entityType).type;
+      // this.logger.debug(`Entity type: ${JSON.stringify(entityType)}`);
+      console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+      console.log(type)
 
       const category = await this.archivistService.getCategory(uid);
-      this.logger.debug(`Entity category: ${category}`);
+      const cat = decodeRequest(category);
+      console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+      console.log(cat)
+      // this.logger.debug(`Entity category: ${cat}`);
 
       // 2. Route to appropriate service based on entity type and category
       switch (entityType.type) {
