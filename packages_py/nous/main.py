@@ -1,48 +1,53 @@
+#!/usr/bin/env python3
+
 from rich import print
 import asyncio
 import logging
 import socketio
-from src.socketio_clients.aperture_client import aperture_client
-from src.socketio_clients.archivist_client import archivist_client
-from src.socketio_clients.clarity_client import clarity_client
+from aiohttp import web
 
-from src.socketio_server import nous_socketio_server
+# Import config first to load environment variables
+from src.config import *
 
-from src.relica_nous_langchain.agent.NOUSAgentPrebuilt import NOUSAgent
-# from src.relica_nous_langchain.agent.ToolsPrebuilt import create_agent_tools
+from src.clients.aperture import aperture_client
+from src.clients.archivist import archivist_client
+from src.clients.clarity import clarity_client
 
-from src.relica_nous_langchain.SemanticModel import semantic_model
+from src.server import nous_socketio_server
 
-# Set up logging - suppress EDN format logs
+from src.agent.nous_agent import NOUSAgent
+from src.models.semantic_model import semantic_model
+from src.proxies.aperture_proxy import ApertureSocketIOProxy
+from src.proxies.archivist_proxy import ArchivistSocketIOProxy
+
+from src.agent.concept_placement import *
+
+# Set up logging
 logging.basicConfig(level=logging.INFO)
-logging.getLogger("edn_format").setLevel(logging.WARNING)  # Suppress EDN logs
-
-# from dotenv import load_dotenv
-# load_dotenv()  # This loads the variables from .env
-
-# #####################################################################################
 
 messages = []
+
 
 async def main():
     print("RELICA :: NOUS :: STARTING UP....")
 
     async def retrieveEnv():
-        # print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
         try:
             # Connect if not already connected
             if not aperture_client.is_connected():
                 await aperture_client.connect()
-            
-            result = await aperture_client.retrieve_environment(1, None)
+
+            result = await aperture_client.retrieve_environment(
+                DEFAULT_ENVIRONMENT_ID, None
+            )
             print("*******************************************")
             print(result)
 
             env = result
-            facts = env.get('facts', [])
+            facts = env.get("facts", [])
 
             await semantic_model.addFacts(facts)
-            semantic_model.selected_entity = env.get('selected_entity_id')
+            semantic_model.selected_entity = env.get("selected_entity_id")
 
             return env
         except Exception as e:
@@ -52,7 +57,9 @@ async def main():
     async def handle_user_input(user_id, env_id, message, client_id: str):
         """Handle user input received via WebSocket."""
         logger = logging.getLogger(__name__)
-        logger.info(f"Handling input for user '{user_id}', env '{env_id}', client '{client_id}': '{message}'")
+        logger.info(
+            f"Handling input for user '{user_id}', env '{env_id}', client '{client_id}': '{message}'"
+        )
 
         # Ensure clients are connected
         if not aperture_client.is_connected():
@@ -60,39 +67,50 @@ async def main():
         if not archivist_client.is_connected():
             await archivist_client.connect()
 
-        # 1. Generate the tools and metadata using the factory and the user-specific proxy
-        # tool_data = create_agent_tools(aperture_proxy=aperture_proxy)
+        # 2. Create proxy clients for the agent using the existing Socket.IO connections
+        aperture_proxy = ApertureSocketIOProxy(aperture_client, user_id, env_id)
+        archivist_proxy = ArchivistSocketIOProxy(archivist_client, user_id, env_id)
 
-        # 2. Instantiate the NOUSAgent
-        #    (Adjust constructor arguments if NOUSAgent expects different names/structure)
+        # 3. Instantiate the NOUSAgent
         agent = NOUSAgent(
-            aperture_client=aperture_client, # Pass the Socket.IO client
-            archivist_client=archivist_client,
-            semantic_model=semantic_model, # Pass the imported semantic_model instance
+            aperture_client=aperture_proxy,
+            archivist_client=archivist_proxy,
+            semantic_model=semantic_model,
+            user_id=user_id,
+            env_id=env_id,
         )
 
-
-        # 3. Invoke the agent to process the input
-        #    (Replace 'handleInput' with the actual method name if different)
+        # 4. Invoke the agent to process the input
         try:
             # Assuming the agent returns the final answer to send to the user
-            messages.append({"role":"user", "content": message})
+            messages.append({"role": "user", "content": message})
             final_answer_raw = await agent.handleInput(messages)
-            final_answer = final_answer_raw.strip() if isinstance(final_answer_raw, str) else final_answer_raw
-            messages.append({"role":"assistant", "content": final_answer})
+            final_answer = (
+                final_answer_raw.strip()
+                if isinstance(final_answer_raw, str)
+                else final_answer_raw
+            )
+            messages.append({"role": "assistant", "content": final_answer})
 
             logger.info(f"Final answer: {final_answer}")
-            logger.info(f"Agent processed message from user '{user_id}', sending response to client '{client_id}'.")
+            logger.info(
+                f"Agent processed message from user '{user_id}', sending response to client '{client_id}'."
+            )
             # 4. Send the final answer back to the user via Socket.IO
             await nous_socketio_server.send_final_answer(client_id, final_answer)
         except Exception as e:
-            logger.error(f"Agent processing failed for user '{user_id}', client '{client_id}': {e}", exc_info=True)
+            logger.error(
+                f"Agent processing failed for user '{user_id}', client '{client_id}': {e}",
+                exc_info=True,
+            )
             # Send error message via Socket.IO
-            await nous_socketio_server.send_error_message(client_id, f"An error occurred: {e}")
+            await nous_socketio_server.send_error_message(
+                client_id, f"An error occurred: {e}"
+            )
 
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
-    # Register handler with Socket.IO server
+    # Register async handler with Socket.IO server
     nous_socketio_server.set_nous_handler(handle_user_input)
 
     # Connect to services
@@ -105,33 +123,53 @@ async def main():
 
     # Check connections before retrieving environment
     if aperture_connected:
+        print("Aperture connected")
         # Call retrieveEnv which uses the singleton client
-        env = await retrieveEnv()
-        print(f">>>>>>>>>> Retrieved environment - startup: {env is not None}")
+        # env = await retrieveEnv()
+        # print(f">>>>>>>>>> Retrieved environment - direct socketio: {env is not None}")
+
+        # if not archivist_client.is_connected():
+        #     await archivist_client.connect()
+        # archivist_proxy = ArchivistSocketIOProxy(archivist_client, 34, "bb121d97-1ab4-4cd3-bcb9-54459ad9b9b3")
+
+        # foo = await categorizeConceptType('Chrysanthemum')
+        # print('FOOOOOOOOOOOO', foo)
+
+        # bar = await get_subtypes_with_definitions(
+        #     730063, #731005, #730044,
+        #     archivist_proxy
+        # )
+        # print("BBBBAAAAARRR", bar)
+
+        # baz = await select_best_subtype('Volkswagen GTI', 'is a hot hatch', bar)
+        # print("BAAAAAAAAAZZZ", baz)
+
+        # foobarbaz = await find_best_placement_recursive('Volkswagen GTI', 'is a hot hatch', 730044, archivist_proxy)
+        # foobarbaz = await find_best_placement_recursive('Chrysanthemum', 'is a flower', 730044, archivist_proxy)
+        # foobarbaz = await find_best_placement_recursive('emotion', '', 790123, archivist_proxy)
+        # print("FOOOOOBAAAARRRBAAAZZ", foobarbaz)
+
+        # bro = await infer_definition("Chrysanthemum")
+        # print("INFERED DEF", bro)
+
+        # sis = await place_concept("Meeting", archivist_proxy)
+        # print("GOT PLACEMENT", sis)
+
     else:
         print("Cannot retrieve environment - Aperture not connected")
 
-    # Keep the main task running to prevent program termination
-    await asyncio.Future()  # This keeps the event loop running
-
 
 if __name__ == "__main__":
-    import uvicorn
-    from fastapi import FastAPI
+    # Create aiohttp app for Socket.IO
+    app = web.Application()
 
-    # Create FastAPI app
-    app = FastAPI(title="NOUS Service")
-    
-    # Create Socket.IO ASGI app
-    socket_app = socketio.ASGIApp(nous_socketio_server.sio, other_asgi_app=app)
+    # Attach Socket.IO to aiohttp app
+    nous_socketio_server.sio.attach(app)
 
-    # Start the uvicorn server in a separate thread
-    import threading
-    threading.Thread(
-        target=uvicorn.run,
-        kwargs={"app": socket_app, "host": "0.0.0.0", "port": 3006},
-        daemon=True
-    ).start()
+    async def init_app():
+        # Start main async function
+        asyncio.create_task(main())
+        return app
 
-    # Run the asyncio event loop for our main function
-    asyncio.run(main())
+    # Run aiohttp server
+    web.run_app(init_app(), host=NOUS_HOST, port=NOUS_PORT)

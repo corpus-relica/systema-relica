@@ -229,7 +229,26 @@ export class SetupService implements OnModuleInit {
       // Validate credentials
       const validation = this.validateCredentials(userCredentials);
       if (!validation.valid) {
-        this.sendEvent({ type: 'ERROR', errorMessage: validation.message });
+        this.sendEvent({ type: 'USER_CREATION_ERROR', errorMessage: validation.message });
+        return;
+      }
+
+      // Check for existing users
+      const existingUserByEmail = await this.usersService.findByEmail(userCredentials.email);
+      if (existingUserByEmail) {
+        this.sendEvent({ 
+          type: 'USER_CREATION_ERROR', 
+          errorMessage: 'A user with this email address already exists. Please use a different email.' 
+        });
+        return;
+      }
+
+      const existingUserByUsername = await this.usersService.findOne(userCredentials.username);
+      if (existingUserByUsername) {
+        this.sendEvent({ 
+          type: 'USER_CREATION_ERROR', 
+          errorMessage: 'This username is already taken. Please choose a different username.' 
+        });
         return;
       }
 
@@ -246,7 +265,20 @@ export class SetupService implements OnModuleInit {
       this.sendEvent({ type: 'USER_CREATION_SUCCESS' });
     } catch (error) {
       console.error('Error creating admin user:', error);
-      this.sendEvent({ type: 'ERROR', errorMessage: `Failed to create admin user: ${error.message}` });
+      
+      // Handle database constraint errors
+      if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+        let errorMessage = 'User creation failed due to duplicate information.';
+        if (error.message.includes('email')) {
+          errorMessage = 'A user with this email address already exists.';
+        } else if (error.message.includes('username')) {
+          errorMessage = 'This username is already taken.';
+        }
+        this.sendEvent({ type: 'USER_CREATION_ERROR', errorMessage });
+      } else {
+        // For other errors, use the generic ERROR event that goes to error state
+        this.sendEvent({ type: 'ERROR', errorMessage: `Failed to create admin user: ${error.message}` });
+      }
     }
   }
 
@@ -280,10 +312,38 @@ export class SetupService implements OnModuleInit {
     console.log('[Activity] Starting DB seed...');
     try {
       const result = await this.batchService.seedDatabase();
+      
       if (result.success) {
+        // Log seeding statistics if available
+        if (result.statistics) {
+          const stats = result.statistics;
+          console.log('[Setup] Database seeding statistics:');
+          console.log(`  Files processed: ${stats.processedFiles}/${stats.totalFiles}`);
+          console.log(`  Nodes: ${stats.nodes.loaded} loaded, ${stats.nodes.skipped} skipped`);
+          console.log(`  Relationships: ${stats.relationships.loaded} loaded, ${stats.relationships.skipped} skipped`);
+          
+          // Check if we had significant data skipping
+          const totalSkipped = stats.nodes.skipped + stats.relationships.skipped;
+          const totalLoaded = stats.nodes.loaded + stats.relationships.loaded;
+          
+          if (totalSkipped > 0 && totalLoaded > 0) {
+            console.log(`[Setup] ⚠️  Warning: Database seeding completed with ${totalSkipped} items skipped due to data quality issues`);
+          }
+        }
+        
         this.sendEvent({ type: 'SEEDING_COMPLETE' });
       } else {
-        this.sendEvent({ type: 'SEEDING_SKIPPED' });
+        console.error('[Setup] Database seeding failed:', result.error);
+        
+        // Check if this was a partial failure (some data loaded)
+        if (result.statistics?.nodes?.loaded > 0 || result.statistics?.relationships?.loaded > 0) {
+          console.log('[Setup] Some data was loaded despite errors. Continuing setup process...');
+          this.sendEvent({ type: 'SEEDING_COMPLETE' });
+        } else {
+          // Complete failure - skip seeding stage
+          console.log('[Setup] No data was loaded. Skipping database seeding...');
+          this.sendEvent({ type: 'SEEDING_SKIPPED' });
+        }
       }
     } catch (error) {
       console.error('Error during database seeding:', error);

@@ -6,8 +6,6 @@ pydantic>=2.10.0
 python-dotenv>=1.0.0
 python-socketio[asyncio_client]>=5.10.0
 
-# Clojure communication
-edn_format>=0.7.5
 
 # LLM and agent dependencies
 langchain>=0.3.0
@@ -33,6 +31,7 @@ typer>=0.15.0
 jsonschema>=4.23.0
 orjson>=3.10.0
 httpx>=0.28.0
+rich>=13.0.0
 
 # Testing infrastructure (Phase 1: Foundation Setup)
 pytest>=8.0.0

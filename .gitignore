@@ -36,3 +36,18 @@ temp.*
 /packages/websocket-contracts/dist/
 /packages/websocket-clients/dist/
 /reference/
+.clj-kondo/
+SCRATCHPAD.md
+
+# Neo4j database files
+packages/dataplex/neo4j/
+**/neo4j/databases/
+**/neo4j/transactions/
+**/neo4j/dbms/
+*.db
+*.id
+*.lock
+**/checkpoint.*
+**/neostore*
+**/server_id
+packages/coverage/

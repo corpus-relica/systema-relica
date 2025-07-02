@@ -1,4 +1,5 @@
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+import { getAuthToken } from "./authProvider";
 
 class EventEmitter {
   private events: { [key: string]: Function[] } = {};
@@ -16,77 +17,43 @@ class EventEmitter {
   }
 
   emit(event: string, data: any) {
+    console.log(`Emitting event: ${event}`, data);
     if (!this.events[event]) return;
     this.events[event].forEach((callback) => callback(data));
   }
 }
 
-// Legacy CC Socket implementation
-class CCSocket extends EventEmitter {
-  private ws: WebSocket | null = null;
-  private url: string;
+// Legacy CC Socket implementation (commented out - not currently used)
+// class CCSocket extends EventEmitter {
+//   private ws: WebSocket | null = null;
+//   private url: string;
+//
+//   constructor() {
+//     super();
+//     this.url =
+//       import.meta.env.VITE_RELICA_CC_SOCKET_URL || "http://localhost:3001";
+//   }
+//
+//   private connect() {
+//     // ... legacy implementation
+//   }
+// }
 
-  constructor() {
-    super();
-    this.url =
-      import.meta.env.VITE_RELICA_CC_SOCKET_URL || "http://localhost:3001";
-    //this.connect();
-  }
-
-  private connect() {
-    this.ws = new WebSocket(this.url.replace("http", "ws"));
-
-    this.ws.onopen = () => {
-      console.log("CC WebSocket connected");
-    };
-
-    this.ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        this.emit(message.type, message.payload);
-      } catch (error) {
-        console.error("Error parsing CC WebSocket message:", error);
-      }
-    };
-
-    this.ws.onclose = () => {
-      console.log("CC WebSocket closed, reconnecting...");
-      setTimeout(() => this.connect(), 1000);
-    };
-  }
-
-  send(type: string, payload: any) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type, payload }));
-    }
-  }
-}
-
-// export const nousSocket = io(import.meta.env.VITE_RELICA_NOUS_SOCKET_URL);
-
-// export const nousSocket = {
-//   on: (x, y) => {},
-//   off: (x, y) => {},
-//   emit: (x, y) => {},
-// };
-
-export const sockSendNous = (role, content) => {
-  if (nousSocket) {
-    //ts-ignore next line
-    nousSocket.emit("message", { role, content });
-  }
+// Legacy NOUS socket function (keeping for compatibility)
+export const sockSendNous = (role: string, content: string) => {
+  console.warn("sockSendNous is deprecated - use portalWs.send instead");
 };
 
-
 class PortalWebSocketClient extends EventEmitter {
-  private ws: WebSocket | null = null;
+  private socket: Socket | null = null;
   private reconnectTimeout: number = 1000;
   private maxReconnectTimeout: number = 30000;
   private jwtToken: string | null = null;
   private socketToken: string | null = null;
   private isConnecting: boolean = false;
+  private isAuthenticated: boolean = false;
   private pingInterval: number | null = null;
-  private clientId: string | null = null;
+  public clientId: string | null = null;
 
   constructor() {
     super();
@@ -97,31 +64,32 @@ class PortalWebSocketClient extends EventEmitter {
     return this.clientId;
   }
 
-  onmessage(event: MessageEvent) {
+  private handleMessage(message: any) {
     try {
-      const message = JSON.parse(event.data);
-      console.log("Parsed message:", message);
+      console.log("Received message:", message);
 
-      let payload = message.payload;
+      let payload = message.payload || message.data;
 
       // Handle standardized response format
-      // New format: {"success": true, "request_id": "...", "data": {...}}
-      // or {"success": false, "request_id": "...", "error": {...}}
       if ('success' in message) {
         if (message.success) {
-          // Success response
           payload = message.data;
         } else {
-          // Error response
           payload = {
             error: typeof message.error === 'object' ? message.error : { message: message.error }
           };
-          console.error("WebSocket error response:", message.error);
+          console.error("Socket.IO error response:", message.error);
         }
       }
 
-      // Emit to our internal event system using the standardized payload
-      this.emit(message.type, payload);
+      console.log("MESSGE PAYLOAD:", message, message.payload)
+      // Emit to our internal event system
+      this.emit(message.type || message.event, payload);
+
+      // Handle authentication response
+      if (message.type === "auth" || message.event === "auth") {
+        this.handleAuthResponse(message);
+      }
 
       // Handle client registration
       if (message.type === "system:clientRegistered") {
@@ -129,142 +97,153 @@ class PortalWebSocketClient extends EventEmitter {
         this.clientId = payload.clientID;
       }
 
-      // Dispatch message as a DOM event for components to listen to
-      // const eventName = message.type.replace(/:/g, '-');
-      // const customEvent = new CustomEvent(`portal:${eventName}`, {
-      //   detail: payload
-      // });
-      // document.dispatchEvent(customEvent);
-
-      // For handling response messages from our request-response pattern
-      // if (message.type === 'response') {
-      //   const responseEvent = new CustomEvent('ws:response', {
-      //     detail: message
-      //   });
-      //   document.dispatchEvent(responseEvent);
-      // }
     } catch (error) {
-      console.error("Error parsing WebSocket message:", error);
+      console.error("Error handling Socket.IO message:", error);
+    }
+  }
+
+  private handleAuthResponse(message: any) {
+    if (message.success && message.data?.token) {
+      this.socketToken = message.data.token;
+      this.isAuthenticated = true;
+      console.log("✅ Authentication successful, socket token received");
+      this.emit("authenticated", message.data);
+    } else {
+      console.error("❌ Authentication failed:", message.error);
+      this.isAuthenticated = false;
+      this.emit("authenticationFailed", message.error);
     }
   }
 
   send(type: string, payload: any) {
+    if (!this.socket?.connected) {
+      console.warn("Socket.IO not connected, cannot send message");
+      return;
+    }
+
+    if (!this.isAuthenticated && type !== "auth") {
+      console.warn("Not authenticated, cannot send message:", type);
+      return;
+    }
+
     const id = Math.random().toString(36).substr(2, 9);
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const userID = user.id;
-    const clientID = this.clientId;
 
-    if (this.ws?.readyState === WebSocket.OPEN && userID) {
-      const finalPayload = { ...payload, userId: userID, clientId: clientID};
-      this.ws.send(
-        JSON.stringify({
-          id,
-          type,
-          payload: finalPayload,
-        })
-      );
-    } else {
-      console.warn("WebSocket not ready or user not authenticated");
-    }
+    const message = {
+      id,
+      type,
+      payload: { ...payload, userId: userID, clientId: this.clientId },
+    };
+
+    console.log("Sending Socket.IO message:", message);
+    this.socket.emit(type, message);
   }
 
-  async connect(jwtToken: string) {
+  async connect(jwtToken?: string) {
     if (this.isConnecting) return;
     this.isConnecting = true;
-    this.jwtToken = jwtToken;
 
-    console.log(
-      "Connect PortalWebsocketClient !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1"
-    );
+    // Use provided token or get from auth provider
+    this.jwtToken = jwtToken || getAuthToken();
+
+    if (!this.jwtToken) {
+      console.error("No JWT token available for Socket.IO connection");
+      this.isConnecting = false;
+      return;
+    }
+
+    console.log("🔌 Connecting to Portal via Socket.IO...");
 
     try {
-      // First get our socket token
-      console.log("Requesting socket token...");
-      const wsAuthResponse = await fetch(
-        `${import.meta.env.VITE_PORTAL_WS_URL || "http://localhost:2174"}/ws-auth`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${jwtToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const portalUrl = import.meta.env.VITE_PORTAL_API_URL || "http://localhost:2204";
+      
+      this.socket = io(portalUrl, {
+        transports: ["websocket"],
+        timeout: 10000,
+        autoConnect: false,
+      });
 
-      if (!wsAuthResponse.ok) {
-        throw new Error(`Failed to get socket token: ${wsAuthResponse.status}`);
-      }
-
-      const wsAuthData = await wsAuthResponse.json();
-      this.socketToken = wsAuthData.token;
-      console.log("Received socket token:", this.socketToken);
-
-      if (!this.socketToken) {
-        throw new Error("No socket token received");
-      }
-
-      const wsUrl = `${
-        import.meta.env.VITE_PORTAL_WS_URL || "ws://localhost:2174"
-      }/chsk?token=${encodeURIComponent(this.socketToken)}`;
-
-      console.log("Attempting WebSocket connection to:", wsUrl);
-      console.log("Current protocol:", window.location.protocol);
-
-      this.ws = new WebSocket(wsUrl);
-
-      this.ws.onopen = () => {
-        console.log("WebSocket connection opened!");
+      this.socket.on("connect", async () => {
+        console.log("✅ Socket.IO connected to Portal");
         this.isConnecting = false;
         this.reconnectTimeout = 1000; // Reset backoff
-        this.setupPing(); // Set up ping handling
+        this.setupPing();
+        const foo = await this.authenticateSocket();
+        console.log("Authenticating Socket.IO connection with JWT:", foo);
+        this.emit("connect", {});
+      });
 
-        this.emit("connect");
-      };
-
-      this.ws.onmessage = this.onmessage.bind(this);
-
-      this.ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        console.log("WebSocket state:", this.ws?.readyState);
-      };
-
-      this.ws.onclose = (event) => {
-        console.log("WebSocket closed:", {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean,
-        });
+      this.socket.on("disconnect", (reason) => {
+        console.log("❌ Socket.IO disconnected:", reason);
+        this.isAuthenticated = false;
         this.cleanupPing();
         this.scheduleReconnect();
+        this.emit("disconnect", { reason });
+      });
 
-        this.emit("disconnect");
-      };
+      this.socket.on("connect_error", (error) => {
+        console.error("🚫 Socket.IO connection error:", error);
+        this.isConnecting = false;
+        this.scheduleReconnect();
+      });
+
+      // Handle all message types
+      this.socket.onAny((event, ...args) => {
+        const message = args[0];
+        this.handleMessage({ event, ...message });
+      });
+
+      // Connect the socket
+      this.socket.connect();
 
     } catch (error) {
-      console.error("Portal WebSocket connection error:", error);
+      console.error("Portal Socket.IO connection error:", error);
       this.isConnecting = false;
       this.scheduleReconnect();
     }
   }
 
+  private async authenticateSocket() {
+    if (!this.jwtToken || !this.socket?.connected) {
+      console.error("Cannot authenticate: missing token or socket not connected");
+      return;
+    }
+
+    console.log("🔐 Authenticating Socket.IO connection...");
+
+    const authMessage = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: "auth",
+      payload: { jwt: this.jwtToken },
+    };
+
+    this.socket.emit("auth", authMessage, (response: any) => {
+      if (response.success) {
+        this.socketToken = response.data.token;
+        this.clientId = response.data.clientID;
+        this.isAuthenticated = true;
+        console.log("✅ Socket.IO authentication successful !!!!", response);
+        this.emit("system:clientRegistered", response.data);
+      }
+    });
+  }
+
   private setupPing() {
-    // Clear any existing ping handlers
     this.cleanupPing();
 
     // Send ping every 25 seconds
     this.pingInterval = window.setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
+      if (this.socket?.connected && this.isAuthenticated) {
         console.log("Sending ping");
-        // this.ws.send(JSON.stringify({ type: "ping" }));
         this.send("ping", {});
       }
     }, 25000);
 
-    // Also handle server pings (though they shouldn't happen)
+    // Handle server pings
     this.on("ping", () => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        // this.ws.send(JSON.stringify({ type: "pong" }));
-        this.send("ping", {});
+      if (this.socket?.connected) {
+        this.send("pong", {});
       }
     });
   }
@@ -277,9 +256,9 @@ class PortalWebSocketClient extends EventEmitter {
   }
 
   private scheduleReconnect() {
-    if (this.token) {
+    if (this.jwtToken) {
       setTimeout(() => {
-        this.connect(this.token!);
+        this.connect(this.jwtToken!);
       }, this.reconnectTimeout);
 
       this.reconnectTimeout = Math.min(
@@ -291,21 +270,31 @@ class PortalWebSocketClient extends EventEmitter {
 
   close() {
     this.cleanupPing();
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
     this.isConnecting = false;
+    this.isAuthenticated = false;
     this.jwtToken = null;
+    this.socketToken = null;
+  }
+
+  isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
+
+  getAuthenticationStatus(): boolean {
+    return this.isAuthenticated;
   }
 }
 
 export const portalWs = new PortalWebSocketClient();
 
-export const initializeWebSocket = async (token: string) => {
+export const initializeWebSocket = async (token?: string) => {
   try {
-    await portalWs.connect(token);
-    console.log('WebSocket initialized');
+    const res = await portalWs.connect(token);
+    console.log('WebSocket initialized', res);
   } catch (error) {
     console.error('Failed to initialize WebSocket:', error);
   }
@@ -316,9 +305,16 @@ export const closeWebSocket = () => {
 };
 
 export const sendSocketMessage = (type: string, payload: any) => {
-  if (!portalWs.getClientId()) {
-    console.warn('Attempting to send message before client registration');
+  if (!portalWs.isConnected()) {
+    console.warn('Socket not connected');
+    return;
+  }
+  if (!portalWs.getAuthenticationStatus()) {
+    console.warn('Not authenticated, cannot send message');
     return;
   }
   portalWs.send(type, payload);
 };
+
+// Export for compatibility
+export { portalWs as portalSocket };

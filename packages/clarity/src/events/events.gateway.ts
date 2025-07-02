@@ -10,15 +10,13 @@ import { ModelService } from '../model/model.service';
 import { SemanticModelService } from '../services/semantic-model.service';
 import { Logger } from '@nestjs/common';
 import { ClarityActions } from '@relica/websocket-contracts';
-import { toResponse, toErrorResponse } from '@relica/websocket-contracts';
-import customParser from 'socket.io-msgpack-parser';
+import { toResponse, toErrorResponse, createBroadcast } from '@relica/websocket-contracts';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
   transports: ['websocket'],
-  parser: customParser,
 })
 export class EventsGateway {
   private logger: Logger = new Logger('EventsGateway');
@@ -32,6 +30,7 @@ export class EventsGateway {
     private readonly semanticModelService: SemanticModelService,
   ) {}
 
+
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
   }
@@ -41,13 +40,13 @@ export class EventsGateway {
     // You can emit a welcome message or initial data here
     client.emit('connection', { message: 'Successfully connected to server' });
     // Optionally broadcast to other clients that a new client has joined
-    client.broadcast.emit('clientJoined', { clientId: client.id });
+    createBroadcast(this.server, 'clientJoined', { clientId: client.id });
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
     // Optionally broadcast to other clients that a client has left
-    this.server.emit('clientLeft', { clientId: client.id });
+    createBroadcast(this.server, 'clientLeft', { clientId: client.id });
   }
 
   // SEMANTIC MODEL OPERATIONS //
@@ -58,10 +57,12 @@ export class EventsGateway {
       const { uid } = message.payload;
       this.logger.log('GET MODEL:', uid);
       const model = await this.semanticModelService.retrieveSemanticModel(uid);
-      return toResponse(model, message.id);
+      const response = toResponse(model, message.id);
+      return response;
     } catch (error) {
       this.logger.error('Error retrieving model:', error);
-      return toErrorResponse(error, message.id);
+      const errorResponse = toErrorResponse(error, message.id || 'unknown');
+      return errorResponse;
     }
   }
 
@@ -85,23 +86,24 @@ export class EventsGateway {
       const { uid } = message.payload;
       this.logger.log('GET KIND MODEL:', uid);
       const model = await this.semanticModelService.retrieveSemanticModel(+uid);
-      return toResponse(model, message.id);
+      const response = toResponse(model, message.id);
+      return response;
     } catch (error) {
       this.logger.error('Error retrieving kind model:', error);
-      return toErrorResponse(error, message.id);
+      const errorResponse = toErrorResponse(error, message.id || 'unknown');
+      return errorResponse;
     }
   }
 
-  @SubscribeMessage('clarity.individual/get')
+  @SubscribeMessage(ClarityActions.INDIVIDUAL_GET)
   async getIndividualModel(@MessageBody() message: any) {
     try {
       const { uid } = message.payload;
-      this.logger.log('GET INDIVIDUAL MODEL:', uid);
-      const model = await this.semanticModelService.retrieveSemanticModel(uid);
+      const model = await this.semanticModelService.retrieveSemanticModel(+uid);
       return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving individual model:', error);
-      return toErrorResponse(error, message.id);
+      return toErrorResponse(error, message.id || 'unknown');
     }
   }
 
@@ -119,10 +121,12 @@ export class EventsGateway {
         partial_definition,
         full_definition,
       );
-      return toResponse(result, message.id);
+      const response = toResponse(result, message.id);
+      return response;
     } catch (error) {
       this.logger.error('Error updating definition:', error);
-      return toErrorResponse(error, message.id);
+      const errorResponse = toErrorResponse(error, message.id || 'unknown');
+      return errorResponse;
     }
   }
 

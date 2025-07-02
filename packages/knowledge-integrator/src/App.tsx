@@ -25,7 +25,7 @@ import { getSetupStatus, loadUserEnvironment } from "./PortalClient";
 import { SetupStatus } from '@relica/websocket-contracts';
 import { SETUP_STATES } from '@relica/constants';
 import { SetupWizard } from "./pages/Setup";
-import { portalSocket } from "./PortalSocket";
+import { portalSocket } from "./socket";
 import DebugPanel from "./components/DebugPanel";
 
 import CCDataProvider from "./data/CCDataProvider";

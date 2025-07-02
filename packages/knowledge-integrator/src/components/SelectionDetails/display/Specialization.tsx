@@ -7,7 +7,8 @@ import { toJS } from "mobx";
 import { useStore } from "react-admin";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import { portalSocket } from "../../../PortalSocket";
+import { PortalUserActions } from "@relica/websocket-contracts";
+import { portalSocket } from "../../../socket";
 
 interface SpecializationProps {
   uids: number[]; // specify the correct type instead of any if possible
@@ -18,8 +19,8 @@ const Specialization: React.FC<SpecializationProps> = ({ uids, childUID }) => {
   console.log("SPECIALIZATION");
 
   const handleUIDClick = (uid: number) => {
-    portalSocket.emit("user", "loadEntity", { uid: uid });
-    portalSocket.emit("user", "loadEntity", { uid: childUID });
+    portalSocket.send(PortalUserActions.LOAD_ENTITY, { uid: uid });
+    portalSocket.send(PortalUserActions.LOAD_ENTITY, { uid: childUID });
   };
 
   const ui = uids.map((uid, index) => {

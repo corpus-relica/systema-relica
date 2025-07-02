@@ -32,7 +32,7 @@ function generateUUID(): string {
  */
 
 /**
- * Creates a successful BaseResponse
+ * Creates a successful BaseResponse using JSON
  */
 export function toResponse(data: any, correlationId?: string): BaseResponse {
   return {
@@ -46,7 +46,7 @@ export function toResponse(data: any, correlationId?: string): BaseResponse {
 }
 
 /**
- * Creates an error BaseResponse
+ * Creates an error BaseResponse using JSON
  */
 export function toErrorResponse(error: Error | string, correlationId?: string): BaseResponse {
   const errorMessage = error instanceof Error ? error.message : String(error);

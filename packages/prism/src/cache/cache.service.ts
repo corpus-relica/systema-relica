@@ -72,7 +72,7 @@ export class CacheService {
           range: BATCH_SIZE
         });
 
-        const facts = batchResult.payload || [];
+        const facts = batchResult;
         
         if (facts.length === 0) {
           hasMore = false;
@@ -127,7 +127,7 @@ export class CacheService {
           relTypeUids: [1146, 1726] // Specialization relation types
         });
         
-        const facts = batchResult.payload || [];
+        const facts = batchResult;
         
         if (facts.length === 0) {
           hasMore = false;
@@ -141,7 +141,7 @@ export class CacheService {
           if (lh_object_uid) {
             // Get lineage for the entity using the dedicated lineage endpoint
             const result = await this.archivistClient.getEntityLineageViaEndpoint(lh_object_uid);
-            const lineage = result.payload || [];
+            const lineage = result;
             
             if (lineage.length > 0) {
               // Store lineage in Redis cache
@@ -188,7 +188,7 @@ export class CacheService {
           relTypeUids: [1146, 1726] // Specialization relation types
         });
         
-        const facts = batchResult.payload || [];
+        const facts = batchResult;
         
         if (facts.length === 0) {
           hasMore = false;
@@ -202,7 +202,7 @@ export class CacheService {
           if (lh_object_uid) {
             // Get lineage for the entity
             const result = await this.archivistClient.getEntityLineageViaEndpoint(lh_object_uid);
-            const lineage = result.payload || [];
+            const lineage = result;
             
             if (lineage.length > 0) {
               // Add this entity as a descendant to all its ancestors

@@ -5,11 +5,28 @@
   "main": "index.js",
   "license": "GNU",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
+    "build": "yarn workspaces run build",
+    "build:watch": "yarn workspaces run build --watch",
+    "lint": "yarn workspaces run lint",
+    "lint:fix": "yarn workspaces run lint --fix",
     "test": "yarn workspaces run test",
     "test:watch": "yarn workspaces run test:watch",
     "test:cov": "yarn workspaces run test:cov",
+    "type-check": "yarn workspaces run type-check",
+    "format": "yarn workspaces run format",
+    "clean": "yarn workspaces run clean",
+    "start:dev": "./scripts/start-all-services.sh",
+    "start:databases": "./scripts/start-databases.sh",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose up --build -d",
+    "docker:logs": "docker-compose logs -f",
+    "docker:status": "./scripts/docker-status.sh",
+    "docker:logs:smart": "./scripts/docker-logs.sh",
     "test:setup": "yarn workspace @relica/prism test",
     "test:setup:watch": "yarn workspace @relica/prism test:watch",
     "test:setup:cov": "yarn workspace @relica/prism test:cov",
@@ -17,5 +34,8 @@
     "test:setup:integration": "yarn workspace @relica/prism test -- --testPathPattern='integration'",
     "test:all-packages": "yarn workspaces run test",
     "test:all-coverage": "yarn workspaces run test:cov"
+  },
+  "dependencies": {
+    "msgpackr": "^1.11.4"
   }
 }

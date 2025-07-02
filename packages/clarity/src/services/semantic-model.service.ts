@@ -8,6 +8,7 @@ import { RelationModelService } from './relation-model.service';
 import { OccurrenceModelService } from './occurrence-model.service';
 import { CATEGORY_CONSTANTS, ENTITY_NATURE } from '../constants';
 
+
 export type SemanticModel = any; // Union of all model types
 
 @Injectable()
@@ -37,7 +38,7 @@ export class SemanticModelService {
       this.logger.debug(`Entity type: ${JSON.stringify(entityType)}`);
 
       const category = await this.archivistService.getCategory(uid);
-      this.logger.debug(`Entity category: ${category}`);
+      this.logger.debug(`Entity category: ${JSON.stringify(category)}`);
 
       // 2. Route to appropriate service based on entity type and category
       switch (entityType.type) {

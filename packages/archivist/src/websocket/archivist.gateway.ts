@@ -10,8 +10,6 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import customParser from 'socket.io-msgpack-parser';
-
 import { EntityHandlers } from './handlers/entity.handlers';
 import { EntityActions } from '@relica/websocket-contracts';
 import { FactActions } from '@relica/websocket-contracts';
@@ -33,7 +31,6 @@ import { toResponse, toErrorResponse } from '@relica/websocket-contracts';
     origin: '*',
   },
   transports: ['websocket'],
-  parser: customParser,
 })
 export class ArchivistGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
@@ -52,6 +49,7 @@ export class ArchivistGateway
 
   @WebSocketServer()
   server: Server;
+
 
   afterInit(server: Server) {
     this.logger.log(
@@ -118,6 +116,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.entityHandlers.handleEntityCategoryGet(
         message.payload,
         client,
@@ -134,6 +133,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.entityHandlers.handleEntityTypeGet(
         message.payload,
         client,
@@ -150,6 +150,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.entityHandlers.handleEntityCollectionsGet(
         message.payload,
         client,
@@ -170,6 +171,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactCreate(
         message.payload,
         client,
@@ -186,6 +188,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactUpdate(
         message.payload,
         client,
@@ -202,6 +205,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactDelete(
         message.payload,
         client,
@@ -219,6 +223,7 @@ export class ArchivistGateway
   ) {
     try {
       this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
+      
       const result = await this.factHandlers.handleFactGet(
         message.payload,
         client,
@@ -235,6 +240,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactGetDefinitive(
         message.payload,
         client,
@@ -252,17 +258,14 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactGetDefinitive(
         message.payload,
         client,
       );
 
-      console.log('GOT DEFINITION');
-      console.log(result);
       if (result.length > 0) {
         const def = result.map((f) => f.full_definition);
-        console.log('got def');
-        console.log(def);
         return toResponse(def, message.id);
       } else {
         return toResponse('no definition found', message.id);
@@ -278,6 +281,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleGetAllRelated(
         message.payload,
         client,
@@ -297,6 +301,7 @@ export class ArchivistGateway
       this.logger.debug(
         `Handling ${FactActions.GET_SUBTYPES} from ${client.id}`,
       );
+      
       const result = await this.factHandlers.handleFactGetSubtypes(
         message.payload,
         client,
@@ -316,6 +321,7 @@ export class ArchivistGateway
       this.logger.debug(
         `Handling ${FactActions.GET_SUBTYPES_CONE} from ${client.id}`,
       );
+      
       const result = await this.factHandlers.handleFactGetSubtypesCone(
         message.payload,
         client,
@@ -332,6 +338,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactGetSupertypes(
         message.payload,
         client,
@@ -348,6 +355,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactGetClassified(
         message.payload,
         client,
@@ -364,6 +372,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactValidate(
         message.payload,
         client,
@@ -380,6 +389,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       const result = await this.factHandlers.handleFactBatchGet(
         message.payload,
         client,
@@ -397,6 +407,7 @@ export class ArchivistGateway
   ) {
     try {
       this.logger.debug(`Handling ${FactActions.COUNT} from ${client.id}`);
+      
       const result = await this.factHandlers.handleFactCount(
         message.payload,
         client,
@@ -421,6 +432,7 @@ export class ArchivistGateway
         `Handling ${KindActions.LIST} from ${client.id}:`,
         message,
       );
+      
       const result = await this.kindHandlers.handleKindsList(
         message.payload,
         client,
@@ -445,6 +457,7 @@ export class ArchivistGateway
         `Handling ${LineageActions.GET} from ${client.id}:`,
         message,
       );
+      
       const result = await this.lineageHandlers.handleLineageGet(
         message.payload,
         client,
@@ -465,6 +478,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${QueryActions.EXECUTE} from ${client.id}:`,
         message.payload,
@@ -485,6 +499,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${QueryActions.VALIDATE} from ${client.id}:`,
         message.payload,
@@ -505,6 +520,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${QueryActions.PARSE} from ${client.id}:`,
         message.payload,
@@ -529,6 +545,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${SearchActions.GENERAL} from ${client.id}:`,
         message,
@@ -552,6 +569,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${SearchActions.INDIVIDUAL} from ${client.id}:`,
         message.payload,
@@ -572,6 +590,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${SearchActions.KIND} from ${client.id}:`,
         message.payload,
@@ -592,6 +611,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${SearchActions.EXECUTE} from ${client.id}:`,
         message,
@@ -612,6 +632,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${SearchActions.UID} from ${client.id}:`,
         message,
@@ -636,6 +657,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${SpecializationActions.SPECIALIZATION_FACT_GET} from ${client.id}:`,
         message,
@@ -657,6 +679,7 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
+      
       this.logger.debug(
         `Handling ${SpecializationActions.SPECIALIZATION_HIERARCHY_GET} from ${client.id}:`,
         message.payload,

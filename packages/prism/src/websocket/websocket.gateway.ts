@@ -13,7 +13,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SetupService } from '../setup/setup.service';
 import { CacheService } from '../cache/cache.service';
 import { HealthService } from '../health/health.service';
-import { PrismActions, PrismEvents, SetupStatusBroadcastEvent, toResponse, toErrorResponse } from '@relica/websocket-contracts';
+import { PrismActions, PrismEvents, SetupStatusBroadcastEvent, toResponse, toErrorResponse, createBroadcast } from '@relica/websocket-contracts';
 
 @Injectable()
 @WebSocketGateway({ 
@@ -27,6 +27,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   server: Server;
 
   private clients: Set<Socket> = new Set();
+
 
   constructor(
     private setupService: SetupService,
@@ -224,7 +225,6 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
       data: setupStatus,
     };
     
-    console.log('Broadcasting canonical setup status update:', broadcastEvent);
     this.broadcast(broadcastEvent);
   }
 
@@ -236,10 +236,6 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   }
 
   private broadcast(message: any) {
-    this.clients.forEach(client => {
-      if (client.connected) {
-        client.emit(message.type, message.data);
-      }
-    });
+    createBroadcast(this.server, message.type, message.data || message);
   }
 }

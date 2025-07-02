@@ -25,6 +25,7 @@ export type SetupEvent =
   | { type: 'DB_CHECK_COMPLETE_NOT_EMPTY' }
   | { type: 'SUBMIT_CREDENTIALS'; data: { username: string; email:string, password: string } }
   | { type: 'USER_CREATION_SUCCESS' }
+  | { type: 'USER_CREATION_ERROR'; errorMessage: string }
   | { type: 'SEEDING_COMPLETE' }
   | { type: 'SEEDING_SKIPPED' }
   | { type: 'FACTS_CACHE_COMPLETE' }
@@ -89,12 +90,14 @@ export const setupMachine = createMachine({
     awaiting_user_credentials: {
       entry: assign({
         statusMessage: 'Awaiting admin user credentials...',
+        errorMessage: undefined,  // Clear any previous error message
       }),
       on: {
         SUBMIT_CREDENTIALS: {
           target: 'creating_admin_user',
           actions: assign({
             userCredentials: ({ event }) => event.data,
+            errorMessage: undefined,  // Clear error when resubmitting
           }),
         },
       },
@@ -103,12 +106,20 @@ export const setupMachine = createMachine({
     creating_admin_user: {
       entry: assign({
         statusMessage: 'Creating admin user...',
+        errorMessage: undefined,  // Clear any previous error
       }),
       on: {
         USER_CREATION_SUCCESS: {
           target: 'seeding_db',
           actions: assign({
             masterUser: ({ context }) => context.userCredentials?.username,
+          }),
+        },
+        USER_CREATION_ERROR: {
+          target: 'awaiting_user_credentials',
+          actions: assign({
+            statusMessage: ({ event }) => event.errorMessage,
+            // Don't set errorMessage here - that's for the error state
           }),
         },
         ERROR: {
