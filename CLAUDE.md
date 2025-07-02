@@ -4,7 +4,7 @@ This document serves as comprehensive orientation for Claude development session
 
 ## Project Identity & Mission
 
-Systema Relica is a distributed knowledge management and AI ecosystem designed for real-time collaboration, intelligent data processing, and seamless information integration. Think of it as a "living knowledge graph" with AI-powered insights, real-time updates, and multi-modal data handling.
+Relica is semantic modeling platform that enables applications to maintain persistent, relationship-aware representations of complex information. Built on Gellish Ontological Modelling Language, a self-referential semantic modeling framework where relationship type specifications are co-located with the data itself, it allows systems to store not just data points or amorphous notions, but integrated and unambiguous knowledge models: subgraphs that represent objects with aspects, spatial relationships, and state that participate in temporal changes and causal connections. Relica provides an extensible framework of semantic primitives which support meaning expression and interpretation, enabling applications to reason about information the way users naturally think about it.
 
 ### Core Philosophy
 - **Distributed but Coherent**: Microservices that feel like a unified system
@@ -12,6 +12,9 @@ Systema Relica is a distributed knowledge management and AI ecosystem designed f
 - **Real-time First**: Live updates and collaborative features are core, not afterthoughts
 - **AI-Augmented**: Intelligence woven throughout, not bolted on
 - **Developer Experience**: Tools and patterns that make complex things simple
+
+### GitHub Repository Details
+- Organization/Repo Name: `corups-relica/systema-relica`
 
 ## Architecture Mental Model
 
@@ -54,12 +57,14 @@ Systema Relica is a distributed knowledge management and AI ecosystem designed f
 ### Language & Technology Zones
 
 **TypeScript Zone** (Primary):
+- in '/packages' directory
 - All NestJS backend services
 - React frontend applications  
 - Shared libraries and contracts
 - Primary development focus
 
 **Python Zone** (Specialized AI):
+- in '/packages_py' directory
 - NOUS service (Socket.IO based)
 - Heavy ML/AI workloads
 - Integrates via Socket.IO with TypeScript services
