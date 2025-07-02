@@ -50,3 +50,4 @@ packages/dataplex/neo4j/
 **/checkpoint.*
 **/neostore*
 **/server_id
+packages/coverage/
