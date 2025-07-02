@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class FactsService {
@@ -10,8 +9,7 @@ export class FactsService {
 
   async getClassified(uid: number) {
     try {
-      const binaryResponse = await this.archivistClient.getClassified(uid);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.getClassified(uid);
     } catch (error) {
       this.logger.error(`Failed to get classified facts for uid ${uid}:`, error);
       throw error;
@@ -20,8 +18,7 @@ export class FactsService {
 
   async getSubtypes(uid: number) {
     try {
-      const binaryResponse = await this.archivistClient.getSubtypes(uid);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.getSubtypes(uid);
     } catch (error) {
       this.logger.error(`Failed to get subtypes for uid ${uid}:`, error);
       throw error;
@@ -30,8 +27,7 @@ export class FactsService {
 
   async getSubtypesCone(uid: number) {
     try {
-      const binaryResponse = await this.archivistClient.getSubtypesCone(uid);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.getSubtypesCone(uid);
     } catch (error) {
       this.logger.error(`Failed to get subtypes cone for uid ${uid}:`, error);
       throw error;

@@ -45,7 +45,7 @@ import {
   type SelectNoneRequest,
   type LoadSpecializationHierarchyRequest,
   type StandardResponse,
-  createTargetedPortalBroadcast,
+  createTargetedBroadcast,
 } from "@relica/websocket-contracts";
 
 interface ConnectedClient {
@@ -128,7 +128,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         targetClients.push(clientData.socket);
       }
     }
-    createTargetedPortalBroadcast(targetClients, "message", message);
+    createTargetedBroadcast(targetClients, "message", message, "portal");
   }
 
   @SubscribeMessage("auth")

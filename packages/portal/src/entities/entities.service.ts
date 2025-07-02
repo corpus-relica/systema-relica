@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class EntitiesService {
@@ -10,8 +9,7 @@ export class EntitiesService {
 
   async resolveUIDs(uids: number[]) {
     try {
-      const binaryResponse = await this.archivistClient.resolveUIDs(uids);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.resolveUIDs(uids);
     } catch (error) {
       this.logger.error(`Failed to resolve UIDs ${uids.join(', ')}:`, error);
       throw error;
@@ -20,8 +18,7 @@ export class EntitiesService {
 
   async getEntityType(uid: number) {
     try {
-      const binaryResponse = await this.archivistClient.getEntityType(uid);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.getEntityType(uid);
     } catch (error) {
       this.logger.error(`Failed to get entity type for uid ${uid}:`, error);
       throw error;
@@ -30,8 +27,7 @@ export class EntitiesService {
 
   async getEntityCategory(uid: number) {
     try {
-      const binaryResponse = await this.archivistClient.getEntityCategory(uid);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.getEntityCategory(uid);
     } catch (error) {
       this.logger.error(`Failed to get entity category for uid ${uid}:`, error);
       throw error;
@@ -40,8 +36,7 @@ export class EntitiesService {
 
   async getEntityCollections() {
     try {
-      const binaryResponse = await this.archivistClient.getEntityCollections();
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.getEntityCollections();
     } catch (error) {
       this.logger.error('Failed to get entity collections:', error);
       throw error;

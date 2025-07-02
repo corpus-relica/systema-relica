@@ -24,14 +24,13 @@ import { SearchHandlers } from './handlers/search.handlers';
 import { SearchActions } from '@relica/websocket-contracts';
 import { SpecializationHandlers } from './handlers/specialization.handlers';
 import { SpecializationActions } from '@relica/websocket-contracts';
-import { toResponse, toErrorResponse, decodeRequest } from '@relica/websocket-contracts';
+import { toResponse, toErrorResponse } from '@relica/websocket-contracts';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
   transports: ['websocket'],
-  // Using app-level binary serialization instead of transport-level parser
 })
 export class ArchivistGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
@@ -51,7 +50,6 @@ export class ArchivistGateway
   @WebSocketServer()
   server: Server;
 
-  // Binary serialization methods now provided by shared websocket-contracts utilities
 
   afterInit(server: Server) {
     this.logger.log(
@@ -102,12 +100,11 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
       const result = await this.entityHandlers.handleEntityBatchResolve(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -119,12 +116,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.entityHandlers.handleEntityCategoryGet(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -136,12 +133,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.entityHandlers.handleEntityTypeGet(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -153,12 +150,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.entityHandlers.handleEntityCollectionsGet(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -174,12 +171,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactCreate(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -191,12 +188,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactUpdate(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -208,12 +205,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactDelete(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -226,12 +223,12 @@ export class ArchivistGateway
   ) {
     try {
       this.logger.debug(`Handling ${FactActions.GET} from ${client.id}`);
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactGet(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -243,12 +240,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactGetDefinitive(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -261,17 +258,17 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactGetDefinitive(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
 
       if (result.length > 0) {
         const def = result.map((f) => f.full_definition);
-        return toResponse(def, decodedMessage.id || message.id);
+        return toResponse(def, message.id);
       } else {
-        return toResponse('no definition found', decodedMessage.id || message.id);
+        return toResponse('no definition found', message.id);
       }
     } catch (error) {
       return toErrorResponse(error, message.id);
@@ -284,12 +281,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleGetAllRelated(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -304,12 +301,12 @@ export class ArchivistGateway
       this.logger.debug(
         `Handling ${FactActions.GET_SUBTYPES} from ${client.id}`,
       );
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactGetSubtypes(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -324,12 +321,12 @@ export class ArchivistGateway
       this.logger.debug(
         `Handling ${FactActions.GET_SUBTYPES_CONE} from ${client.id}`,
       );
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactGetSubtypesCone(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -341,12 +338,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactGetSupertypes(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -358,12 +355,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactGetClassified(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -375,12 +372,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactValidate(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -392,12 +389,12 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactBatchGet(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -410,12 +407,12 @@ export class ArchivistGateway
   ) {
     try {
       this.logger.debug(`Handling ${FactActions.COUNT} from ${client.id}`);
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.factHandlers.handleFactCount(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -435,12 +432,12 @@ export class ArchivistGateway
         `Handling ${KindActions.LIST} from ${client.id}:`,
         message,
       );
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.kindHandlers.handleKindsList(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -460,12 +457,12 @@ export class ArchivistGateway
         `Handling ${LineageActions.GET} from ${client.id}:`,
         message,
       );
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.lineageHandlers.handleLineageGet(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -481,16 +478,16 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${QueryActions.EXECUTE} from ${client.id}:`,
-        decodedMessage.payload,
+        message.payload,
       );
       const result = await this.queryHandlers.handleQueryExecute(
-        decodedMessage,
+        message,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -502,16 +499,16 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${QueryActions.VALIDATE} from ${client.id}:`,
-        decodedMessage.payload,
+        message.payload,
       );
       const result = await this.queryHandlers.handleQueryValidate(
-        decodedMessage,
+        message,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -523,16 +520,16 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${QueryActions.PARSE} from ${client.id}:`,
-        decodedMessage.payload,
+        message.payload,
       );
       const result = await this.queryHandlers.handleQueryParse(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -548,19 +545,19 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${SearchActions.GENERAL} from ${client.id}:`,
-        decodedMessage,
+        message,
       );
       const result = await this.searchHandlers.handleGeneralSearch(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
       this.logger.debug(
         `Found ${result.facts.length} search results for ${SearchActions.GENERAL}`,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -572,16 +569,16 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${SearchActions.INDIVIDUAL} from ${client.id}:`,
-        decodedMessage.payload,
+        message.payload,
       );
       const result = await this.searchHandlers.handleIndividualSearch(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -593,16 +590,16 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${SearchActions.KIND} from ${client.id}:`,
-        decodedMessage.payload,
+        message.payload,
       );
       const result = await this.searchHandlers.handleKindSearch(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -614,16 +611,16 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${SearchActions.EXECUTE} from ${client.id}:`,
-        decodedMessage,
+        message,
       );
       const result = await this.searchHandlers.handleExecuteSearch(
-        decodedMessage,
+        message,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -635,16 +632,16 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${SearchActions.UID} from ${client.id}:`,
-        decodedMessage,
+        message,
       );
       const result = await this.searchHandlers.handleUidSearch(
-        decodedMessage.payload,
+        message.payload,
         client,
       );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -660,17 +657,17 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${SpecializationActions.SPECIALIZATION_FACT_GET} from ${client.id}:`,
-        decodedMessage,
+        message,
       );
       const result =
         await this.specializationHandlers.handleSpecializationFactGet(
-          decodedMessage.payload,
+          message.payload,
           client,
         );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }
@@ -682,17 +679,17 @@ export class ArchivistGateway
     @MessageBody() message: any,
   ) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       this.logger.debug(
         `Handling ${SpecializationActions.SPECIALIZATION_HIERARCHY_GET} from ${client.id}:`,
-        decodedMessage.payload,
+        message.payload,
       );
       const result =
         await this.specializationHandlers.handleSpecializationHierarchyGet(
-          decodedMessage.payload,
+          message.payload,
           client,
         );
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       return toErrorResponse(error, message.id);
     }

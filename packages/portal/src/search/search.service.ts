@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class SearchService {
@@ -16,8 +15,7 @@ export class SearchService {
     filter?: string
   ) {
     try {
-      const binaryResponse = await this.archivistClient.searchText(searchTerm, collectionUID, limit, offset, filter);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.searchText(searchTerm, collectionUID, limit, offset, filter);
     } catch (error) {
       this.logger.error(`Failed to search text for term '${searchTerm}':`, error);
       throw error;
@@ -26,8 +24,7 @@ export class SearchService {
 
   async searchUid(uid: string) {
     try {
-      const binaryResponse = await this.archivistClient.searchUid(uid);
-      return decodePayload(binaryResponse);
+      return await this.archivistClient.searchUid(uid);
     } catch (error) {
       this.logger.error(`Failed to search for UID '${uid}':`, error);
       throw error;

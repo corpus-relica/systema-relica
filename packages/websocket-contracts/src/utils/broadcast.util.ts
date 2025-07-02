@@ -1,101 +1,52 @@
-import { _encodeResponseData } from './binary-serialization.util';
 import { Server, Socket } from 'socket.io';
 
 /**
  * Centralized broadcasting utilities for WebSocket communication.
  * 
- * This module provides consistent broadcasting across all services with proper
- * binary encoding for backend services and JSON for frontend communication.
+ * This module provides consistent broadcasting across all services using
+ * JSON for optimal compatibility and performance.
  */
 
 /**
- * Creates a binary-encoded broadcast event for backend service-to-service communication.
- * Uses the existing binary serialization infrastructure for performance.
+ * Creates a broadcast event for service communication.
  * 
  * @param type - Event type identifier
  * @param data - Event payload data
- * @returns Binary-encoded broadcast event
+ * @param source - Source of the event (backend/portal)
+ * @returns JSON broadcast event
  */
-export function toBinaryBroadcastEvent(type: string, data: any): any {
-  const event = {
-    type,
-    data,
-    timestamp: Date.now(),
-    source: 'backend'
-  };
-  return _encodeResponseData(event);
-}
-
-/**
- * Creates a JSON broadcast event for Portal-to-frontend communication.
- * No binary encoding to maintain browser compatibility.
- * 
- * @param type - Event type identifier  
- * @param data - Event payload data
- * @returns Plain JSON broadcast event
- */
-export function toJsonBroadcastEvent(type: string, data: any): any {
+export function createBroadcastEvent(type: string, data: any, source: string = 'backend'): any {
   return {
     type,
     data,
     timestamp: Date.now(),
-    source: 'portal'
+    source
   };
 }
 
 /**
- * Broadcasts a binary-encoded event to all connected clients on a server.
- * For backend service global broadcasts.
+ * Broadcasts an event to all connected clients on a server.
  * 
  * @param server - Socket.IO server instance
  * @param eventType - Event type to emit
  * @param data - Event data to broadcast
+ * @param source - Source of the event (optional)
  */
-export function createServiceBroadcast(server: Server, eventType: string, data: any): void {
-  const event = toBinaryBroadcastEvent(eventType, data);
+export function createBroadcast(server: Server, eventType: string, data: any, source?: string): void {
+  const event = createBroadcastEvent(eventType, data, source);
   server.emit(eventType, event);
 }
 
 /**
- * Broadcasts a binary-encoded event to specific connected clients.
- * For backend service targeted broadcasts.
+ * Broadcasts an event to specific connected clients.
  * 
  * @param clients - Array of Socket instances to target
  * @param eventType - Event type to emit
  * @param data - Event data to broadcast
+ * @param source - Source of the event (optional)
  */
-export function createTargetedServiceBroadcast(clients: Socket[], eventType: string, data: any): void {
-  const event = toBinaryBroadcastEvent(eventType, data);
-  clients.forEach(client => {
-    if (client.connected) {
-      client.emit(eventType, event);
-    }
-  });
-}
-
-/**
- * Broadcasts a JSON event to all connected clients on a server.
- * For Portal-to-frontend global broadcasts.
- * 
- * @param server - Socket.IO server instance
- * @param eventType - Event type to emit
- * @param data - Event data to broadcast
- */
-export function createPortalBroadcast(server: Server, eventType: string, data: any): void {
-  const event = toJsonBroadcastEvent(eventType, data);
-  server.emit(eventType, event);
-}
-
-/**
- * Broadcasts a JSON event to specific connected clients.
- * For Portal-to-frontend targeted broadcasts.
- * 
- * @param clients - Array of Socket instances to target
- * @param eventType - Event type to emit
- * @param data - Event data to broadcast
- */
-export function createTargetedPortalBroadcast(clients: Socket[], eventType: string, data: any): void {
-  const event = toJsonBroadcastEvent(eventType, data);
+export function createTargetedBroadcast(clients: Socket[], eventType: string, data: any, source?: string): void {
+  const event = createBroadcastEvent(eventType, data, source);
   clients.forEach(client => {
     if (client.connected) {
       client.emit(eventType, event);

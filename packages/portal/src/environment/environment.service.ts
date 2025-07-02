@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ApertureSocketClient } from '@relica/websocket-clients';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class EnvironmentService {
@@ -10,8 +9,7 @@ export class EnvironmentService {
 
   async getEnvironment(userId: string) {
     try {
-      const binaryResponse = await this.apertureClient.getEnvironment(userId);
-      return decodePayload(binaryResponse);
+      return await this.apertureClient.getEnvironment(userId);
     } catch (error) {
       this.logger.error(`Failed to get environment for user ${userId}:`, error);
       throw error;

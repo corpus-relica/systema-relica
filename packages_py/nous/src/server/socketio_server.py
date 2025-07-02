@@ -9,12 +9,7 @@ import asyncio
 import logging
 import socketio
 from typing import Dict, Any, Optional
-from ..utils.binary_serialization import (
-    decode_request,
-    encode_response_data,
-    to_binary_broadcast_event,
-    to_json_broadcast_event,
-)
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +77,11 @@ class NOUSSocketIOServer:
         """Handle incoming messages"""
         print("HANDLE THE MESSAGE", sid, data)
         try:
-            # Decode binary request from TypeScript services
-            decoded_data = decode_request(data)
-
-            message_id = decoded_data.get("id", "unknown")
-            message_type = decoded_data.get("type", "unknown")
-            action = decoded_data.get("action", message_type)
-            payload = decoded_data.get("payload", {})
+            # Use JSON data directly from TypeScript services
+            message_id = data.get("id", "unknown")
+            message_type = data.get("type", "unknown")
+            action = data.get("action", message_type)
+            payload = data.get("payload", {})
 
             logger.debug(
                 f"!!!!!!!!!!!!!!!!!11 Received message from {sid}: type={action}, id={message_id}"
@@ -100,7 +93,7 @@ class NOUSSocketIOServer:
                 try:
                     result = await handler(payload, sid)
 
-                    # Send success response (binary-encoded for TypeScript services)
+                    # Send success response (JSON for TypeScript services)
                     response = {
                         "id": message_id,
                         "type": "response",
@@ -108,12 +101,11 @@ class NOUSSocketIOServer:
                         "data": result,  # Use 'data' instead of 'payload' for consistency
                         "timestamp": int(asyncio.get_event_loop().time() * 1000),
                     }
-                    encoded_response = encode_response_data(response)
-                    await self.sio.emit("message", encoded_response, room=sid)
+                    await self.sio.emit("message", response, room=sid)
 
                 except Exception as e:
                     logger.error(f"Handler error for {action}: {e}")
-                    # Send error response (binary-encoded for TypeScript services)
+                    # Send error response (JSON for TypeScript services)
                     response = {
                         "id": message_id,
                         "type": "response",
@@ -121,11 +113,10 @@ class NOUSSocketIOServer:
                         "error": str(e),
                         "timestamp": int(asyncio.get_event_loop().time() * 1000),
                     }
-                    encoded_response = encode_response_data(response)
-                    await self.sio.emit("message", encoded_response, room=sid)
+                    await self.sio.emit("message", response, room=sid)
             else:
                 logger.warning(f"No handler for message type: {action}")
-                # Send error response (binary-encoded for TypeScript services)
+                # Send error response (JSON for TypeScript services)
                 response = {
                     "id": message_id,
                     "type": "response",
@@ -133,8 +124,7 @@ class NOUSSocketIOServer:
                     "error": f"No handler for message type: {action}",
                     "timestamp": int(asyncio.get_event_loop().time() * 1000),
                 }
-                encoded_response = encode_response_data(response)
-                await self.sio.emit("message", encoded_response, room=sid)
+                await self.sio.emit("message", response, room=sid)
 
         except Exception as e:
             logger.error(f"Error handling message from {sid}: {e}")
@@ -235,11 +225,8 @@ class NOUSSocketIOServer:
         print(f"Direct process-chat-input from {sid}: {data}")
         logger.debug(f"Direct process-chat-input from {sid}: {data}")
         try:
-            # Decode the entire request first (data is already the full request structure)
-            decoded_data = decode_request(data)
-            
-            # Extract the decoded payload
-            payload = decoded_data.get("payload", {})
+            # Use JSON data directly from TypeScript services
+            payload = data.get("payload", {})
             
             print(f"Decoded payload: {payload}")
 
@@ -271,31 +258,27 @@ class NOUSSocketIOServer:
             logger.error(f"Error handling direct generate-response: {e}")
             return {"error": str(e)}
 
-    async def broadcast(
-        self, event: str, data: Dict[str, Any], binary_encode: bool = True
-    ):
+    async def broadcast(self, event: str, data: Dict[str, Any]):
         """Broadcast message to all connected clients"""
-        if binary_encode:
-            # Binary-encode for TypeScript services
-            broadcast_event = to_binary_broadcast_event(event, data)
-            await self.sio.emit(event, broadcast_event)
-        else:
-            # Send as JSON for Portal/frontend
-            broadcast_event = to_json_broadcast_event(event, data)
-            await self.sio.emit(event, broadcast_event)
+        # Create JSON broadcast event
+        broadcast_event = {
+            "type": event,
+            "data": data,
+            "timestamp": int(time.time() * 1000),  # milliseconds
+            "source": "nous"
+        }
+        await self.sio.emit(event, broadcast_event)
 
-    async def send_to_client(
-        self, sid: str, event: str, data: Dict[str, Any], binary_encode: bool = True
-    ):
+    async def send_to_client(self, sid: str, event: str, data: Dict[str, Any]):
         """Send message to specific client"""
-        if binary_encode:
-            # Binary-encode for TypeScript services
-            broadcast_event = to_binary_broadcast_event(event, data)
-            await self.sio.emit(event, broadcast_event, room=sid)
-        else:
-            # Send as JSON for Portal/frontend
-            broadcast_event = to_json_broadcast_event(event, data)
-            await self.sio.emit(event, broadcast_event, room=sid)
+        # Create JSON broadcast event
+        broadcast_event = {
+            "type": event,
+            "data": data,
+            "timestamp": int(time.time() * 1000),  # milliseconds
+            "source": "nous"
+        }
+        await self.sio.emit(event, broadcast_event, room=sid)
 
     def get_connected_clients(self) -> list:
         """Get list of connected client IDs"""
@@ -310,9 +293,7 @@ class NOUSSocketIOServer:
         self._nous_user_input_handler = handler
         logger.info("NOUS user input handler registered with Socket.IO server")
 
-    async def send_final_answer(
-        self, client_id: str, answer: str, binary_encode: bool = True
-    ):
+    async def send_final_answer(self, client_id: str, answer: str):
         """Send final answer to client"""
         await self.send_to_client(
             client_id,
@@ -321,19 +302,15 @@ class NOUSSocketIOServer:
                 "response": answer,
                 "timestamp": int(asyncio.get_event_loop().time() * 1000),
             },
-            binary_encode=binary_encode,
         )
         logger.info(f"Sent final answer to client {client_id}")
 
-    async def send_error_message(
-        self, client_id: str, error: str, binary_encode: bool = True
-    ):
+    async def send_error_message(self, client_id: str, error: str):
         """Send error message to client"""
         await self.send_to_client(
             client_id,
             "nous.chat/error",
             {"error": error, "timestamp": int(asyncio.get_event_loop().time() * 1000)},
-            binary_encode=binary_encode,
         )
         logger.error(f"Sent error to client {client_id}: {error}")
 

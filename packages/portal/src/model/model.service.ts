@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ClaritySocketClient } from '@relica/websocket-clients';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class ModelService {
@@ -10,8 +9,7 @@ export class ModelService {
 
   async getModel(uid: number) {
     try {
-      const binaryResponse = await this.clarityClient.getModel(uid);
-      return decodePayload(binaryResponse);
+      return await this.clarityClient.getModel(uid);
     } catch (error) {
       this.logger.error(`Failed to get model for uid ${uid}:`, error);
       throw error;
@@ -20,8 +18,7 @@ export class ModelService {
 
   async getKindModel(uid: number) {
     try {
-      const binaryResponse = await this.clarityClient.getKindModel(uid);
-      return decodePayload(binaryResponse);
+      return await this.clarityClient.getKindModel(uid);
     } catch (error) {
       this.logger.error(`Failed to get kind model for uid ${uid}:`, error);
       throw error;
@@ -30,8 +27,7 @@ export class ModelService {
 
   async getIndividualModel(uid: string) {
     try {
-      const binaryResponse = await this.clarityClient.getIndividualModel(uid);
-      return decodePayload(binaryResponse);
+      return await this.clarityClient.getIndividualModel(uid);
     } catch (error) {
       this.logger.error(`Failed to get individual model for uid ${uid}:`, error);
       throw error;

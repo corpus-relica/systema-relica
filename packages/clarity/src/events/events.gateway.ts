@@ -10,7 +10,7 @@ import { ModelService } from '../model/model.service';
 import { SemanticModelService } from '../services/semantic-model.service';
 import { Logger } from '@nestjs/common';
 import { ClarityActions } from '@relica/websocket-contracts';
-import { toResponse, toErrorResponse, decodeRequest, createServiceBroadcast } from '@relica/websocket-contracts';
+import { toResponse, toErrorResponse, createBroadcast } from '@relica/websocket-contracts';
 
 @WebSocketGateway({
   cors: {
@@ -30,7 +30,6 @@ export class EventsGateway {
     private readonly semanticModelService: SemanticModelService,
   ) {}
 
-  // Binary serialization methods now provided by shared websocket-contracts utilities
 
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
@@ -41,21 +40,20 @@ export class EventsGateway {
     // You can emit a welcome message or initial data here
     client.emit('connection', { message: 'Successfully connected to server' });
     // Optionally broadcast to other clients that a new client has joined
-    createServiceBroadcast(this.server, 'clientJoined', { clientId: client.id });
+    createBroadcast(this.server, 'clientJoined', { clientId: client.id });
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
     // Optionally broadcast to other clients that a client has left
-    createServiceBroadcast(this.server, 'clientLeft', { clientId: client.id });
+    createBroadcast(this.server, 'clientLeft', { clientId: client.id });
   }
 
   // SEMANTIC MODEL OPERATIONS //
 
   @SubscribeMessage(ClarityActions.MODEL_GET)
-  async getModel(@MessageBody() rawMessage: any) {
+  async getModel(@MessageBody() message: any) {
     try {
-      const message = decodeRequest(rawMessage);
       const { uid } = message.payload;
       this.logger.log('GET MODEL:', uid);
       const model = await this.semanticModelService.retrieveSemanticModel(uid);
@@ -63,7 +61,7 @@ export class EventsGateway {
       return response;
     } catch (error) {
       this.logger.error('Error retrieving model:', error);
-      const errorResponse = toErrorResponse(error, rawMessage.id || 'unknown');
+      const errorResponse = toErrorResponse(error, message.id || 'unknown');
       return errorResponse;
     }
   }
@@ -83,9 +81,8 @@ export class EventsGateway {
   }
 
   @SubscribeMessage(ClarityActions.KIND_GET)
-  async getKindModel(@MessageBody() rawMessage: any) {
+  async getKindModel(@MessageBody() message: any) {
     try {
-      const message = decodeRequest(rawMessage);
       const { uid } = message.payload;
       this.logger.log('GET KIND MODEL:', uid);
       const model = await this.semanticModelService.retrieveSemanticModel(+uid);
@@ -93,28 +90,26 @@ export class EventsGateway {
       return response;
     } catch (error) {
       this.logger.error('Error retrieving kind model:', error);
-      const errorResponse = toErrorResponse(error, rawMessage.id || 'unknown');
+      const errorResponse = toErrorResponse(error, message.id || 'unknown');
       return errorResponse;
     }
   }
 
   @SubscribeMessage(ClarityActions.INDIVIDUAL_GET)
-  async getIndividualModel(@MessageBody() rawMessage: any) {
+  async getIndividualModel(@MessageBody() message: any) {
     try {
-      const message = decodeRequest(rawMessage);
       const { uid } = message.payload;
       const model = await this.semanticModelService.retrieveSemanticModel(+uid);
       return toResponse(model, message.id);
     } catch (error) {
       this.logger.error('Error retrieving individual model:', error);
-      return toErrorResponse(error, rawMessage.id || 'unknown');
+      return toErrorResponse(error, message.id || 'unknown');
     }
   }
 
   @SubscribeMessage('clarity.model/update-definition')
-  async updateDefinition(@MessageBody() rawMessage: any) {
+  async updateDefinition(@MessageBody() message: any) {
     try {
-      const message = decodeRequest(rawMessage);
       const { uid, partial_definition, full_definition } = message.payload;
       this.logger.log('UPDATE DEFINITION:', {
         uid,
@@ -130,7 +125,7 @@ export class EventsGateway {
       return response;
     } catch (error) {
       this.logger.error('Error updating definition:', error);
-      const errorResponse = toErrorResponse(error, rawMessage.id || 'unknown');
+      const errorResponse = toErrorResponse(error, message.id || 'unknown');
       return errorResponse;
     }
   }

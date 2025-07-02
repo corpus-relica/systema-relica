@@ -13,7 +13,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SetupService } from '../setup/setup.service';
 import { CacheService } from '../cache/cache.service';
 import { HealthService } from '../health/health.service';
-import { PrismActions, PrismEvents, SetupStatusBroadcastEvent, toResponse, toErrorResponse, decodeRequest, toBinaryBroadcastEvent } from '@relica/websocket-contracts';
+import { PrismActions, PrismEvents, SetupStatusBroadcastEvent, toResponse, toErrorResponse, createBroadcast } from '@relica/websocket-contracts';
 
 @Injectable()
 @WebSocketGateway({ 
@@ -28,7 +28,6 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
 
   private clients: Set<Socket> = new Set();
 
-  // Binary serialization methods now provided by shared websocket-contracts utilities
 
   constructor(
     private setupService: SetupService,
@@ -84,10 +83,9 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   @SubscribeMessage(PrismActions.GET_SETUP_STATUS)
   handleGetSetupStatus(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
       this.logger.log('Handling setup status request');
       const status = this.setupService.getSetupState();
-      return toResponse(status, decodedMessage.id || message.id);
+      return toResponse(status, message.id);
     } catch (error) {
       this.logger.error('Failed to get setup status', error);
       return toErrorResponse(error, message.id);
@@ -157,7 +155,6 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   @SubscribeMessage(':prism.cache/rebuild')
   async handleCacheRebuild(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
       this.logger.log('Starting cache rebuild via WebSocket');
       const result = await this.cacheService.rebuildAllCaches();
       const data = {
@@ -166,7 +163,7 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
           ? 'Cache rebuild completed successfully'
           : 'Cache rebuild failed',
       };
-      return toResponse(data, decodedMessage.id || message.id);
+      return toResponse(data, message.id);
     } catch (error) {
       this.logger.error('Failed to start cache rebuild', error);
       return toErrorResponse(error, message.id);
@@ -239,11 +236,6 @@ export class PrismWebSocketGateway implements OnGatewayConnection, OnGatewayDisc
   }
 
   private broadcast(message: any) {
-    const broadcastEvent = toBinaryBroadcastEvent(message.type, message.data || message);
-    this.clients.forEach(client => {
-      if (client.connected) {
-        client.emit(message.type, broadcastEvent);
-      }
-    });
+    createBroadcast(this.server, message.type, message.data || message);
   }
 }

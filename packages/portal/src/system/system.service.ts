@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismWebSocketClientService } from '../shared/services/prism-websocket-client.service';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class SystemService {
@@ -10,8 +9,7 @@ export class SystemService {
 
   async resetSystem() {
     try {
-      const binaryResponse = await this.prismClient.resetSystem();
-      return decodePayload(binaryResponse);
+      return await this.prismClient.resetSystem();
     } catch (error) {
       this.logger.error('Failed to reset system:', error);
       throw error;

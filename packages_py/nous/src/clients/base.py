@@ -3,7 +3,6 @@ import logging
 import socketio  # python-socketio
 from typing import Any, Dict, Optional, Callable
 import uuid
-from ..utils.binary_serialization import encode_payload, decode_payload
 
 logger = logging.getLogger(__name__)
 
@@ -70,20 +69,18 @@ class BaseSocketIOClient:
             'type': 'request',
             'service': self.service_name,
             'action': action,
-            'payload': encode_payload(payload)  # Binary encode outgoing payload
+            'payload': payload  # Send payload as JSON
         }
         
         try:
             # Use sio.call() which mirrors TypeScript's emit with callback acknowledgment
             response = await self.sio.call(action, message, timeout=timeout)
             
-            # Decode binary response from TypeScript services
-            decoded_response = decode_payload(response)
-            
-            if decoded_response and decoded_response.get('success', False):
-                return decoded_response.get('data', decoded_response.get('payload', {}))
+            # Use JSON response directly from TypeScript services
+            if response and response.get('success', False):
+                return response.get('data', response.get('payload', {}))
             else:
-                error_msg = decoded_response.get('error', 'Unknown error') if decoded_response else 'No response received'
+                error_msg = response.get('error', 'Unknown error') if response else 'No response received'
                 raise Exception(f"{self.service_name} error: {error_msg}")
                 
         except asyncio.TimeoutError:

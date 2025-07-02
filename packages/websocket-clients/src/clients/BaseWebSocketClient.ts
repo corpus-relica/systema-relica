@@ -1,7 +1,6 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { io, Socket } from 'socket.io-client';
-import { encodePayload, decodePayload } from '@relica/websocket-contracts';
 
 export interface WebSocketServiceClient {
   connect(): Promise<void>;
@@ -68,7 +67,7 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      // Using app-level binary serialization instead of transport-level parser
+      // Using JSON for optimal performance and compatibility
     });
 
     this.setupEventHandlers();
@@ -130,7 +129,7 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
     return crypto.randomUUID();
   }
 
-  // Binary serialization methods now use shared functions from websocket-contracts
+  // Direct JSON communication for optimal performance
 
   protected async sendRequestMessage(action: string, payload: any): Promise<any> {
     if (!this.socket?.connected) {
@@ -150,7 +149,7 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
       type: 'request' as const,
       service: this.serviceName,
       action,
-      payload: encodePayload(payload),
+      payload,
     };
 
     return new Promise((resolve, reject) => {
@@ -161,13 +160,10 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
       this.socket!.emit(action, message, (response: any) => {
         clearTimeout(timeout);
 
-        // Decode binary response if present
-        const decodedResponse = decodePayload(response);
-
-        if (decodedResponse && decodedResponse.success === false) {
-          reject(new Error(decodedResponse.error || 'Request failed'));
+        if (response && response.success === false) {
+          reject(new Error(response.error || 'Request failed'));
         } else {
-          resolve(decodedResponse?.data || decodedResponse);
+          resolve(response?.data || response);
         }
       });
     });

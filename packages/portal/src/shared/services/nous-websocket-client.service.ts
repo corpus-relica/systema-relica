@@ -7,7 +7,6 @@ import {
   type AIResponse,
   type PongResponse,
   type ChatReceiptAcknowledgment,
-  decodePayload,
 } from "@relica/websocket-contracts";
 
 @Injectable()
@@ -26,10 +25,10 @@ export class NousWebSocketClientService implements OnModuleInit {
         return;
       }
       // Decode binary broadcast event before forwarding to frontend clients
-      const decodedPayload = decodePayload(payload);
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CHAT_RESPONSE,
-        {payload: decodedPayload.data}// || decodedPayload
+        {payload: payload.data}// || decodedPayload
       );
     });
 
@@ -40,10 +39,10 @@ export class NousWebSocketClientService implements OnModuleInit {
         return;
       }
       // Decode binary broadcast event before forwarding to frontend clients
-      const decodedPayload = decodePayload(payload);
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CHAT_ERROR,
-        {payload: decodedPayload.data}// || decodedPayload
+        {payload: payload.data}// || decodedPayload
       );
     });
 
@@ -54,10 +53,10 @@ export class NousWebSocketClientService implements OnModuleInit {
         return;
       }
       // Decode binary broadcast event before forwarding to frontend clients
-      const decodedPayload = decodePayload(payload);
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_AI_RESPONSE,
-        {payload: decodedPayload.data}// || decodedPayload
+        {payload: payload.data}// || decodedPayload
       );
     });
 
@@ -68,10 +67,10 @@ export class NousWebSocketClientService implements OnModuleInit {
         return;
       }
       // Decode binary broadcast event before forwarding to frontend clients
-      const decodedPayload = decodePayload(payload);
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_AI_ERROR,
-        {payload: decodedPayload.data}// || decodedPayload
+        {payload: payload.data}// || decodedPayload
       );
     });
 
@@ -82,10 +81,10 @@ export class NousWebSocketClientService implements OnModuleInit {
         return;
       }
       // Decode binary broadcast event before forwarding to frontend clients
-      const decodedPayload = decodePayload(payload);
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(
         PortalSystemEvents.NOUS_CONNECTION_STATUS,
-        {payload: decodedPayload.data}// || decodedPayload
+        {payload: payload.data}// || decodedPayload
       );
     });
   }

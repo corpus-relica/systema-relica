@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ArchivistSocketClient } from '@relica/websocket-clients';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class KindsService {
@@ -16,14 +15,13 @@ export class KindsService {
     filterParams: any
   ) {
     try {
-      const binaryResponse = await this.archivistClient.getKindsList(
+      return await this.archivistClient.getKindsList(
         sortField,
         sortOrder,
         skip,
         pageSize,
         filterParams
       );
-      return decodePayload(binaryResponse);
     } catch (error) {
       this.logger.error(`Failed to get kinds list:`, error);
       throw error;

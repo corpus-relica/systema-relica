@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismWebSocketClientService } from '../shared/services/prism-websocket-client.service';
-import { decodePayload } from '@relica/websocket-contracts';
 
 @Injectable()
 export class PrismService {
@@ -10,8 +9,7 @@ export class PrismService {
 
   async getSetupStatus() {
     try {
-      const binaryResponse = await this.prismClient.getSetupStatus();
-      return decodePayload(binaryResponse);
+      return await this.prismClient.getSetupStatus();
     } catch (error) {
       this.logger.error('Failed to get setup status:', error);
       throw error;
@@ -20,8 +18,7 @@ export class PrismService {
 
   async startSetup() {
     try {
-      const binaryResponse = await this.prismClient.startSetup();
-      return decodePayload(binaryResponse);
+      return await this.prismClient.startSetup();
     } catch (error) {
       this.logger.error('Failed to start setup:', error);
       throw error;
@@ -30,8 +27,7 @@ export class PrismService {
 
   async createUser(userData: { username: string; email: string; password: string }) {
     try {
-      const binaryResponse = await this.prismClient.createUser(userData);
-      return decodePayload(binaryResponse);
+      return await this.prismClient.createUser(userData);
     } catch (error) {
       this.logger.error('Failed to create user:', error);
       throw error;
@@ -40,8 +36,7 @@ export class PrismService {
 
   async importData(importData: { dataSource: string; options?: any }) {
     try {
-      const binaryResponse = await this.prismClient.importData(importData);
-      return decodePayload(binaryResponse);
+      return await this.prismClient.importData(importData);
     } catch (error) {
       this.logger.error('Failed to import data:', error);
       throw error;
@@ -50,8 +45,7 @@ export class PrismService {
 
   async resetSystem() {
     try {
-      const binaryResponse = await this.prismClient.resetSystem();
-      return decodePayload(binaryResponse);
+      return await this.prismClient.resetSystem();
     } catch (error) {
       this.logger.error('Failed to reset system:', error);
       throw error;

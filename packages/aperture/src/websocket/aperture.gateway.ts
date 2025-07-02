@@ -11,7 +11,7 @@ import { Server, Socket } from "socket.io";
 import { EnvironmentService } from "../environment/environment.service";
 import { ArchivistSocketClient } from "@relica/websocket-clients";
 import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
-import { toResponse, toErrorResponse, decodeRequest, createServiceBroadcast } from "@relica/websocket-contracts";
+import { toResponse, toErrorResponse, createBroadcast } from "@relica/websocket-contracts";
 
 @WebSocketGateway({
   cors: {
@@ -48,10 +48,10 @@ export class ApertureGateway
 
   // Environment Operations
   @SubscribeMessage(ApertureActions.ENVIRONMENT_GET)
-  async getEnvironment(@MessageBody() rawMessage: any) {
+  async getEnvironment(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(rawMessage);
-      const { userId, environmentId } = decodedMessage.payload;
+      
+      const { userId, environmentId } = message.payload;
       let environment;
 
       if (environmentId) {
@@ -63,38 +63,38 @@ export class ApertureGateway
         environment = await this.environmentService.findDefaultForUser(userId);
       }
 
-      return toResponse(environment, decodedMessage.id || rawMessage.id);
+      return toResponse(environment, message.id);
     } catch (error) {
       this.logger.error("Failed to get environment", error);
-      return toErrorResponse(error, rawMessage.id);
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage(ApertureActions.ENVIRONMENT_LIST)
-  async listEnvironments(@MessageBody() rawMessage: any) {
+  async listEnvironments(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(rawMessage);
-      const { userId } = decodedMessage.payload;
+      
+      const { userId } = message.payload;
       const environments = await this.environmentService.findAll(userId);
 
-      return toResponse(environments, decodedMessage.id || rawMessage.id);
+      return toResponse(environments, message.id);
     } catch (error) {
       this.logger.error("Failed to list environments", error);
-      return toErrorResponse(error, rawMessage.id);
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage(ApertureActions.ENVIRONMENT_CREATE)
   async createEnvironment(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, name } = decodedMessage.payload;
+      
+      const { userId, name } = message.payload;
       const environment = await this.environmentService.create({
         userId,
         name,
       });
 
-      return toResponse(environment, decodedMessage.id || message.id);
+      return toResponse(environment, message.id);
     } catch (error) {
       this.logger.error("Failed to create environment", error);
       return toErrorResponse(error, message.id);
@@ -104,10 +104,10 @@ export class ApertureGateway
   // Entity Operations
   // @SubscribeMessage('aperture.entity/select')
   @SubscribeMessage(ApertureActions.SELECT_ENTITY)
-  async selectEntity(@MessageBody() rawMessage: any) {
+  async selectEntity(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(rawMessage);
-      const { userId, environmentId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId, uid } = message.payload;
       const environment = await this.environmentService.selectEntity(
         environmentId,
         userId,
@@ -115,7 +115,7 @@ export class ApertureGateway
       );
 
       // Broadcast to all clients
-      createServiceBroadcast(this.server, ApertureEvents.ENTITY_SELECTED, {
+      createBroadcast(this.server, ApertureEvents.ENTITY_SELECTED, {
         uid,
         userId,
         environmentId,
@@ -125,28 +125,28 @@ export class ApertureGateway
         {
           selectedEntity: uid,
         },
-        decodedMessage.id || rawMessage.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to select entity", error);
-      return toErrorResponse(error, rawMessage.id);
+      return toErrorResponse(error, message.id);
     }
   }
 
   @SubscribeMessage(ApertureActions.ENTITY_DESELECT)
   async deselectEntity(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId } = decodedMessage.payload;
+      
+      const { userId, environmentId } = message.payload;
       await this.environmentService.deselectEntity(environmentId, userId);
 
       // Broadcast to all clients
-      createServiceBroadcast(this.server, ApertureEvents.ENTITY_DESELECTED, {
+      createBroadcast(this.server, ApertureEvents.ENTITY_DESELECTED, {
         userId,
         environmentId,
       });
 
-      return toResponse({}, decodedMessage.id || message.id);
+      return toResponse({}, message.id);
     } catch (error) {
       this.logger.error("Failed to deselect entity", error);
       return toErrorResponse(error, message.id);
@@ -156,8 +156,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENVIRONMENT_CLEAR)
   async clearEnvironment(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId } = decodedMessage.payload;
+      
+      const { userId, environmentId } = message.payload;
       const environment = await this.environmentService.findOne(
         environmentId,
         userId
@@ -167,14 +167,14 @@ export class ApertureGateway
       await this.environmentService.clearFacts(environmentId, userId);
 
       // Broadcast to all clients - matches FactsUnloadedEventSchema
-      createServiceBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
+      createBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
         factUids,
         modelUids: [],
         userId: Number(userId),
         environmentId: Number(environmentId),
       });
 
-      return toResponse({ factUids }, decodedMessage.id || message.id);
+      return toResponse({ factUids }, message.id);
     } catch (error) {
       this.logger.error("Failed to clear environment", error);
       return toErrorResponse(error, message.id);
@@ -184,18 +184,18 @@ export class ApertureGateway
   // Heartbeat
   @SubscribeMessage("relica.app/heartbeat")
   async heartbeat(@MessageBody() message: any) {
-    const decodedMessage = decodeRequest(message);
+    
     return toResponse(
       {
         timestamp: Date.now(),
       },
-      decodedMessage.id || message.id
+      message.id
     );
   }
 
   // Helper method to broadcast facts loaded
   broadcastFactsLoaded(facts: any[], userId: string, environmentId: string) {
-    createServiceBroadcast(this.server, ApertureEvents.LOADED_FACTS, {
+    createBroadcast(this.server, ApertureEvents.LOADED_FACTS, {
       facts,
       userId,
       environmentId,
@@ -209,7 +209,7 @@ export class ApertureGateway
     userId: number,
     environmentId: string
   ) {
-    createServiceBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
+    createBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
       factUids,
       modelUids,
       userId,
@@ -221,8 +221,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_TEXT)
   async searchLoadText(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, term } = decodedMessage.payload;
+      
+      const { userId, term } = message.payload;
 
       // Get text search results from Archivist
       const searchResult = await this.archivistClient.textSearch(term, true);
@@ -256,7 +256,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: factsToLoad,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load text search results", error);
@@ -267,8 +267,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SEARCH_LOAD_UID)
   async searchLoadUid(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, uid } = decodedMessage.payload;
+      
+      const { userId, uid } = message.payload;
 
       // Get UID search results from Archivist
       const searchResult = await this.archivistClient.uidSearch({
@@ -304,7 +304,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: factsToLoad,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load UID search results", error);
@@ -316,8 +316,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD_FACT)
   async specializationLoadFact(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, uid } = message.payload;
 
       // Get specialization fact from Archivist
       const result = await this.archivistClient.getSpecializationFact(
@@ -352,7 +352,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load specialization fact", error);
@@ -363,8 +363,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SPECIALIZATION_LOAD)
   async specializationLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId, uid } = message.payload;
 
       // Get specialization hierarchy from Archivist
       const result = await this.archivistClient.getSpecializationHierarchy(
@@ -399,7 +399,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load specialization hierarchy", error);
@@ -411,8 +411,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_LOAD)
   async entityLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId, entityUid } = message.payload;
 
       // Get environment
       const environment = environmentId
@@ -457,7 +457,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: allNewFacts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load entity", error);
@@ -468,8 +468,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD)
   async entityUnload(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get environment
       const environment = envId
@@ -526,7 +526,7 @@ export class ApertureGateway
           factUidsRemoved: factUidsToRemove,
           modelUidsRemoved: finalModelUidsToRemove,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to unload entity", error);
@@ -537,8 +537,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_LOAD_MULTIPLE)
   async entityLoadMultiple(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId, uids } = decodedMessage.payload;
+      
+      const { userId, environmentId, uids } = message.payload;
 
       // Get environment
       const environment = environmentId
@@ -557,7 +557,7 @@ export class ApertureGateway
             environmentId,
             entityUid,
           },
-          id: decodedMessage.id || message.id,
+          id: message.id,
         });
 
         if (result.success && (result.data as any)?.facts) {
@@ -581,7 +581,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: uniqueFacts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load entities", error);
@@ -592,8 +592,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.ENTITY_UNLOAD_MULTIPLE)
   async entityUnloadMultiple(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUids } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUids } = message.payload;
 
       // Get environment
       const environment = envId
@@ -651,7 +651,7 @@ export class ApertureGateway
           factUidsRemoved: factUidsToRemove,
           modelUidsRemoved: finalModelUidsToRemove,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to unload entities", error);
@@ -662,21 +662,21 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.LOAD_ALL_RELATED_FACTS)
   async loadAllRelatedFacts(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
+      
       const result = await this.environmentService.loadAllRelatedFacts(
-        decodedMessage.payload.userId,
-        decodedMessage.payload.environmentId,
-        decodedMessage.payload.uid
+        message.payload.userId,
+        message.payload.environmentId,
+        message.payload.uid
       );
 
       // Broadcast facts loaded event
       this.broadcastFactsLoaded(
         result.facts,
-        "" + decodedMessage.payload.userId,
-        decodedMessage.payload.environmentId
+        "" + message.payload.userId,
+        message.payload.environmentId
       );
 
-      return toResponse(result, decodedMessage.id || message.id);
+      return toResponse(result, message.id);
     } catch (error) {
       this.logger.error("Failed to load all related facts", error);
       return toErrorResponse(error, message.id);
@@ -687,8 +687,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD)
   async subtypeLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes from Archivist
       const result = await this.archivistClient.getSubtypes(uid);
@@ -720,7 +720,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load subtypes", error);
@@ -731,8 +731,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_LOAD_CONE)
   async subtypeLoadCone(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes cone from Archivist
       const result = await this.archivistClient.getSubtypesCone(uid);
@@ -764,7 +764,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load subtypes cone", error);
@@ -775,8 +775,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.SUBTYPE_UNLOAD_CONE)
   async subtypeUnloadCone(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId, uid } = message.payload;
 
       // Get subtypes cone from Archivist
       const result = await this.archivistClient.getSubtypesCone(uid);
@@ -838,7 +838,7 @@ export class ApertureGateway
           factUidsRemoved: factUidsToRemove,
           modelUidsRemoved: finalModelUidsToRemove,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to unload subtypes cone", error);
@@ -850,8 +850,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD)
   async classificationLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get classified entities from Archivist
       const result = await this.archivistClient.getClassified(entityUid);
@@ -883,7 +883,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load classified entities", error);
@@ -894,8 +894,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CLASSIFICATION_LOAD_FACT)
   async classificationLoadFact(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get classification fact from Archivist
       const result =
@@ -928,7 +928,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load classification fact", error);
@@ -940,8 +940,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD)
   async compositionLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get composition relationships from Archivist (1190 is composition relation type)
       const result = await this.archivistClient.getRecursiveRelations(
@@ -976,7 +976,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load composition relationships", error);
@@ -987,8 +987,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.COMPOSITION_LOAD_IN)
   async compositionLoadIn(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get incoming composition relationships from Archivist (1190 is composition relation type)
       const result = await this.archivistClient.getRecursiveRelationsTo(
@@ -1023,7 +1023,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error(
@@ -1038,8 +1038,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD)
   async connectionLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get connection relationships from Archivist (1487 is connection relation type)
       const result = await this.archivistClient.getRecursiveRelations(
@@ -1074,7 +1074,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load connection relationships", error);
@@ -1085,8 +1085,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.CONNECTION_LOAD_IN)
   async connectionLoadIn(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, entityUid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, entityUid } = message.payload;
 
       // Get incoming connection relationships from Archivist (1487 is connection relation type)
       const result = await this.archivistClient.getRecursiveRelationsTo(
@@ -1121,7 +1121,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error(
@@ -1136,8 +1136,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.RELATION_REQUIRED_ROLES_LOAD)
   async relationRequiredRolesLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, uid } = message.payload;
 
       // Get required roles from Archivist
       const result = await this.archivistClient.getRequiredRoles(uid);
@@ -1169,7 +1169,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load required roles", error);
@@ -1180,8 +1180,8 @@ export class ApertureGateway
   @SubscribeMessage(ApertureActions.RELATION_ROLE_PLAYERS_LOAD)
   async relationRolePlayersLoad(@MessageBody() message: any) {
     try {
-      const decodedMessage = decodeRequest(message);
-      const { userId, environmentId: envId, uid } = decodedMessage.payload;
+      
+      const { userId, environmentId: envId, uid } = message.payload;
 
       // Get role players from Archivist
       const result = await this.archivistClient.getRolePlayers(uid);
@@ -1221,7 +1221,7 @@ export class ApertureGateway
           environment: updatedEnvironment,
           facts: facts,
         },
-        decodedMessage.id || message.id
+        message.id
       );
     } catch (error) {
       this.logger.error("Failed to load role players", error);
