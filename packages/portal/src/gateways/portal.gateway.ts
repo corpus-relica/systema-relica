@@ -1,52 +1,35 @@
+import { Injectable, Logger } from "@nestjs/common";
 import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
-  MessageBody,
   ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  WsException,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from "@nestjs/websockets";
-import { Logger, Injectable, Inject } from "@nestjs/common";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
+import {
+  ClearEntitiesRequestSchema,
+  DeleteEntityRequestSchema,
+  DeleteFactRequestSchema,
+  GetSpecializationHierarchyRequestSchema,
+  LoadEntitiesRequestSchema,
+  LoadEntityRequestSchema,
+  LoadSpecializationHierarchyRequestSchema,
+  LoadSubtypesConeRequestSchema,
+  PortalUserActions,
+  SelectEntityRequestSchema,
+  UnloadEntitiesRequestSchema,
+  UnloadEntityRequestSchema,
+  UnloadSubtypesConeRequestSchema,
+  createTargetedBroadcast,
+} from "@relica/websocket-contracts";
 import { Server, Socket } from "socket.io";
-import { ShutterRestClientService } from "../shared/services/shutter-rest-client.service";
 import { ApertureWebSocketClientService } from "../shared/services/aperture-websocket-client.service";
 import { NousWebSocketClientService } from "../shared/services/nous-websocket-client.service";
 import { PrismWebSocketClientService } from "../shared/services/prism-websocket-client.service";
-import { ArchivistSocketClient } from "@relica/websocket-clients";
-import {
-  ServiceMessage,
-  ServiceResponse,
-  ClientMessage,
-  ClientResponse,
-  ClientEvent,
-} from "../shared/types/websocket-messages";
-import {
-  PortalUserActions,
-  PortalSystemEvents,
-  SelectEntityRequestSchema,
-  SelectFactRequestSchema,
-  SelectNoneRequestSchema,
-  LoadSpecializationHierarchyRequestSchema,
-  LoadEntityRequestSchema,
-  ClearEntitiesRequestSchema,
-  LoadAllRelatedFactsRequestSchema,
-  LoadSubtypesConeRequestSchema,
-  UnloadEntityRequestSchema,
-  UnloadSubtypesConeRequestSchema,
-  DeleteEntityRequestSchema,
-  DeleteFactRequestSchema,
-  LoadEntitiesRequestSchema,
-  UnloadEntitiesRequestSchema,
-  GetSpecializationHierarchyRequestSchema,
-  type SelectEntityRequest,
-  type SelectFactRequest,
-  type SelectNoneRequest,
-  type LoadSpecializationHierarchyRequest,
-  type StandardResponse,
-  createTargetedBroadcast,
-} from "@relica/websocket-contracts";
+import { ShutterRestClientService } from "../shared/services/shutter-rest-client.service";
 
 interface ConnectedClient {
   userId: string;
@@ -147,7 +130,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -179,9 +162,9 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.error("Auth error:", error);
       return {
         error: error.message,
-        id: rawMessage.id || 'unknown',
+        id: rawMessage.id || "unknown",
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -216,7 +199,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Guest auth error:", error);
@@ -224,7 +207,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -243,7 +226,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Ping failed", error);
@@ -251,7 +234,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -275,14 +258,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
       const clientData = this.connectedClients.get(client.id);
-
-      console.log("Client data:", client);
-      console.log(clientData)
 
       if (!clientData) {
         const error = new Error("Not authenticated");
@@ -291,7 +271,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -302,32 +282,21 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         environmentId,
         payload.uid
       );
-      // Broadcast entity selected event to environment
-      // this.broadcastToEnvironment(environmentId, {
-      //   id: 'system',
-      //   type: 'portal:entitySelected',
-      //   payload: {
-      //     type: 'aperture.entity/selected',
-      //     entity_uid: payload.uid,
-      //     userId: payload.userId,
-      //     environment_id: environmentId,
-      //   },
-      // });
 
       const data = { message: "Entity selected" };
       return {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Select entity error:", error);
       return {
         error: error.message,
-        id: rawMessage.id || 'unknown',
+        id: rawMessage.id || "unknown",
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -347,7 +316,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -373,7 +342,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Select none error:", error);
@@ -381,7 +350,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -408,7 +377,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -424,7 +393,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -432,7 +401,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Load specialization hierarchy error:", error);
@@ -440,7 +409,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -464,7 +433,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -488,7 +457,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -496,15 +465,15 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Load entity error:", error);
       return {
         error: error.message,
-        id: rawMessage.id || 'unknown',
+        id: rawMessage.id || "unknown",
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -524,11 +493,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Clear entities validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       this.logger.log("CLEAR ENTITIES", payload);
@@ -540,7 +509,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -559,11 +528,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Clear entities failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const data = {
@@ -577,7 +546,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Clear entities error:", error);
@@ -585,7 +554,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -607,7 +576,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Load all related facts error:", error);
@@ -615,7 +584,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -635,11 +604,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Load subtypes cone validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const userId = payload.userId;
@@ -659,18 +628,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Load subtypes cone failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Load subtypes cone error:", error);
@@ -678,7 +647,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -698,11 +667,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Unload entity validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const userId = payload.userId;
@@ -722,18 +691,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Unload entity failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Unload entity error:", error);
@@ -741,7 +710,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -761,11 +730,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Unload subtypes cone validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const userId = payload.userId;
@@ -785,18 +754,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Unload subtypes cone failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Unload subtypes cone error:", error);
@@ -804,7 +773,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -824,11 +793,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Delete entity validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const uid = payload.uid;
@@ -842,18 +811,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Delete entity failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Delete entity error:", error);
@@ -861,7 +830,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -881,11 +850,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Delete fact validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const factUid = payload.factUid;
@@ -899,18 +868,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Delete fact failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Delete fact error:", error);
@@ -918,7 +887,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -939,11 +908,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Load entities validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const userId = payload.userId;
@@ -954,11 +923,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const error = new Error("uids must be a non-empty array");
         this.logger.error("Load entities invalid uids", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       // Call Aperture service to load multiple entities
@@ -974,18 +943,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Load entities failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Load entities error:", error);
@@ -993,7 +962,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -1013,11 +982,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Unload entities validation failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       const userId = payload.userId;
@@ -1028,11 +997,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const error = new Error("uids must be a non-empty array");
         this.logger.error("Unload entities invalid uids", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       // Call Aperture service to unload multiple entities
@@ -1047,18 +1016,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
         this.logger.error("Unload entities failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Unload entities error:", error);
@@ -1066,7 +1035,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -1090,11 +1059,11 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error
         );
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       // Call Aperture service to get specialization hierarchy
@@ -1107,18 +1076,18 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const error = new Error("Failed to get specialization hierarchy");
         this.logger.error("Get specialization hierarchy failed", error);
         return {
-        error: error.message,
-        id: message.id,
-        success: false,
-        timestamp: Date.now()
-      };
+          error: error.message,
+          id: message.id,
+          success: false,
+          timestamp: Date.now(),
+        };
       }
 
       return {
         data: result,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Get specialization hierarchy error:", error);
@@ -1126,7 +1095,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -1149,7 +1118,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -1179,7 +1148,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Chat input error:", error);
@@ -1187,7 +1156,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -1207,7 +1176,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -1226,7 +1195,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Generate AI response error:", error);
@@ -1234,7 +1203,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -1254,7 +1223,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
           error: error.message,
           id: message.id,
           success: false,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
 
@@ -1264,7 +1233,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Clear chat history error:", error);
@@ -1272,7 +1241,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -1290,7 +1259,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Prism start setup error:", error);
@@ -1298,7 +1267,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }
@@ -1316,7 +1285,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data,
         id: message.id,
         success: true,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       this.logger.error("Prism create user error:", error);
@@ -1324,7 +1293,7 @@ export class PortalGateway implements OnGatewayConnection, OnGatewayDisconnect {
         error: error.message,
         id: message.id,
         success: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   }

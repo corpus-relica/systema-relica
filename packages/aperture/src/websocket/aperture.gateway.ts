@@ -11,7 +11,6 @@ import { ArchivistSocketClient } from "@relica/websocket-clients";
 import {
   ApertureActions,
   ApertureEvents,
-  createBroadcast,
   toErrorResponse,
   toResponse,
 } from "@relica/websocket-contracts";

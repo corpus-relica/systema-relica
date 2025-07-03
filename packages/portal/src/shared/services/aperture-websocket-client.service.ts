@@ -21,7 +21,9 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         return;
       }
       // Forward event directly to frontend clients
-      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, {payload: payload.data});
+      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, {
+        payload,
+      });
     });
 
     this.apertureClient.on(ApertureEvents.UNLOADED_FACTS, (payload) => {
@@ -31,10 +33,9 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         return;
       }
       // Forward event directly to frontend clients
-      this.portalGateway.server.emit(
-        PortalSystemEvents.UNLOADED_FACTS,
-        {payload: payload.data}
-      );
+      this.portalGateway.server.emit(PortalSystemEvents.UNLOADED_FACTS, {
+        payload,
+      });
     });
 
     this.apertureClient.on(ApertureEvents.ENTITY_SELECTED, (payload) => {
@@ -44,10 +45,9 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         return;
       }
       // Forward event directly to frontend clients
-      this.portalGateway.server.emit(
-        PortalSystemEvents.SELECTED_ENTITY,
-        {payload: payload.data}
-      );
+      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_ENTITY, {
+        payload,
+      });
     });
 
     this.apertureClient.on(ApertureEvents.ENTITY_DESELECTED, (payload) => {
@@ -57,9 +57,9 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         return;
       }
       // Forward event directly to frontend clients
-      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE,
-        {payload: payload.data}
-      );
+      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE, {
+        payload,
+      });
     });
   }
 
