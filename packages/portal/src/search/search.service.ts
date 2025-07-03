@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
+import { Injectable, Logger } from "@nestjs/common";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
 
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
-  
+
   constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
   async searchText(
@@ -15,9 +15,18 @@ export class SearchService {
     filter?: string
   ) {
     try {
-      return await this.archivistClient.searchText(searchTerm, collectionUID, limit, offset, filter);
+      return await this.archivistClient.searchText(
+        searchTerm,
+        collectionUID,
+        limit,
+        offset,
+        filter
+      );
     } catch (error) {
-      this.logger.error(`Failed to search text for term '${searchTerm}':`, error);
+      this.logger.error(
+        `Failed to search text for term '${searchTerm}':`,
+        error
+      );
       throw error;
     }
   }

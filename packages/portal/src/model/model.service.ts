@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ClaritySocketClient } from '@relica/websocket-clients';
+import { Injectable, Logger } from "@nestjs/common";
+import { ClaritySocketClient } from "@relica/websocket-clients";
 
 @Injectable()
 export class ModelService {
   private readonly logger = new Logger(ModelService.name);
-  
+
   constructor(private readonly clarityClient: ClaritySocketClient) {}
 
   async getModel(uid: number) {
@@ -29,7 +29,10 @@ export class ModelService {
     try {
       return await this.clarityClient.getIndividualModel(uid);
     } catch (error) {
-      this.logger.error(`Failed to get individual model for uid ${uid}:`, error);
+      this.logger.error(
+        `Failed to get individual model for uid ${uid}:`,
+        error
+      );
       throw error;
     }
   }

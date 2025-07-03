@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
+import { Injectable, Logger } from "@nestjs/common";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
 
 @Injectable()
 export class KindsService {
   private readonly logger = new Logger(KindsService.name);
-  
+
   constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
   async getKindsList(
