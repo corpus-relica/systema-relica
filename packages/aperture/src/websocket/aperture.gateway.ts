@@ -17,10 +17,6 @@ import {
 } from "@relica/websocket-contracts";
 import { Server, Socket } from "socket.io";
 import { EnvironmentService } from "../environment/environment.service";
-import { ArchivistSocketClient } from "@relica/websocket-clients";
-import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
-import customParser from "socket.io-msgpack-parser";
-import { toResponse, toErrorResponse } from "@relica/websocket-contracts";
 
 @WebSocketGateway({
   cors: {
