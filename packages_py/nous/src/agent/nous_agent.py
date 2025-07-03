@@ -20,15 +20,12 @@ from langchain_core.messages import AnyMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.prebuilt.chat_agent_executor import AgentState
 
-
 def prompt(state: AgentState, config: RunnableConfig) -> list[AnyMessage]:
     environment = config["configurable"].get("environment", "")
     selected_entity = config["configurable"].get("selected_entity", 0)
     user_id = config["configurable"].get("user_id", 0)
     env_id = config["configurable"].get("env_id", 0)
-    timestamp = config["configurable"].get(
-        "timestamp", datetime.now().strftime("%Y-%m-%d %H:%M")
-    )
+    timestamp = config["configurable"].get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     # user_name = config["configurable"].get("user_name")
     # system_msg = f"You are a helpful assistant. Address the user as {user_name}."
@@ -192,22 +189,21 @@ Do your best to maintain the level of discourse at the level of a 12th grader.
 </interaction_approach>
 
 """
-    # - loadSubtypeCone: Retrieve closure of specializing kinds <currently unavailable>
+# - loadSubtypeCone: Retrieve closure of specializing kinds <currently unavailable>
 
-    # Knowledge Order Operations:
-    # - getDefinitionalRelations: Retrieve relations true by definition
-    # - getPossibilityRelations: Retrieve relations expressing possibilities
-    # - getNecessityRelations: Retrieve relations expressing requirements
+# Knowledge Order Operations:
+# - getDefinitionalRelations: Retrieve relations true by definition
+# - getPossibilityRelations: Retrieve relations expressing possibilities
+# - getNecessityRelations: Retrieve relations expressing requirements
 
-    # - Navigate the taxonomic hierarchy (loadSpecializationHierarchy, loadSubtypes, loadSpecializationFact)
-    # - Explore classifications (loadClassified, loadClassificationFact)
-    # - Examine entity relationships (loadEntity, getEntityOverview, getEntityDetails)
+# - Navigate the taxonomic hierarchy (loadSpecializationHierarchy, loadSubtypes, loadSpecializationFact)
+# - Explore classifications (loadClassified, loadClassificationFact)
+# - Examine entity relationships (loadEntity, getEntityOverview, getEntityDetails)
 
-    # Chat History: {chat_history}
-    # Current Query: {input}
+# Chat History: {chat_history}
+# Current Query: {input}
 
     return [{"role": "system", "content": system_msg}] + state["messages"]
-
 
 # Chat History: {chat_history}
 # Current Query: {input}
@@ -225,18 +221,16 @@ def get_llm():
         # other params...
     )
 
-
 class NOUSAgent:
-    def __init__(
-        self,
-        aperture_client,
-        archivist_client,
-        semantic_model: SemanticModel,
-        user_id,
-        env_id,
-    ):
+    def __init__(self,
+                 aperture_client,
+                 archivist_client,
+                 semantic_model: SemanticModel,
+                 user_id,
+                 env_id,
+                 ):
         self.user_id = user_id
-        self.env_id = env_id
+        self.env_id= env_id
         self.emitter = EventEmitter()
         self.conversation_history: List[Dict[str, Any]] = []
 
@@ -254,43 +248,24 @@ class NOUSAgent:
         self.app = create_react_agent(
             # llm,
             "anthropic:claude-3-7-sonnet-latest",
-            tools=t["tools"],
+            tools=t['tools'],
             prompt=prompt,
         )
         # console.print(self.app.get_graph().draw_ascii()) # Optional: Draw graph for debugging
 
-        self.conversation_id = str(
-            uuid.uuid4()
-        )  # Generate a unique ID for this agent instance
+        self.conversation_id = str(uuid.uuid4())  # Generate a unique ID for this agent instance
         console.print(f"NOUS Agent Initialized (ID: {self.conversation_id})")
 
     async def handleInput(self, messages):
         # Note: user_id and env_id are now part of self.aperture_client
         # They might still be needed for the initial state if nodes rely on them directly from state
 
-        user_input = messages[-1]["content"]
+        user_input = messages[-1]['content']
 
-        console.print(
-            "==================== NOUS AGENT HANDLE INPUT ==================="
-        )
+        console.print("==================== NOUS AGENT HANDLE INPUT ===================")
         console.print(f"User ID: {self.user_id}")
         console.print(f"Env ID: {self.env_id}")
         console.print(f"User Input: {messages}")
-
-        # prep environment and selected entity
-
-        if not self.aperture_client.client.is_connected():
-            console.print("Connecting to Aperture client...")
-            await self.aperture_client.client.connect()
-
-        env_res = await self.aperture_client.client.retrieve_environment(
-            self.env_id, self.user_id
-        )
-
-        console.print("Environment retrieved:", env_res)
-        facts = env_res.get("facts", [])
-        await self.semantic_model.addFacts(facts)
-        self.semantic_model.selected_entity = env_res.get("selected_entity_id")
 
         # p = prompt(
         #     environment=self.semantic_model.format_relationships(),
@@ -313,21 +288,18 @@ class NOUSAgent:
             final_state = await self.app.ainvoke(
                 {"messages": messages},
                 # {"recursion_limit": 100},
-                config={
-                    "configurable": {
-                        "environment": self.semantic_model.format_relationships(),
-                        "selected_entity": self.semantic_model.selectedEntity,
-                        "user_id": self.user_id,
-                        "env_id": self.env_id,
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    }
-                },
-            )
+                config={"configurable": {
+                    "environment": self.semantic_model.format_relationships(),
+                    "selected_entity": self.semantic_model.selectedEntity,
+                    "user_id": self.user_id,
+                    "env_id": self.env_id,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    }}
+                )
 
         except Exception as e:
             console.print(f"Error invoking agent graph: {e}")
             import traceback
-
             traceback.print_exc()
             # Handle error, maybe return an error message or raise
             return f"An error occurred during agent execution: {e}"

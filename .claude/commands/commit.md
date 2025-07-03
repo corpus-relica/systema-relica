@@ -13,6 +13,6 @@ description: Create a git commit
 ## Your task
 
 Based on the above changes, create a single git commit.
-Conventional-commits style, maximum hieroglyphic emoji!
-No Claude attribution, please.
-
+Conventional-commits style
+use thoughtful hieroglyphic emoji
+IMPORTANT! No Claude attribution.

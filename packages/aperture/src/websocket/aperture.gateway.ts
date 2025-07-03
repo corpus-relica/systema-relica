@@ -17,12 +17,17 @@ import {
 } from "@relica/websocket-contracts";
 import { Server, Socket } from "socket.io";
 import { EnvironmentService } from "../environment/environment.service";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
+import { ApertureActions, ApertureEvents } from "@relica/websocket-contracts";
+import customParser from "socket.io-msgpack-parser";
+import { toResponse, toErrorResponse } from "@relica/websocket-contracts";
 
 @WebSocketGateway({
   cors: {
     origin: "*",
   },
   transports: ["websocket"],
+  // parser: customParser,
 })
 export class ApertureGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -36,8 +41,6 @@ export class ApertureGateway
     private readonly environmentService: EnvironmentService,
     private readonly archivistClient: ArchivistSocketClient
   ) {}
-
-  // Binary serialization methods now provided by shared websocket-contracts utilities
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
@@ -116,7 +119,7 @@ export class ApertureGateway
       );
 
       // Broadcast to all clients
-      createBroadcast(this.server, ApertureEvents.ENTITY_SELECTED, {
+      this.server.emit(ApertureEvents.ENTITY_SELECTED, {
         uid,
         userId,
         environmentId,
@@ -141,7 +144,7 @@ export class ApertureGateway
       await this.environmentService.deselectEntity(environmentId, userId);
 
       // Broadcast to all clients
-      createBroadcast(this.server, ApertureEvents.ENTITY_DESELECTED, {
+      this.server.emit(ApertureEvents.ENTITY_DESELECTED, {
         userId,
         environmentId,
       });
@@ -166,7 +169,7 @@ export class ApertureGateway
       await this.environmentService.clearFacts(environmentId, userId);
 
       // Broadcast to all clients - matches FactsUnloadedEventSchema
-      createBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
+      this.server.emit("aperture.facts/unloaded", {
         factUids,
         modelUids: [],
         userId: Number(userId),
@@ -193,7 +196,7 @@ export class ApertureGateway
 
   // Helper method to broadcast facts loaded
   broadcastFactsLoaded(facts: any[], userId: string, environmentId: string) {
-    createBroadcast(this.server, ApertureEvents.LOADED_FACTS, {
+    this.server.emit(ApertureEvents.LOADED_FACTS, {
       facts,
       userId,
       environmentId,
@@ -207,7 +210,7 @@ export class ApertureGateway
     userId: number,
     environmentId: string
   ) {
-    createBroadcast(this.server, ApertureEvents.UNLOADED_FACTS, {
+    this.server.emit(ApertureEvents.UNLOADED_FACTS, {
       factUids,
       modelUids,
       userId,

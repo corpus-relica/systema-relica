@@ -123,7 +123,6 @@ async def main():
 
     # Check connections before retrieving environment
     if aperture_connected:
-        print("Aperture connected")
         # Call retrieveEnv which uses the singleton client
         env = await retrieveEnv()
         print(f">>>>>>>>>> Retrieved environment - direct socketio: {env is not None}")
