@@ -1,6 +1,10 @@
-# Systema Relica
+# Systema Relica (TypeScript Implementation)
 
 > Semantic modeling platform for relationship-aware knowledge representation
+
+## Implementation Note
+
+This repository contains the **TypeScript implementation** of Systema Relica, designed for active development and broad community adoption. For those interested in the original philosophical implementation, see [systema-relica-clj](https://github.com/corpus-relica/systema-relica-clj).
 
 ## Why
 
