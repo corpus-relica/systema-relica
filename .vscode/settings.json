@@ -1,0 +1,84 @@
+{
+  // TypeScript configuration for better Claude Code experience
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  
+  // Error display and diagnostics
+  "typescript.format.enable": true,
+  "typescript.validate.enable": true,
+  "typescript.reportStyleChecksAsWarnings": true,
+  "typescript.surveys.enabled": false,
+  "typescript.suggest.includeAutomaticOptionalChainCompletions": true,
+  
+  // Format on save for consistency
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  
+  // File associations for this project
+  "files.associations": {
+    "*.ts": "typescript",
+    "*.tsx": "typescriptreact",
+    "docker-compose*.yml": "dockercompose"
+  },
+  
+  // Exclude common build artifacts and dependencies
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/.nyc_output": true,
+    "**/packages/*/dist": true,
+    "**/packages/*/coverage": true
+  },
+  
+  // Search configuration
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/yarn.lock": true,
+    "**/package-lock.json": true
+  },
+  
+  // Workspace recommendations
+  "extensions.recommendations": [
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-eslint",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-docker"
+  ],
+  
+  // Workspace-specific settings for monorepo
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.workspaceSymbols.scope": "allOpenProjects",
+  
+  // Enhanced IntelliSense for this project structure
+  "typescript.suggest.completeFunctionCalls": true,
+  "typescript.suggest.paths": true,
+  "typescript.suggest.autoImports": true,
+  
+  // Better error visualization
+  "problems.showCurrentInStatus": true,
+  "problems.sortOrder": "severity",
+  
+  // Terminal configuration for development
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  
+  // File watching for development
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true,
+    "**/.git/**": true
+  }
+}

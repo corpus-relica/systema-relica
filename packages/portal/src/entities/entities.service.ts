@@ -1,23 +1,45 @@
-import { Injectable } from '@nestjs/common';
-import { ArchivistSocketClient } from '@relica/websocket-clients';
+import { Injectable, Logger } from "@nestjs/common";
+import { ArchivistSocketClient } from "@relica/websocket-clients";
 
 @Injectable()
 export class EntitiesService {
+  private readonly logger = new Logger(EntitiesService.name);
+
   constructor(private readonly archivistClient: ArchivistSocketClient) {}
 
   async resolveUIDs(uids: number[]) {
-    return this.archivistClient.resolveUIDs(uids);
+    try {
+      return await this.archivistClient.resolveUIDs(uids);
+    } catch (error) {
+      this.logger.error(`Failed to resolve UIDs ${uids.join(", ")}:`, error);
+      throw error;
+    }
   }
 
   async getEntityType(uid: number) {
-    return this.archivistClient.getEntityType(uid);
+    try {
+      return await this.archivistClient.getEntityType(uid);
+    } catch (error) {
+      this.logger.error(`Failed to get entity type for uid ${uid}:`, error);
+      throw error;
+    }
   }
 
   async getEntityCategory(uid: number) {
-    return this.archivistClient.getEntityCategory(uid);
+    try {
+      return await this.archivistClient.getEntityCategory(uid);
+    } catch (error) {
+      this.logger.error(`Failed to get entity category for uid ${uid}:`, error);
+      throw error;
+    }
   }
 
   async getEntityCollections() {
-    return this.archivistClient.getEntityCollections();
+    try {
+      return await this.archivistClient.getEntityCollections();
+    } catch (error) {
+      this.logger.error("Failed to get entity collections:", error);
+      throw error;
+    }
   }
 }

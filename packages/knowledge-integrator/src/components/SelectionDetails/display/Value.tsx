@@ -1,7 +1,9 @@
 import React, { useContext } from "react";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { portalSocket } from "../../../PortalSocket";
+
+import { PortalUserActions } from "@relica/websocket-contracts";
+import { portalSocket } from "../../../socket";
 
 interface ValueProps {
   value: { quant: number; uom: { uid: number; name: string } };
@@ -9,7 +11,7 @@ interface ValueProps {
 
 const Value: React.FC<ValueProps> = ({ value }) => {
   const performRequest = async () => {
-    portalSocket.emit("user", "getSpecializationHierarchy", { uid: value.uom.uid });
+    portalSocket.send(PortalUserActions.GET_SPECIALIZATION_HIERARCHY, { uid: value.uom.uid });
   };
 
   return (

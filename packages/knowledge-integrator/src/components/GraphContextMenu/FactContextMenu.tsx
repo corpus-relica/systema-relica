@@ -9,7 +9,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
-import { portalSocket } from "../../PortalSocket";
+import { portalSocket } from "../../socket";
+import { PortalUserActions } from "@relica/websocket-contracts";
 import { useStores } from "../../context/RootStoreContext";
 
 const CLEAR_ALL = "Clear all";
@@ -49,7 +50,7 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       case CLEAR_ALL: {
         const userId = authStore.userId;
         const environmentId = rootStore.environmentId;
-        portalSocket.emit("user", "clearEntities", {
+        portalSocket.send(PortalUserActions.CLEAR_ENTITIES, {
           userId,
           environmentId,
         });
@@ -65,12 +66,12 @@ const FactContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       case REIFY: {
         const userId = authStore.userId;
         const environmentId = rootStore.environmentId;
-        portalSocket.emit("user", "loadSpecializationHierarchy", {
+        portalSocket.send(PortalUserActions.LOAD_SPECIALIZATION_HIERARCHY, {
           userId,
           environmentId,
           uid: relType,
         });
-        portalSocket.emit("user", "selectEntity", {
+        portalSocket.send(PortalUserActions.SELECT_ENTITY, {
           userId,
           environmentId,
           uid: relType,

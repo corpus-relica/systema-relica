@@ -1,13 +1,13 @@
-import { Controller, Get, Query, BadRequestException } from "@nestjs/common";
+import { BadRequestException, Controller, Get, Query } from "@nestjs/common";
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiOperation,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from "@nestjs/swagger";
-import { ModelService } from "./model.service";
 import { User } from "../shared/decorators/user.decorator";
+import { ModelService } from "./model.service";
 
 @ApiTags("Model")
 // @Controller('model')

@@ -13,7 +13,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import SearchIcon from "@mui/icons-material/Search";
 
-import { portalSocket } from "../../PortalSocket";
+import { portalSocket } from "../../socket";
+import { PortalUserActions } from "@relica/websocket-contracts";
 import { useStores } from "../../context/RootStoreContext";
 
 const CLEAR_ALL = "Clear all";
@@ -51,7 +52,7 @@ const StageContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
       case CLEAR_ALL:
         const userId = authStore.userId;
         const environmentId = rootStore.environmentId;
-        portalSocket.emit("user", "clearEntities", {userId, environmentId});
+        portalSocket.send(PortalUserActions.CLEAR_ENTITIES, {userId, environmentId});
         handleClose();
         break;
       case SEARCH:

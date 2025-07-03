@@ -296,6 +296,87 @@ packages/knowledge-integrator/
 3. Monitor WebSocket connection counts
 4. Review AI/ML inference times
 
+## 🛠️ Standard Development Commands
+
+**Use these commands for all development tasks. They work consistently across the entire monorepo.**
+
+### Essential Daily Commands
+```bash
+# Build all packages (run this first after git pull)
+yarn build
+
+# Type check all TypeScript (run before committing)
+yarn type-check
+
+# Lint and fix all packages
+yarn lint
+yarn lint:fix
+
+# Run all tests
+yarn test
+yarn test:cov
+
+# Start all services for development
+yarn start:dev
+
+# Start only databases (when running services individually)
+yarn start:databases
+```
+
+### Docker Commands
+```bash
+# Start all services in containers
+yarn docker:up
+yarn docker:build    # with rebuild
+
+# View logs from all services
+yarn docker:logs
+
+# Stop all containers
+yarn docker:down
+```
+
+### Individual Service Commands
+```bash
+# Work with specific services
+yarn workspace @relica/portal start:dev
+yarn workspace @relica/archivist build
+yarn workspace @relica/prism test
+yarn workspace @relica/websocket-contracts type-check
+```
+
+### Common Development Workflows
+
+**Starting Development Session:**
+```bash
+git pull origin main
+yarn build                 # Build all packages
+yarn type-check            # Verify no type errors
+yarn start:databases       # Start databases
+yarn start:dev             # Start all services
+```
+
+**Before Committing:**
+```bash
+yarn build                 # Ensure everything builds
+yarn type-check            # Check for type errors
+yarn lint                  # Fix linting issues
+yarn test                  # Run tests
+```
+
+**When Adding New Features:**
+1. Define WebSocket contracts first (`packages/websocket-contracts`)
+2. Implement service logic
+3. Update frontend if needed
+4. Run `yarn type-check` and `yarn test`
+
+**Quick Service Health Check:**
+```bash
+curl http://localhost:3000/health  # Archivist
+curl http://localhost:3005/health  # Prism
+curl http://localhost:2204/health  # Portal
+```
+
 ## Key Configuration Patterns
 
 ### Environment Variables

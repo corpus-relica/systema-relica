@@ -9,7 +9,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 
-import { portalSocket } from "../../PortalSocket";
+import { portalSocket } from "../../socket";
+import { PortalUserActions } from "@relica/websocket-contracts";
 import { useStores } from "../../context/RootStoreContext";
 
 const SHOW_ALL = "show 'all'";
@@ -49,7 +50,7 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
         case SHOW_ALL: {
           const userId = authStore.userId;
           const environmentId = rootStore.environmentId;
-          portalSocket.emit("user", "loadAllRelatedFacts", {
+          portalSocket.send(PortalUserActions.LOAD_ALL_RELATED_FACTS, {
             userId,
             environmentId,
             uid,
@@ -60,7 +61,7 @@ const IndividualContextMenu: React.FC<IndividualContextMenuProps> = (props) => {
         case REM_THIS: {
           const userId = authStore.userId;
           const environmentId = rootStore.environmentId;
-          portalSocket.emit("user", "unloadEntity", {
+          portalSocket.send(PortalUserActions.UNLOAD_ENTITIES, {
             userId,
             environmentId,
             uid,

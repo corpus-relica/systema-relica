@@ -1,7 +1,6 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { io, Socket } from 'socket.io-client';
-import customParser from 'socket.io-msgpack-parser';
 
 export interface WebSocketServiceClient {
   connect(): Promise<void>;
@@ -68,7 +67,7 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      // parser: customParser, // Use msgpack parser for better performance
+      // Using JSON for optimal performance and compatibility
     });
 
     this.setupEventHandlers();
@@ -130,6 +129,8 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
     return crypto.randomUUID();
   }
 
+  // Direct JSON communication for optimal performance
+
   protected async sendRequestMessage(action: string, payload: any): Promise<any> {
     if (!this.socket?.connected) {
       this.logger.log(`Not connected to ${this.serviceName}, attempting to connect...`);
@@ -158,7 +159,7 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
 
       this.socket!.emit(action, message, (response: any) => {
         clearTimeout(timeout);
-        
+
         if (response && response.success === false) {
           reject(new Error(response.error || 'Request failed'));
         } else {

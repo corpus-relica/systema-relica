@@ -69,13 +69,14 @@ class BaseSocketIOClient:
             'type': 'request',
             'service': self.service_name,
             'action': action,
-            'payload': payload
+            'payload': payload  # Send payload as JSON
         }
         
         try:
             # Use sio.call() which mirrors TypeScript's emit with callback acknowledgment
             response = await self.sio.call(action, message, timeout=timeout)
             
+            # Use JSON response directly from TypeScript services
             if response and response.get('success', False):
                 return response.get('data', response.get('payload', {}))
             else:

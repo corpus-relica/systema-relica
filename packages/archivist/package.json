@@ -29,8 +29,8 @@
     "@nestjs/swagger": "^7.3.1",
     "@nestjs/typeorm": "^10.0.2",
     "@nestjs/websockets": "^11.0.0",
-    "@relica/hsm-manager": "^0.0.0",
     "@relica/constants": "*",
+    "@relica/hsm-manager": "^0.0.0",
     "@relica/types": "*",
     "c3-linearization": "^0.3.0",
     "ioredis": "^5.3.2",
@@ -40,7 +40,6 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
-    "socket.io-msgpack-parser": "^3.0.2",
     "typeorm": "^0.3.20",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
     "xstate": "^5.13.0"

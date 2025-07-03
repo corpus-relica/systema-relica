@@ -20,8 +20,8 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
-      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, payload);
+      // Forward event directly to frontend clients
+      this.portalGateway.server.emit(PortalSystemEvents.LOADED_FACTS, {payload: payload.data});
     });
 
     this.apertureClient.on(ApertureEvents.UNLOADED_FACTS, (payload) => {
@@ -30,10 +30,10 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(
         PortalSystemEvents.UNLOADED_FACTS,
-        payload
+        {payload: payload.data}
       );
     });
 
@@ -43,10 +43,10 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(
         PortalSystemEvents.SELECTED_ENTITY,
-        payload
+        {payload: payload.data}
       );
     });
 
@@ -56,8 +56,10 @@ export class ApertureWebSocketClientService implements OnModuleInit {
         this.logger.warn("PortalGateway not set, cannot forward event");
         return;
       }
-      // Forward the event to the Portal Gateway
-      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE, payload);
+      // Forward event directly to frontend clients
+      this.portalGateway.server.emit(PortalSystemEvents.SELECTED_NONE,
+        {payload: payload.data}
+      );
     });
   }
 
@@ -123,7 +125,6 @@ export class ApertureWebSocketClientService implements OnModuleInit {
     environmentId: string = "1",
     uid: number
   ): Promise<any> {
-    console.log("SELECTING ENTITY", { userId, environmentId, uid });
     const result = await this.apertureClient.selectEntity(
       userId.toString(),
       environmentId,
@@ -132,7 +133,6 @@ export class ApertureWebSocketClientService implements OnModuleInit {
     if (!result.success && result.error) {
       throw new Error(result.error.message || "Failed to select entity");
     }
-    console.log("APERTURE SELECT ENTITY RESPONSE", result);
     return result.data || result;
   }
 

@@ -6,7 +6,7 @@ import { observer } from "mobx-react";
 
 import { useStore } from "react-admin";
 
-import { portalSocket } from "../PortalSocket";
+import { portalSocket } from "../socket";
 import { PortalUserActions } from "@relica/websocket-contracts";
 
 import Box from "@mui/material/Box";
@@ -40,7 +40,7 @@ const Graph = observer(() => {
   const selectNode = (id: number) => {
     const userId = authStore.userId;
     const environmentId = rootStore.environmentId;
-    portalSocket.emit(USER, "selectEntity", { userId, environmentId, uid: id });
+    portalSocket.send(PortalUserActions.SELECT_ENTITY, { userId, environmentId, uid: id });
   };
 
   const token = getAuthToken();
@@ -86,14 +86,14 @@ const Graph = observer(() => {
   }, []);
 
   const handleEdgeClick = (uid: any) => {
-    portalSocket.emit(USER, "selectFact", { uid });
+    portalSocket.send(PortalUserActions.SELECT_FACT, { uid });
   };
 
   const onStageClick = () => {
     setOpen(false);
     const userId = authStore.userId;
     const environmentId = rootStore.environmentId;
-    portalSocket.emit(USER, "selectNone", { userId, environmentId });
+    portalSocket.send(PortalUserActions.SELECT_NONE, { userId, environmentId });
   };
 
   const handleSearchUIClose = async (res: any) => {
@@ -106,7 +106,7 @@ const Graph = observer(() => {
     const identityx = await authProvider.getIdentity();
     console.log("authprovider userId:", identityx);
     const { lh_object_uid } = res;
-    portalSocket.emit(USER, "loadSpecializationHierarchy", {
+    portalSocket.send(USER + ":loadSpecializationHierarchy", {
       uid: lh_object_uid,
       userId: authStore.userId || identityx?.id || "unknown",
       environmentId: rootStore.environmentId,

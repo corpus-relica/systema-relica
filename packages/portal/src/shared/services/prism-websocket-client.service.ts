@@ -17,7 +17,7 @@ export class PrismWebSocketClientService implements OnModuleInit {
         this.logger.warn('PortalGateway not set, cannot forward event');
         return;
       }
-      // Forward the broadcast to all connected frontend clients via Portal Gateway
+      // Forward event directly to frontend clients
       this.portalGateway.server.emit(PrismEvents.SETUP_STATUS_UPDATE, broadcastEvent);
     });
   }

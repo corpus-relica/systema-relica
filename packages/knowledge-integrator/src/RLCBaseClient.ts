@@ -85,7 +85,6 @@ export const getEntityType = async (uid: number) => {
   const result = await axiosInstance.get(ENTITY_TYPE_ENDPOINT, {
     params: { uid },
   });
-  console.log("XXXXX", result.data);
   return result.data.type;
 };
 
@@ -107,7 +106,6 @@ export const getSubtypes = async (uid: number) => {
   const response = await axiosInstance.get(SUBTYPES_ENDPOINT, {
     params: { uid },
   });
-  console.log("RLCBaseClient.getSubtypes response", response.data.subtypes);
   return response.data.subtypes;
 };
 
@@ -122,7 +120,7 @@ export const getClassified = async (uid: number) => {
   const response = await axiosInstance.get(CLASSIFIED_ENDPOINT, {
     params: { uid },
   });
-  return response.data;
+  return response.data.facts;
 };
 
 export const getClassificationFact = async (uid: number) => {

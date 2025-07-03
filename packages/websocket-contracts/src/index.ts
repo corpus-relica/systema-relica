@@ -41,6 +41,10 @@ export * from './validation';
 // Response utilities
 export * from './utils/response.utils';
 
+
+// Broadcasting utilities
+export * from './utils/broadcast.util';
+
 export {
   PrismActions,
   PrismEvents,
