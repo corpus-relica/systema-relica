@@ -49,10 +49,10 @@ Service Dockerfiles use different approaches and lack standardization:
 - [x] **Test builds**: Verify Archivist and Shutter Docker builds succeed
 
 ### Phase 1B: Standardize Multi-Stage Build Pattern
-- [ ] **Create standardized Dockerfile template** for TypeScript services
-- [ ] **Update Portal Dockerfile** to use standardized multi-stage pattern
-- [ ] **Update Clarity Dockerfile** to use standardized multi-stage pattern (if needed)
-- [ ] **Update Aperture Dockerfile** to use standardized multi-stage pattern
+- [x] **Create standardized Dockerfile template** for TypeScript services
+- [x] **Update Portal Dockerfile** to use standardized multi-stage pattern
+- [x] **Update Clarity Dockerfile** to use standardized multi-stage pattern
+- [x] **Update Aperture Dockerfile** to use standardized multi-stage pattern
 - [ ] **Update Shutter Dockerfile** to use standardized multi-stage pattern
 - [ ] **Update Prism Dockerfile** to use standardized multi-stage pattern
 - [ ] **Update Archivist Dockerfile** to use standardized multi-stage pattern
@@ -202,6 +202,27 @@ This work is part of the larger Docker Infrastructure Overhaul to make Systema R
 - ✅ **Shutter**: Package dependencies resolved, websocket-contracts accessible  
 
 **Status**: Phase 1A complete! Critical dependency fixes resolved the blocking Docker build failures.
+
+### 2025-07-04 - Phase 1B Standardization Progress
+
+**Standardized Dockerfile Template Created:**
+- ✅ **Dockerfile.template.typescript**: Comprehensive template with all patterns
+- ✅ **Security features**: Non-root user, proper ownership, health checks
+- ✅ **Build optimization**: Multi-stage builds, Alpine Linux, dependency caching
+- ✅ **Flexibility**: Configurable for different service dependency needs
+
+**Services Standardized:**
+- ✅ **Portal**: Updated to standardized pattern (websocket-contracts only, port 2204)
+- ✅ **Clarity**: Updated to standardized pattern (types + constants + websocket-contracts, port 3001)  
+- ✅ **Aperture**: Updated to standardized pattern (websocket-contracts only, port 3002)
+
+**Key Improvements Applied:**
+- **Consistent Node Version**: All services now use `node:18-alpine`
+- **Security**: Non-root `relica` user, proper file ownership
+- **Health Checks**: Built-in health endpoints for all services
+- **Build Optimization**: Proper multi-stage builds with production-only dependencies
+
+**Status**: Phase 1B partially complete! 3 of 6 services standardized.
 
 ## Success Criteria
 

@@ -1,46 +1,101 @@
-FROM node:18 as build
+# =============================================================================
+# PORTAL SERVICE DOCKERFILE - Standardized Pattern
+# =============================================================================
+# API Gateway + Auth Orchestration - Port 2204
+# Dependencies: websocket-contracts only
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# BUILD STAGE
+# -----------------------------------------------------------------------------
+FROM node:18-alpine AS build
+
+# Install build dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
 
 # Ensure yarn is available
-RUN which yarn || npm install -g yarn
+RUN corepack enable
 
 WORKDIR /usr/src/app
 
-COPY package.json .
-COPY yarn.lock .
-COPY packages/portal ./packages/portal
+# Copy workspace configuration
+COPY package.json yarn.lock ./
+
+# Copy shared packages (always needed)
 COPY packages/websocket-contracts ./packages/websocket-contracts
 
-RUN yarn config set network-timeout 300000 && \
-    yarn cache clean && \
-    yarn install --network-timeout 300000
+# Copy service-specific source
+COPY packages/portal ./packages/portal
 
-WORKDIR /usr/src/app/packages/portal
-RUN yarn build
+# Install all dependencies (including devDependencies for build)
+RUN yarn install --frozen-lockfile --non-interactive
 
-# --------------------------------------
+# Build shared packages in dependency order
+RUN cd packages/websocket-contracts && yarn build
 
-FROM node:18
+# Build the service
+RUN cd packages/portal && yarn build
+
+# -----------------------------------------------------------------------------
+# RUNTIME STAGE
+# -----------------------------------------------------------------------------
+FROM node:18-alpine AS runtime
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S relica -u 1001
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    && rm -rf /var/cache/apk/*
 
 # Ensure yarn is available
-RUN which yarn || npm install -g yarn
-
-# Set PATH to include yarn
-ENV PATH="/usr/local/bin:${PATH}"
+RUN corepack enable
 
 WORKDIR /usr/src/app
 
-COPY package.json .
-COPY yarn.lock .
+# Copy workspace configuration
+COPY package.json yarn.lock ./
 
-COPY packages/portal /usr/src/app/packages/portal
-COPY packages/websocket-contracts /usr/src/app/packages/websocket-contracts
+# Copy built shared packages with proper ownership
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/websocket-contracts/package.json ./packages/websocket-contracts/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/websocket-contracts/dist ./packages/websocket-contracts/dist
 
-ENV NODE_ENV development
+# Copy service built artifacts
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/portal/package.json ./packages/portal/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/portal/dist ./packages/portal/dist
 
-RUN yarn config set network-timeout 300000 && \
-    yarn cache clean && \
-    yarn install --network-timeout 300000 --production=false
+# Copy service source files for development
+COPY --chown=relica:nodejs packages/portal ./packages/portal
 
+# Install production dependencies only
+RUN yarn install --frozen-lockfile --non-interactive --production && \
+    yarn cache clean
+
+# Set proper ownership
+RUN chown -R relica:nodejs /usr/src/app
+
+# Switch to non-root user
+USER relica
+
+# Set working directory to service
 WORKDIR /usr/src/app/packages/portal
 
+# Expose service port
+EXPOSE 2204
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:2204/health || exit 1
+
+# Environment variables
+ENV NODE_ENV=development
+ENV PORT=2204
+
+# Start the service (development mode)
 CMD ["yarn", "start:dev"]
