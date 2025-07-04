@@ -1,8 +1,8 @@
 # =============================================================================
-# ARCHIVIST SERVICE .DOCKERIGNORE
+# SHUTTER SERVICE .DOCKERIGNORE
 # =============================================================================
-# Service-specific exclusions for Archivist (Data Persistence and Retrieval)
-# Port: 3000 | Dependencies: websocket-contracts, types, constants, hsm-manager
+# Service-specific exclusions for Shutter (Authentication and Authorization)
+# Port: 3004 | Dependencies: websocket-contracts only
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -21,7 +21,6 @@ dist/
 coverage/
 .nyc_output/
 *.log
-npm-debug.log
 
 # -----------------------------------------------------------------------------
 # TESTING
@@ -58,22 +57,16 @@ tmp/
 .cache/
 
 # -----------------------------------------------------------------------------
-# ARCHIVIST SPECIFIC (Data Storage)
+# SHUTTER SPECIFIC (Security)
 # -----------------------------------------------------------------------------
-# Database files and backups
-*.sqlite
-*.db
-data/
-backups/
-exports/
+# Security-related temp files
+*.key
+*.pem
+*.p12
+keys/
+certs/
+secrets/
 
-# Large data files
-*.xlsx
-*.csv
-*.json.backup
-seed-data/temp/
-
-# Graph database exports
-*.cypher
-*.graphml
-neo4j-exports/
+# Database migrations backup
+migrations/backup/
+*.sql.backup

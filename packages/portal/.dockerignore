@@ -1,8 +1,8 @@
 # =============================================================================
-# ARCHIVIST SERVICE .DOCKERIGNORE
+# PORTAL SERVICE .DOCKERIGNORE
 # =============================================================================
-# Service-specific exclusions for Archivist (Data Persistence and Retrieval)
-# Port: 3000 | Dependencies: websocket-contracts, types, constants, hsm-manager
+# Service-specific exclusions for Portal (API Gateway + Auth Orchestration)
+# Port: 2204 | Dependencies: websocket-contracts only
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -21,7 +21,6 @@ dist/
 coverage/
 .nyc_output/
 *.log
-npm-debug.log
 
 # -----------------------------------------------------------------------------
 # TESTING
@@ -56,24 +55,3 @@ jest.config.*
 tmp/
 *.tmp
 .cache/
-
-# -----------------------------------------------------------------------------
-# ARCHIVIST SPECIFIC (Data Storage)
-# -----------------------------------------------------------------------------
-# Database files and backups
-*.sqlite
-*.db
-data/
-backups/
-exports/
-
-# Large data files
-*.xlsx
-*.csv
-*.json.backup
-seed-data/temp/
-
-# Graph database exports
-*.cypher
-*.graphml
-neo4j-exports/

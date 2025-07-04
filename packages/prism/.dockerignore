@@ -1,8 +1,8 @@
 # =============================================================================
-# ARCHIVIST SERVICE .DOCKERIGNORE
+# PRISM SERVICE .DOCKERIGNORE
 # =============================================================================
-# Service-specific exclusions for Archivist (Data Persistence and Retrieval)
-# Port: 3000 | Dependencies: websocket-contracts, types, constants, hsm-manager
+# Service-specific exclusions for Prism (System Initialization and Health)
+# Port: 3005 | Dependencies: websocket-contracts, types, constants
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -21,7 +21,6 @@ dist/
 coverage/
 .nyc_output/
 *.log
-npm-debug.log
 
 # -----------------------------------------------------------------------------
 # TESTING
@@ -58,22 +57,13 @@ tmp/
 .cache/
 
 # -----------------------------------------------------------------------------
-# ARCHIVIST SPECIFIC (Data Storage)
+# PRISM SPECIFIC (System Initialization)
 # -----------------------------------------------------------------------------
-# Database files and backups
-*.sqlite
-*.db
-data/
-backups/
-exports/
+# System state snapshots
+system-snapshots/
+health-logs/
+diagnostic-dumps/
 
-# Large data files
-*.xlsx
-*.csv
-*.json.backup
-seed-data/temp/
-
-# Graph database exports
-*.cypher
-*.graphml
-neo4j-exports/
+# Temporary system files
+.system-state
+*.state.json

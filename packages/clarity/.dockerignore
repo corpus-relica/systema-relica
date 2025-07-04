@@ -1,8 +1,8 @@
 # =============================================================================
-# ARCHIVIST SERVICE .DOCKERIGNORE
+# CLARITY SERVICE .DOCKERIGNORE
 # =============================================================================
-# Service-specific exclusions for Archivist (Data Persistence and Retrieval)
-# Port: 3000 | Dependencies: websocket-contracts, types, constants, hsm-manager
+# Service-specific exclusions for Clarity (Semantic Object Mapper)
+# Port: 3001 | Dependencies: websocket-contracts, types, constants
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -21,7 +21,6 @@ dist/
 coverage/
 .nyc_output/
 *.log
-npm-debug.log
 
 # -----------------------------------------------------------------------------
 # TESTING
@@ -58,22 +57,8 @@ tmp/
 .cache/
 
 # -----------------------------------------------------------------------------
-# ARCHIVIST SPECIFIC (Data Storage)
+# CLARITY SPECIFIC
 # -----------------------------------------------------------------------------
-# Database files and backups
-*.sqlite
-*.db
-data/
-backups/
-exports/
-
-# Large data files
-*.xlsx
-*.csv
-*.json.backup
-seed-data/temp/
-
-# Graph database exports
-*.cypher
-*.graphml
-neo4j-exports/
+# Static resources (if not needed in container)
+resources/public/dev/
+resources/public/test/
