@@ -53,9 +53,9 @@ Service Dockerfiles use different approaches and lack standardization:
 - [x] **Update Portal Dockerfile** to use standardized multi-stage pattern
 - [x] **Update Clarity Dockerfile** to use standardized multi-stage pattern
 - [x] **Update Aperture Dockerfile** to use standardized multi-stage pattern
-- [ ] **Update Shutter Dockerfile** to use standardized multi-stage pattern
-- [ ] **Update Prism Dockerfile** to use standardized multi-stage pattern
-- [ ] **Update Archivist Dockerfile** to use standardized multi-stage pattern
+- [x] **Update Shutter Dockerfile** to use standardized multi-stage pattern
+- [x] **Update Prism Dockerfile** to use standardized multi-stage pattern
+- [x] **Update Archivist Dockerfile** to use standardized multi-stage pattern
 
 ### Phase 1C: Create .dockerignore Files
 - [ ] **Create root .dockerignore** with comprehensive exclusions
@@ -222,7 +222,12 @@ This work is part of the larger Docker Infrastructure Overhaul to make Systema R
 - **Health Checks**: Built-in health endpoints for all services
 - **Build Optimization**: Proper multi-stage builds with production-only dependencies
 
-**Status**: Phase 1B partially complete! 3 of 6 services standardized.
+**Additional Services Standardized:**
+- ✅ **Shutter**: Updated to standardized pattern (websocket-contracts only, port 3004)
+- ✅ **Prism**: Updated to standardized pattern (types + constants + websocket-contracts, port 3005)
+- ✅ **Archivist**: Updated to standardized pattern (all packages: types + constants + hsm-manager + websocket-contracts, port 3000)
+
+**Status**: Phase 1B COMPLETE! ✅ All 6 TypeScript services now use standardized multi-stage Docker patterns.
 
 ## Success Criteria
 

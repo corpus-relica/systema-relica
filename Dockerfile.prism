@@ -1,36 +1,114 @@
-# Use Node.js 20 Alpine
-FROM node:20-alpine
+# =============================================================================
+# PRISM SERVICE DOCKERFILE - Standardized Pattern
+# =============================================================================
+# System Initialization and Health - Port 3005
+# Dependencies: websocket-contracts, types, constants
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# BUILD STAGE
+# -----------------------------------------------------------------------------
+FROM node:18-alpine AS build
+
+# Install build dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
 
 # Ensure yarn is available
-RUN which yarn || npm install -g yarn
+RUN corepack enable
 
-# Set working directory
 WORKDIR /usr/src/app
 
-# Copy package files
+# Copy workspace configuration
 COPY package.json yarn.lock ./
-COPY packages/prism/package.json ./packages/prism/
 
-# Copy shared packages
-COPY packages/constants ./packages/constants
-COPY packages/types ./packages/types
+# Copy shared packages (always needed)
 COPY packages/websocket-contracts ./packages/websocket-contracts
 
-# Install dependencies
-RUN yarn install --frozen-lockfile
+# Copy conditional shared packages based on service needs
+COPY packages/types ./packages/types
+COPY packages/constants ./packages/constants
 
-# Copy prism source code
+# Copy service-specific source
 COPY packages/prism ./packages/prism
 
-# Build the application
+# Install all dependencies (including devDependencies for build)
+RUN yarn install --frozen-lockfile --non-interactive
+
+# Build shared packages in dependency order
+RUN cd packages/websocket-contracts && yarn build
+RUN cd packages/types && yarn build
+RUN cd packages/constants && yarn build
+
+# Build the service
 RUN cd packages/prism && yarn build
 
-# Expose port 3005
+# -----------------------------------------------------------------------------
+# RUNTIME STAGE
+# -----------------------------------------------------------------------------
+FROM node:18-alpine AS runtime
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S relica -u 1001
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Ensure yarn is available
+RUN corepack enable
+
+WORKDIR /usr/src/app
+
+# Copy workspace configuration
+COPY package.json yarn.lock ./
+
+# Copy built shared packages with proper ownership
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/websocket-contracts/package.json ./packages/websocket-contracts/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/websocket-contracts/dist ./packages/websocket-contracts/dist
+
+# Copy conditional shared packages
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/types/package.json ./packages/types/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/types/dist ./packages/types/dist
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/constants/package.json ./packages/constants/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/constants/dist ./packages/constants/dist
+
+# Copy service built artifacts
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/prism/package.json ./packages/prism/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/prism/dist ./packages/prism/dist
+
+# Copy service source files for development
+COPY --chown=relica:nodejs packages/prism ./packages/prism
+
+# Install production dependencies only
+RUN yarn install --frozen-lockfile --non-interactive --production && \
+    yarn cache clean
+
+# Set proper ownership
+RUN chown -R relica:nodejs /usr/src/app
+
+# Switch to non-root user
+USER relica
+
+# Set working directory to service
+WORKDIR /usr/src/app/packages/prism
+
+# Expose service port
 EXPOSE 3005
 
-# Set environment variables
-ENV NODE_ENV=production
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3005/health || exit 1
+
+# Environment variables
+ENV NODE_ENV=development
+ENV PORT=3005
 ENV PRISM_PORT=3005
 
-# Start the application
-CMD ["node", "packages/prism/dist/main.js"]
+# Start the service (development mode)
+CMD ["yarn", "start:dev"]

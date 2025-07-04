@@ -1,56 +1,117 @@
-FROM node:latest as build
+# =============================================================================
+# ARCHIVIST SERVICE DOCKERFILE - Standardized Pattern
+# =============================================================================
+# Data Persistence and Retrieval - Port 3000
+# Dependencies: websocket-contracts, types, constants, hsm-manager
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# BUILD STAGE
+# -----------------------------------------------------------------------------
+FROM node:18-alpine AS build
+
+# Install build dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
+
+# Ensure yarn is available
+RUN corepack enable
 
 WORKDIR /usr/src/app
 
-COPY package.json .
-COPY yarn.lock .
+# Copy workspace configuration
+COPY package.json yarn.lock ./
+
+# Copy shared packages (always needed)
+COPY packages/websocket-contracts ./packages/websocket-contracts
+
+# Copy conditional shared packages based on service needs
 COPY packages/types ./packages/types
 COPY packages/constants ./packages/constants
 COPY packages/hsm-manager ./packages/hsm-manager
-COPY packages/websocket-contracts ./packages/websocket-contracts
+
+# Copy service-specific source
 COPY packages/archivist ./packages/archivist
 
-RUN yarn install --pure-lockfile --non-interactive
+# Install all dependencies (including devDependencies for build)
+RUN yarn install --frozen-lockfile --non-interactive
 
-WORKDIR /usr/src/app/packages/types
-RUN yarn build
+# Build shared packages in dependency order
+RUN cd packages/websocket-contracts && yarn build
+RUN cd packages/types && yarn build
+RUN cd packages/constants && yarn build
+RUN cd packages/hsm-manager && yarn build
 
-WORKDIR /usr/src/app/packages/constants
-RUN yarn build
+# Build the service
+RUN cd packages/archivist && yarn build
 
-WORKDIR /usr/src/app/packages/hsm-manager
-RUN yarn build
+# -----------------------------------------------------------------------------
+# RUNTIME STAGE
+# -----------------------------------------------------------------------------
+FROM node:18-alpine AS runtime
 
-WORKDIR /usr/src/app/packages/archivist
-RUN yarn build
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S relica -u 1001
 
-# --------------------------------------
+# Install runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    && rm -rf /var/cache/apk/*
 
-FROM node:latest
+# Ensure yarn is available
+RUN corepack enable
 
 WORKDIR /usr/src/app
 
-COPY package.json .
-COPY yarn.lock .
+# Copy workspace configuration
+COPY package.json yarn.lock ./
 
-COPY --from=build /usr/src/app/packages/types/package.json /usr/src/app/packages/types/package.json
-COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/dist
+# Copy built shared packages with proper ownership
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/websocket-contracts/package.json ./packages/websocket-contracts/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/websocket-contracts/dist ./packages/websocket-contracts/dist
 
-COPY --from=build /usr/src/app/packages/constants/package.json /usr/src/app/packages/constants/package.json
-COPY --from=build /usr/src/app/packages/constants/dist /usr/src/app/packages/constants/dist
+# Copy conditional shared packages
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/types/package.json ./packages/types/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/types/dist ./packages/types/dist
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/constants/package.json ./packages/constants/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/constants/dist ./packages/constants/dist
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/hsm-manager/package.json ./packages/hsm-manager/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/hsm-manager/dist ./packages/hsm-manager/dist
 
-COPY --from=build /usr/src/app/packages/hsm-manager/package.json /usr/src/app/packages/hsm-manager/package.json
-COPY --from=build /usr/src/app/packages/hsm-manager/dist /usr/src/app/packages/hsm-manager/dist
+# Copy service built artifacts
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/archivist/package.json ./packages/archivist/package.json
+COPY --from=build --chown=relica:nodejs /usr/src/app/packages/archivist/dist ./packages/archivist/dist
 
-COPY --from=build /usr/src/app/packages/websocket-contracts/package.json /usr/src/app/packages/websocket-contracts/package.json
-COPY --from=build /usr/src/app/packages/websocket-contracts/dist /usr/src/app/packages/websocket-contracts/dist
+# Copy service source files for development
+COPY --chown=relica:nodejs packages/archivist ./packages/archivist
 
-COPY packages/archivist /usr/src/app/packages/archivist
+# Install production dependencies only
+RUN yarn install --frozen-lockfile --non-interactive --production && \
+    yarn cache clean
 
-ENV NODE_ENV development
+# Set proper ownership
+RUN chown -R relica:nodejs /usr/src/app
 
-RUN yarn install --pure-lockfile --non-interactive
+# Switch to non-root user
+USER relica
 
+# Set working directory to service
 WORKDIR /usr/src/app/packages/archivist
 
+# Expose service port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Environment variables
+ENV NODE_ENV=development
+ENV PORT=3000
+
+# Start the service (development mode)
 CMD ["yarn", "start:dev"]
