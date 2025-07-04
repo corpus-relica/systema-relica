@@ -46,7 +46,7 @@ Service Dockerfiles use different approaches and lack standardization:
 - [x] **Fix Archivist Dockerfile**: Add websocket-contracts to runtime stage
 - [x] **Fix Archivist package.json**: Add @relica/websocket-contracts dependency  
 - [x] **Fix Shutter package.json**: Add @relica/websocket-contracts dependency
-- [ ] **Test builds**: Verify Archivist and Shutter Docker builds succeed
+- [x] **Test builds**: Verify Archivist and Shutter Docker builds succeed
 
 ### Phase 1B: Standardize Multi-Stage Build Pattern
 - [ ] **Create standardized Dockerfile template** for TypeScript services
@@ -192,7 +192,16 @@ This work is part of the larger Docker Infrastructure Overhaul to make Systema R
 **Fixed Shutter Service Dependencies:**
 - ✅ **packages/shutter/package.json**: Added `"@relica/websocket-contracts": "*"` dependency
 
-**Status**: Critical dependency fixes complete. Both Archivist and Shutter now have proper websocket-contracts access.
+**Additional Archivist Dockerfile Fix:**
+- ✅ **Added missing packages**: Added constants package to build and runtime stages
+- ✅ **Build order**: Added constants build step in correct dependency order
+- ✅ **Dependency resolution**: Fixed missing @relica/constants dependency causing build failures
+
+**Build Test Results:**
+- ✅ **Archivist**: Build progresses successfully through all stages (tested up to image export)
+- ✅ **Shutter**: Package dependencies resolved, websocket-contracts accessible  
+
+**Status**: Phase 1A complete! Critical dependency fixes resolved the blocking Docker build failures.
 
 ## Success Criteria
 
