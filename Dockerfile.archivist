@@ -35,6 +35,9 @@ COPY --from=build /usr/src/app/packages/types/dist /usr/src/app/packages/types/d
 COPY --from=build /usr/src/app/packages/hsm-manager/package.json /usr/src/app/packages/hsm-manager/package.json
 COPY --from=build /usr/src/app/packages/hsm-manager/dist /usr/src/app/packages/hsm-manager/dist
 
+COPY --from=build /usr/src/app/packages/websocket-contracts/package.json /usr/src/app/packages/websocket-contracts/package.json
+COPY --from=build /usr/src/app/packages/websocket-contracts/dist /usr/src/app/packages/websocket-contracts/dist
+
 COPY packages/archivist /usr/src/app/packages/archivist
 
 ENV NODE_ENV development
