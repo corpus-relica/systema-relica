@@ -7,7 +7,7 @@ import {
   useFormikContext,
   FieldArray,
 } from "formik";
-import SearchIcon from "@mui/icons-material/Search";
+import { Search as SearchIcon } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
 import KGEntityField from "../ui/KGEntityField";
 import DefinitionField from "../ui/DefinitionField";

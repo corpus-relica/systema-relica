@@ -10,7 +10,7 @@ import {
 } from "formik";
 //import './styles.css';
 import Grid from "@mui/material/Grid";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { AutoAwesome as AutoAwesomeIcon } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 import Table from "../Table";
 import { useMutation } from "@tanstack/react-query";

@@ -1,0 +1,425 @@
+version: "3.8"
+
+services:
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    command: /bin/sh -c "redis-server --requirepass redis"
+    volumes:
+      - ./packages/dataplex/data/redis:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+
+  postgres:
+    container_name: postgres
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    command: ["bash", "/docker-entrypoint-initdb.d/init-postgres.sh"]
+    volumes:
+      - ./packages/dataplex/data/postgres:/var/lib/postgresql/data
+      - ./packages/dataplex/init_scripts/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+
+  neo4j:
+    container_name: neo4j
+    image: neo4j:5.12.0
+    restart: always
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_dbms_security_procedures_unrestricted="apoc.*"
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.\\\*,gds.\\\*
+      - dbms_connector_bolt_listen__address=neo4j-db:7687
+      - dbms_connector_bolt_advertised__address=neo4j-db:7687
+      - NEO4J_apoc_import_file_enabled="true"
+      - NEO4J_apoc_export_file_enabled="true"
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT="yes"
+    volumes:
+      - ./packages/dataplex/data/neo4j:/data
+      - ./seed_csv:/var/lib/neo4j/import
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cypher-shell -u neo4j -p password 'MATCH (n) RETURN COUNT(n);' || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.3"
+          memory: 512M
+
+  archivist:
+    container_name: archivist
+    build:
+      context: ./
+      dockerfile: Dockerfile.archivist
+    restart: always
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - REDIS_PASSWORD=redis
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    volumes:
+      - ./packages/archivist:/usr/src/app/packages/archivist
+      - ./seed_xls:/usr/src/app/packages/archivist/seed_xls
+      - ./seed_csv:/usr/src/app/packages/archivist/seed_csv
+      - /usr/src/app/packages/archivist/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+    networks:
+      - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
+
+  clarity:
+    container_name: clarity
+    build:
+      context: ./
+      dockerfile: Dockerfile.clarity
+    restart: always
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+    volumes:
+      - ./packages/clarity:/usr/src/app/packages/clarity
+      - /usr/src/app/packages/clarity/node_modules
+    ports:
+      - "3001:3001"
+    depends_on:
+      - archivist
+    networks:
+      rlc-net:
+        aliases:
+          - clarity
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
+
+  aperture:
+    container_name: aperture
+    build:
+      context: ./
+      dockerfile: Dockerfile.aperture
+    restart: always
+    environment:
+      - NODE_ENV=development
+      - APERTURE_PORT=3002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+    volumes:
+      - ./packages/aperture:/usr/src/app/packages/aperture
+      - /usr/src/app/packages/aperture/node_modules
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - archivist
+      - clarity
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      rlc-net:
+        aliases:
+          - aperture
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
+
+  shutter:
+    container_name: shutter
+    build:
+      context: ./
+      dockerfile: Dockerfile.shutter
+    restart: always
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - JWT_SECRET=${JWT_SECRET:-development-secret-change-in-production}
+      - PORT=3004
+    volumes:
+      - ./packages/shutter:/usr/src/app/packages/shutter
+      - /usr/src/app/packages/shutter/node_modules
+    ports:
+      - "3004:3004"
+    depends_on:
+      - postgres
+    networks:
+      - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+
+  prism:
+    container_name: prism
+    build:
+      context: ./
+      dockerfile: Dockerfile.prism
+    restart: always
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - REDIS_URL=redis://redis:6379
+      - REDIS_PASSWORD=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - PRISM_PORT=3005
+      - PRISM_SEED_XLS_DIR=/usr/src/app/seed_xls
+      - PRISM_CSV_OUTPUT_DIR=/usr/src/app/seed_csv
+      - PRISM_NEO4J_IMPORT_DIR=/var/lib/neo4j/import
+      - ARCHIVIST_URL=http://archivist:3000
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+    volumes:
+      - ./packages/prism:/usr/src/app/packages/prism
+      - ./packages/constants:/usr/src/app/packages/constants
+      - ./packages/types:/usr/src/app/packages/types
+      - ./packages/websocket-contracts:/usr/src/app/packages/websocket-contracts
+      - ./seed_xls:/usr/src/app/seed_xls
+      - ./seed_csv:/usr/src/app/seed_csv
+      - /usr/src/app/packages/prism/node_modules
+    ports:
+      - "3005:3005"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+    networks:
+      - rlc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
+
+  portal:
+    container_name: portal
+    build:
+      context: ./
+      dockerfile: Dockerfile.portal
+    restart: always
+    environment:
+      - PORT=2204
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - CLARITY_HOST=clarity
+      - CLARITY_PORT=3001
+      - APERTURE_HOST=aperture
+      - APERTURE_PORT=3002
+      - SHUTTER_HOST=shutter
+      - SHUTTER_PORT=3004
+      - PRISM_HOST=prism
+      - PRISM_PORT=3005
+      - NOUS_HOST=nous
+      - NOUS_PORT=3006
+    volumes:
+      - ./packages/portal:/usr/src/app/packages/portal
+      - /usr/src/app/packages/portal/node_modules
+    ports:
+      - "2204:2204"
+    depends_on:
+      - archivist
+      - clarity
+      - aperture
+      - shutter
+      - prism
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:2204/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      rlc-net:
+        aliases:
+          - portal
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+
+  nous:
+    container_name: nous
+    build:
+      context: ./
+      dockerfile: Dockerfile.nous
+    restart: always
+    command: ["python", "main.py"]
+    volumes:
+      # Mount code for hot reloading
+      - ./packages_py/nous:/usr/src/app/packages_py/nous
+    ports:
+      - "3006:3006"
+    environment:
+      - PYTHONPATH=/usr/src/app
+      - PYTHONUNBUFFERED=1
+      # Use container names for dependencies
+      - CLARITY_HOST=clarity
+      - CLARITY_PORT=3001
+      - APERTURE_HOST=aperture
+      - APERTURE_PORT=3002
+      - ARCHIVIST_HOST=archivist
+      - ARCHIVIST_PORT=3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    depends_on:
+      - clarity
+      - aperture
+      - archivist
+    networks:
+      - rlc-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.3"
+          memory: 512M
+
+  knowledge-integrator:
+    container_name: knowledge-integrator
+    build:
+      context: .
+      dockerfile: Dockerfile.knowledge-integrator
+    restart: always
+    command: yarn dev
+    volumes:
+      - ./packages/knowledge-integrator:/usr/src/app/packages/knowledge-integrator
+      - ./packages/constants:/usr/src/app/packages/constants
+      - ./packages/fact-search-ui:/usr/src/app/packages/fact-search-ui
+      - ./packages/3d-graph-ui:/usr/src/app/packages/3d-graph-ui
+      - ./packages/hsm-manager:/usr/src/app/packages/hsm-manager
+      - /usr/src/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_ESBUILD_MAX_BUFFER=8388608
+    depends_on:
+      - portal
+      - nous
+    networks:
+      rlc-net:
+        aliases:
+          - knowledge-integrator
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+networks:
+  rlc-net:
+    name: rlc-net
+    driver: bridge

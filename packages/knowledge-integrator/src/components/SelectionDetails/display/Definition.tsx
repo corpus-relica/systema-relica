@@ -2,16 +2,17 @@ import React, { useContext, useState, useEffect } from "react";
 import { updateModelDefinition } from "../../../CCClient";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import CheckIcon from "@mui/icons-material/Check";
-import EditIcon from "@mui/icons-material/Edit";
-import CloseIcon from "@mui/icons-material/Close";
+import { 
+  Check as CheckIcon,
+  Edit as EditIcon,
+  Close as CloseIcon,
+  ArrowRight as ArrowRightIcon,
+  ArrowLeft as ArrowLeftIcon
+} from "@mui/icons-material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-
-import ArrowRightIcon from "@mui/icons-material/ArrowRight";
-import ArrowLeftIcon from "@mui/icons-material/ArrowLeft";
 
 import Grid from "@mui/material/Grid";
 

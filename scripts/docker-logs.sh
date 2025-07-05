@@ -26,13 +26,7 @@ show_usage() {
     echo "  postgres     - PostgreSQL database logs"
     echo "  neo4j        - Neo4j database logs"
     echo "  redis        - Redis cache logs"
-    echo "  archivist    - Archivist service logs"
-    echo "  clarity      - Clarity service logs"
-    echo "  aperture     - Aperture service logs"
-    echo "  shutter      - Shutter service logs"
-    echo "  prism        - Prism service logs"
-    echo "  nous         - NOUS AI service logs"
-    echo "  portal       - Portal gateway logs"
+    echo "  backend      - PM2 backend services logs"
     echo "  frontend     - Knowledge Integrator UI logs"
     echo "  all          - All services (default)"
     echo ""
@@ -44,8 +38,8 @@ show_usage() {
     echo ""
     echo "Examples:"
     echo "  $0                    # Show recent logs from all services"
-    echo "  $0 -f portal         # Follow portal service logs"
-    echo "  $0 -n 100 archivist  # Show last 100 lines from archivist"
+    echo "  $0 -f backend        # Follow backend PM2 logs"
+    echo "  $0 -n 100 postgres   # Show last 100 lines from postgres"
     echo "  $0 -f -t all         # Follow all logs with timestamps"
     echo ""
 }
@@ -75,7 +69,7 @@ while [[ $# -gt 0 ]]; do
             show_usage
             exit 0
             ;;
-        postgres|neo4j|redis|archivist|clarity|aperture|shutter|prism|nous|portal|frontend|all)
+        postgres|neo4j|redis|backend|frontend|all)
             SERVICE="$1"
             shift
             ;;
@@ -97,17 +91,11 @@ fi
 # Map service names to container names
 get_container_name() {
     case $1 in
-        postgres) echo "systema-relica-postgres" ;;
-        neo4j) echo "systema-relica-neo4j" ;;
-        redis) echo "systema-relica-redis" ;;
-        archivist) echo "systema-relica-archivist" ;;
-        clarity) echo "systema-relica-clarity" ;;
-        aperture) echo "systema-relica-aperture" ;;
-        shutter) echo "systema-relica-shutter" ;;
-        prism) echo "systema-relica-prism" ;;
-        nous) echo "systema-relica-nous" ;;
-        portal) echo "systema-relica-portal" ;;
-        frontend) echo "systema-relica-knowledge-integrator" ;;
+        postgres) echo "postgres" ;;
+        neo4j) echo "neo4j" ;;
+        redis) echo "redis" ;;
+        backend) echo "systema-relica-backend" ;;
+        frontend) echo "knowledge-integrator" ;;
         *) echo "" ;;
     esac
 }
@@ -168,7 +156,7 @@ show_all_logs() {
     echo "=============================================="
     
     # Get all running Systema Relica containers
-    local containers=$(docker ps --format "{{.Names}}" | grep "systema-relica" | sort)
+    local containers=$(docker ps --format "{{.Names}}" | grep -E "(systema-relica|postgres|neo4j|redis|knowledge-integrator)" | sort)
     
     if [ -z "$containers" ]; then
         echo -e "${YELLOW}⚠️  No Systema Relica containers are currently running${NC}"
@@ -191,17 +179,21 @@ show_all_logs() {
         # Execute with color coding
         eval "$compose_cmd" 2>&1 | while IFS= read -r line; do
             # Extract service name and colorize
-            if echo "$line" | grep -q "systema-relica-"; then
-                local service_part=$(echo "$line" | sed 's/.*systema-relica-\([^[:space:]]*\).*/\1/')
+            if echo "$line" | grep -q "systema-relica-backend"; then
                 if echo "$line" | grep -qi "error\|fail\|exception"; then
-                    echo -e "${RED}[$service_part]${NC} ${RED}$line${NC}"
+                    echo -e "${RED}[backend]${NC} ${RED}$line${NC}"
                 elif echo "$line" | grep -qi "warn"; then
-                    echo -e "${YELLOW}[$service_part]${NC} ${YELLOW}$line${NC}"
+                    echo -e "${YELLOW}[backend]${NC} ${YELLOW}$line${NC}"
                 elif echo "$line" | grep -qi "info\|start\|success"; then
-                    echo -e "${GREEN}[$service_part]${NC} $line"
+                    echo -e "${GREEN}[backend]${NC} $line"
                 else
-                    echo -e "${BLUE}[$service_part]${NC} $line"
+                    echo -e "${BLUE}[backend]${NC} $line"
                 fi
+            elif echo "$line" | grep -q "knowledge-integrator"; then
+                echo -e "${PURPLE}[frontend]${NC} $line"
+            elif echo "$line" | grep -q "postgres\|neo4j\|redis"; then
+                local service_part=$(echo "$line" | sed 's/.*\(postgres\|neo4j\|redis\).*/\1/')
+                echo -e "${CYAN}[$service_part]${NC} $line"
             else
                 echo "$line"
             fi
@@ -212,7 +204,17 @@ show_all_logs() {
         echo ""
         
         for container in $containers; do
-            local service_name=$(echo "$container" | sed 's/systema-relica-//')
+            # Get friendly service name
+            local service_name=""
+            case $container in
+                systema-relica-backend) service_name="backend (PM2)" ;;
+                knowledge-integrator) service_name="frontend" ;;
+                postgres) service_name="postgres" ;;
+                neo4j) service_name="neo4j" ;;
+                redis) service_name="redis" ;;
+                *) service_name="$container" ;;
+            esac
+            
             echo -e "${PURPLE}=== $service_name ===${NC}"
             
             docker logs --tail 10 "$container" 2>&1 | while IFS= read -r line; do

@@ -21,7 +21,7 @@ import {
 @Injectable()
 export class ArchivistSocketClient extends BaseWebSocketClient {
   constructor(configService: ConfigService) {
-    super(configService, "archivist", 3002);
+    super(configService, "archivist", 3000);
   }
 
   // =====================================================

@@ -2,7 +2,7 @@ import React from "react";
 import Grid from "@mui/material/Grid";
 import { Field, useFormikContext } from "formik";
 import IconButton from "@mui/material/IconButton";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { AutoAwesome as AutoAwesomeIcon } from "@mui/icons-material";
 
 import { conjureDefinition } from "../../../CCClient";
 

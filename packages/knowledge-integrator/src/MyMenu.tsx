@@ -1,9 +1,11 @@
 import { Menu } from "react-admin";
-import LabelIcon from "@mui/icons-material/Label";
-import TravelExploreIcon from "@mui/icons-material/TravelExplore";
-import BlurCircularIcon from "@mui/icons-material/BlurCircular";
-import PlumbingIcon from "@mui/icons-material/Plumbing";
-import FoundationIcon from "@mui/icons-material/Foundation";
+import { 
+  Label as LabelIcon,
+  TravelExplore as TravelExploreIcon,
+  BlurCircular as BlurCircularIcon,
+  Plumbing as PlumbingIcon,
+  Foundation as FoundationIcon
+} from "@mui/icons-material";
 
 export const MyMenu = () => (
   <Menu>

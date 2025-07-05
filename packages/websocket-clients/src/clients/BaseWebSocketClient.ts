@@ -61,6 +61,8 @@ export abstract class BaseWebSocketClient implements OnModuleInit, OnModuleDestr
     const port = this.configService.get<number>(`${this.serviceName.toUpperCase()}_PORT`, this.defaultPort);
     const url = `ws://${host}:${port}`;
 
+    this.logger.log(`Attempt to connect at ${url}`);
+
     this.socket = io(url, {
       transports: ['websocket'],
       autoConnect: false,

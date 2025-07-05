@@ -8,7 +8,7 @@ import { sockSendCC } from "../../../socket.js";
 
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import CopyAllIcon from "@mui/icons-material/CopyAll";
+import { CopyAll as CopyAllIcon } from "@mui/icons-material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 

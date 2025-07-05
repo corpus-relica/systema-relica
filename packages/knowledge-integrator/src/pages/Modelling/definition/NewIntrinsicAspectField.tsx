@@ -3,7 +3,7 @@ import { useStore } from "react-admin";
 import { Field, useFormikContext } from "formik";
 
 import Grid from "@mui/material/Grid";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { AutoAwesome as AutoAwesomeIcon } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 import { conjureDefinition } from "../../../CCClient";
 
