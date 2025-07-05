@@ -1,8 +1,8 @@
 # =============================================================================
-# ARCHIVIST SERVICE .DOCKERIGNORE
+# KNOWLEDGE INTEGRATOR .DOCKERIGNORE
 # =============================================================================
-# Service-specific exclusions for Archivist (Data Persistence and Retrieval)
-# Port: 3000 | Dependencies: websocket-contracts, types, constants, hsm-manager
+# Service-specific exclusions for Knowledge Integrator (Frontend Admin UI)
+# React/Vite Application
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -18,10 +18,11 @@
 # -----------------------------------------------------------------------------
 node_modules/
 dist/
+build/
 coverage/
 .nyc_output/
 *.log
-npm-debug.log
+.vite/
 
 # -----------------------------------------------------------------------------
 # TESTING
@@ -33,6 +34,8 @@ __tests__/
 *.spec.*
 jest.config.*
 .jest/
+cypress/
+e2e/
 
 # -----------------------------------------------------------------------------
 # DEVELOPMENT TOOLS
@@ -41,6 +44,8 @@ jest.config.*
 .prettierrc*
 .eslintcache
 .stylelintcache
+vite.config.ts
+tsconfig.json
 
 # -----------------------------------------------------------------------------
 # IDE
@@ -58,22 +63,18 @@ tmp/
 .cache/
 
 # -----------------------------------------------------------------------------
-# ARCHIVIST SPECIFIC (Data Storage)
+# FRONTEND SPECIFIC
 # -----------------------------------------------------------------------------
-# Database files and backups
-*.sqlite
-*.db
-data/
-backups/
-exports/
+# Source maps
+*.map
 
-# Large data files
-*.xlsx
-*.csv
-*.json.backup
-seed-data/temp/
+# Hot reload
+.hot-update.*
 
-# Graph database exports
-*.cypher
-*.graphml
-neo4j-exports/
+# Build artifacts
+public/dist/
+public/build/
+
+# Storybook
+storybook-static/
+.storybook/

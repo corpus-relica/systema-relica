@@ -12,7 +12,7 @@ import { PortalUserActions } from "@relica/websocket-contracts";
 import Box from "@mui/material/Box";
 
 import Fab from "@mui/material/Fab";
-import CopyAllIcon from "@mui/icons-material/CopyAll";
+import { CopyAll as CopyAllIcon } from "@mui/icons-material";
 
 import XXX from "@relica/fact-search-ui";
 import Button from "@mui/material/Button";

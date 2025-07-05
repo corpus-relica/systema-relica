@@ -1,4 +1,4 @@
-FROM node:latest as build
+FROM node:22-alpine AS build
 MAINTAINER Marc <marc@specular-occlusion>
 
 WORKDIR /usr/src/app
@@ -13,7 +13,7 @@ COPY packages/3d-graph-ui ./packages/3d-graph-ui
 COPY packages/hsm-manager ./packages/hsm-manager
 COPY packages/knowledge-integrator ./packages/knowledge-integrator
 
-RUN yarn install --pure-lockfile --non-interactive
+RUN yarn install --pure-lockfile --non-interactive --network-timeout 600000
 
 WORKDIR /usr/src/app/packages/types
 RUN yarn build
@@ -38,7 +38,7 @@ RUN yarn build
 
 # --------------------------------------
 
-FROM node:latest
+FROM node:22-alpine AS runtime
 
 WORKDIR /usr/src/app
 

@@ -1,7 +1,7 @@
 import { AppBar, TitlePortal } from "react-admin";
 import { Link as RouterLink } from "react-router-dom";
 import { Link } from "@mui/material";
-import SettingsIcon from "@mui/icons-material/Settings";
+import { Settings as SettingsIcon } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 
 const SettingsButton = () => (

@@ -62,17 +62,14 @@ check_container() {
 echo "📊 Service Status:"
 echo "-------------------"
 
-check_container "systema-relica-postgres" "PostgreSQL Database" "5432"
-check_container "systema-relica-neo4j" "Neo4j Database" "7687/7474"
-check_container "systema-relica-redis" "Redis Cache" "6379"
-check_container "systema-relica-archivist" "Archivist Service" "3000"
-check_container "systema-relica-clarity" "Clarity Service" "3001"
-check_container "systema-relica-aperture" "Aperture Service" "3002"
-check_container "systema-relica-shutter" "Shutter Service" "3004"
-check_container "systema-relica-prism" "Prism Service" "3005"
-check_container "systema-relica-nous" "NOUS AI Service" "3006"
-check_container "systema-relica-portal" "Portal Gateway" "2204"
-check_container "systema-relica-knowledge-integrator" "Knowledge Integrator UI" "5173"
+# Database Layer
+check_container "postgres" "PostgreSQL Database" "5432"
+check_container "neo4j" "Neo4j Database" "7687/7474"
+check_container "redis" "Redis Cache" "6379"
+
+# Application Layer (PM2 Architecture)
+check_container "systema-relica-backend" "Backend Services (PM2)" "2204,3000-3006"
+check_container "knowledge-integrator" "Knowledge Integrator UI" "5173"
 
 echo ""
 echo "🔗 Quick Service URLs:"
@@ -80,16 +77,22 @@ echo "----------------------"
 echo "Portal API:           http://localhost:2204"
 echo "Knowledge Integrator: http://localhost:5173"
 echo "Neo4j Browser:        http://localhost:7474"
-echo "Archivist API:        http://localhost:3000"
-echo "Prism API:            http://localhost:3005"
+echo ""
+echo "Backend Services (via Portal):"
+echo "Archivist:            http://localhost:3000"
+echo "Clarity:              http://localhost:3001"
+echo "Aperture:             http://localhost:3002"
+echo "Shutter:              http://localhost:3004"
+echo "Prism:                http://localhost:3005"
+echo "NOUS:                 http://localhost:3006"
 
 echo ""
 echo "📋 Container Overview:"
 echo "----------------------"
 
 # Show running containers
-if docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep systema-relica | head -1 >/dev/null; then
-    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep systema-relica
+if docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "(systema-relica|postgres|neo4j|redis|knowledge-integrator)" | head -1 >/dev/null; then
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "(systema-relica|postgres|neo4j|redis|knowledge-integrator)"
 else
     echo "No Systema Relica containers are currently running"
 fi
@@ -101,7 +104,7 @@ echo "------------------"
 # Show resource usage if available
 if command -v docker stats --no-stream >/dev/null 2>&1; then
     echo "Container resource usage (snapshot):"
-    docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" | grep systema-relica | head -10
+    docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" | grep -E "(systema-relica|postgres|neo4j|redis|knowledge-integrator)" | head -10
 else
     echo "Docker stats not available"
 fi
@@ -114,6 +117,11 @@ echo "Stop all services:   yarn docker:down"
 echo "View logs:           yarn docker:logs"
 echo "Rebuild and start:   yarn docker:build"
 echo ""
-echo "View specific logs:  docker logs systema-relica-<service>"
-echo "Connect to database: docker exec -it systema-relica-postgres psql -U postgres"
-echo "Connect to Neo4j:    docker exec -it systema-relica-neo4j cypher-shell"
+echo "PM2 Commands:"
+echo "View backend logs:   docker logs -f systema-relica-backend"
+echo "PM2 status:          docker exec systema-relica-backend pm2 status"
+echo "PM2 logs:            docker exec systema-relica-backend pm2 logs"
+echo ""
+echo "Database Commands:"
+echo "Connect to database: docker exec -it postgres psql -U postgres"
+echo "Connect to Neo4j:    docker exec -it neo4j cypher-shell"

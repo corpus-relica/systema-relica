@@ -1,7 +1,6 @@
 import React, { useState, KeyboardEvent, useRef, useEffect } from 'react';
 import { Box, Stack, TextField, Button, InputAdornment } from '@mui/material';
-import MicIcon from '@mui/icons-material/Mic';
-import SendIcon from '@mui/icons-material/Send';
+import { Mic as MicIcon, Send as SendIcon } from '@mui/icons-material';
 import { observer } from 'mobx-react';
 import UserMessage from './UserMessage';
 import AssistantMessage from './AssistantMessage';

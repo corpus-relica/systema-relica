@@ -32,6 +32,7 @@
     "@relica/constants": "*",
     "@relica/hsm-manager": "^0.0.0",
     "@relica/types": "*",
+    "@relica/websocket-contracts": "*",
     "c3-linearization": "^0.3.0",
     "ioredis": "^5.3.2",
     "nest-neo4j": "^0.3.1",

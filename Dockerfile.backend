@@ -1,0 +1,86 @@
+# Multi-stage Dockerfile for unified backend with PM2
+# Supports both Node.js TypeScript services and Python NOUS service
+
+# ================================
+# Stage 1: Base Node.js environment for building TypeScript services
+# ================================
+FROM node:22-alpine AS node-builder
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /usr/src/app
+
+# Copy package files and install dependencies
+COPY package.json yarn.lock ./
+COPY packages/constants/package.json ./packages/constants/
+COPY packages/types/package.json ./packages/types/
+COPY packages/websocket-contracts/package.json ./packages/websocket-contracts/
+COPY packages/websocket-clients/package.json ./packages/websocket-clients/
+COPY packages/hsm-manager/package.json ./packages/hsm-manager/
+COPY packages/archivist/package.json ./packages/archivist/
+COPY packages/clarity/package.json ./packages/clarity/
+COPY packages/aperture/package.json ./packages/aperture/
+COPY packages/shutter/package.json ./packages/shutter/
+COPY packages/prism/package.json ./packages/prism/
+COPY packages/portal/package.json ./packages/portal/
+
+# Install all dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy source code
+COPY packages/ ./packages/
+
+# Build all shared packages first
+RUN yarn workspace @relica/constants build
+RUN yarn workspace @relica/types build
+RUN yarn workspace @relica/websocket-contracts build
+RUN yarn workspace @relica/websocket-clients build
+RUN yarn workspace @relica/hsm-manager build
+
+# Build all backend services
+RUN yarn workspace @relica/archivist build
+RUN yarn workspace @relica/clarity build
+RUN yarn workspace @relica/aperture build
+RUN yarn workspace @relica/shutter build
+RUN yarn workspace @relica/prism build
+RUN yarn workspace @relica/portal build
+
+# ================================
+# Stage 2: Runtime environment with PM2
+# ================================
+FROM node:22-alpine AS runtime
+
+# Install PM2 globally and Python runtime
+RUN npm install -g pm2@latest
+RUN apk add --no-cache python3 py3-pip curl
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Copy built Node.js services from builder stage
+COPY --from=node-builder /usr/src/app/packages/ ./packages/
+COPY --from=node-builder /usr/src/app/node_modules/ ./node_modules/
+
+# Copy Python source and install dependencies
+COPY packages_py/ ./packages_py/
+RUN pip3 install --break-system-packages --no-cache-dir -r packages_py/nous/requirements.txt
+
+# Copy PM2 ecosystem configuration
+COPY ecosystem.config.js ./
+
+# Copy seed data directories (mounted volumes in production)
+RUN mkdir -p ./seed_xls ./seed_csv
+
+# Create Python symlink for PM2
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Health check endpoint (Portal service)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:2204/health || exit 1
+
+# Expose all service ports
+EXPOSE 2204 3000 3001 3002 3004 3005 3006
+
+# Start all services with PM2
+CMD ["pm2-runtime", "start", "ecosystem.config.js"]

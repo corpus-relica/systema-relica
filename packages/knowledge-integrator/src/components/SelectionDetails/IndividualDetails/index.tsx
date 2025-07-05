@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 // import IconButton from "@mui/material/IconButton";
-// import CopyAllIcon from "@mui/icons-material/FileCopy";
+// import { FileCopy as CopyAllIcon } from "@mui/icons-material";
 
 // import Collection from "./display/Collection";
 // import IndividualName from "../display/IndividualName";

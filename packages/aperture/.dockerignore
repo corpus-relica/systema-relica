@@ -1,8 +1,8 @@
 # =============================================================================
-# ARCHIVIST SERVICE .DOCKERIGNORE
+# APERTURE SERVICE .DOCKERIGNORE
 # =============================================================================
-# Service-specific exclusions for Archivist (Data Persistence and Retrieval)
-# Port: 3000 | Dependencies: websocket-contracts, types, constants, hsm-manager
+# Service-specific exclusions for Aperture (Media Processing and Analysis)
+# Port: 3002 | Dependencies: websocket-contracts only
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -21,7 +21,6 @@ dist/
 coverage/
 .nyc_output/
 *.log
-npm-debug.log
 
 # -----------------------------------------------------------------------------
 # TESTING
@@ -58,22 +57,19 @@ tmp/
 .cache/
 
 # -----------------------------------------------------------------------------
-# ARCHIVIST SPECIFIC (Data Storage)
+# APERTURE SPECIFIC (Media Processing)
 # -----------------------------------------------------------------------------
-# Database files and backups
-*.sqlite
-*.db
-data/
-backups/
-exports/
+# Temporary media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+uploads/
+temp-media/
+processed/
 
-# Large data files
-*.xlsx
-*.csv
-*.json.backup
-seed-data/temp/
-
-# Graph database exports
-*.cypher
-*.graphml
-neo4j-exports/
+# Image processing temp files
+*.psd
+*.ai
+temp-images/

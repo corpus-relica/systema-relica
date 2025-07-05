@@ -2,9 +2,11 @@ import React, { useContext, useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import IconButton from "@mui/material/IconButton";
-import CheckIcon from "@mui/icons-material/Check";
-import EditIcon from "@mui/icons-material/Edit";
-import CloseIcon from "@mui/icons-material/Close";
+import { 
+  Check as CheckIcon,
+  Edit as EditIcon,
+  Close as CloseIcon
+} from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { updateModelCollection } from "../../../CCClient";
 import Typography from "@mui/material/Typography";

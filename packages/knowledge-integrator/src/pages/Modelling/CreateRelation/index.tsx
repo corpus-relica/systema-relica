@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import Grid from "@mui/material/Grid";
-import SearchIcon from "@mui/icons-material/Search";
+import { Search as SearchIcon } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
 import { Button } from "@mui/material";
 import Table from "../Table";

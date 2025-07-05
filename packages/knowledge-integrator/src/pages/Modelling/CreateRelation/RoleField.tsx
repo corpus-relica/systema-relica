@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Field, useFormikContext } from "formik";
 
 import Grid from "@mui/material/Grid";
-import SearchIcon from "@mui/icons-material/Search";
+import { Search as SearchIcon } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";

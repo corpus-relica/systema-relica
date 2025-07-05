@@ -2,11 +2,21 @@
   "name": "@relica/constants",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
-  "main": "dist/constants.js",
-  "types": "dist/constants.d.ts",
+  "main": "dist/cjs/constants.js",
+  "module": "dist/esm/constants.js",
+  "types": "dist/types/constants.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/constants.js",
+      "require": "./dist/cjs/constants.js",
+      "types": "./dist/types/constants.d.ts"
+    }
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:cjs && npm run build:esm && npm run build:types",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json", 
+    "build:types": "tsc -p tsconfig.types.json",
     "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "echo \"No linting configured\"",
